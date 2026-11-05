@@ -953,7 +953,23 @@
       const avail=window.innerHeight-(h?h.offsetHeight:0)-(f?f.offsetHeight:0)-pad;
       document.documentElement.style.setProperty('--jisu-fill-h',Math.max(320,avail)+'px');
     }
-    window.addEventListener('resize',fit); fit();
+    function packRow(){
+      const stage=document.getElementById('mapStage'); if(!stage) return;
+      const sel=['[data-warehouse-btn]','[data-production-btn="A"]','[data-production-btn="B"]','[data-production-btn="C"]'];
+      const btns=sel.map(s=>document.querySelector(s)); if(btns.some(b=>!b)) return;
+      const sw=stage.getBoundingClientRect().width; if(!sw) return;
+      for(let i=1;i<btns.length;i++){
+        const wrap=btns[i].closest('.hotspot-wrapper'); if(!wrap) continue;
+        wrap.style.left=wrap.dataset.baseLeft||(wrap.dataset.baseLeft=wrap.style.left);
+        const prev=btns[i-1].getBoundingClientRect(), cur=btns[i].getBoundingClientRect();
+        const delta=(prev.right+6)-cur.left;
+        wrap.style.left=(parseFloat(wrap.style.left)+delta/sw*100).toFixed(3)+'%';
+      }
+    }
+    function fitAll(){ fit(); requestAnimationFrame(packRow); }
+    window.addEventListener('resize',fitAll); fitAll();
+    if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fitAll);
+    window.addEventListener('load',fitAll);
   })();
   </script>
 </body>
