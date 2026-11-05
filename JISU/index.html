@@ -171,7 +171,8 @@
       position: absolute;
       top: 100%;
       left: 50%;
-      width: 280px;
+      width: min(400px, calc(100vw - 32px));
+      max-width: calc(100vw - 24px);
       max-height: 0;
       opacity: 0;
       overflow: hidden;
@@ -190,7 +191,12 @@
       color: #f8fafc;
     }
     .hotspot-wrapper.is-open .expand-card {
-      max-height: 360px;
+      max-height: 70vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
       opacity: 1;
       pointer-events: auto;
       transform: translate(-50%, 0) scale(1);
@@ -253,7 +259,7 @@
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> LIVE
           </span>
         </div>
-        <p class="text-xs text-slate-400">각 구역(<span class="text-amber-300 font-semibold">출고 · 입고 · 포장 · 피치</span>)을 클릭하면 상세 관제 화면이 바로 열립니다</p>
+        <p class="text-xs text-slate-400">각 구역 버튼을 누르면 버튼 아래 투명 카드가 펼쳐집니다</p>
       </div>
     </div>
 
@@ -344,9 +350,7 @@
               <span class="font-bold text-emerald-300">18분 / 차량</span>
             </div>
           </div>
-          <button type="button" class="learn-more-action" data-open-modal="outbound">
-            출고 상세 관제 보기 &gt;
-          </button>
+            <div class="zone-inline-details" data-inline-details="outbound"></div>
         </div>
       </div>
 
@@ -384,9 +388,7 @@
               <span class="font-bold text-emerald-300">6대 연속 가동</span>
             </div>
           </div>
-          <button type="button" class="learn-more-action" data-open-modal="inbound">
-            입고 상세 관제 보기 &gt;
-          </button>
+            <div class="zone-inline-details" data-inline-details="inbound"></div>
         </div>
       </div>
 
@@ -424,9 +426,7 @@
               <span class="font-bold text-emerald-300">4기 정상 작동</span>
             </div>
           </div>
-          <button type="button" class="learn-more-action" data-open-modal="packaging">
-            포장 라인 상세 보기 &gt;
-          </button>
+            <div class="zone-inline-details" data-inline-details="packaging"></div>
         </div>
       </div>
 
@@ -464,9 +464,7 @@
               <span class="font-bold text-emerald-300">2.4 bar 정상</span>
             </div>
           </div>
-          <button type="button" class="learn-more-action" data-open-modal="pitch">
-            피치 공정 상세 보기 &gt;
-          </button>
+            <div class="zone-inline-details" data-inline-details="pitch"></div>
         </div>
       </div>
 
@@ -483,7 +481,7 @@
       <span class="hidden md:inline">연결된 저장소: <strong class="text-sky-300">coarfamily-cyber/POSCO-M</strong></span>
     </div>
     <div id="statusToast" class="text-amber-300 font-semibold">
-      구역 버튼을 누르면 상세 관제 정보가 바로 열립니다.
+      구역 버튼 아래 투명 카드에서 상세 관제 정보를 확인하세요.
     </div>
   </footer>
 
@@ -675,18 +673,39 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Reuse the full modal detail set inside each transparent inline card.
+      document.querySelectorAll('[data-inline-details]').forEach(panel => {
+        const info = ZONE_DETAILS[panel.getAttribute('data-inline-details')];
+        if (!info) return;
+        panel.innerHTML = `
+          <section class="mt-3 border-t border-white/15 pt-3">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-amber-200">${info.category}</div>
+            <h4 class="mt-1 text-sm font-extrabold text-white">${info.title}</h4>
+            <p class="mt-1 text-xs leading-relaxed text-slate-200">${info.subtitle}</p>
+            <div class="mt-3 grid grid-cols-2 gap-2">
+              ${info.metrics.map(m => `<div class="rounded-xl border border-white/10 bg-white/5 p-2.5"><div class="text-[10px] text-slate-300">${m.label}</div><div class="mt-1 text-sm font-extrabold ${m.color}">${m.value}</div></div>`).join('')}
+            </div>
+            <div class="mt-3">
+              <h5 class="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-300">최근 관제 로그</h5>
+              <ul class="space-y-2 text-[10px] leading-relaxed text-slate-200">
+                ${info.logs.map(log => `<li class="flex items-start gap-2"><span class="shrink-0 text-amber-300">●</span><span>${log}</span></li>`).join('')}
+              </ul>
+            </div>
+          </section>
+        `;
+      });
       // Wire zone pills on map
       document.querySelectorAll('[data-toggle-zone]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          openZoneModal(btn.getAttribute('data-toggle-zone'));
+          toggleZoneCard(btn.getAttribute('data-toggle-zone'));
         });
       });
 
       // Wire quick buttons in header
       document.querySelectorAll('[data-zone-btn]').forEach(btn => {
         btn.addEventListener('click', () => {
-          openZoneModal(btn.getAttribute('data-zone-btn'));
+          toggleZoneCard(btn.getAttribute('data-zone-btn'));
         });
       });
 
