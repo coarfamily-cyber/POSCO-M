@@ -80,40 +80,15 @@
       box-shadow: 0 0 8px #10b981;
     }
 
-    /* Production controls at the former C building position */
-    .production-group {
+    /* Production markers use the same glass-pill style as existing map buttons */
+    .production-marker {
       position: absolute;
       transform: translate(-50%, -50%);
-      z-index: 20;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      max-width: calc(100% - 12px);
+      z-index: 26;
     }
-    .production-btn {
-      border: 1px solid rgba(255,255,255,.24);
-      border-radius: 9999px;
-      padding: .45em .62em;
-      color: #f8fafc;
-      background: rgba(8,15,27,.58);
-      backdrop-filter: blur(12px) saturate(160%);
-      -webkit-backdrop-filter: blur(12px) saturate(160%);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 6px 18px rgba(0,0,0,.35);
-      font-size: clamp(.62rem, 1vw, .82rem);
-      font-weight: 800;
-      white-space: nowrap;
-      cursor: pointer;
-      transition: background .18s ease, border-color .18s ease, transform .18s ease;
-    }
-    .production-btn:hover, .production-btn.is-selected {
-      background: rgba(8,145,178,.58);
-      border-color: rgba(103,232,249,.82);
-      color: #ecfeff;
-    }
-    .production-btn:focus-visible {
-      outline: 2px solid #67e8f9;
-      outline-offset: 2px;
+    .production-line-button.is-selected {
+      background: rgba(8, 145, 178, 0.34);
+      box-shadow: 0 0 0 2px rgba(103, 232, 249, 0.46), 0 10px 26px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.2);
     }
 
     /* Expandable zone hotspots */
@@ -305,14 +280,14 @@
       <button type="button" data-zone-btn="outbound" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5">
         <span class="w-2 h-2 rounded-full bg-sky-400"></span> 출고
       </button>
-      <button type="button" data-zone-btn="inbound" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-emerald-400"></span> 입고
-      </button>
       <button type="button" data-zone-btn="packaging" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5">
         <span class="w-2 h-2 rounded-full bg-amber-400"></span> 포장
       </button>
       <button type="button" data-zone-btn="pitch" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5">
         <span class="w-2 h-2 rounded-full bg-purple-400"></span> 피치
+      </button>
+      <button type="button" data-zone-btn="inbound" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span> 입고
       </button>
       <button type="button" id="toggleAllBtn" class="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-400/20 text-amber-300 hover:bg-amber-400/30 transition">
         전체 펼치기
@@ -335,11 +310,21 @@
       <button type="button" class="bldg-badge" style="left: 31.2%; top: 51.0%;" data-bldg="B" title="B동 상태 보기">
         <span class="status-dot"></span> B
       </button>
-      <!-- Production controls replace the former C building badge -->
-      <div class="production-group" style="left: 70.6%; top: 34.5%;" role="group" aria-label="생산 구역 선택">
-        <button type="button" class="production-btn" data-production-btn="A" aria-pressed="false">생산A</button>
-        <button type="button" class="production-btn" data-production-btn="B" aria-pressed="false">생산B</button>
-        <button type="button" class="production-btn" data-production-btn="C" aria-pressed="false">생산C</button>
+      <!-- Production buttons placed at their respective factory lines -->
+      <div class="production-marker" style="left: 25%; top: 74%;">
+        <button type="button" class="hotspot-pill production-line-button" data-production-btn="A" aria-pressed="false" aria-label="생산A 선택">
+          <span class="pulse-ring bg-amber-500 text-amber-400"></span><span>생산A</span>
+        </button>
+      </div>
+      <div class="production-marker" style="left: 54%; top: 34%;">
+        <button type="button" class="hotspot-pill production-line-button" data-production-btn="B" aria-pressed="false" aria-label="생산B 선택">
+          <span class="pulse-ring bg-purple-500 text-purple-400"></span><span>생산B</span>
+        </button>
+      </div>
+      <div class="production-marker" style="left: 83%; top: 77%;">
+        <button type="button" class="hotspot-pill production-line-button" data-production-btn="C" aria-pressed="false" aria-label="생산C 선택">
+          <span class="pulse-ring bg-sky-500 text-sky-400"></span><span>생산C</span>
+        </button>
       </div>
       <button type="button" class="bldg-badge" style="left: 70.4%; top: 67.9%;" data-bldg="D" title="D동 상태 보기">
         <span class="status-dot"></span> D
@@ -355,7 +340,7 @@
       </button>
 
       <!-- 1. 출고 (Outbound) Expandable Hotspot -->
-      <div class="hotspot-wrapper" id="hotspot-outbound" style="left: 48.5%; top: 31.0%;">
+      <div class="hotspot-wrapper" id="hotspot-outbound" style="left: 48.5%; top: 20.3%;">
         <button type="button" class="hotspot-pill" data-toggle-zone="outbound">
           <span class="pulse-ring bg-sky-500 text-sky-400"></span>
           <span>출고</span>
