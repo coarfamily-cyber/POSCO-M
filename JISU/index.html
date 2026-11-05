@@ -12,7 +12,7 @@
     :root {
       --gold: #d4af37;
       --gold-light: #f3d478;
-      --glass-bg: rgba(15, 20, 28, 0.84);
+      --glass-bg: rgba(8, 15, 27, 0.34);
       --glass-border: rgba(255, 255, 255, 0.22);
     }
     * {
@@ -79,7 +79,7 @@
       box-shadow: 0 0 8px #10b981;
     }
 
-    /* Expandable Hotspot ("더 알아보기" style from wep) */
+    /* Expandable zone hotspots */
     .hotspot-wrapper {
       position: absolute;
       transform: translate(-50%, -50%);
@@ -90,26 +90,40 @@
       z-index: 50;
     }
 
-    /* Compact trigger badge that looks like the clean white label + '더 알아보기 >' pill feel */
+    /* Compact glass button for zone hotspots */
     .hotspot-pill {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(255, 255, 255, 0.96);
-      color: #0f172a;
+      background: rgba(255, 255, 255, 0.10);
+      color: #f8fafc;
       font-weight: 800;
       font-size: clamp(0.8rem, 1.25vw, 1.15rem);
       padding: 0.36em 0.9em;
       border-radius: 9999px;
-      border: 2px solid rgba(212, 175, 55, 0.75);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 15px rgba(212, 175, 55, 0.25);
+      backdrop-filter: blur(12px) saturate(150%);
+      -webkit-backdrop-filter: blur(12px) saturate(150%);
+      border: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.16);
       cursor: pointer;
       white-space: nowrap;
       transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
     }
     .hotspot-pill:hover {
-      background: #ffffff;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.65), 0 0 22px rgba(212, 175, 55, 0.5);
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    }
+    .zone-quick-btn {
+      border: none !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+      color: #e2e8f0;
+      backdrop-filter: blur(12px) saturate(150%);
+      -webkit-backdrop-filter: blur(12px) saturate(150%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 4px 14px rgba(0, 0, 0, 0.2);
+    }
+    .zone-quick-btn:hover {
+      background: rgba(255, 255, 255, 0.16) !important;
+      color: #ffffff !important;
     }
     .hotspot-pill .pill-sub {
       font-size: 0.7em;
@@ -144,7 +158,7 @@
       }
     }
 
-    /* Inline Expandable Card (exact '더 알아보기' accordion glassmorphic card pattern) */
+    /* Inline expandable glass card */
     .expand-card {
       position: absolute;
       top: 100%;
@@ -160,11 +174,11 @@
                   transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
                   margin-top 0.3s ease;
       background: var(--glass-bg);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border: 1px solid rgba(212, 175, 55, 0.45);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 18px;
-      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8), 0 0 28px rgba(212, 175, 55, 0.18);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.12);
       color: #f8fafc;
     }
     .hotspot-wrapper.is-open .expand-card {
@@ -175,9 +189,10 @@
       margin-top: 8px;
     }
     .hotspot-wrapper.is-open .hotspot-pill {
-      background: #0f172a;
-      color: #f3d478;
-      border-color: #f3d478;
+      background: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      border: none;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 8px 24px rgba(0, 0, 0, 0.28);
     }
     .hotspot-wrapper.is-open .hotspot-pill .pill-sub {
       background: rgba(243, 212, 120, 0.2);
@@ -221,11 +236,11 @@
   <header class="w-full px-4 py-2.5 bg-slate-950/90 backdrop-blur-md border-b border-white/10 flex flex-wrap items-center justify-between gap-3 z-40">
     <div class="flex items-center gap-3">
       <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-300 via-amber-500 to-yellow-700 flex items-center justify-center text-slate-950 font-black text-base shadow-lg shadow-amber-500/20">
-        PM
+        HS
       </div>
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white">POSCO M 실시간 통합 관제 상황실</h1>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white">POSCO M 한성 통합 관제 상황실</h1>
           <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> LIVE
           </span>
@@ -236,17 +251,17 @@
 
     <!-- Quick Trigger Bar for the 4 Zones + Expand All -->
     <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-      <button type="button" data-zone-btn="outbound" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold bg-white/10 hover:bg-amber-400/20 hover:text-amber-300 border border-white/15 transition flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-sky-400"></span> 출고 더 알아보기 &gt;
+      <button type="button" data-zone-btn="outbound" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-sky-400"></span> 출고
       </button>
-      <button type="button" data-zone-btn="inbound" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold bg-white/10 hover:bg-amber-400/20 hover:text-amber-300 border border-white/15 transition flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-emerald-400"></span> 입고 더 알아보기 &gt;
+      <button type="button" data-zone-btn="inbound" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span> 입고
       </button>
-      <button type="button" data-zone-btn="packaging" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold bg-white/10 hover:bg-amber-400/20 hover:text-amber-300 border border-white/15 transition flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-amber-400"></span> 포장 더 알아보기 &gt;
+      <button type="button" data-zone-btn="packaging" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-amber-400"></span> 포장
       </button>
-      <button type="button" data-zone-btn="pitch" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold bg-white/10 hover:bg-amber-400/20 hover:text-amber-300 border border-white/15 transition flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-purple-400"></span> 피치 더 알아보기 &gt;
+      <button type="button" data-zone-btn="pitch" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-purple-400"></span> 피치
       </button>
       <button type="button" id="toggleAllBtn" class="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-400/20 text-amber-300 hover:bg-amber-400/30 border border-amber-400/40 transition">
         전체 펼치기
@@ -290,7 +305,7 @@
         <button type="button" class="hotspot-pill" data-toggle-zone="outbound">
           <span class="pulse-ring bg-sky-500 text-sky-400"></span>
           <span>출고</span>
-          <span class="pill-sub">더 알아보기 <span class="chevron transition-transform duration-300">&gt;</span></span>
+          
         </button>
         <div class="expand-card p-3.5">
           <div class="flex items-center gap-3">
@@ -332,7 +347,7 @@
         <button type="button" class="hotspot-pill" data-toggle-zone="inbound">
           <span class="pulse-ring bg-emerald-500 text-emerald-400"></span>
           <span>입고</span>
-          <span class="pill-sub">더 알아보기 <span class="chevron transition-transform duration-300">&gt;</span></span>
+          
         </button>
         <div class="expand-card p-3.5">
           <div class="flex items-center gap-3">
@@ -372,7 +387,7 @@
         <button type="button" class="hotspot-pill" data-toggle-zone="packaging">
           <span class="pulse-ring bg-amber-500 text-amber-400"></span>
           <span>포장</span>
-          <span class="pill-sub">더 알아보기 <span class="chevron transition-transform duration-300">&gt;</span></span>
+          
         </button>
         <div class="expand-card p-3.5">
           <div class="flex items-center gap-3">
@@ -412,7 +427,7 @@
         <button type="button" class="hotspot-pill" data-toggle-zone="pitch">
           <span class="pulse-ring bg-purple-500 text-purple-400"></span>
           <span>피치</span>
-          <span class="pill-sub">더 알아보기 <span class="chevron transition-transform duration-300">&gt;</span></span>
+          
         </button>
         <div class="expand-card p-3.5">
           <div class="flex items-center gap-3">
