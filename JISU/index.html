@@ -656,10 +656,25 @@
       const wrapper = document.getElementById('hotspot-' + zoneKey);
       if (!wrapper) return;
       const isOpen = wrapper.classList.contains('is-open');
-      wrapper.classList.toggle('is-open', !isOpen);
+      const willOpen = !isOpen;
+      if (willOpen) {
+        const closeSelector = wrapper.classList.contains('production-hotspot')
+          ? '.hotspot-wrapper.is-open'
+          : '.production-hotspot.is-open';
+        document.querySelectorAll(closeSelector).forEach(other => {
+          if (other === wrapper) return;
+          other.classList.remove('is-open');
+          const otherButton = other.querySelector('[data-production-btn], [data-warehouse-btn]');
+          if (otherButton) {
+            otherButton.classList.remove('is-selected');
+            otherButton.setAttribute('aria-pressed', 'false');
+          }
+        });
+      }
+      wrapper.classList.toggle('is-open', willOpen);
       const chevron = wrapper.querySelector('.chevron');
       if (chevron) {
-        chevron.style.transform = !isOpen ? 'rotate(90deg)' : 'rotate(0deg)';
+        chevron.style.transform = willOpen ? 'rotate(90deg)' : 'rotate(0deg)';
       }
       const toast = document.getElementById('statusToast');
       const cardTitle = ZONE_DETAILS[zoneKey]?.title || HOTSPOT_TITLES[zoneKey];
@@ -813,10 +828,12 @@
       document.querySelectorAll('[data-production-btn], [data-warehouse-btn]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
+          const wrapper = btn.closest('.production-hotspot');
+          const selected = Boolean(wrapper && wrapper.classList.contains('is-open'));
           document.querySelectorAll('[data-production-btn], [data-warehouse-btn]').forEach(other => {
-            const selected = other === btn;
-            other.classList.toggle('is-selected', selected);
-            other.setAttribute('aria-pressed', String(selected));
+            const isSelected = other === btn && selected;
+            other.classList.toggle('is-selected', isSelected);
+            other.setAttribute('aria-pressed', String(isSelected));
           });
         });
       });
