@@ -128,7 +128,9 @@
     .hotspot-pill:focus,
     .hotspot-pill:focus-visible,
     .zone-quick-btn:focus,
-    .zone-quick-btn:focus-visible {
+    .zone-quick-btn:focus-visible,
+    #toggleAllBtn:focus,
+    #toggleAllBtn:focus-visible {
       outline: none !important;
     }
     .hotspot-pill .pill-sub {
@@ -269,7 +271,7 @@
       <button type="button" data-zone-btn="pitch" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5">
         <span class="w-2 h-2 rounded-full bg-purple-400"></span> 피치
       </button>
-      <button type="button" id="toggleAllBtn" class="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-400/20 text-amber-300 hover:bg-amber-400/30 border border-amber-400/40 transition">
+      <button type="button" id="toggleAllBtn" class="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-400/20 text-amber-300 hover:bg-amber-400/30 transition">
         전체 펼치기
       </button>
       <div id="liveClock" class="hidden md:block text-xs font-mono text-slate-300 bg-slate-900 px-3 py-1.5 rounded-lg border border-white/10">
