@@ -290,6 +290,13 @@
 
     .prod-row{position:absolute;left:69.95%;top:46%;transform:translate(-50%,-50%);display:flex;gap:6px;align-items:flex-start;z-index:45;}
     .prod-row > .hotspot-wrapper{position:relative;left:auto !important;top:auto !important;transform:none;}
+
+    /* All button indicator lights: green, blinking */
+    .pulse-ring{background:#22c55e !important;color:#4ade80 !important;}
+    .bldg-badge .status-dot{position:relative;display:inline-block;background:#22c55e;box-shadow:0 0 8px #22c55e;color:#4ade80;}
+    .bldg-badge .status-dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid currentColor;animation:ping 1.8s cubic-bezier(0,0,0.2,1) infinite;}
+    .zone-quick-btn > span.rounded-full{position:relative;background:#22c55e !important;color:#4ade80;}
+    .zone-quick-btn > span.rounded-full::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:2px solid currentColor;animation:ping 1.8s cubic-bezier(0,0,0.2,1) infinite;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
