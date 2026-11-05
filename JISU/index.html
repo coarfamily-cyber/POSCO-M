@@ -12,7 +12,7 @@
     :root {
       --gold: #d4af37;
       --gold-light: #f3d478;
-      --glass-bg: rgba(8, 15, 27, 0.34);
+      --glass-bg: rgba(8, 15, 27, 0.22);
       --glass-border: rgba(255, 255, 255, 0.22);
     }
     * {
@@ -124,6 +124,12 @@
     .zone-quick-btn:hover {
       background: rgba(255, 255, 255, 0.16) !important;
       color: #ffffff !important;
+    }
+    .hotspot-pill:focus,
+    .hotspot-pill:focus-visible,
+    .zone-quick-btn:focus,
+    .zone-quick-btn:focus-visible {
+      outline: none !important;
     }
     .hotspot-pill .pill-sub {
       font-size: 0.7em;
