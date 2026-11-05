@@ -80,6 +80,42 @@
       box-shadow: 0 0 8px #10b981;
     }
 
+    /* Production controls at the former C building position */
+    .production-group {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      max-width: calc(100% - 12px);
+    }
+    .production-btn {
+      border: 1px solid rgba(255,255,255,.24);
+      border-radius: 9999px;
+      padding: .45em .62em;
+      color: #f8fafc;
+      background: rgba(8,15,27,.58);
+      backdrop-filter: blur(12px) saturate(160%);
+      -webkit-backdrop-filter: blur(12px) saturate(160%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 6px 18px rgba(0,0,0,.35);
+      font-size: clamp(.62rem, 1vw, .82rem);
+      font-weight: 800;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background .18s ease, border-color .18s ease, transform .18s ease;
+    }
+    .production-btn:hover, .production-btn.is-selected {
+      background: rgba(8,145,178,.58);
+      border-color: rgba(103,232,249,.82);
+      color: #ecfeff;
+    }
+    .production-btn:focus-visible {
+      outline: 2px solid #67e8f9;
+      outline-offset: 2px;
+    }
+
     /* Expandable zone hotspots */
     .hotspot-wrapper {
       position: absolute;
@@ -299,9 +335,12 @@
       <button type="button" class="bldg-badge" style="left: 31.2%; top: 51.0%;" data-bldg="B" title="B동 상태 보기">
         <span class="status-dot"></span> B
       </button>
-      <button type="button" class="bldg-badge" style="left: 70.6%; top: 34.5%;" data-bldg="C" title="C동 상태 보기">
-        <span class="status-dot"></span> C
-      </button>
+      <!-- Production controls replace the former C building badge -->
+      <div class="production-group" style="left: 70.6%; top: 34.5%;" role="group" aria-label="생산 구역 선택">
+        <button type="button" class="production-btn" data-production-btn="A" aria-pressed="false">생산A</button>
+        <button type="button" class="production-btn" data-production-btn="B" aria-pressed="false">생산B</button>
+        <button type="button" class="production-btn" data-production-btn="C" aria-pressed="false">생산C</button>
+      </div>
       <button type="button" class="bldg-badge" style="left: 70.4%; top: 67.9%;" data-bldg="D" title="D동 상태 보기">
         <span class="status-dot"></span> D
       </button>
@@ -406,14 +445,14 @@
               <svg class="w-6 h-6 text-amber-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
               </svg>
-              <span class="text-[10px] font-bold text-amber-200 mt-0.5">C동 좌상단</span>
+              <span class="text-[10px] font-bold text-amber-200 mt-0.5">자동 포장 구역</span>
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center justify-between">
                 <span class="text-[11px] font-bold text-amber-300 uppercase tracking-wider">Packaging Line</span>
                 <span class="text-[11px] font-semibold text-emerald-400">자동화 100%</span>
               </div>
-              <h3 class="text-sm font-extrabold text-white truncate">C동 자동 포장·래핑 라인</h3>
+              <h3 class="text-sm font-extrabold text-white truncate">자동 포장·래핑 라인</h3>
               <p class="text-xs text-slate-300 mt-0.5">시간당 처리 <strong class="text-amber-300" id="metric-packaging">84 팔레트/h</strong></p>
             </div>
           </div>
@@ -444,14 +483,14 @@
               <svg class="w-6 h-6 text-purple-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
               </svg>
-              <span class="text-[10px] font-bold text-purple-200 mt-0.5">C동 상단중앙</span>
+              <span class="text-[10px] font-bold text-purple-200 mt-0.5">피치 공정 구역</span>
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center justify-between">
                 <span class="text-[11px] font-bold text-purple-300 uppercase tracking-wider">Pitch Process</span>
                 <span class="text-[11px] font-semibold text-amber-300">고온 정밀제어</span>
               </div>
-              <h3 class="text-sm font-extrabold text-white truncate">C동 피치(Pitch) 공정 설비</h3>
+              <h3 class="text-sm font-extrabold text-white truncate">피치(Pitch) 공정 설비</h3>
               <p class="text-xs text-slate-300 mt-0.5">로 내부 온도 <strong class="text-amber-300" id="metric-pitch">742 °C</strong> (안정)</p>
             </div>
           </div>
@@ -515,8 +554,8 @@
     const ZONE_DETAILS = {
       outbound: {
         category: 'OUTBOUND LOGISTICS · 출고 구역',
-        title: '출고 대기 및 자동 상차 구역 (B동~C동 상단)',
-        subtitle: 'C동 포장 라인에서 완료된 완제품 팔레트가 AGV를 통해 출고 도크로 자동 이송됩니다.',
+        title: '출고 대기 및 자동 상차 구역',
+        subtitle: '포장 라인에서 완료된 완제품 팔레트가 AGV를 통해 출고 도크로 자동 이송됩니다.',
         metrics: [
           { label: '금일 누적 출고', value: '428 Ton', color: 'text-sky-300' },
           { label: '출고 목표 달성률', value: '94.2%', color: 'text-emerald-300' },
@@ -524,7 +563,7 @@
         ],
         logs: [
           '19:17:42 - GATE #2 25톤 카고트럭 상차 완료 (Lot #PM-261105-09)',
-          '19:16:15 - C동 포장라인 → 출고 버퍼 구간 AGV #04 이송 완료',
+          '19:16:15 - 포장라인 → 출고 버퍼 구간 AGV #04 이송 완료',
           '19:14:03 - RFID 자동 출문 스캔 정상 확인'
         ]
       },
@@ -545,7 +584,7 @@
       },
       packaging: {
         category: 'PACKAGING PROCESS · 포장 공정',
-        title: 'C동 좌측 상단 자동 포장·래핑 라인',
+        title: '자동 포장·래핑 라인',
         subtitle: '피치 공정을 거친 제품을 방습 래핑 및 자동 팔레타이징하여 출고 구역으로 전달합니다.',
         metrics: [
           { label: '시간당 처리량', value: '84 PLT/h', color: 'text-amber-300' },
@@ -560,7 +599,7 @@
       },
       pitch: {
         category: 'PITCH COATING · 피치 공정',
-        title: 'C동 상단 중앙 피치(Pitch) 정밀 공정',
+        title: '피치(Pitch) 정밀 공정',
         subtitle: '고온 열처리 및 피치 코팅·함침 공정을 실시간 온도·압력 센서로 정밀 제어합니다.',
         metrics: [
           { label: '챔버 내부 온도', value: '742 °C', color: 'text-purple-300' },
@@ -570,7 +609,7 @@
         logs: [
           '19:18:05 - 피치 열처리 챔버 #1~#3 온도 편차 ±0.4°C 이내 안정',
           '19:15:40 - 배기가스 집진 필터 차압 정상 (98.9% 정화)',
-          '19:11:22 - C동 중앙 라인 연속 공정 피딩 정상'
+          '19:11:22 - 중앙 생산 라인 연속 공정 피딩 정상'
         ]
       }
     };
@@ -578,7 +617,6 @@
     const BUILDING_DETAILS = {
       A: { title: 'A동 (주 생산 1동)', desc: '대형 주력 생산 설비 및 태양광 루프탑 발전 가동 중', rate: '97.2%', temp: '24.1°C', power: '4.8 MW' },
       B: { title: 'B동 (전처리 및 물류 허브동)', desc: 'A동 연계 브릿지 및 입·출고 완충 물류 자동화 라인', rate: '95.8%', temp: '22.8°C', power: '2.1 MW' },
-      C: { title: 'C동 (피치 및 포장 핵심 공정동)', desc: '피치(Pitch) 공정 및 자동 포장 라인 통합 가동', rate: '98.1%', temp: '25.3°C', power: '3.6 MW' },
       D: { title: 'D동 (주 생산 2동)', desc: '고효율 모듈/소재 열처리 및 대량 생산 라인', rate: '96.5%', temp: '24.7°C', power: '3.2 MW' },
       E: { title: 'E동 (유틸리티 1동)', desc: '공업용수 처리 및 보조 공조 설비 가동', rate: '99.0%', temp: '21.0°C', power: '0.2 MW' },
       F: { title: 'F동 (유틸리티 2동)', desc: '압축공기·가스 공급 및 환경 설비 가동', rate: '98.4%', temp: '21.5°C', power: '0.2 MW' },
@@ -733,11 +771,23 @@
         });
       });
 
-      // Wire building badges A-G
+      // Wire remaining building badges A, B, D-G
       document.querySelectorAll('[data-bldg]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           openBuildingModal(btn.getAttribute('data-bldg'));
+        });
+      });
+
+      // Production buttons select a line without inventing production metrics.
+      document.querySelectorAll('[data-production-btn]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          document.querySelectorAll('[data-production-btn]').forEach(other => {
+            const selected = other === btn;
+            other.classList.toggle('is-selected', selected);
+            other.setAttribute('aria-pressed', String(selected));
+          });
         });
       });
 
