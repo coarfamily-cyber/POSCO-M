@@ -312,16 +312,21 @@
       </button>
       <!-- Production buttons placed at their respective factory lines -->
       <div class="production-marker" style="left: 59.1%; top: 46%;">
+        <button type="button" class="hotspot-pill production-line-button" data-warehouse-btn aria-pressed="false" aria-label="창고 선택">
+          <span class="pulse-ring bg-emerald-500 text-emerald-400"></span><span>창고</span>
+        </button>
+      </div>
+      <div class="production-marker" style="left: 66.6%; top: 46%;">
         <button type="button" class="hotspot-pill production-line-button" data-production-btn="A" aria-pressed="false" aria-label="생산A 선택">
           <span class="pulse-ring bg-amber-500 text-amber-400"></span><span>생산A</span>
         </button>
       </div>
-      <div class="production-marker" style="left: 66.6%; top: 46%;">
+      <div class="production-marker" style="left: 74.1%; top: 46%;">
         <button type="button" class="hotspot-pill production-line-button" data-production-btn="B" aria-pressed="false" aria-label="생산B 선택">
           <span class="pulse-ring bg-purple-500 text-purple-400"></span><span>생산B</span>
         </button>
       </div>
-      <div class="production-marker" style="left: 74.1%; top: 46%;">
+      <div class="production-marker" style="left: 81.6%; top: 46%;">
         <button type="button" class="hotspot-pill production-line-button" data-production-btn="C" aria-pressed="false" aria-label="생산C 선택">
           <span class="pulse-ring bg-sky-500 text-sky-400"></span><span>생산C</span>
         </button>
@@ -765,10 +770,10 @@
       });
 
       // Production buttons select a line without inventing production metrics.
-      document.querySelectorAll('[data-production-btn]').forEach(btn => {
+      document.querySelectorAll('[data-production-btn], [data-warehouse-btn]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          document.querySelectorAll('[data-production-btn]').forEach(other => {
+          document.querySelectorAll('[data-production-btn], [data-warehouse-btn]').forEach(other => {
             const selected = other === btn;
             other.classList.toggle('is-selected', selected);
             other.setAttribute('aria-pressed', String(selected));
