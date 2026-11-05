@@ -253,7 +253,7 @@
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> LIVE
           </span>
         </div>
-        <p class="text-xs text-slate-400">각 구역(<span class="text-amber-300 font-semibold">출고 · 입고 · 포장 · 피치</span>)을 클릭하면 상세 카드가 펼쳐집니다</p>
+        <p class="text-xs text-slate-400">각 구역(<span class="text-amber-300 font-semibold">출고 · 입고 · 포장 · 피치</span>)을 클릭하면 상세 관제 화면이 바로 열립니다</p>
       </div>
     </div>
 
@@ -483,7 +483,7 @@
       <span class="hidden md:inline">연결된 저장소: <strong class="text-sky-300">coarfamily-cyber/POSCO-M</strong></span>
     </div>
     <div id="statusToast" class="text-amber-300 font-semibold">
-      맵 위의 [출고 · 입고 · 포장 · 피치] 버튼을 눌러 상세 카드를 확인하세요.
+      구역 버튼을 누르면 상세 관제 정보가 바로 열립니다.
     </div>
   </footer>
 
@@ -679,14 +679,14 @@
       document.querySelectorAll('[data-toggle-zone]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          toggleZoneCard(btn.getAttribute('data-toggle-zone'));
+          openZoneModal(btn.getAttribute('data-toggle-zone'));
         });
       });
 
       // Wire quick buttons in header
       document.querySelectorAll('[data-zone-btn]').forEach(btn => {
         btn.addEventListener('click', () => {
-          toggleZoneCard(btn.getAttribute('data-zone-btn'));
+          openZoneModal(btn.getAttribute('data-zone-btn'));
         });
       });
 
