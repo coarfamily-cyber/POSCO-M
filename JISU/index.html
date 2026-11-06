@@ -378,6 +378,11 @@
     /* 출고: green light while work is in progress, blue otherwise */
     [data-toggle-zone="outbound"].has-active-work .pulse-ring{background:#22c55e !important;color:#4ade80 !important;}
     [data-zone-btn="outbound"].has-active-work > span.rounded-full{background:#22c55e !important;color:#4ade80 !important;}
+    .work-complete::before{content:none !important;display:none !important;}
+    .work-complete{padding:6px 12px !important;}
+    .work-progress.is-working{color:#fff !important;border-color:transparent !important;background:linear-gradient(135deg,#f59e0b,#f97316) !important;box-shadow:0 6px 16px rgba(249,115,22,.45);animation:workPulse 1.6s ease-in-out infinite;}
+    @keyframes workPulse{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.55),0 6px 16px rgba(249,115,22,.35);}50%{box-shadow:0 0 0 5px rgba(249,115,22,0),0 6px 16px rgba(249,115,22,.5);}}
+    .cmd-item.is-completed .work-progress{opacity:.55;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -1008,10 +1013,11 @@
       if(isWork){
         right='<div class="work-ctrl">'
           +'<label class="work-done-num">완료 <input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" enterkeyhint="done" data-cmd-progress="'+x.id+'" value="'+(x.done!=null?esc(x.done):'')+'" placeholder="0"'+(x.completed?' disabled':'')+'>'+(g?'<span>/ '+esc(g.n)+(g.u?' '+esc(g.u):'')+'</span>':'')+'</label>'
+          +'<button type="button" class="work-complete work-progress'+(x.working&&!x.completed?' is-working':'')+'" data-cmd-working="'+x.id+'">작업중</button>'
           +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?'완료됨':'작업완료')+'</button>'
           +'</div>';
       }
-      return '<div class="cmd-item'+(x.completed?' is-completed':'')+'"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'금일작업')+'</span><span>'+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):'')+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
+      return '<div class="cmd-item'+(x.completed?' is-completed':'')+'"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'금일작업')+'</span><span>'+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):(x.working&&x.startedAt?' · 작업중 '+esc(x.startedAt):''))+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
         +'<div class="cmd-row"><div class="cmd-text">'+esc(x.text)+'</div>'+right+'</div></div>';
     }
     function renderCards(){
@@ -1027,7 +1033,7 @@
       document.querySelectorAll('[data-toggle-zone],[data-bldg]').forEach(b=>{
         const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg');
         const mine=all.filter(x=>x.target===k); const work=mine.filter(x=>x.kind!=='notice'); const done=work.filter(x=>x.completed).length;
-        const active=work.length>0 && done<work.length; b.classList.toggle('has-active-work',active);
+        const active=work.some(x=>x.working&&!x.completed); b.classList.toggle('has-active-work',active);
         document.querySelectorAll('[data-zone-btn="'+k+'"]').forEach(z=>z.classList.toggle('has-active-work',active));
         let badge=b.querySelector('.cmd-count'); if(!mine.length){ if(badge) badge.remove(); return; }
         if(!badge){ badge=document.createElement('span'); badge.className='cmd-count'; b.appendChild(badge); }
@@ -1045,8 +1051,11 @@
     function update(id,fn){const all=load();const it=all.find(x=>x.id===id);if(!it)return;fn(it);save(all);render();if(modalKey)fillModal(modalKey);}
     const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
     function onChange(e){const id=e.target.getAttribute&&e.target.getAttribute('data-cmd-progress');if(!id)return;e.stopPropagation();const v=e.target.value.replace(',','.').replace(/[^0-9.]/g,'').trim();const n=v===''?null:Number(v);update(id,it=>{it.done=(n==null||isNaN(n))?null:n;});}
-    function onClick(e){const t=e.target.closest?e.target.closest('[data-cmd-complete],[data-cmd-progress],.work-ctrl'):null;if(!t)return;e.stopPropagation();const id=t.getAttribute('data-cmd-complete');if(!id)return;
-      update(id,it=>{if(it.completed){it.completed=false;it.completedAt=null;}else{const g=goalOf(it.text);it.completed=true;it.completedAt=nowStr();if((it.done==null||it.done==='')&&g)it.done=Number(g.n);}});}
+    function onClick(e){const t=e.target.closest?e.target.closest('[data-cmd-complete],[data-cmd-working],[data-cmd-progress],.work-ctrl'):null;if(!t)return;e.stopPropagation();
+      const wid=t.getAttribute('data-cmd-working');
+      if(wid){update(wid,it=>{if(it.completed){it.completed=false;it.completedAt=null;it.working=true;it.startedAt=it.startedAt||nowStr();}else{it.working=!it.working;if(it.working)it.startedAt=it.startedAt||nowStr();}});return;}
+      const id=t.getAttribute('data-cmd-complete');if(!id)return;
+      update(id,it=>{if(it.completed){it.completed=false;it.completedAt=null;}else{const g=goalOf(it.text);it.completed=true;it.working=false;it.completedAt=nowStr();if((it.done==null||it.done==='')&&g)it.done=Number(g.n);}});}
     [document.getElementById('mapStage'),document.getElementById('modalCmds'),list].forEach(el=>{if(!el)return;el.addEventListener('change',onChange,true);el.addEventListener('click',onClick,true);el.addEventListener('keydown',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){e.stopPropagation();if(e.key==='Enter')e.target.blur();}},true);el.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){const c=e.target.value.replace(/[^0-9.,]/g,'');if(c!==e.target.value)e.target.value=c;}},true);});
     function render(){
       renderCards();
