@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061211">
+  <meta name="jisu-build" content="202611061214">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1540,6 +1540,20 @@
         const csv='\ufeff'+[head.join(',')].concat(rows.map(r=>head.map(k=>'"'+String(r[k]).replace(/"/g,'""')+'"').join(','))).join('\r\n');
         const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download=fname+'.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
       }finally{ btn.disabled=false; btn.innerHTML=label; }
+    });
+  })();
+  </script>
+  <script>
+  /* Ctrl+Enter (Mac: Cmd+Enter): full screen on/off. While typing in the 내용 box it registers the entry instead. */
+  (function(){
+    function toggleFull(){ const d=document, el=d.documentElement;
+      if(!d.fullscreenElement && !d.webkitFullscreenElement){ (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el); }
+      else { (d.exitFullscreen||d.webkitExitFullscreen||function(){}).call(d); } }
+    document.addEventListener('keydown',e=>{
+      if(e.key!=='Enter' || !(e.ctrlKey||e.metaKey)) return;
+      const t=e.target;
+      if(t && t.id==='cmdText'){ e.preventDefault(); const b=document.getElementById('cmdSubmit'); if(b && !b.disabled) b.click(); return; }
+      e.preventDefault(); toggleFull();
     });
   })();
   </script>
