@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  <meta name="jisu-build" content="202611061120">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>POSCO M 실시간 관제 상황실 대시보드</title>
@@ -1279,6 +1280,18 @@
     const wrap=document.getElementById('hotspot-outbound');
     if(wrap) new MutationObserver(()=>{if(!wrap.classList.contains('is-open'))stopCam();}).observe(wrap,{attributes:true,attributeFilter:['class']});
     render();
+  })();
+  </script>
+  <script>
+  (function jisuCheckUpdate(){
+    const cur=(document.querySelector('meta[name="jisu-build"]')||{}).content||'';
+    async function check(){
+      try{ const r=await fetch(location.pathname+'?cb='+Date.now(),{cache:'no-store'}); const t=await r.text(); const m=t.match(/<meta name="jisu-build" content="([^"]+)"/);
+        if(m && cur && m[1]!==cur){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){}
+    }
+    setTimeout(check,1500); setInterval(check,60000);
+    document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') check(); });
+    const ft=document.querySelector('body > footer'); if(ft&&cur){ const s=document.createElement('span'); s.style.cssText='opacity:.55;font-size:10px;margin-left:8px'; s.textContent='v'+cur; (ft.firstElementChild||ft).appendChild(s); }
   })();
   </script>
 </body>
