@@ -359,7 +359,7 @@
     .work-done-num input::-webkit-outer-spin-button,.work-done-num input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
     .work-complete{padding:6px 10px;}
     .cmd-count{min-width:1.35em;width:auto;padding:0 .4em;}
-    .cmd-count.all-done{background:#16a34a;}
+    .cmd-count.all-done{background:#2563eb;box-shadow:0 0 8px rgba(59,130,246,.7);}
 
     /* 작업완료 button: glass pill with check circle (redesign) */
     .work-complete{position:relative;display:inline-flex !important;align-items:center;gap:6px;font-size:11.5px !important;font-weight:800;letter-spacing:-.01em;
@@ -375,6 +375,9 @@
       background:linear-gradient(135deg,#38bdf8,#6366f1) !important;box-shadow:0 0 0 1px rgba(255,255,255,.18) inset,0 6px 16px rgba(99,102,241,.45);}
     .work-complete.is-done::before{content:'✓';display:inline-flex;align-items:center;justify-content:center;background:#fff;border:none;color:#4f46e5;font-size:10px;font-weight:900;}
     .cmd-text{flex:1 1 90px !important;min-width:90px;word-break:keep-all;}
+    /* 출고: green light while work is in progress, blue otherwise */
+    [data-toggle-zone="outbound"].has-active-work .pulse-ring{background:#22c55e !important;color:#4ade80 !important;}
+    [data-zone-btn="outbound"].has-active-work > span.rounded-full{background:#22c55e !important;color:#4ade80 !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -1024,6 +1027,8 @@
       document.querySelectorAll('[data-toggle-zone],[data-bldg]').forEach(b=>{
         const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg');
         const mine=all.filter(x=>x.target===k); const work=mine.filter(x=>x.kind!=='notice'); const done=work.filter(x=>x.completed).length;
+        const active=work.length>0 && done<work.length; b.classList.toggle('has-active-work',active);
+        document.querySelectorAll('[data-zone-btn="'+k+'"]').forEach(z=>z.classList.toggle('has-active-work',active));
         let badge=b.querySelector('.cmd-count'); if(!mine.length){ if(badge) badge.remove(); return; }
         if(!badge){ badge=document.createElement('span'); badge.className='cmd-count'; b.appendChild(badge); }
         badge.textContent = work.length ? (done ? work.length+'/'+done : String(work.length)) : String(mine.length);
