@@ -396,6 +396,17 @@
     .cmd-side .work-unit{min-width:5.2em;}
     .cmd-side .work-complete{min-width:60px;}
     .cmd-row{align-items:center;}
+    .cmd-side .work-ctrl{column-gap:3px;}
+    .cmd-side .work-unit{min-width:4.8em;}
+    .cmd-side .work-complete{min-width:54px;padding:5px 6px !important;}
+    .cmd-side .work-done-num{gap:3px;}
+    @media (max-width:640px){
+      .work-ctrl{column-gap:3px;}
+      .work-unit{min-width:4.8em;}
+      .work-complete{min-width:54px;padding:5px 6px !important;font-size:11px !important;}
+      .work-done-num{gap:3px;}
+      .work-done-num input{width:46px;}
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
