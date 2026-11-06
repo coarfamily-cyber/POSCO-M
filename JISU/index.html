@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061120">
+  <meta name="jisu-build" content="202611061122">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>POSCO M 실시간 관제 상황실 대시보드</title>
@@ -437,6 +437,13 @@
     .move-start{fill:#fbbf24;stroke:#1f2937;stroke-width:2;}
     .move-start.is-working{fill:#4ade80;}
     .cmd-notice-count{display:inline-flex;align-items:center;justify-content:center;min-width:1.35em;height:1.35em;padding:0 .35em;border-radius:9999px;background:#f59e0b;color:#1f2937;font-size:.7em;font-weight:900;margin-left:.3em;line-height:1;box-shadow:0 0 8px rgba(245,158,11,.6);}
+    .cmd-notice-count{padding:0 .45em !important;white-space:nowrap;}
+    .cmd-summary{display:flex;flex-wrap:wrap;gap:5px;}
+    .cmd-summary-h{width:100%;font-size:11px;color:#94a3b8;font-weight:700;}
+    .cmd-sum-chip{font-size:11.5px;padding:4px 9px;border-radius:9999px;border:1px solid #334155;background:#111827;color:#e2e8f0;}
+    .cmd-sum-chip.is-on{border-color:#6366f1;background:rgba(99,102,241,.2);}
+    .cmd-sum-chip b{color:#fca5a5;font-weight:800;}
+    .cmd-sum-chip i{font-style:normal;color:#fbbf24;font-weight:800;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -512,6 +519,7 @@
         <div class="cmd-move-row"><select id="cmdFrom" aria-label="출발"><option value="">선택 안 함</option><option value="A">A동</option><option value="B">B동</option><option value="C">C동</option><option value="D">D동</option><option value="outbound">출고</option><option value="inbound">입고</option><option value="packaging">포장</option><option value="pitch">피치</option><option value="production-a">생산A</option><option value="production-b">생산B</option><option value="production-c">생산C</option><option value="production-d">생산D</option></select><span class="cmd-move-arrow">→</span><select id="cmdTo" aria-label="도착"><option value="">선택 안 함</option><option value="A">A동</option><option value="B">B동</option><option value="C">C동</option><option value="D">D동</option><option value="outbound">출고</option><option value="inbound">입고</option><option value="packaging">포장</option><option value="pitch">피치</option><option value="production-a">생산A</option><option value="production-b">생산B</option><option value="production-c">생산C</option><option value="production-d">생산D</option></select></div>
       </div>
       <button type="button" class="cmd-submit" id="cmdSubmit">금일작업 내용 등록</button>
+      <div class="cmd-summary" id="cmdSummary"></div>
       <label>등록 내역 <span id="cmdTargetLabel">· 창고</span></label>
       <div class="cmd-list" id="cmdList"></div>
     </aside>
@@ -1097,8 +1105,9 @@
         else if(badge) badge.remove();
         let nb=b.querySelector('.cmd-notice-count');
         if(notices){ if(!nb){ nb=document.createElement('span'); nb.className='cmd-notice-count'; b.appendChild(nb); }
-          nb.textContent=String(notices); nb.title='공지 '+notices+'건'; }
+          nb.textContent='공지 '+notices; nb.title='공지 '+notices+'건'; }
         else if(nb) nb.remove();
+        document.querySelectorAll('[data-zone-btn="'+k+'"]').forEach(z=>{let zb=z.querySelector('.cmd-notice-count'); if(notices){ if(!zb){zb=document.createElement('span');zb.className='cmd-notice-count';z.appendChild(zb);} zb.textContent='공지 '+notices; } else if(zb) zb.remove();});
       });
     }
     let modalKey=null;
@@ -1190,6 +1199,8 @@
     }
     function render(){
       renderCards(); drawMoves();
+      (function(){const box=document.getElementById('cmdSummary'); if(!box) return; const all=load(); const by={}; all.forEach(x=>{const o=by[x.target]||(by[x.target]={w:0,d:0,n:0}); if(x.kind==='notice') o.n++; else {o.w++; if(x.completed) o.d++;}});
+        const keys=Object.keys(by); box.innerHTML=keys.length?'<div class="cmd-summary-h">전체 등록 현황 (누르면 이동)</div>'+keys.map(k=>{const o=by[k];return '<button type="button" class="cmd-sum-chip'+(k===sel.value?' is-on':'')+'" data-cmd-goto="'+esc(k)+'">'+esc(NAMES[k]||k)+(o.w?' <b>'+(o.d?o.w+'/'+o.d:o.w)+'</b>':'')+(o.n?' <i>공지 '+o.n+'</i>':'')+'</button>';}).join(''):'';})();
       const t=sel.value; label.textContent='· '+(NAMES[t]||t);
       const items=load().filter(x=>x.target===t).reverse();
       list.innerHTML=items.length?items.map(x=>itemHtml(x,true)).join(''):'<div class="cmd-empty">등록된 내용이 없습니다.</div>';
@@ -1202,6 +1213,7 @@
     try{const last=localStorage.getItem('jisu-cmd-target');if(last&&[...sel.options].some(o=>o.value===last))sel.value=last;}catch(e){}
     document.querySelectorAll('[data-toggle-zone],[data-bldg],[data-zone-btn]').forEach(b=>b.addEventListener('click',()=>{const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg')||b.getAttribute('data-zone-btn');if(NAMES[k]){sel.value=k;try{localStorage.setItem('jisu-cmd-target',k)}catch(e){}render();}if(b.hasAttribute('data-bldg'))fillModal(k);}));
     window.addEventListener('storage',e=>{if(e.key===KEY)render();});
+    document.getElementById('cmdSummary').addEventListener('click',e=>{const b=e.target.closest('[data-cmd-goto]');if(!b)return;sel.value=b.getAttribute('data-cmd-goto');try{localStorage.setItem('jisu-cmd-target',sel.value)}catch(_){}render();});
     window.addEventListener('resize',()=>{drawMoves();setTimeout(drawMoves,500);}); if(window.ResizeObserver){new ResizeObserver(()=>drawMoves()).observe(document.getElementById('mapStage'));} setTimeout(drawMoves,800);
     render();
   })();
