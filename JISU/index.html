@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061158">
+  <meta name="jisu-build" content="202611061201">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -465,9 +465,17 @@
     body > main{padding:6px !important;}
     body > header{padding-top:6px !important;padding-bottom:6px !important;}
     .cmd-layout{gap:8px !important;}
+    /* Paper-like warm beige surroundings */
+    html,body{background-color:#ebe0cc !important;}
+    body{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.33  0 0 0 0 0.18  0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),radial-gradient(1200px 700px at 15% 0%,rgba(255,250,240,.65),transparent 60%),radial-gradient(900px 600px at 100% 100%,rgba(196,170,128,.28),transparent 60%) !important;background-attachment:fixed;}
+    body > header{background:rgba(239,229,211,.88) !important;border-bottom:1px solid rgba(122,92,52,.22) !important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 4px 14px rgba(110,80,40,.10);}
+    body > header h1{color:#3b2c1c !important;letter-spacing:-.01em;}
+    .jisu-ver{color:#7a6248 !important;opacity:.75 !important;}
+    .map-stage{box-shadow:0 18px 44px rgba(84,58,28,.38),0 0 0 1px rgba(96,70,38,.30) !important;}
+    .cmd-side{box-shadow:0 14px 34px rgba(84,58,28,.30),0 0 0 1px rgba(96,70,38,.22);border-color:rgba(96,70,38,.35) !important;}
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
+<body class="min-h-screen flex flex-col justify-between text-slate-100">
 
   <!-- Top Navigation / Situation Room Header -->
   <header class="w-full px-4 py-2.5 bg-slate-950/90 backdrop-blur-md border-b border-white/10 flex flex-wrap items-center justify-between gap-3 z-40">
