@@ -1031,7 +1031,8 @@
         if(pack && sr.width){ const pr=pack.getBoundingClientRect(); grid.style.left=((pr.left+pr.width/2-sr.left)/sr.width*100).toFixed(3)+'%'; }
         grid.style.transform='translate('+(-half)+'px,-50%)';
       };
-      place(); window.addEventListener('resize',place); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(place);
+      place(); window.addEventListener('resize',()=>{ place(); setTimeout(place,450); }); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(place);
+      if(window.ResizeObserver){ const ro=new ResizeObserver(()=>place()); [stage,firstBtn,pack].forEach(el=>{ if(el) ro.observe(el); }); }
     })();
   })();
   </script>
