@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061129">
+  <meta name="jisu-build" content="202611061132">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>POSCO M 실시간 관제 상황실 대시보드</title>
@@ -448,6 +448,11 @@
     .cmd-item .meta{align-items:center;}
     .cmd-retarget{margin-left:auto;margin-right:6px;font-size:10.5px;background:#0b0f14;border:1px solid #334155;border-radius:6px;color:#cbd5e1;padding:1px 4px;max-width:72px;}
     .cmd-side .cmd-retarget{width:auto !important;height:22px;padding:0 4px !important;font-size:10.5px !important;border-radius:6px;}
+    .cmd-notice-count{display:none !important;}
+    .cmd-notice-banner{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:rgba(245,158,11,.16);border:1px solid rgba(245,158,11,.55);}
+    .cmd-notice-banner b{font-size:10.5px;font-weight:900;color:#1f2937;background:#f59e0b;border-radius:6px;padding:2px 6px;}
+    .cmd-notice-banner span{font-size:12.5px;font-weight:800;color:#fef3c7;overflow-wrap:anywhere;}
+    .cmd-notice-banner time{font-size:10px;color:#fcd34d;opacity:.8;white-space:nowrap;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -1093,7 +1098,8 @@
         const items=all.filter(x=>x.target===k).reverse();
         if(!items.length && !slot){ if(box) box.remove(); return; }
         if(!box){ box=document.createElement('div'); box.className='cmd-in-card'; if(slot) slot.appendChild(box); else card.insertBefore(box,card.firstChild); }
-        box.innerHTML='<div class="cmd-in-card-h">금일작업 · 공지 <span>'+items.length+'건</span></div>'+(items.length?items.slice(0,5).map(x=>itemHtml(x,false)).join(''):'<div class="cmd-empty">등록된 금일작업·공지가 없습니다. 왼쪽에서 등록하세요.</div>')+(items.length>5?'<div class="cmd-empty">외 '+(items.length-5)+'건은 왼쪽 등록 내역에서 확인</div>':'');
+        const ns=items.filter(x=>x.kind==='notice'), ws=items.filter(x=>x.kind!=='notice');
+        box.innerHTML='<div class="cmd-in-card-h">금일작업 · 공지 <span>'+items.length+'건</span></div>'+ns.map(x=>'<div class="cmd-notice-banner"><b>공지</b><span>'+esc(x.text)+'</span><time>'+esc(x.at)+'</time></div>').join('')+(items.length?ws.slice(0,5).map(x=>itemHtml(x,false)).join(''):'<div class="cmd-empty">등록된 금일작업·공지가 없습니다. 왼쪽에서 등록하세요.</div>')+(ws.length>5?'<div class="cmd-empty">외 '+(ws.length-5)+'건은 왼쪽 등록 내역에서 확인</div>':'');
       });
       document.querySelectorAll('[data-toggle-zone],[data-bldg]').forEach(b=>{
         const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg');
@@ -1107,11 +1113,9 @@
           badge.classList.toggle('all-done', done===work.length);
           badge.title='금일작업 '+work.length+'건 중 '+done+'건 완료'; }
         else if(badge) badge.remove();
-        let nb=b.querySelector('.cmd-notice-count');
-        if(notices){ if(!nb){ nb=document.createElement('span'); nb.className='cmd-notice-count'; b.appendChild(nb); }
-          nb.textContent='공지 '+notices; nb.title='공지 '+notices+'건'; }
-        else if(nb) nb.remove();
-        document.querySelectorAll('[data-zone-btn="'+k+'"]').forEach(z=>{let zb=z.querySelector('.cmd-notice-count'); if(notices){ if(!zb){zb=document.createElement('span');zb.className='cmd-notice-count';z.appendChild(zb);} zb.textContent='공지 '+notices; } else if(zb) zb.remove();});
+        { const nb=b.querySelector('.cmd-notice-count'); if(nb) nb.remove(); }
+
+        document.querySelectorAll('[data-zone-btn="'+k+'"] .cmd-notice-count').forEach(z=>z.remove());
       });
     }
     let modalKey=null;
