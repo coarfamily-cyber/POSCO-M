@@ -330,8 +330,8 @@
     .ob-item time{position:absolute;left:0;right:0;bottom:0;font-size:9.5px;background:rgba(0,0,0,.6);color:#e2e8f0;padding:2px 4px;}
     .ob-item .ob-del{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.65);color:#fca5a5;font-size:12px;line-height:20px;text-align:center;}
 
-    /* Production buttons: 2x2 (A B / C D), left edge just right of the 창고 column */
-    .prod-grid{position:absolute;left:64.6%;top:42%;transform:translateY(-50%);display:grid;grid-template-columns:repeat(2,max-content);gap:6px;z-index:45;}
+    /* Production buttons: one row A B C D, centered under the top-right building */
+    .prod-grid{position:absolute;left:69.9%;top:50.5%;transform:translate(-50%,-50%);display:grid;grid-template-columns:repeat(4,max-content);gap:6px;z-index:45;}
     .prod-grid > .hotspot-wrapper{position:relative;left:auto !important;top:auto !important;transform:none;}
     .prod-grid > .hotspot-wrapper .hotspot-pill{width:100%;justify-content:center;}
   </style>
