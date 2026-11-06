@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061225">
+  <meta name="jisu-build" content="202611061230">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -537,6 +537,36 @@
     .expand-card .cmd-item{background:rgba(255,255,255,.05) !important;border-color:rgba(255,255,255,.13) !important;}
     .expand-card .bg-white\/5{background:rgba(255,255,255,.06) !important;}
     #detailModal > div{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,0) 40%),rgba(12,18,28,.55) !important;backdrop-filter:blur(10px) saturate(150%) !important;-webkit-backdrop-filter:blur(10px) saturate(150%) !important;}
+    /* Light (cream-white) sidebar */
+    .cmd-side{background:rgba(255,253,248,.94) !important;border:1px solid rgba(122,92,52,.24) !important;color:#2b2118;box-shadow:0 14px 34px rgba(84,58,28,.18),inset 0 1px 0 #fff !important;}
+    .cmd-side h2{color:#2b2118 !important;}
+    .cmd-side label,.cmd-side .cmd-move-h,.cmd-side .cmd-summary-h{color:#7a6248 !important;}
+    .cmd-side .cmd-move-h small{color:#a8977f !important;}
+    .cmd-side select,.cmd-side textarea{background:#fff !important;border:1px solid rgba(122,92,52,.30) !important;color:#1f160c !important;}
+    .cmd-side textarea::placeholder{color:#a8977f;}
+    .cmd-side select:focus,.cmd-side textarea:focus{outline:none;border-color:#6366f1 !important;box-shadow:0 0 0 3px rgba(99,102,241,.15);}
+    .cmd-side .cmd-kind button{background:#f5efe3 !important;border-color:rgba(122,92,52,.25) !important;color:#5b4630 !important;}
+    .cmd-side .cmd-kind button[aria-pressed="true"]{background:#4f46e5 !important;border-color:#4f46e5 !important;color:#fff !important;}
+    .cmd-side .cmd-submit:disabled{background:#ece4d6 !important;color:#a8977f !important;}
+    .cmd-side .cmd-move-arrow{color:#d97706 !important;}
+    .cmd-side .cmd-sum-chip{background:#fff !important;border-color:rgba(122,92,52,.25) !important;color:#3b2c1c !important;}
+    .cmd-side .cmd-sum-chip b{color:#dc2626 !important;}.cmd-side .cmd-sum-chip i{color:#b45309 !important;}
+    .cmd-side .cmd-sum-chip.is-on{border-color:#6366f1 !important;background:rgba(99,102,241,.10) !important;}
+    .cmd-side .cmd-item{background:#fff !important;border:1px solid rgba(122,92,52,.18) !important;box-shadow:0 1px 3px rgba(84,58,28,.08);}
+    .cmd-side .cmd-item .meta{color:#8a7660 !important;}
+    .cmd-side .cmd-item .tag.notice{color:#b45309 !important;}.cmd-side .cmd-item .tag.instruction{color:#15803d !important;}
+    .cmd-side .cmd-item [data-cmd-del]{color:#dc2626 !important;}
+    .cmd-side .cmd-text{color:#2b2118 !important;}
+    .cmd-side .cmd-item.is-completed{border-color:rgba(22,163,74,.35) !important;opacity:.85;}
+    .cmd-side .cmd-item.is-completed .cmd-text{color:#a8977f !important;}
+    .cmd-side .work-done-num{color:#7a6248 !important;}
+    .cmd-side .work-done-num input{background:#fff !important;border:1px solid rgba(122,92,52,.35) !important;color:#1f160c !important;}
+    .cmd-side .work-unit{color:#5b4630 !important;}
+    .cmd-side .work-complete:not(.is-working):not(.is-done){background:#fff !important;border:1px solid rgba(122,92,52,.30) !important;color:#3b2c1c !important;box-shadow:0 1px 2px rgba(84,58,28,.12) !important;backdrop-filter:none;}
+    .cmd-side .work-complete:not(.is-working):not(.is-done):hover{border-color:#6366f1 !important;color:#4338ca !important;}
+    .cmd-side .move-tag{color:#92400e !important;background:rgba(251,191,36,.18) !important;border-color:rgba(217,119,6,.45) !important;}
+    .cmd-side .cmd-empty{color:#8a7660 !important;}
+    .cmd-side .jisu-ver{color:#a8977f !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
