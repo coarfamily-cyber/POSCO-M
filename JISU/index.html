@@ -407,6 +407,12 @@
       .work-done-num{gap:3px;}
       .work-done-num input{width:46px;}
     }
+    /* Building labels: glass style matching the map buttons (no white box, no dot) */
+    .bldg-badge{background:rgba(15,23,42,.42) !important;color:#f8fafc !important;border:1px solid rgba(255,255,255,.28) !important;border-radius:10px !important;
+      backdrop-filter:blur(10px) saturate(140%);-webkit-backdrop-filter:blur(10px) saturate(140%);
+      box-shadow:0 8px 22px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.18) !important;text-shadow:0 1px 2px rgba(0,0,0,.5);padding:.25em .7em !important;}
+    .bldg-badge:hover{background:rgba(30,41,59,.6) !important;border-color:rgba(125,211,252,.7) !important;}
+    .bldg-badge .status-dot{display:none !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -468,10 +474,8 @@
         <option value="pitch">피치</option>
         <option value="A">A동</option>
         <option value="B">B동</option>
+        <option value="C">C동</option>
         <option value="D">D동</option>
-        <option value="E">E동</option>
-        <option value="F">F동</option>
-        <option value="G">G동</option>
       </select>
       <div class="cmd-kind" role="group" aria-label="등록 유형">
         <button type="button" data-cmd-kind="instruction" aria-pressed="true">금일작업 내용</button>
@@ -489,10 +493,13 @@
 
       <!-- Building Badges A ~ G (Clickable to inspect building status) -->
       <button type="button" class="bldg-badge" style="left: 14.6%; top: 68%;" data-bldg="A" title="A동 상태 보기">
-        <span class="status-dot"></span> A
+        A
       </button>
       <button type="button" class="bldg-badge" style="left: 28.4%; top: 49%;" data-bldg="B" title="B동 상태 보기">
-        <span class="status-dot"></span> B
+        B
+      </button>
+      <button type="button" class="bldg-badge" style="left: 69.9%; top: 30%;" data-bldg="C" title="C동 상태 보기">
+        C
       </button>
       <!-- Production buttons placed at their respective factory lines -->
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-a" style="left: 66.6%; top: 46%;">
@@ -544,16 +551,7 @@
         </div>
       </div>
       <button type="button" class="bldg-badge" style="left: 70%; top: 71.5%;" data-bldg="D" title="D동 상태 보기">
-        <span class="status-dot"></span> D
-      </button>
-      <button type="button" class="bldg-badge" style="left: 91.3%; top: 21.8%;" data-bldg="E" title="E동 상태 보기">
-        <span class="status-dot"></span> E
-      </button>
-      <button type="button" class="bldg-badge" style="left: 91.3%; top: 46.2%;" data-bldg="F" title="F동 상태 보기">
-        <span class="status-dot"></span> F
-      </button>
-      <button type="button" class="bldg-badge" style="left: 91.3%; top: 74.5%;" data-bldg="G" title="G동 상태 보기">
-        <span class="status-dot"></span> G
+        D
       </button>
 
       <!-- 1. 출고 (Outbound) Expandable Hotspot -->
@@ -808,6 +806,7 @@
     const BUILDING_DETAILS = {
       A: { title: 'A동 (주 생산 1동)', desc: '대형 주력 생산 설비 및 태양광 루프탑 발전 가동 중', rate: '97.2%', temp: '24.1°C', power: '4.8 MW' },
       B: { title: 'B동 (전처리 및 물류 허브동)', desc: 'A동 연계 브릿지 및 입·출고 완충 물류 자동화 라인', rate: '95.8%', temp: '22.8°C', power: '2.1 MW' },
+      C: { title: 'C동 (생산동)', desc: '포장·피치 공정 및 생산 A~D 라인 위치', rate: '-', temp: '-', power: '-' },
       D: { title: 'D동 (주 생산 2동)', desc: '고효율 모듈/소재 열처리 및 대량 생산 라인', rate: '96.5%', temp: '24.7°C', power: '3.2 MW' },
       E: { title: 'E동 (유틸리티 1동)', desc: '공업용수 처리 및 보조 공조 설비 가동', rate: '99.0%', temp: '21.0°C', power: '0.2 MW' },
       F: { title: 'F동 (유틸리티 2동)', desc: '압축공기·가스 공급 및 환경 설비 가동', rate: '98.4%', temp: '21.5°C', power: '0.2 MW' },
@@ -1025,7 +1024,7 @@
   <script>
   (function(){
     const KEY='jisu-commands-v1';
-    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","outbound":"출고","inbound":"입고","packaging":"포장","pitch":"피치","A":"A동","B":"B동","D":"D동","E":"E동","F":"F동","G":"G동"};
+    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","outbound":"출고","inbound":"입고","packaging":"포장","pitch":"피치","A":"A동","B":"B동","C":"C동","D":"D동"};
     let kind='instruction';
     const sel=document.getElementById('cmdTarget'), text=document.getElementById('cmdText'), submit=document.getElementById('cmdSubmit'), list=document.getElementById('cmdList'), label=document.getElementById('cmdTargetLabel');
     const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
