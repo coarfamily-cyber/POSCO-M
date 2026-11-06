@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061222">
+  <meta name="jisu-build" content="202611061225">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -528,6 +528,15 @@
     .expand-card::-webkit-scrollbar{width:6px}.expand-card::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35);border-radius:9px}
     /* building detail window: same glass */
     #detailModal > div{background:linear-gradient(145deg,rgba(255,255,255,.22),rgba(255,255,255,.06)),rgba(18,24,36,.40) !important;backdrop-filter:blur(30px) saturate(190%);-webkit-backdrop-filter:blur(30px) saturate(190%);border:1px solid rgba(255,255,255,.34) !important;border-radius:26px !important;box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.55) !important;}
+    /* clearer glass: less blur / haze */
+    .expand-card{background:linear-gradient(180deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.03) 40%,rgba(255,255,255,0) 100%),rgba(12,18,28,.46) !important;
+      backdrop-filter:blur(10px) saturate(150%) !important;-webkit-backdrop-filter:blur(10px) saturate(150%) !important;
+      border:1px solid rgba(255,255,255,.28) !important;}
+    .expand-card::before{background:linear-gradient(180deg,rgba(255,255,255,.10),transparent 18%) !important;mix-blend-mode:normal !important;}
+    .expand-card .cmd-in-card{background:rgba(255,255,255,.06) !important;border-color:rgba(255,255,255,.16) !important;}
+    .expand-card .cmd-item{background:rgba(255,255,255,.05) !important;border-color:rgba(255,255,255,.13) !important;}
+    .expand-card .bg-white\/5{background:rgba(255,255,255,.06) !important;}
+    #detailModal > div{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,0) 40%),rgba(12,18,28,.55) !important;backdrop-filter:blur(10px) saturate(150%) !important;-webkit-backdrop-filter:blur(10px) saturate(150%) !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
