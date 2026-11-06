@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061148">
+  <meta name="jisu-build" content="202611061151">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>POSCO M 실시간 관제 상황실 대시보드</title>
@@ -1439,6 +1439,9 @@
       const sr=stage.getBoundingClientRect(), br=btn.getBoundingClientRect();
       // width: never wider than the map
       const maxW=sr.width-2*M; card.style.width = card.offsetWidth>maxW ? maxW+'px' : '';
+      if(sr.height<360){ /* phone: map too small, let the card open below normally (page scroll), only keep it inside horizontally */
+        card.style.top='100%'; card.style.bottom='auto'; card.style.maxHeight='none'; card.classList.remove('opens-up');
+        const w0=card.offsetWidth, cx0=br.left+br.width/2; let l0=cx0-w0/2, d0=0; const vw=document.documentElement.clientWidth; if(l0<M) d0=M-l0; else if(l0+w0>vw-M) d0=(vw-M)-(l0+w0); card.style.transform='translate(calc(-50% + '+Math.round(d0)+'px), 0)'; return; }
       const natural=card.scrollHeight;
       const below=sr.bottom-br.bottom-M-8, above=br.top-sr.top-M-8;
       let up=false, maxH;
