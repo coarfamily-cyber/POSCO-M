@@ -341,6 +341,21 @@
     .cmd-in-card-h span{color:#a5b4fc;font-weight:700;}
     #modalCmds .cmd-item{margin-top:6px;}
     .cmd-count{display:inline-flex;align-items:center;justify-content:center;min-width:1.35em;height:1.35em;padding:0 .3em;border-radius:9999px;background:#ef4444;color:#fff;font-size:.7em;font-weight:800;margin-left:.35em;line-height:1;}
+
+    /* 금일작업: progress number + 작업완료 */
+    .cmd-row{display:flex;gap:8px;align-items:center;justify-content:space-between;}
+    .cmd-text{flex:1;min-width:0;overflow-wrap:anywhere;font-weight:700;color:#f1f5f9;}
+    .work-ctrl{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:0 0 auto;}
+    .work-done-num{display:flex;align-items:center;gap:4px;font-size:10.5px;color:#94a3b8;font-weight:700;white-space:nowrap;}
+    .work-done-num input{width:64px;background:#0b0f14;border:1px solid #475569;border-radius:7px;color:#fff;font-size:13px;font-weight:800;padding:3px 6px;text-align:right;}
+    .work-done-num input:focus{outline:none;border-color:#22c55e;}
+    .work-done-num span{color:#cbd5e1;}
+    .work-complete{font-size:11px;font-weight:800;padding:4px 9px;border-radius:7px;background:#16a34a;color:#fff;border:1px solid #22c55e;white-space:nowrap;}
+    .work-complete:hover{background:#22c55e;}
+    .work-complete.is-done{background:transparent;color:#4ade80;border-color:#4ade80;}
+    .cmd-item.is-completed{opacity:.75;border-color:rgba(74,222,128,.45);}
+    .cmd-item.is-completed .cmd-text{text-decoration:line-through;color:#94a3b8;}
+    .cmd-item .tag.instruction{color:#86efac !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -388,8 +403,8 @@
   <!-- Main Full-Screen Map Area -->
   <main class="flex-1 p-2 sm:p-3 overflow-visible">
     <div class="cmd-layout">
-    <aside class="cmd-side" id="cmdSide" aria-label="지시사항 및 공지사항 등록">
-      <h2>지시 · 공지 등록</h2>
+    <aside class="cmd-side" id="cmdSide" aria-label="금일작업 내용 및 공지사항 등록">
+      <h2>금일작업 · 공지 등록</h2>
       <label for="cmdTarget">대상 버튼</label>
       <select id="cmdTarget">
         <option value="production-a">생산A</option>
@@ -408,12 +423,12 @@
         <option value="G">G동</option>
       </select>
       <div class="cmd-kind" role="group" aria-label="등록 유형">
-        <button type="button" data-cmd-kind="instruction" aria-pressed="true">지시사항</button>
+        <button type="button" data-cmd-kind="instruction" aria-pressed="true">금일작업 내용</button>
         <button type="button" data-cmd-kind="notice" aria-pressed="false">공지사항</button>
       </div>
       <label for="cmdText">내용</label>
-      <textarea id="cmdText" maxlength="500" placeholder="지시사항을 입력하세요"></textarea>
-      <button type="button" class="cmd-submit" id="cmdSubmit">지시사항 등록</button>
+      <textarea id="cmdText" maxlength="500" placeholder="금일작업 내용을 입력하세요 (예: A- 75 TON)"></textarea>
+      <button type="button" class="cmd-submit" id="cmdSubmit">금일작업 내용 등록</button>
       <label>등록 내역 <span id="cmdTargetLabel">· 창고</span></label>
       <div class="cmd-list" id="cmdList"></div>
     </aside>
@@ -516,12 +531,6 @@
               <p class="text-xs text-slate-300 mt-0.5">금일 출고량 <strong class="text-amber-300" id="metric-outbound">428 Ton</strong> (상차 3대)</p>
             </div>
           </div>
-          <div class="grid grid-cols-1 gap-2 my-3 text-xs bg-white/5 p-2 rounded-xl border border-white/10">
-            <div>
-              <span class="text-slate-400 block text-[10px]">평균 체류시간</span>
-              <span class="font-bold text-emerald-300">18분 / 차량</span>
-            </div>
-          </div>
             <div class="zone-inline-details" data-inline-details="outbound"></div>
             <section class="ob-photo" id="obPhoto">
               <div class="ob-photo-head"><span>출고 사진</span><span class="ob-count" id="obCount">0장</span></div>
@@ -568,16 +577,6 @@
               <p class="text-xs text-slate-300 mt-0.5">금일 입고량 <strong class="text-amber-300" id="metric-inbound">512 Ton</strong> (대기 2대)</p>
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-2 my-3 text-xs bg-white/5 p-2 rounded-xl border border-white/10">
-            <div>
-              <span class="text-slate-400 block text-[10px]">품질 검수 완료</span>
-              <span class="font-bold text-white">98.7% 적합</span>
-            </div>
-            <div>
-              <span class="text-slate-400 block text-[10px]">AGV 이송 상태</span>
-              <span class="font-bold text-emerald-300">6대 연속 가동</span>
-            </div>
-          </div>
             <div class="zone-inline-details" data-inline-details="inbound"></div>
         </div>
       </div>
@@ -606,16 +605,6 @@
               <p class="text-xs text-slate-300 mt-0.5">시간당 처리 <strong class="text-amber-300" id="metric-packaging">84 팔레트/h</strong></p>
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-2 my-3 text-xs bg-white/5 p-2 rounded-xl border border-white/10">
-            <div>
-              <span class="text-slate-400 block text-[10px]">설비 종합효율(OEE)</span>
-              <span class="font-bold text-white">96.4%</span>
-            </div>
-            <div>
-              <span class="text-slate-400 block text-[10px]">로봇 암 패킹</span>
-              <span class="font-bold text-emerald-300">4기 정상 작동</span>
-            </div>
-          </div>
             <div class="zone-inline-details" data-inline-details="packaging"></div>
         </div>
       </div>
@@ -642,16 +631,6 @@
               </div>
               <h3 class="text-sm font-extrabold text-white truncate">피치(Pitch) 공정 설비</h3>
               <p class="text-xs text-slate-300 mt-0.5">로 내부 온도 <strong class="text-amber-300" id="metric-pitch">742 °C</strong> (안정)</p>
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-2 my-3 text-xs bg-white/5 p-2 rounded-xl border border-white/10">
-            <div>
-              <span class="text-slate-400 block text-[10px]">코팅·함침 수율</span>
-              <span class="font-bold text-white">99.1%</span>
-            </div>
-            <div>
-              <span class="text-slate-400 block text-[10px]">압력·유량 센서</span>
-              <span class="font-bold text-emerald-300">2.4 bar 정상</span>
             </div>
           </div>
             <div class="zone-inline-details" data-inline-details="pitch"></div>
@@ -1000,7 +979,19 @@
     const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
     const save=v=>localStorage.setItem(KEY,JSON.stringify(v));
     const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    function itemHtml(x,withDel){return '<div class="cmd-item"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'지시')+'</span><span>'+esc(x.at)+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'+esc(x.text)+'</div>';}
+    function goalOf(t){const m=String(t).match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||String(t).match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/);return m?{n:m[1].replace(',','.'),u:(m[2]||'').toUpperCase()}:null;}
+    function itemHtml(x,withDel){
+      const isWork=x.kind!=='notice'; const g=isWork?goalOf(x.text):null;
+      let right='';
+      if(isWork){
+        right='<div class="work-ctrl">'
+          +'<label class="work-done-num">완료 <input type="number" min="0" step="any" inputmode="decimal" data-cmd-progress="'+x.id+'" value="'+(x.done!=null?esc(x.done):'')+'" placeholder="0"'+(x.completed?' disabled':'')+'>'+(g?'<span>/ '+esc(g.n)+(g.u?' '+esc(g.u):'')+'</span>':'')+'</label>'
+          +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?'✓ 작업완료':'작업완료')+'</button>'
+          +'</div>';
+      }
+      return '<div class="cmd-item'+(x.completed?' is-completed':'')+'"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'금일작업')+'</span><span>'+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):'')+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
+        +'<div class="cmd-row"><div class="cmd-text">'+esc(x.text)+'</div>'+right+'</div></div>';
+    }
     function renderCards(){
       const all=load();
       Object.keys(NAMES).forEach(k=>{
@@ -1009,29 +1000,36 @@
         const items=all.filter(x=>x.target===k).reverse();
         if(!items.length){ if(box) box.remove(); return; }
         if(!box){ box=document.createElement('div'); box.className='cmd-in-card'; card.insertBefore(box,card.firstChild); }
-        box.innerHTML='<div class="cmd-in-card-h">지시 · 공지 <span>'+items.length+'건</span></div>'+items.slice(0,5).map(x=>itemHtml(x,false)).join('')+(items.length>5?'<div class="cmd-empty">외 '+(items.length-5)+'건은 왼쪽 등록 내역에서 확인</div>':'');
+        box.innerHTML='<div class="cmd-in-card-h">금일작업 · 공지 <span>'+items.length+'건</span></div>'+items.slice(0,5).map(x=>itemHtml(x,false)).join('')+(items.length>5?'<div class="cmd-empty">외 '+(items.length-5)+'건은 왼쪽 등록 내역에서 확인</div>':'');
       });
       document.querySelectorAll('[data-toggle-zone],[data-bldg]').forEach(b=>{
-        const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg'); const n=all.filter(x=>x.target===k).length;
+        const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg'); const n=all.filter(x=>x.target===k&&!x.completed).length;
         let badge=b.querySelector('.cmd-count'); if(!n){ if(badge) badge.remove(); return; }
         if(!badge){ badge=document.createElement('span'); badge.className='cmd-count'; b.appendChild(badge); }
         badge.textContent=n;
       });
     }
+    let modalKey=null;
     function fillModal(k){
-      const box=document.getElementById('modalCmds'); if(!box) return;
+      modalKey=k; const box=document.getElementById('modalCmds'); if(!box) return;
       const items=load().filter(x=>x.target===k).reverse();
-      box.innerHTML=items.length?'<div class="cmd-in-card-h">지시 · 공지 <span>'+items.length+'건</span></div>'+items.map(x=>itemHtml(x,false)).join(''):'';
+      box.innerHTML=items.length?'<div class="cmd-in-card-h">금일작업 · 공지 <span>'+items.length+'건</span></div>'+items.map(x=>itemHtml(x,false)).join(''):'';
     }
+    function update(id,fn){const all=load();const it=all.find(x=>x.id===id);if(!it)return;fn(it);save(all);render();if(modalKey)fillModal(modalKey);}
+    const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
+    function onChange(e){const id=e.target.getAttribute&&e.target.getAttribute('data-cmd-progress');if(!id)return;e.stopPropagation();const v=e.target.value.trim();update(id,it=>{it.done=v===''?null:Number(v);});}
+    function onClick(e){const t=e.target.closest?e.target.closest('[data-cmd-complete],[data-cmd-progress],.work-ctrl'):null;if(!t)return;e.stopPropagation();const id=t.getAttribute('data-cmd-complete');if(!id)return;
+      update(id,it=>{if(it.completed){it.completed=false;it.completedAt=null;}else{const g=goalOf(it.text);it.completed=true;it.completedAt=nowStr();if((it.done==null||it.done==='')&&g)it.done=Number(g.n);}});}
+    [document.getElementById('mapStage'),document.getElementById('modalCmds'),list].forEach(el=>{if(!el)return;el.addEventListener('change',onChange,true);el.addEventListener('click',onClick,true);el.addEventListener('keydown',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){e.stopPropagation();if(e.key==='Enter')e.target.blur();}},true);});
     function render(){
       renderCards();
       const t=sel.value; label.textContent='· '+(NAMES[t]||t);
       const items=load().filter(x=>x.target===t).reverse();
       list.innerHTML=items.length?items.map(x=>itemHtml(x,true)).join(''):'<div class="cmd-empty">등록된 내용이 없습니다.</div>';
     }
-    function setKind(k){kind=k;document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cmdKind===k)));submit.textContent=k==='notice'?'공지사항 등록':'지시사항 등록';text.placeholder=k==='notice'?'공지사항을 입력하세요':'지시사항을 입력하세요';}
+    function setKind(k){kind=k;document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cmdKind===k)));submit.textContent=k==='notice'?'공지사항 등록':'금일작업 내용 등록';text.placeholder=k==='notice'?'공지사항을 입력하세요':'금일작업 내용을 입력하세요 (예: A- 75 TON)';}
     document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.addEventListener('click',()=>setKind(b.dataset.cmdKind)));
-    submit.addEventListener('click',()=>{const v=text.value.trim();if(!v){text.focus();return;}const all=load();all.push({id:Date.now().toString(36),target:sel.value,kind,text:v,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})});save(all);text.value='';render();});
+    submit.addEventListener('click',()=>{const v=text.value.trim();if(!v){text.focus();return;}const all=load();all.push({id:Date.now().toString(36),target:sel.value,kind,text:v,at:nowStr()});save(all);text.value='';render();});
     list.addEventListener('click',e=>{const id=e.target.getAttribute('data-cmd-del');if(!id)return;save(load().filter(x=>x.id!==id));render();});
     sel.addEventListener('change',render);
     document.querySelectorAll('[data-toggle-zone],[data-bldg],[data-zone-btn]').forEach(b=>b.addEventListener('click',()=>{const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg')||b.getAttribute('data-zone-btn');if(NAMES[k]){sel.value=k;render();}if(b.hasAttribute('data-bldg'))fillModal(k);}));
