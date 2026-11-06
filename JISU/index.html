@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061154">
+  <meta name="jisu-build" content="202611061158">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -461,6 +461,10 @@
     .xlsx-btn:hover{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;}
     .xlsx-btn svg{width:13px;height:13px;}
     .xlsx-btn[disabled]{opacity:.6;cursor:wait;}
+    .jisu-ver{font-size:10px;opacity:.45;margin-left:6px;align-self:center;}
+    body > main{padding:6px !important;}
+    body > header{padding-top:6px !important;padding-bottom:6px !important;}
+    .cmd-layout{gap:8px !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -479,7 +483,7 @@
           </span>
           <button type="button" id="xlsxDoneBtn" class="xlsx-btn" title="오늘 작업완료한 금일작업을 엑셀 파일로 받기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>금일 작업완료 엑셀</button>
         </div>
-        <p class="text-xs text-slate-400">각 구역 버튼을 누르면 버튼 아래 투명 카드가 펼쳐집니다</p>
+        
       </div>
     </div>
 
@@ -527,6 +531,7 @@
         <option value="packaging">포장</option>
         <option value="packaging-d">포장(D동)</option>
         <option value="pitch">피치</option>
+        <option value="environment">환경</option>
         <option value="A">A동</option>
         <option value="B">B동</option>
         <option value="C">C동</option>
@@ -540,7 +545,7 @@
       <textarea id="cmdText" maxlength="500" placeholder="금일작업 내용을 입력하세요 (예: A- 75 TON)"></textarea>
       <div class="cmd-move" id="cmdMove">
         <span class="cmd-move-h">이동작업 <small>(선택 · 글에 "A동→C동" 쓰면 자동)</small></span>
-        <div class="cmd-move-row"><select id="cmdFrom" aria-label="출발"><option value="">선택 안 함</option><option value="A">A동</option><option value="B">B동</option><option value="C">C동</option><option value="D">D동</option><option value="outbound">출고</option><option value="inbound">입고</option><option value="packaging">포장</option><option value="packaging-d">포장(D동)</option><option value="pitch">피치</option><option value="production-a">생산A</option><option value="production-b">생산B</option><option value="production-c">생산C</option><option value="production-d">생산D</option><option value="production-e">생산E</option><option value="production-f">생산F</option><option value="production-g">생산G</option><option value="production-h">생산H</option></select><span class="cmd-move-arrow">→</span><select id="cmdTo" aria-label="도착"><option value="">선택 안 함</option><option value="A">A동</option><option value="B">B동</option><option value="C">C동</option><option value="D">D동</option><option value="outbound">출고</option><option value="inbound">입고</option><option value="packaging">포장</option><option value="packaging-d">포장(D동)</option><option value="pitch">피치</option><option value="production-a">생산A</option><option value="production-b">생산B</option><option value="production-c">생산C</option><option value="production-d">생산D</option><option value="production-e">생산E</option><option value="production-f">생산F</option><option value="production-g">생산G</option><option value="production-h">생산H</option></select></div>
+        <div class="cmd-move-row"><select id="cmdFrom" aria-label="출발"><option value="">선택 안 함</option><option value="A">A동</option><option value="B">B동</option><option value="C">C동</option><option value="D">D동</option><option value="outbound">출고</option><option value="inbound">입고</option><option value="packaging">포장</option><option value="packaging-d">포장(D동)</option><option value="pitch">피치</option><option value="environment">환경</option><option value="production-a">생산A</option><option value="production-b">생산B</option><option value="production-c">생산C</option><option value="production-d">생산D</option><option value="production-e">생산E</option><option value="production-f">생산F</option><option value="production-g">생산G</option><option value="production-h">생산H</option></select><span class="cmd-move-arrow">→</span><select id="cmdTo" aria-label="도착"><option value="">선택 안 함</option><option value="A">A동</option><option value="B">B동</option><option value="C">C동</option><option value="D">D동</option><option value="outbound">출고</option><option value="inbound">입고</option><option value="packaging">포장</option><option value="packaging-d">포장(D동)</option><option value="pitch">피치</option><option value="environment">환경</option><option value="production-a">생산A</option><option value="production-b">생산B</option><option value="production-c">생산C</option><option value="production-d">생산D</option><option value="production-e">생산E</option><option value="production-f">생산F</option><option value="production-g">생산G</option><option value="production-h">생산H</option></select></div>
       </div>
       <button type="button" class="cmd-submit" id="cmdSubmit">금일작업 내용 등록</button>
       <div class="cmd-summary" id="cmdSummary"></div>
@@ -661,6 +666,23 @@
       <button type="button" class="bldg-badge" style="left: 70%; top: 71.5%;" data-bldg="D" title="D동 상태 보기">
         D
       </button>
+
+      <!-- 환경 (A동 옆) -->
+      <div class="hotspot-wrapper" id="hotspot-environment" style="left: 22%; top: 68%;">
+        <button type="button" class="hotspot-pill" data-toggle-zone="environment">
+          <span class="pulse-ring bg-emerald-500 text-emerald-400"></span>
+          <span>환경</span>
+        </button>
+        <div class="expand-card p-3.5">
+          <div class="flex items-center gap-3">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500/30 to-teal-900/50 border border-emerald-400/30 flex items-center justify-center shrink-0" title="환경">
+              <svg viewBox="0 0 24 24" class="w-8 h-8" aria-hidden="true"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z" fill="#34d399" opacity=".85"/><path d="M5 19c3-4 6-7 10-9" fill="none" stroke="#065f46" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <div class="min-w-0 flex-1"><h3 class="text-sm font-extrabold text-white">환경</h3></div>
+          </div>
+          <div class="cmd-slot" data-cmd-slot="environment"></div>
+        </div>
+      </div>
 
       <!-- 1. 출고 (Outbound) Expandable Hotspot -->
       <div class="hotspot-wrapper" id="hotspot-outbound" style="left: 48.5%; top: 20.3%;">
@@ -829,18 +851,7 @@
   </main>
 
   <!-- Bottom Real-Time Status Ticker Bar -->
-  <footer class="w-full px-4 py-2 bg-slate-950/90 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
-    <div class="flex items-center gap-4">
-      <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> 전체 가동률: <strong class="text-white" id="footerOee">96.8%</strong></span>
-      <span class="hidden sm:inline">|</span>
-      <span class="hidden sm:inline">전력 부하: <strong class="text-amber-300" id="footerPower">14.2 MW</strong></span>
-      <span class="hidden md:inline">|</span>
-      <span class="hidden md:inline">연결된 저장소: <strong class="text-sky-300">coarfamily-cyber/POSCO-M</strong></span>
-    </div>
-    <div id="statusToast" class="text-amber-300 font-semibold">
-      구역 버튼 아래 투명 카드에서 상세 관제 정보를 확인하세요.
-    </div>
-  </footer>
+
 
   <!-- Full Detail Modal (Opens when clicking '상세 관제 보기 >' inside any expanded card or clicking A~G buildings) -->
   <div id="detailModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center p-4 z-50">
@@ -941,7 +952,8 @@
       'production-f': '생산F 상세 관제',
       'production-g': '생산G 상세 관제',
       'production-h': '생산H 상세 관제',
-      'packaging-d': 'D동 포장 라인'
+      'packaging-d': 'D동 포장 라인',
+      'environment': '환경'
     };
 
     const BUILDING_DETAILS = {
@@ -1165,7 +1177,7 @@
   <script>
   (function(){
     const KEY='jisu-commands-v1';
-    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","A":"A동","B":"B동","C":"C동","D":"D동"};
+    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","environment":"환경","environment":"환경","A":"A동","B":"B동","C":"C동","D":"D동"};
     let kind='instruction';
     const sel=document.getElementById('cmdTarget'), text=document.getElementById('cmdText'), submit=document.getElementById('cmdSubmit'), list=document.getElementById('cmdList'), label=document.getElementById('cmdTargetLabel');
     const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
@@ -1229,7 +1241,7 @@
       const id=t.getAttribute('data-cmd-complete');if(!id)return;
       update(id,it=>{if(it.completed){it.completed=false;it.completedAt=null;if('doneBefore' in it){it.done=it.doneBefore;delete it.doneBefore;}}else{const g=goalOf(it.text);it.completed=true;it.working=false;it.completedAt=nowStr();it.doneBefore=(it.done==null?null:it.done);if(g){const goal=Number(g.n);const cur=Number(it.done);it.done=(it.done==null||it.done===''||isNaN(cur)||cur<goal)?goal:cur;}}});}
     [document.getElementById('mapStage'),document.getElementById('modalCmds'),list].forEach(el=>{if(!el)return;el.addEventListener('change',onChange,true);el.addEventListener('click',onClick,true);el.addEventListener('keydown',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){e.stopPropagation();if(e.key==='Enter')e.target.blur();}},true);el.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){const c=e.target.value.replace(/[^0-9.,]/g,'');if(c!==e.target.value)e.target.value=c;}},true);});
-    const PLACE_LABEL={A:'A동',B:'B동',C:'C동',D:'D동',outbound:'출고',inbound:'입고',packaging:'포장','packaging-d':'포장(D동)',pitch:'피치','production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H'};
+    const PLACE_LABEL={A:'A동',B:'B동',C:'C동',D:'D동',outbound:'출고',inbound:'입고',packaging:'포장','packaging-d':'포장(D동)',pitch:'피치',environment:'환경','production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H'};
     function detectMove(t){
       t=String(t||''); if(!/이동|→|->|⇒|에서|운반|옮/.test(t)) return null;
       const pats=[[/생산\s*([A-H])/gi,m=>'production-'+m[1].toLowerCase()],[/출고/g,()=>'outbound'],[/입고/g,()=>'inbound'],[/포장/g,()=>'packaging'],[/피치/g,()=>'pitch'],
@@ -1253,7 +1265,7 @@
       const W=sr.width, H=sr.height, P=(x,y)=>[x/100*W,y/100*H];
       // building footprints (% of map) and road centre-lines (% of map) traced from the background image
       const BLD={A:[6.0,49.5,23.2,86.7],B:[25.6,10.4,31.3,86.7],C:[57.35,11.4,82.5,45.4],D:[57.35,55.4,82.6,87.9]};
-      const ZONE_BLD={packaging:'C','packaging-d':'D',pitch:'C','production-a':'C','production-b':'C','production-c':'C','production-d':'C','production-e':'D','production-f':'D','production-g':'D','production-h':'D'};
+      const ZONE_BLD={environment:'A',packaging:'C','packaging-d':'D',pitch:'C','production-a':'C','production-b':'C','production-c':'C','production-d':'C','production-e':'D','production-f':'D','production-g':'D','production-h':'D'};
       const ROADS=[['v',3.0,5,92],['v',24.4,5,92],['v',32.7,5,92],['v',43.7,5,92],['v',56.0,5,50.4],['v',84.1,5,92],['h',5,3.0,84.1],['h',92,3.0,84.1],['h',50.4,43.7,84.1]] /* 43.7 = centre lane of the yard between B and C/D */
         .map(([o,c,a,b])=>o==='v'?{o,x:c/100*W,a:a/100*H,b:b/100*H}:{o,y:c/100*H,a:a/100*W,b:b/100*W});
       function exitsOf(k){
@@ -1368,7 +1380,9 @@
       const place2=()=>{ if(!grid2) return; grid2.style.left=grid.style.left; grid2.style.transform=grid.style.transform; };
       const packD=document.getElementById('hotspot-packaging-d'), dLbl=document.querySelector('[data-bldg="D"]');
       const place3=()=>{ if(!packD||!wraps2[0]) return; const sr=stage.getBoundingClientRect(); const eb=wraps2[0].querySelector('.hotspot-pill').getBoundingClientRect(); packD.style.left=((eb.left+eb.width/2-sr.left)/sr.width*100).toFixed(3)+'%'; if(dLbl){ const dr=dLbl.getBoundingClientRect(); packD.style.top=((dr.top+dr.height/2-sr.top)/sr.height*100).toFixed(3)+'%'; } };
-      const placeAll=()=>{ place(); place2(); requestAnimationFrame(place3); };
+      const envW=document.getElementById('hotspot-environment'), aLbl=document.querySelector('[data-bldg="A"]');
+      const place4=()=>{ if(!envW||!aLbl) return; const sr=stage.getBoundingClientRect(), ar=aLbl.getBoundingClientRect(), eb=envW.querySelector('.hotspot-pill').getBoundingClientRect(); envW.style.left=((ar.right+8+eb.width/2-sr.left)/sr.width*100).toFixed(3)+'%'; envW.style.top=((ar.top+ar.height/2-sr.top)/sr.height*100).toFixed(3)+'%'; };
+      const placeAll=()=>{ place(); place2(); requestAnimationFrame(()=>{ place3(); place4(); }); };
       placeAll(); window.addEventListener('resize',()=>{ placeAll(); setTimeout(placeAll,450); }); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(placeAll);
       if(window.ResizeObserver){ const ro=new ResizeObserver(()=>placeAll()); [stage,firstBtn,pack].forEach(el=>{ if(el) ro.observe(el); }); }
     })();
@@ -1429,7 +1443,7 @@
     }
     setTimeout(check,1500); setInterval(check,60000);
     document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') check(); });
-    const ft=document.querySelector('body > footer'); if(ft&&cur){ const s=document.createElement('span'); s.style.cssText='opacity:.55;font-size:10px;margin-left:8px'; s.textContent='v'+cur; (ft.firstElementChild||ft).appendChild(s); }
+    const clk=document.getElementById('liveClock'); if(cur){ const s=document.createElement('span'); s.className='jisu-ver'; s.textContent='v'+cur; (clk&&clk.parentNode?clk.parentNode:document.querySelector('body > header')).appendChild(s); }
   })();
   </script>
   <script>
@@ -1440,7 +1454,7 @@
     function reset(card){ ['top','bottom','maxHeight','transform','marginTop','marginBottom','width'].forEach(p=>card.style[p]=''); card.classList.remove('opens-up'); }
     function fitCard(wrap){
       const card=wrap.querySelector(':scope > .expand-card'); if(!card) return;
-      if(!wrap.classList.contains('is-open')){ reset(card); return; }
+      if(!wrap.classList.contains('is-open')){ card.style.maxHeight=''; return; } /* keep up/down + sideways position while it fades out (no flash) */
       const btn=wrap.querySelector(':scope > button, :scope > .hotspot-pill') || wrap.firstElementChild;
       const sr=stage.getBoundingClientRect(), br=btn.getBoundingClientRect();
       // width: never wider than the map
