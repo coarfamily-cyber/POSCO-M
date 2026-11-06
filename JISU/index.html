@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061203">
+  <meta name="jisu-build" content="202611061206">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -479,6 +479,12 @@
     body > header span.bg-emerald-500\/20{background:rgba(16,185,129,.16) !important;color:#047857 !important;border-color:rgba(4,120,87,.4) !important;}
     body > header #toggleAllBtn{background:rgba(217,119,6,.16) !important;color:#92400e !important;border:1px solid rgba(146,64,14,.3);}
     body > header #toggleAllBtn:hover{background:rgba(217,119,6,.26) !important;}
+    .hdr-right{display:none !important;}
+    .side-title-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+    .side-title-row .xlsx-btn{padding:4px 11px 4px 9px;font-size:11.5px;}
+    .side-clock{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;font-weight:700;color:#e2e8f0;background:#0b0f14;border:1px solid #334155;border-radius:9px;padding:6px 10px;text-align:center;letter-spacing:.02em;}
+    .cmd-side .jisu-ver{margin-top:auto;color:#64748b !important;opacity:.8 !important;font-size:10px;text-align:right;}
+    body > header{padding-top:4px !important;padding-bottom:4px !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
@@ -495,14 +501,14 @@
           <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> LIVE
           </span>
-          <button type="button" id="xlsxDoneBtn" class="xlsx-btn" title="오늘 작업완료한 금일작업을 엑셀 파일로 받기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>금일 작업완료 엑셀</button>
+          
         </div>
         
       </div>
     </div>
 
-    <!-- Quick Trigger Bar for the 4 Zones + Expand All -->
-    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+    <!-- Quick Trigger Bar for the 4 Zones + Expand All (hidden to enlarge map) -->
+    <div class="hdr-right flex flex-wrap items-center gap-1.5 sm:gap-2">
       <button type="button" data-zone-btn="outbound" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5">
         <span class="w-2 h-2 rounded-full bg-sky-400"></span> 출고
       </button>
@@ -518,9 +524,7 @@
       <button type="button" id="toggleAllBtn" class="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-400/20 text-amber-300 hover:bg-amber-400/30 transition">
         전체 펼치기
       </button>
-      <div id="liveClock" class="hidden md:block text-xs font-mono text-slate-300 bg-slate-900 px-3 py-1.5 rounded-lg border border-white/10">
-        2026-11-05 19:18:00
-      </div>
+
     </div>
   </header>
 
@@ -528,7 +532,10 @@
   <main class="flex-1 p-2 sm:p-3 overflow-visible">
     <div class="cmd-layout">
     <aside class="cmd-side" id="cmdSide" aria-label="금일작업 내용 및 공지사항 등록">
-      <h2>금일작업 · 공지 등록</h2>
+      <div class="side-title-row"><h2>금일작업 · 공지 등록</h2><button type="button" id="xlsxDoneBtn" class="xlsx-btn" title="오늘 작업완료한 금일작업을 엑셀 파일로 받기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>AI액셀</button></div>
+      <div id="liveClock" class="side-clock">
+        2026-11-05 19:18:00
+      </div>
       <label for="cmdTarget">대상 버튼</label>
       <select id="cmdTarget">
         <option value="">HOME</option>
@@ -1457,7 +1464,7 @@
     }
     setTimeout(check,1500); setInterval(check,60000);
     document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') check(); });
-    const clk=document.getElementById('liveClock'); if(cur){ const s=document.createElement('span'); s.className='jisu-ver'; s.textContent='v'+cur; (clk&&clk.parentNode?clk.parentNode:document.querySelector('body > header')).appendChild(s); }
+    const clk=document.getElementById('liveClock'); if(cur){ const s=document.createElement('span'); s.className='jisu-ver'; s.textContent='v'+cur; (document.getElementById('cmdSide')||document.querySelector('body > header')).appendChild(s); }
   })();
   </script>
   <script>
