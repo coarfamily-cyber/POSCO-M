@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061153">
+  <meta name="jisu-build" content="202611061154">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1238,6 +1238,7 @@
       hits.sort((a,b)=>a.i-b.i||b.e-a.e); const seq=[]; let end=-1; hits.forEach(x=>{if(x.i<end)return; end=x.e; if(!seq.length||seq[seq.length-1]!==x.k) seq.push(x.k);});
       return seq.length>=2 && seq[0]!==seq[1] ? {from:seq[0],to:seq[1],auto:true} : null;
     }
+    window.jisuMoveOf=x=>moveOf(x);
     function moveOf(x){ if(x.kind==='notice') return null; if(x.from&&x.to) return {from:x.from,to:x.to,auto:false}; return detectMove(x.text); }
     function anchorEl(k){ return document.querySelector('[data-bldg="'+k+'"]')||document.querySelector('[data-toggle-zone="'+k+'"]'); }
     function drawMoves(){
@@ -1483,7 +1484,7 @@
       const work=all.filter(x=>x.kind!=='notice');
       const doneToday=work.filter(x=>x.completed && String(x.completedAt||'').startsWith(today));
       if(!doneToday.length && !confirm('오늘 작업완료된 금일작업이 없습니다.\n그래도 오늘 전체 금일작업 현황을 엑셀로 받을까요?')) return;
-      const row=(x,i)=>{const g=goal(x.text);return {'번호':i+1,'대상':NAMES[x.target]||x.target,'작업 내용':x.text,'이동':(x.from&&x.to)?(NAMES[x.from]||x.from)+' → '+(NAMES[x.to]||x.to):'','목표량':g.n,'완료량':x.done==null?'':Number(x.done),'단위':g.u,'상태':x.completed?'작업완료':(x.working?'작업중':'대기'),'등록 시각':x.at||'','작업 시작':x.startedAt||'','완료 시각':x.completedAt||''};};
+      const row=(x,i)=>{const g=goal(x.text);return {'번호':i+1,'대상':NAMES[x.target]||x.target,'작업 내용':x.text,'이동':(function(){const mv=(x.from&&x.to)?{from:x.from,to:x.to}:(window.jisuMoveOf?window.jisuMoveOf(x):null);return mv?(NAMES[mv.from]||mv.from)+' → '+(NAMES[mv.to]||mv.to):'';})(),'목표량':g.n,'완료량':x.done==null?'':Number(x.done),'단위':g.u,'상태':x.completed?'작업완료':(x.working?'작업중':'대기'),'등록 시각':x.at||'','작업 시작':x.startedAt||'','완료 시각':x.completedAt||''};};
       btn.disabled=true; const label=btn.innerHTML; btn.lastChild.textContent='만드는 중…';
       const fname='금일작업완료_'+y+m+d;
       try{
