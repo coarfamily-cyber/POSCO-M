@@ -358,6 +358,8 @@
     .cmd-item .tag.instruction{color:#86efac !important;}
     .work-done-num input::-webkit-outer-spin-button,.work-done-num input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
     .work-complete{padding:6px 10px;}
+    .cmd-count{min-width:1.35em;width:auto;padding:0 .4em;}
+    .cmd-count.all-done{background:#16a34a;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -1005,10 +1007,13 @@
         box.innerHTML='<div class="cmd-in-card-h">금일작업 · 공지 <span>'+items.length+'건</span></div>'+items.slice(0,5).map(x=>itemHtml(x,false)).join('')+(items.length>5?'<div class="cmd-empty">외 '+(items.length-5)+'건은 왼쪽 등록 내역에서 확인</div>':'');
       });
       document.querySelectorAll('[data-toggle-zone],[data-bldg]').forEach(b=>{
-        const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg'); const n=all.filter(x=>x.target===k&&!x.completed).length;
-        let badge=b.querySelector('.cmd-count'); if(!n){ if(badge) badge.remove(); return; }
+        const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg');
+        const mine=all.filter(x=>x.target===k); const work=mine.filter(x=>x.kind!=='notice'); const done=work.filter(x=>x.completed).length;
+        let badge=b.querySelector('.cmd-count'); if(!mine.length){ if(badge) badge.remove(); return; }
         if(!badge){ badge=document.createElement('span'); badge.className='cmd-count'; b.appendChild(badge); }
-        badge.textContent=n;
+        badge.textContent = work.length ? (done ? work.length+'/'+done : String(work.length)) : String(mine.length);
+        badge.classList.toggle('all-done', work.length>0 && done===work.length);
+        badge.title = work.length ? ('금일작업 '+work.length+'건 중 '+done+'건 완료') : ('공지 '+mine.length+'건');
       });
     }
     let modalKey=null;
