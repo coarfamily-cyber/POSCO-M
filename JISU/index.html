@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061140">
+  <meta name="jisu-build" content="202611061142">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>POSCO M 실시간 관제 상황실 대시보드</title>
@@ -518,6 +518,7 @@
         <option value="outbound">출고</option>
         <option value="inbound">입고</option>
         <option value="packaging">포장</option>
+        <option value="packaging-d">포장(D동)</option>
         <option value="pitch">피치</option>
         <option value="A">A동</option>
         <option value="B">B동</option>
@@ -532,7 +533,7 @@
       <textarea id="cmdText" maxlength="500" placeholder="금일작업 내용을 입력하세요 (예: A- 75 TON)"></textarea>
       <div class="cmd-move" id="cmdMove">
         <span class="cmd-move-h">이동작업 <small>(선택 · 글에 "A동→C동" 쓰면 자동)</small></span>
-        <div class="cmd-move-row"><select id="cmdFrom" aria-label="출발"><option value="">선택 안 함</option><option value="A">A동</option><option value="B">B동</option><option value="C">C동</option><option value="D">D동</option><option value="outbound">출고</option><option value="inbound">입고</option><option value="packaging">포장</option><option value="pitch">피치</option><option value="production-a">생산A</option><option value="production-b">생산B</option><option value="production-c">생산C</option><option value="production-d">생산D</option><option value="production-e">생산E</option><option value="production-f">생산F</option><option value="production-g">생산G</option><option value="production-h">생산H</option></select><span class="cmd-move-arrow">→</span><select id="cmdTo" aria-label="도착"><option value="">선택 안 함</option><option value="A">A동</option><option value="B">B동</option><option value="C">C동</option><option value="D">D동</option><option value="outbound">출고</option><option value="inbound">입고</option><option value="packaging">포장</option><option value="pitch">피치</option><option value="production-a">생산A</option><option value="production-b">생산B</option><option value="production-c">생산C</option><option value="production-d">생산D</option><option value="production-e">생산E</option><option value="production-f">생산F</option><option value="production-g">생산G</option><option value="production-h">생산H</option></select></div>
+        <div class="cmd-move-row"><select id="cmdFrom" aria-label="출발"><option value="">선택 안 함</option><option value="A">A동</option><option value="B">B동</option><option value="C">C동</option><option value="D">D동</option><option value="outbound">출고</option><option value="inbound">입고</option><option value="packaging">포장</option><option value="packaging-d">포장(D동)</option><option value="pitch">피치</option><option value="production-a">생산A</option><option value="production-b">생산B</option><option value="production-c">생산C</option><option value="production-d">생산D</option><option value="production-e">생산E</option><option value="production-f">생산F</option><option value="production-g">생산G</option><option value="production-h">생산H</option></select><span class="cmd-move-arrow">→</span><select id="cmdTo" aria-label="도착"><option value="">선택 안 함</option><option value="A">A동</option><option value="B">B동</option><option value="C">C동</option><option value="D">D동</option><option value="outbound">출고</option><option value="inbound">입고</option><option value="packaging">포장</option><option value="packaging-d">포장(D동)</option><option value="pitch">피치</option><option value="production-a">생산A</option><option value="production-b">생산B</option><option value="production-c">생산C</option><option value="production-d">생산D</option><option value="production-e">생산E</option><option value="production-f">생산F</option><option value="production-g">생산G</option><option value="production-h">생산H</option></select></div>
       </div>
       <button type="button" class="cmd-submit" id="cmdSubmit">금일작업 내용 등록</button>
       <div class="cmd-summary" id="cmdSummary"></div>
@@ -759,6 +760,34 @@
         </div>
       </div>
 
+      <!-- 3-2. D동 포장 -->
+      <div class="hotspot-wrapper" id="hotspot-packaging-d" style="left: 59.8%; top: 71.5%;">
+        <button type="button" class="hotspot-pill" data-toggle-zone="packaging-d">
+          <span class="pulse-ring bg-amber-500 text-amber-400"></span>
+          <span>포장</span>
+          
+        </button>
+        <div class="expand-card p-3.5">
+          <div class="flex items-center gap-3">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500/30 to-yellow-900/50 border border-amber-400/30 flex flex-col items-center justify-center shrink-0">
+              <svg class="w-6 h-6 text-amber-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+              </svg>
+              <span class="text-[10px] font-bold text-amber-200 mt-0.5">자동 포장 구역</span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-amber-300 uppercase tracking-wider">Packaging Line</span>
+                <span class="text-[11px] font-semibold text-emerald-400">자동화 100%</span>
+              </div>
+              <h3 class="text-sm font-extrabold text-white truncate">자동 포장·래핑 라인</h3>
+              <p class="text-xs text-slate-300 mt-0.5">시간당 처리 <strong class="text-amber-300">84 팔레트/h</strong></p>
+            </div>
+          </div>
+            <div class="zone-inline-details" data-inline-details="packaging"></div>
+        </div>
+      </div>
+
       <!-- 4. 피치 (Pitch) Expandable Hotspot -->
       <div class="hotspot-wrapper" id="hotspot-pitch" style="left: 71.0%; top: 20.3%;">
         <button type="button" class="hotspot-pill" data-toggle-zone="pitch">
@@ -904,7 +933,8 @@
       'production-e': '생산E 상세 관제',
       'production-f': '생산F 상세 관제',
       'production-g': '생산G 상세 관제',
-      'production-h': '생산H 상세 관제'
+      'production-h': '생산H 상세 관제',
+      'packaging-d': 'D동 포장 라인'
     };
 
     const BUILDING_DETAILS = {
@@ -1128,7 +1158,7 @@
   <script>
   (function(){
     const KEY='jisu-commands-v1';
-    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","pitch":"피치","A":"A동","B":"B동","C":"C동","D":"D동"};
+    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","A":"A동","B":"B동","C":"C동","D":"D동"};
     let kind='instruction';
     const sel=document.getElementById('cmdTarget'), text=document.getElementById('cmdText'), submit=document.getElementById('cmdSubmit'), list=document.getElementById('cmdList'), label=document.getElementById('cmdTargetLabel');
     const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
@@ -1192,7 +1222,7 @@
       const id=t.getAttribute('data-cmd-complete');if(!id)return;
       update(id,it=>{if(it.completed){it.completed=false;it.completedAt=null;if('doneBefore' in it){it.done=it.doneBefore;delete it.doneBefore;}}else{const g=goalOf(it.text);it.completed=true;it.working=false;it.completedAt=nowStr();it.doneBefore=(it.done==null?null:it.done);if(g){const goal=Number(g.n);const cur=Number(it.done);it.done=(it.done==null||it.done===''||isNaN(cur)||cur<goal)?goal:cur;}}});}
     [document.getElementById('mapStage'),document.getElementById('modalCmds'),list].forEach(el=>{if(!el)return;el.addEventListener('change',onChange,true);el.addEventListener('click',onClick,true);el.addEventListener('keydown',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){e.stopPropagation();if(e.key==='Enter')e.target.blur();}},true);el.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){const c=e.target.value.replace(/[^0-9.,]/g,'');if(c!==e.target.value)e.target.value=c;}},true);});
-    const PLACE_LABEL={A:'A동',B:'B동',C:'C동',D:'D동',outbound:'출고',inbound:'입고',packaging:'포장',pitch:'피치','production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H'};
+    const PLACE_LABEL={A:'A동',B:'B동',C:'C동',D:'D동',outbound:'출고',inbound:'입고',packaging:'포장','packaging-d':'포장(D동)',pitch:'피치','production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H'};
     function detectMove(t){
       t=String(t||''); if(!/이동|→|->|⇒|에서|운반|옮/.test(t)) return null;
       const pats=[[/생산\s*([A-H])/gi,m=>'production-'+m[1].toLowerCase()],[/출고/g,()=>'outbound'],[/입고/g,()=>'inbound'],[/포장/g,()=>'packaging'],[/피치/g,()=>'pitch'],
@@ -1215,7 +1245,7 @@
       const W=sr.width, H=sr.height, P=(x,y)=>[x/100*W,y/100*H];
       // building footprints (% of map) and road centre-lines (% of map) traced from the background image
       const BLD={A:[6.0,49.5,23.2,86.7],B:[25.6,10.4,31.3,86.7],C:[57.35,11.4,82.5,45.4],D:[57.35,55.4,82.6,87.9]};
-      const ZONE_BLD={packaging:'C',pitch:'C','production-a':'C','production-b':'C','production-c':'C','production-d':'C','production-e':'D','production-f':'D','production-g':'D','production-h':'D'};
+      const ZONE_BLD={packaging:'C','packaging-d':'D',pitch:'C','production-a':'C','production-b':'C','production-c':'C','production-d':'C','production-e':'D','production-f':'D','production-g':'D','production-h':'D'};
       const ROADS=[['v',3.0,5,92],['v',24.4,5,92],['v',32.7,5,92],['v',43.7,5,92],['v',56.0,5,50.4],['v',84.1,5,92],['h',5,3.0,84.1],['h',92,3.0,84.1],['h',50.4,43.7,84.1]] /* 43.7 = centre lane of the yard between B and C/D */
         .map(([o,c,a,b])=>o==='v'?{o,x:c/100*W,a:a/100*H,b:b/100*H}:{o,y:c/100*H,a:a/100*W,b:b/100*W});
       function exitsOf(k){
@@ -1328,7 +1358,9 @@
       const wraps2=ids2.map(id=>document.getElementById(id));
       let grid2=null; if(wraps2.every(Boolean)){ grid2=document.createElement('div'); grid2.className='prod-grid prod-grid-d'; stage.appendChild(grid2); wraps2.forEach(w=>grid2.appendChild(w)); }
       const place2=()=>{ if(!grid2) return; grid2.style.left=grid.style.left; grid2.style.transform=grid.style.transform; };
-      const placeAll=()=>{ place(); place2(); };
+      const packD=document.getElementById('hotspot-packaging-d'), dLbl=document.querySelector('[data-bldg="D"]');
+      const place3=()=>{ if(!packD||!wraps2[0]) return; const sr=stage.getBoundingClientRect(); const eb=wraps2[0].querySelector('.hotspot-pill').getBoundingClientRect(); packD.style.left=((eb.left+eb.width/2-sr.left)/sr.width*100).toFixed(3)+'%'; if(dLbl){ const dr=dLbl.getBoundingClientRect(); packD.style.top=((dr.top+dr.height/2-sr.top)/sr.height*100).toFixed(3)+'%'; } };
+      const placeAll=()=>{ place(); place2(); requestAnimationFrame(place3); };
       placeAll(); window.addEventListener('resize',()=>{ placeAll(); setTimeout(placeAll,450); }); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(placeAll);
       if(window.ResizeObserver){ const ro=new ResizeObserver(()=>placeAll()); [stage,firstBtn,pack].forEach(el=>{ if(el) ro.observe(el); }); }
     })();
