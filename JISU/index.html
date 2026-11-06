@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061234">
+  <meta name="jisu-build" content="202611061238">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1551,8 +1551,15 @@
     const cur=(document.querySelector('meta[name="jisu-build"]')||{}).content||'';
     async function check(){
       try{ const r=await fetch(location.pathname+'?cb='+Date.now(),{cache:'no-store'}); const t=await r.text(); const m=t.match(/<meta name="jisu-build" content="([^"]+)"/);
-        if(m && cur && m[1]!==cur){ location.replace(location.pathname+'?v='+m[1]); } }catch(e){}
+        if(m && cur && m[1] > cur){ pending=m[1]; apply(); } }catch(e){}
     }
+    /* only move FORWARD to a newer build (prevents bouncing between cached copies),
+       and never reload while full screen or while typing - wait until the user is done */
+    let pending=null;
+    function busy(){ const a=document.activeElement; return !!(document.fullscreenElement||document.webkitFullscreenElement) || (a && (a.tagName==='TEXTAREA'||a.tagName==='INPUT'||a.tagName==='SELECT')); }
+    function apply(){ if(!pending) return; if(busy()) return; const go=pending; pending=null; location.replace(location.pathname+'?v='+go); }
+    document.addEventListener('fullscreenchange',()=>setTimeout(apply,300));
+    document.addEventListener('focusout',()=>setTimeout(apply,1500));
     setTimeout(check,1500); setInterval(check,60000);
     document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') check(); });
     const clk=document.getElementById('liveClock'); if(cur){ const s=document.createElement('span'); s.className='jisu-ver'; s.textContent='v'+cur; (document.getElementById('cmdSide')||document.querySelector('body > header')).appendChild(s); }
@@ -1636,7 +1643,7 @@
       if(!d.fullscreenElement && !d.webkitFullscreenElement){ (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el); }
       else { (d.exitFullscreen||d.webkitExitFullscreen||function(){}).call(d); } }
     document.addEventListener('keydown',e=>{
-      if(e.key!=='Enter' || !(e.ctrlKey||e.metaKey)) return;
+      if(e.key!=='Enter' || !(e.ctrlKey||e.metaKey||e.altKey)) return;
       const t=e.target;
       if(t && t.id==='cmdText'){ e.preventDefault(); const b=document.getElementById('cmdSubmit'); if(b && !b.disabled) b.click(); return; }
       e.preventDefault(); toggleFull();
