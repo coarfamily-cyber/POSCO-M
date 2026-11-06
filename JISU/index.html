@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061122">
+  <meta name="jisu-build" content="202611061125">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>POSCO M 실시간 관제 상황실 대시보드</title>
@@ -444,6 +444,9 @@
     .cmd-sum-chip.is-on{border-color:#6366f1;background:rgba(99,102,241,.2);}
     .cmd-sum-chip b{color:#fca5a5;font-weight:800;}
     .cmd-sum-chip i{font-style:normal;color:#fbbf24;font-weight:800;}
+    .cmd-submit-target{display:inline-block;background:rgba(255,255,255,.22);border-radius:6px;padding:0 6px;margin-right:2px;}
+    .cmd-item .meta{align-items:center;}
+    .cmd-retarget{margin-left:auto;margin-right:6px;font-size:10.5px;background:#0b0f14;border:1px solid #334155;border-radius:6px;color:#cbd5e1;padding:1px 4px;max-width:72px;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -1077,7 +1080,7 @@
           +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?'완료됨':'작업완료')+'</button>'
           +'</div>';
       }
-      return '<div class="cmd-item'+(x.completed?' is-completed':'')+'"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'금일작업')+'</span><span>'+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):(x.working&&x.startedAt?' · 작업중 '+esc(x.startedAt):''))+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
+      return '<div class="cmd-item'+(x.completed?' is-completed':'')+'"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'금일작업')+'</span><span>'+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):(x.working&&x.startedAt?' · 작업중 '+esc(x.startedAt):''))+'</span>'+(withDel?'<select class="cmd-retarget" data-cmd-retarget="'+x.id+'" title="대상 버튼 바꾸기">'+Object.keys(NAMES).filter(k=>document.querySelector('#cmdTarget option[value="'+k+'"]')).map(k=>'<option value="'+k+'"'+(k===x.target?' selected':'')+'>'+esc(NAMES[k])+'</option>').join('')+'</select><button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
         +'<div class="cmd-row"><div class="cmd-text">'+esc(x.text)+(function(){const mv=moveOf(x);return mv?'<span class="move-tag">이동 '+esc(PLACE_LABEL[mv.from]||mv.from)+' → '+esc(PLACE_LABEL[mv.to]||mv.to)+'</span>':'';})()+'</div>'+right+'</div></div>';
     }
     function renderCards(){
@@ -1201,11 +1204,12 @@
       renderCards(); drawMoves();
       (function(){const box=document.getElementById('cmdSummary'); if(!box) return; const all=load(); const by={}; all.forEach(x=>{const o=by[x.target]||(by[x.target]={w:0,d:0,n:0}); if(x.kind==='notice') o.n++; else {o.w++; if(x.completed) o.d++;}});
         const keys=Object.keys(by); box.innerHTML=keys.length?'<div class="cmd-summary-h">전체 등록 현황 (누르면 이동)</div>'+keys.map(k=>{const o=by[k];return '<button type="button" class="cmd-sum-chip'+(k===sel.value?' is-on':'')+'" data-cmd-goto="'+esc(k)+'">'+esc(NAMES[k]||k)+(o.w?' <b>'+(o.d?o.w+'/'+o.d:o.w)+'</b>':'')+(o.n?' <i>공지 '+o.n+'</i>':'')+'</button>';}).join(''):'';})();
-      const t=sel.value; label.textContent='· '+(NAMES[t]||t);
+      const t=sel.value; label.textContent='· '+(NAMES[t]||t); updateSubmitLabel();
       const items=load().filter(x=>x.target===t).reverse();
       list.innerHTML=items.length?items.map(x=>itemHtml(x,true)).join(''):'<div class="cmd-empty">등록된 내용이 없습니다.</div>';
     }
-    function setKind(k){kind=k;document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cmdKind===k)));submit.textContent=k==='notice'?'공지사항 등록':'금일작업 내용 등록';text.placeholder=k==='notice'?'공지사항을 입력하세요':'금일작업 내용을 입력하세요 (예: A- 75 TON)';}
+    function updateSubmitLabel(){const nm=NAMES[sel.value]||sel.value; submit.innerHTML='<span class="cmd-submit-target">'+esc(nm)+'</span>에 '+(kind==='notice'?'공지사항 등록':'금일작업 내용 등록');}
+    function setKind(k){kind=k;document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cmdKind===k)));updateSubmitLabel();text.placeholder=k==='notice'?'공지사항을 입력하세요':'금일작업 내용을 입력하세요 (예: A- 75 TON)';}
     document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.addEventListener('click',()=>setKind(b.dataset.cmdKind)));
     submit.addEventListener('click',()=>{const v=text.value.trim();if(!v){text.focus();return;}const all=load();const rec={id:Date.now().toString(36),target:sel.value,kind,text:v,at:nowStr()};const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);text.value='';if(fr)fr.value='';if(to)to.value='';render();});
     list.addEventListener('click',e=>{const id=e.target.getAttribute('data-cmd-del');if(!id)return;save(load().filter(x=>x.id!==id));render();});
@@ -1213,6 +1217,7 @@
     try{const last=localStorage.getItem('jisu-cmd-target');if(last&&[...sel.options].some(o=>o.value===last))sel.value=last;}catch(e){}
     document.querySelectorAll('[data-toggle-zone],[data-bldg],[data-zone-btn]').forEach(b=>b.addEventListener('click',()=>{const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg')||b.getAttribute('data-zone-btn');if(NAMES[k]){sel.value=k;try{localStorage.setItem('jisu-cmd-target',k)}catch(e){}render();}if(b.hasAttribute('data-bldg'))fillModal(k);}));
     window.addEventListener('storage',e=>{if(e.key===KEY)render();});
+    list.addEventListener('change',e=>{const id=e.target.getAttribute&&e.target.getAttribute('data-cmd-retarget');if(!id)return;const nt=e.target.value;const all=load();const it=all.find(x=>x.id===id);if(!it)return;it.target=nt;save(all);sel.value=nt;try{localStorage.setItem('jisu-cmd-target',nt)}catch(_){}render();});
     document.getElementById('cmdSummary').addEventListener('click',e=>{const b=e.target.closest('[data-cmd-goto]');if(!b)return;sel.value=b.getAttribute('data-cmd-goto');try{localStorage.setItem('jisu-cmd-target',sel.value)}catch(_){}render();});
     window.addEventListener('resize',()=>{drawMoves();setTimeout(drawMoves,500);}); if(window.ResizeObserver){new ResizeObserver(()=>drawMoves()).observe(document.getElementById('mapStage'));} setTimeout(drawMoves,800);
     render();
