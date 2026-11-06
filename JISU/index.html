@@ -413,6 +413,8 @@
       box-shadow:0 8px 22px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.18) !important;text-shadow:0 1px 2px rgba(0,0,0,.5);padding:.25em .7em !important;}
     .bldg-badge:hover{background:rgba(30,41,59,.6) !important;border-color:rgba(125,211,252,.7) !important;}
     .bldg-badge .status-dot{display:none !important;}
+    .cmd-slot{margin-top:12px;}
+    .cmd-slot .cmd-in-card{margin-bottom:0;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -581,7 +583,7 @@
               <h3 class="text-sm font-extrabold text-white">지게차 번호</h3>
             </div>
           </div>
-            <div class="zone-inline-details" data-inline-details="outbound"></div>
+            <div class="cmd-slot" data-cmd-slot="outbound"></div>
             <section class="ob-photo" id="obPhoto">
               <div class="ob-photo-head"><span>출고 사진</span><span class="ob-count" id="obCount">0장</span></div>
               <div class="ob-actions">
@@ -1048,11 +1050,12 @@
       const all=load();
       Object.keys(NAMES).forEach(k=>{
         const wrap=document.getElementById('hotspot-'+k); const card=wrap&&wrap.querySelector('.expand-card'); if(!card) return;
-        let box=card.querySelector(':scope > .cmd-in-card');
+        const slot=card.querySelector('[data-cmd-slot]');
+        let box=(slot||card).querySelector(':scope > .cmd-in-card');
         const items=all.filter(x=>x.target===k).reverse();
-        if(!items.length){ if(box) box.remove(); return; }
-        if(!box){ box=document.createElement('div'); box.className='cmd-in-card'; card.insertBefore(box,card.firstChild); }
-        box.innerHTML='<div class="cmd-in-card-h">금일작업 · 공지 <span>'+items.length+'건</span></div>'+items.slice(0,5).map(x=>itemHtml(x,false)).join('')+(items.length>5?'<div class="cmd-empty">외 '+(items.length-5)+'건은 왼쪽 등록 내역에서 확인</div>':'');
+        if(!items.length && !slot){ if(box) box.remove(); return; }
+        if(!box){ box=document.createElement('div'); box.className='cmd-in-card'; if(slot) slot.appendChild(box); else card.insertBefore(box,card.firstChild); }
+        box.innerHTML='<div class="cmd-in-card-h">금일작업 · 공지 <span>'+items.length+'건</span></div>'+(items.length?items.slice(0,5).map(x=>itemHtml(x,false)).join(''):'<div class="cmd-empty">등록된 금일작업·공지가 없습니다. 왼쪽에서 등록하세요.</div>')+(items.length>5?'<div class="cmd-empty">외 '+(items.length-5)+'건은 왼쪽 등록 내역에서 확인</div>':'');
       });
       document.querySelectorAll('[data-toggle-zone],[data-bldg]').forEach(b=>{
         const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg');
