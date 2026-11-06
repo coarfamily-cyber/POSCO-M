@@ -329,6 +329,11 @@
     .ob-item img{width:100%;height:100%;object-fit:cover;display:block;}
     .ob-item time{position:absolute;left:0;right:0;bottom:0;font-size:9.5px;background:rgba(0,0,0,.6);color:#e2e8f0;padding:2px 4px;}
     .ob-item .ob-del{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.65);color:#fca5a5;font-size:12px;line-height:20px;text-align:center;}
+
+    /* Production buttons: 2x2 (A B / C D), left edge just right of the 창고 column */
+    .prod-grid{position:absolute;left:64.6%;top:42%;transform:translateY(-50%);display:grid;grid-template-columns:repeat(2,max-content);gap:6px;z-index:45;}
+    .prod-grid > .hotspot-wrapper{position:relative;left:auto !important;top:auto !important;transform:none;}
+    .prod-grid > .hotspot-wrapper .hotspot-pill{width:100%;justify-content:center;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -384,6 +389,7 @@
         <option value="production-a">생산A</option>
         <option value="production-b">생산B</option>
         <option value="production-c">생산C</option>
+        <option value="production-d">생산D</option>
         <option value="outbound">출고</option>
         <option value="inbound">입고</option>
         <option value="packaging">포장</option>
@@ -465,6 +471,18 @@
           <section class="mt-3 border-t border-white/15 pt-3">
             <div class="text-[10px] font-bold uppercase tracking-wider text-amber-200">PRODUCTION LINE · C</div>
             <h4 class="mt-1 text-sm font-extrabold text-white">생산C 상세내용</h4>
+            <p class="mt-2 rounded-xl border border-white/10 bg-white/5 p-3 text-sm font-semibold leading-relaxed text-white">성용아 차 안바꾸니? 살빼라 지수야</p>
+          </section>
+        </div>
+      </div>
+      <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-d" style="left: 80.8%; top: 46%;">
+        <button type="button" class="hotspot-pill production-line-button" data-toggle-zone="production-d" data-production-btn="D" aria-pressed="false" aria-label="생산D 선택">
+          <span class="pulse-ring bg-sky-500 text-sky-400"></span><span>생산D</span>
+        </button>
+        <div class="expand-card p-3.5">
+          <section class="mt-3 border-t border-white/15 pt-3">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-amber-200">PRODUCTION LINE · D</div>
+            <h4 class="mt-1 text-sm font-extrabold text-white">생산D 상세내용</h4>
             <p class="mt-2 rounded-xl border border-white/10 bg-white/5 p-3 text-sm font-semibold leading-relaxed text-white">성용아 차 안바꾸니? 살빼라 지수야</p>
           </section>
         </div>
@@ -761,7 +779,8 @@
       warehouse: '원자재 창고 및 입고 검수 구역',
       'production-a': '생산A 상세 관제',
       'production-b': '생산B 상세 관제',
-      'production-c': '생산C 상세 관제'
+      'production-c': '생산C 상세 관제',
+      'production-d': '생산D 상세 관제'
     };
 
     const BUILDING_DETAILS = {
@@ -984,7 +1003,7 @@
   <script>
   (function(){
     const KEY='jisu-commands-v1';
-    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","outbound":"출고","inbound":"입고","packaging":"포장","pitch":"피치","A":"A동","B":"B동","D":"D동","E":"E동","F":"F동","G":"G동"};
+    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","outbound":"출고","inbound":"입고","packaging":"포장","pitch":"피치","A":"A동","B":"B동","D":"D동","E":"E동","F":"F동","G":"G동"};
     let kind='instruction';
     const sel=document.getElementById('cmdTarget'), text=document.getElementById('cmdText'), submit=document.getElementById('cmdSubmit'), list=document.getElementById('cmdList'), label=document.getElementById('cmdTargetLabel');
     const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
@@ -1014,12 +1033,14 @@
       document.documentElement.style.setProperty('--jisu-fill-h',Math.max(320,avail)+'px');
     }
     window.addEventListener('resize',fit); fit();
-    (function rowify(){
+    (function gridify(){
       const stage=document.getElementById('mapStage'); if(!stage) return;
-      const ids=['hotspot-warehouse','hotspot-production-a','hotspot-production-b','hotspot-production-c'];
+      const wh=document.getElementById('hotspot-warehouse');
+      if(wh){ wh.style.left='59.8%'; wh.style.top='42%'; }
+      const ids=['hotspot-production-a','hotspot-production-b','hotspot-production-c','hotspot-production-d'];
       const wraps=ids.map(id=>document.getElementById(id)); if(wraps.some(w=>!w)) return;
-      const row=document.createElement('div'); row.className='prod-row';
-      stage.appendChild(row); wraps.forEach(w=>row.appendChild(w));
+      const grid=document.createElement('div'); grid.className='prod-grid';
+      stage.appendChild(grid); wraps.forEach(w=>grid.appendChild(w));
     })();
   })();
   </script>
