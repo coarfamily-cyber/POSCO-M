@@ -334,6 +334,13 @@
     .prod-grid{position:absolute;left:59.8%;top:40%;transform:translate(0,-50%);display:grid;grid-template-columns:repeat(4,max-content);gap:6px;z-index:45;}
     .prod-grid > .hotspot-wrapper{position:relative;left:auto !important;top:auto !important;transform:none;}
     .prod-grid > .hotspot-wrapper .hotspot-pill{width:100%;justify-content:center;}
+
+    /* Registered instructions/notices shown inside each button card */
+    .cmd-in-card{background:rgba(79,70,229,.14);border:1px solid rgba(129,140,248,.35);border-radius:12px;padding:8px;margin-bottom:10px;display:flex;flex-direction:column;gap:6px;}
+    .cmd-in-card-h{font-size:11px;font-weight:800;color:#c7d2fe;display:flex;justify-content:space-between;}
+    .cmd-in-card-h span{color:#a5b4fc;font-weight:700;}
+    #modalCmds .cmd-item{margin-top:6px;}
+    .cmd-count{display:inline-flex;align-items:center;justify-content:center;min-width:1.35em;height:1.35em;padding:0 .3em;border-radius:9999px;background:#ef4444;color:#fff;font-size:.7em;font-weight:800;margin-left:.35em;line-height:1;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -689,6 +696,7 @@
         <ul class="space-y-1.5 text-xs text-slate-300" id="modalLogs"></ul>
       </div>
 
+      <div id="modalCmds" class="mb-4"></div>
       <button type="button" id="closeModalBtn" class="learn-more-action">
         닫기 (Close)
       </button>
@@ -992,17 +1000,42 @@
     const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
     const save=v=>localStorage.setItem(KEY,JSON.stringify(v));
     const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    function itemHtml(x,withDel){return '<div class="cmd-item"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'지시')+'</span><span>'+esc(x.at)+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'+esc(x.text)+'</div>';}
+    function renderCards(){
+      const all=load();
+      Object.keys(NAMES).forEach(k=>{
+        const wrap=document.getElementById('hotspot-'+k); const card=wrap&&wrap.querySelector('.expand-card'); if(!card) return;
+        let box=card.querySelector(':scope > .cmd-in-card');
+        const items=all.filter(x=>x.target===k).reverse();
+        if(!items.length){ if(box) box.remove(); return; }
+        if(!box){ box=document.createElement('div'); box.className='cmd-in-card'; card.insertBefore(box,card.firstChild); }
+        box.innerHTML='<div class="cmd-in-card-h">지시 · 공지 <span>'+items.length+'건</span></div>'+items.slice(0,5).map(x=>itemHtml(x,false)).join('')+(items.length>5?'<div class="cmd-empty">외 '+(items.length-5)+'건은 왼쪽 등록 내역에서 확인</div>':'');
+      });
+      document.querySelectorAll('[data-toggle-zone],[data-bldg]').forEach(b=>{
+        const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg'); const n=all.filter(x=>x.target===k).length;
+        let badge=b.querySelector('.cmd-count'); if(!n){ if(badge) badge.remove(); return; }
+        if(!badge){ badge=document.createElement('span'); badge.className='cmd-count'; b.appendChild(badge); }
+        badge.textContent=n;
+      });
+    }
+    function fillModal(k){
+      const box=document.getElementById('modalCmds'); if(!box) return;
+      const items=load().filter(x=>x.target===k).reverse();
+      box.innerHTML=items.length?'<div class="cmd-in-card-h">지시 · 공지 <span>'+items.length+'건</span></div>'+items.map(x=>itemHtml(x,false)).join(''):'';
+    }
     function render(){
+      renderCards();
       const t=sel.value; label.textContent='· '+(NAMES[t]||t);
       const items=load().filter(x=>x.target===t).reverse();
-      list.innerHTML=items.length?items.map(x=>'<div class="cmd-item"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'지시')+'</span><span>'+esc(x.at)+'</span><button type="button" data-cmd-del="'+x.id+'">삭제</button></div>'+esc(x.text)+'</div>').join(''):'<div class="cmd-empty">등록된 내용이 없습니다.</div>';
+      list.innerHTML=items.length?items.map(x=>itemHtml(x,true)).join(''):'<div class="cmd-empty">등록된 내용이 없습니다.</div>';
     }
     function setKind(k){kind=k;document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cmdKind===k)));submit.textContent=k==='notice'?'공지사항 등록':'지시사항 등록';text.placeholder=k==='notice'?'공지사항을 입력하세요':'지시사항을 입력하세요';}
     document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.addEventListener('click',()=>setKind(b.dataset.cmdKind)));
     submit.addEventListener('click',()=>{const v=text.value.trim();if(!v){text.focus();return;}const all=load();all.push({id:Date.now().toString(36),target:sel.value,kind,text:v,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})});save(all);text.value='';render();});
     list.addEventListener('click',e=>{const id=e.target.getAttribute('data-cmd-del');if(!id)return;save(load().filter(x=>x.id!==id));render();});
     sel.addEventListener('change',render);
-    document.querySelectorAll('[data-toggle-zone],[data-bldg]').forEach(b=>b.addEventListener('click',()=>{const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg');if(NAMES[k]){sel.value=k;render();}}));
+    document.querySelectorAll('[data-toggle-zone],[data-bldg],[data-zone-btn]').forEach(b=>b.addEventListener('click',()=>{const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg')||b.getAttribute('data-zone-btn');if(NAMES[k]){sel.value=k;render();}if(b.hasAttribute('data-bldg'))fillModal(k);}));
+    window.addEventListener('storage',e=>{if(e.key===KEY)render();});
     render();
   })();
   </script>
