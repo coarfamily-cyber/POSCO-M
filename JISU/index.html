@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061218">
+  <meta name="jisu-build" content="202611061222">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -507,6 +507,27 @@
     .hdr-tools .xlsx-btn svg{opacity:0;transition:opacity .2s;}
     .hdr-tools .xlsx-btn:hover,.hdr-tools .xlsx-btn:focus-visible{background:linear-gradient(135deg,#15803d,#166534) !important;border-color:rgba(74,222,128,.55) !important;color:#fff !important;box-shadow:0 2px 8px rgba(0,0,0,.25) !important;}
     .hdr-tools .xlsx-btn:hover svg,.hdr-tools .xlsx-btn:focus-visible svg{opacity:1;}
+    /* Apple-style liquid glass detail cards */
+    .expand-card{
+      background:linear-gradient(145deg,rgba(255,255,255,.20) 0%,rgba(255,255,255,.07) 45%,rgba(255,255,255,.04) 100%),rgba(18,24,36,.30) !important;
+      backdrop-filter:blur(30px) saturate(190%) brightness(1.04) !important;-webkit-backdrop-filter:blur(30px) saturate(190%) brightness(1.04) !important;
+      border:1px solid rgba(255,255,255,.34) !important;border-radius:24px !important;
+      box-shadow:0 30px 70px rgba(0,0,0,.38),0 8px 20px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(255,255,255,.10),inset 0 0 0 .5px rgba(255,255,255,.15) !important;
+      color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35);
+    }
+    .expand-card::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+      background:radial-gradient(120% 60% at 0% 0%,rgba(255,255,255,.28),transparent 55%),linear-gradient(180deg,rgba(255,255,255,.14),transparent 30%);mix-blend-mode:screen;}
+    .hotspot-wrapper.is-open .expand-card{transition:max-height .45s cubic-bezier(.2,.9,.2,1),opacity .28s ease,transform .45s cubic-bezier(.2,.9,.2,1.15),margin-top .3s ease !important;}
+    .expand-card .cmd-in-card{background:rgba(255,255,255,.09) !important;border:1px solid rgba(255,255,255,.22) !important;border-radius:16px !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.18);}
+    .expand-card .cmd-item{background:rgba(255,255,255,.08) !important;border:1px solid rgba(255,255,255,.16) !important;border-radius:14px !important;}
+    .expand-card .bg-white\/5{background:rgba(255,255,255,.10) !important;}
+    .expand-card .border-white\/10{border-color:rgba(255,255,255,.20) !important;}
+    .expand-card .rounded-xl{border-radius:14px;}
+    .expand-card .work-done-num input{background:rgba(0,0,0,.35) !important;border-color:rgba(255,255,255,.28) !important;}
+    .expand-card .cmd-notice-banner{background:rgba(251,191,36,.18) !important;border-color:rgba(251,191,36,.5) !important;}
+    .expand-card::-webkit-scrollbar{width:6px}.expand-card::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35);border-radius:9px}
+    /* building detail window: same glass */
+    #detailModal > div{background:linear-gradient(145deg,rgba(255,255,255,.22),rgba(255,255,255,.06)),rgba(18,24,36,.40) !important;backdrop-filter:blur(30px) saturate(190%);-webkit-backdrop-filter:blur(30px) saturate(190%);border:1px solid rgba(255,255,255,.34) !important;border-radius:26px !important;box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.55) !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
