@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061151">
+  <meta name="jisu-build" content="202611061153">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>POSCO M 실시간 관제 상황실 대시보드</title>
+  <title>지수 통합 관제 상황실</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -457,6 +457,10 @@
     .cmd-submit:disabled{background:#1e293b;color:#64748b;cursor:not-allowed;}
     .hotspot-wrapper.is-open .expand-card.opens-up{transform-origin:bottom center;}
     html,body{overflow-x:hidden;}
+    .xlsx-btn{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;color:#dcfce7;background:linear-gradient(135deg,#15803d,#166534);border:1px solid rgba(74,222,128,.55);border-radius:9999px;padding:3px 10px 3px 8px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+    .xlsx-btn:hover{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;}
+    .xlsx-btn svg{width:13px;height:13px;}
+    .xlsx-btn[disabled]{opacity:.6;cursor:wait;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -469,10 +473,11 @@
       </div>
       <div>
         <div class="flex items-center gap-2">
-          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white">POSCO M 한성 통합 관제 상황실</h1>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white">지수 통합 관제 상황실</h1>
           <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> LIVE
           </span>
+          <button type="button" id="xlsxDoneBtn" class="xlsx-btn" title="오늘 작업완료한 금일작업을 엑셀 파일로 받기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>금일 작업완료 엑셀</button>
         </div>
         <p class="text-xs text-slate-400">각 구역 버튼을 누르면 버튼 아래 투명 카드가 펼쳐집니다</p>
       </div>
@@ -1462,6 +1467,39 @@
     document.querySelectorAll('.hotspot-wrapper > .expand-card').forEach(c=>mo2.observe(c,{childList:true,subtree:true}));
     window.addEventListener('resize',()=>{ fitOpen(); setTimeout(fitOpen,450); });
     if(window.ResizeObserver) new ResizeObserver(()=>fitOpen()).observe(stage);
+  })();
+  </script>
+  <script>
+  /* 금일 작업완료 → Excel (.xlsx) */
+  (function(){
+    const btn=document.getElementById('xlsxDoneBtn'); if(!btn) return;
+    const NAMES={"production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","A":"A동","B":"B동","C":"C동","D":"D동"};
+    const kstParts=()=>{const p=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const g=t=>p.find(x=>x.type===t).value;return {y:g('year'),m:g('month'),d:g('day')};};
+    function loadLib(){ if(window.XLSX) return Promise.resolve(window.XLSX); return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';s.onload=()=>res(window.XLSX);s.onerror=()=>rej(new Error('lib'));document.head.appendChild(s);}); }
+    function goal(t){const m=String(t).match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||String(t).match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/);return m?{n:Number(m[1].replace(',','.')),u:(m[2]||'').toUpperCase()}:{n:'',u:''};}
+    btn.addEventListener('click',async()=>{
+      let all=[]; try{all=JSON.parse(localStorage.getItem('jisu-commands-v1')||'[]')}catch(e){}
+      const {y,m,d}=kstParts(); const today=m+'. '+d+'.';
+      const work=all.filter(x=>x.kind!=='notice');
+      const doneToday=work.filter(x=>x.completed && String(x.completedAt||'').startsWith(today));
+      if(!doneToday.length && !confirm('오늘 작업완료된 금일작업이 없습니다.\n그래도 오늘 전체 금일작업 현황을 엑셀로 받을까요?')) return;
+      const row=(x,i)=>{const g=goal(x.text);return {'번호':i+1,'대상':NAMES[x.target]||x.target,'작업 내용':x.text,'이동':(x.from&&x.to)?(NAMES[x.from]||x.from)+' → '+(NAMES[x.to]||x.to):'','목표량':g.n,'완료량':x.done==null?'':Number(x.done),'단위':g.u,'상태':x.completed?'작업완료':(x.working?'작업중':'대기'),'등록 시각':x.at||'','작업 시작':x.startedAt||'','완료 시각':x.completedAt||''};};
+      btn.disabled=true; const label=btn.innerHTML; btn.lastChild.textContent='만드는 중…';
+      const fname='금일작업완료_'+y+m+d;
+      try{
+        const XLSX=await loadLib(); const wb=XLSX.utils.book_new();
+        const s1=XLSX.utils.json_to_sheet(doneToday.map(row),{header:['번호','대상','작업 내용','이동','목표량','완료량','단위','상태','등록 시각','작업 시작','완료 시각']});
+        s1['!cols']=[{wch:5},{wch:10},{wch:30},{wch:16},{wch:8},{wch:8},{wch:6},{wch:9},{wch:13},{wch:13},{wch:13}];
+        XLSX.utils.book_append_sheet(wb,s1,'금일 작업완료');
+        const s2=XLSX.utils.json_to_sheet(work.map(row)); s2['!cols']=s1['!cols']; XLSX.utils.book_append_sheet(wb,s2,'전체 금일작업');
+        XLSX.writeFile(wb,fname+'.xlsx');
+      }catch(e){
+        // fallback: CSV that Excel opens directly
+        const rows=doneToday.map(row); const head=['번호','대상','작업 내용','이동','목표량','완료량','단위','상태','등록 시각','작업 시작','완료 시각'];
+        const csv='\ufeff'+[head.join(',')].concat(rows.map(r=>head.map(k=>'"'+String(r[k]).replace(/"/g,'""')+'"').join(','))).join('\r\n');
+        const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download=fname+'.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+      }finally{ btn.disabled=false; btn.innerHTML=label; }
+    });
   })();
   </script>
 </body>
