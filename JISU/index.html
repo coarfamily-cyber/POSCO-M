@@ -330,8 +330,8 @@
     .ob-item time{position:absolute;left:0;right:0;bottom:0;font-size:9.5px;background:rgba(0,0,0,.6);color:#e2e8f0;padding:2px 4px;}
     .ob-item .ob-del{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.65);color:#fca5a5;font-size:12px;line-height:20px;text-align:center;}
 
-    /* Production buttons: one row A B C D, centered under the top-right building */
-    .prod-grid{position:absolute;left:69.9%;top:50.5%;transform:translate(-50%,-50%);display:grid;grid-template-columns:repeat(4,max-content);gap:6px;z-index:45;}
+    /* Production buttons: one row A B C D on the former 창고 line (생산A centered under 포장) */
+    .prod-grid{position:absolute;left:59.8%;top:42%;transform:translate(0,-50%);display:grid;grid-template-columns:repeat(4,max-content);gap:6px;z-index:45;}
     .prod-grid > .hotspot-wrapper{position:relative;left:auto !important;top:auto !important;transform:none;}
     .prod-grid > .hotspot-wrapper .hotspot-pill{width:100%;justify-content:center;}
   </style>
@@ -385,7 +385,6 @@
       <h2>지시 · 공지 등록</h2>
       <label for="cmdTarget">대상 버튼</label>
       <select id="cmdTarget">
-        <option value="warehouse">창고</option>
         <option value="production-a">생산A</option>
         <option value="production-b">생산B</option>
         <option value="production-c">생산C</option>
@@ -423,22 +422,6 @@
         <span class="status-dot"></span> B
       </button>
       <!-- Production buttons placed at their respective factory lines -->
-      <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-warehouse" style="left: 59.1%; top: 46%;">
-        <button type="button" class="hotspot-pill production-line-button" data-toggle-zone="warehouse" data-warehouse-btn aria-pressed="false" aria-label="창고 선택">
-          <span class="pulse-ring bg-emerald-500 text-emerald-400"></span><span>창고</span>
-        </button>
-        <div class="expand-card p-3.5">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/30 to-teal-900/50 border border-emerald-400/30 flex items-center justify-center shrink-0 text-xs font-black text-emerald-200">WH</div>
-            <div class="min-w-0 flex-1">
-              <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-300">WAREHOUSE · 창고</div>
-              <h3 class="text-sm font-extrabold text-white">원자재 입고 및 품질 검수</h3>
-              <p class="text-xs text-slate-300 mt-0.5">창고 입고·검수 구역 상세 관제</p>
-            </div>
-          </div>
-          <div class="zone-inline-details mt-3" data-inline-details="inbound"></div>
-        </div>
-      </div>
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-a" style="left: 66.6%; top: 46%;">
         <button type="button" class="hotspot-pill production-line-button" data-toggle-zone="production-a" data-production-btn="A" aria-pressed="false" aria-label="생산A 선택">
           <span class="pulse-ring bg-amber-500 text-amber-400"></span><span>생산A</span>
@@ -1035,12 +1018,14 @@
     window.addEventListener('resize',fit); fit();
     (function gridify(){
       const stage=document.getElementById('mapStage'); if(!stage) return;
-      const wh=document.getElementById('hotspot-warehouse');
-      if(wh){ wh.style.left='59.8%'; wh.style.top='42%'; }
+
       const ids=['hotspot-production-a','hotspot-production-b','hotspot-production-c','hotspot-production-d'];
       const wraps=ids.map(id=>document.getElementById(id)); if(wraps.some(w=>!w)) return;
       const grid=document.createElement('div'); grid.className='prod-grid';
       stage.appendChild(grid); wraps.forEach(w=>grid.appendChild(w));
+      const firstBtn=wraps[0].querySelector('.hotspot-pill');
+      const place=()=>{ const half=firstBtn ? firstBtn.getBoundingClientRect().width/2 : 0; grid.style.transform='translate('+(-half)+'px,-50%)'; };
+      place(); window.addEventListener('resize',place); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(place);
     })();
   })();
   </script>
