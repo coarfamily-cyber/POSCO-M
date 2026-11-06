@@ -1136,7 +1136,7 @@
         .map(([o,c,a,b])=>o==='v'?{o,x:c/100*W,a:a/100*H,b:b/100*H}:{o,y:c/100*H,a:a/100*W,b:b/100*W});
       function exitsOf(k){
         const bk=BLD[k]?k:ZONE_BLD[k];
-        if(bk){const [x1,y1,x2,y2]=BLD[bk];return [P(x1,y1),P(x2,y1),P(x1,y2),P(x2,y2)];}
+        if(bk){const [x1,y1,x2,y2]=BLD[bk];return [P(x1,y2),P(x2,y2)];} /* loading docks: bottom corners only */
         const el=anchorEl(k); if(!el) return [];
         const r=el.getBoundingClientRect(); return [[r.left+r.width/2-sr.left,r.top+r.height/2-sr.top]];
       }
