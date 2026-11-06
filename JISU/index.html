@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061214">
+  <meta name="jisu-build" content="202611061218">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -489,6 +489,24 @@
     .hdr-clock{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;font-weight:700;color:#3b2c1c;background:rgba(255,253,248,.75);border:1px solid rgba(122,92,52,.28);border-radius:9px;padding:4px 10px;white-space:nowrap;}
     .hdr-tools .xlsx-btn{padding:5px 12px 5px 10px;font-size:12px;}
     @media(max-width:520px){.hdr-clock{font-size:11px;padding:3px 7px;}}
+    /* 로그인 */
+    .login-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:#3b2c1c;background:rgba(255,253,248,.75);border:1px solid rgba(122,92,52,.28);border-radius:9999px;padding:4px 12px 4px 9px;white-space:nowrap;}
+    .login-btn svg{width:14px;height:14px;}
+    .login-btn:hover{background:#fffaf0;}
+    .login-btn.is-in{color:#065f46;border-color:rgba(6,95,70,.4);background:rgba(209,250,229,.7);}
+    .login-modal{position:fixed;inset:0;z-index:100;background:rgba(40,28,14,.35);display:flex;align-items:center;justify-content:center;padding:16px;}
+    .login-modal[hidden]{display:none;}
+    .login-box{width:min(360px,100%);background:#fbf6ec;border:1px solid rgba(122,92,52,.3);border-radius:16px;padding:18px;box-shadow:0 20px 50px rgba(60,40,20,.35);color:#3b2c1c;}
+    .login-box h3{font-size:16px;font-weight:900;margin-bottom:4px;}
+    .login-note{font-size:11.5px;color:#7a6248;margin-bottom:10px;}
+    .login-box input{width:100%;font-size:16px;padding:9px 12px;border-radius:10px;border:1px solid rgba(122,92,52,.35);background:#fff;color:#1f160c;}
+    .login-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;}
+    .lg-primary{background:#3b2c1c;color:#fff;font-weight:800;border-radius:9px;padding:7px 14px;font-size:13px;}
+    .lg-ghost{background:transparent;color:#5b4630;font-weight:700;border-radius:9px;padding:7px 12px;font-size:13px;border:1px solid rgba(122,92,52,.3);}
+    .hdr-tools .xlsx-btn{background:transparent !important;border-color:transparent !important;color:transparent !important;box-shadow:none !important;transition:all .2s ease;}
+    .hdr-tools .xlsx-btn svg{opacity:0;transition:opacity .2s;}
+    .hdr-tools .xlsx-btn:hover,.hdr-tools .xlsx-btn:focus-visible{background:linear-gradient(135deg,#15803d,#166534) !important;border-color:rgba(74,222,128,.55) !important;color:#fff !important;box-shadow:0 2px 8px rgba(0,0,0,.25) !important;}
+    .hdr-tools .xlsx-btn:hover svg,.hdr-tools .xlsx-btn:focus-visible svg{opacity:1;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
@@ -532,7 +550,7 @@
     </div>
     <div class="hdr-tools"><div id="liveClock" class="hdr-clock">
         2026-11-05 19:18:00
-      </div><button type="button" id="xlsxDoneBtn" class="xlsx-btn" title="오늘 작업완료한 금일작업을 엑셀 파일로 받기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>AI액셀</button></div>
+      </div><button type="button" id="loginBtn" class="login-btn" title="작업자 로그인"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="loginLabel">로그인</span></button><button type="button" id="xlsxDoneBtn" class="xlsx-btn" title="오늘 작업완료한 금일작업을 엑셀 파일로 받기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>액셀</button></div>
   </header>
 
   <!-- Main Full-Screen Map Area -->
@@ -880,6 +898,7 @@
 
 
   <!-- Full Detail Modal (Opens when clicking '상세 관제 보기 >' inside any expanded card or clicking A~G buildings) -->
+  <div id="loginModal" class="login-modal" hidden><div class="login-box" role="dialog" aria-label="작업자 로그인"><h3>작업자 로그인</h3><p class="login-note">이름을 넣으면 등록하는 금일작업·공지에 작성자로 남고, 액셀에도 들어갑니다.</p><input id="loginName" type="text" maxlength="20" placeholder="이름 (예: 지수)" autocomplete="name"><div class="login-actions"><button type="button" id="loginCancel" class="lg-ghost">닫기</button><button type="button" id="logoutBtn" class="lg-ghost" hidden>로그아웃</button><button type="button" id="loginOk" class="lg-primary">로그인</button></div></div></div>
   <div id="detailModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center p-4 z-50">
     <div class="bg-slate-900/95 border border-amber-400/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl text-slate-100 relative">
       <button type="button" id="closeModalX" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 font-bold">
@@ -1220,7 +1239,7 @@
           +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?'완료됨':'작업완료')+'</button>'
           +'</div>';
       }
-      return '<div class="cmd-item'+(x.completed?' is-completed':'')+'"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'금일작업')+'</span><span>'+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):(x.working&&x.startedAt?' · 작업중 '+esc(x.startedAt):''))+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
+      return '<div class="cmd-item'+(x.completed?' is-completed':'')+'"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'금일작업')+'</span><span>'+(x.by?esc(x.by)+' · ':'')+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):(x.working&&x.startedAt?' · 작업중 '+esc(x.startedAt):''))+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
         +'<div class="cmd-row"><div class="cmd-text">'+esc(x.text)+(function(){const mv=moveOf(x);return mv?'<span class="move-tag">이동 '+esc(PLACE_LABEL[mv.from]||mv.from)+' → '+esc(PLACE_LABEL[mv.to]||mv.to)+'</span>':'';})()+'</div>'+right+'</div></div>';
     }
     function renderCards(){
@@ -1353,7 +1372,7 @@
     function updateSubmitLabel(){if(!sel.value){submit.disabled=true;submit.textContent='대상 버튼을 먼저 선택하세요';return;} submit.disabled=false; const nm=NAMES[sel.value]||sel.value; submit.innerHTML='<span class="cmd-submit-target">'+esc(nm)+'</span>에 '+(kind==='notice'?'공지사항 등록':'금일작업 내용 등록');}
     function setKind(k){kind=k;document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cmdKind===k)));updateSubmitLabel();text.placeholder=k==='notice'?'공지사항을 입력하세요':'금일작업 내용을 입력하세요 (예: A- 75 TON)';}
     document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.addEventListener('click',()=>setKind(b.dataset.cmdKind)));
-    submit.addEventListener('click',()=>{if(!sel.value){sel.focus();return;}const v=text.value.trim();if(!v){text.focus();return;}const all=load();const rec={id:Date.now().toString(36),target:sel.value,kind,text:v,at:nowStr()};const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);text.value='';if(fr)fr.value='';if(to)to.value='';render();});
+    submit.addEventListener('click',()=>{if(!sel.value){sel.focus();return;}const v=text.value.trim();if(!v){text.focus();return;}const all=load();const rec={id:Date.now().toString(36),target:sel.value,kind,text:v,at:nowStr()};try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);text.value='';if(fr)fr.value='';if(to)to.value='';render();});
     list.addEventListener('click',e=>{const id=e.target.getAttribute('data-cmd-del');if(!id)return;save(load().filter(x=>x.id!==id));render();});
     function goHome(){
       document.querySelectorAll('.hotspot-wrapper.is-open').forEach(w=>w.classList.remove('is-open'));
@@ -1524,19 +1543,19 @@
       const work=all.filter(x=>x.kind!=='notice');
       const doneToday=work.filter(x=>x.completed && String(x.completedAt||'').startsWith(today));
       if(!doneToday.length && !confirm('오늘 작업완료된 금일작업이 없습니다.\n그래도 오늘 전체 금일작업 현황을 엑셀로 받을까요?')) return;
-      const row=(x,i)=>{const g=goal(x.text);return {'번호':i+1,'대상':NAMES[x.target]||x.target,'작업 내용':x.text,'이동':(function(){const mv=(x.from&&x.to)?{from:x.from,to:x.to}:(window.jisuMoveOf?window.jisuMoveOf(x):null);return mv?(NAMES[mv.from]||mv.from)+' → '+(NAMES[mv.to]||mv.to):'';})(),'목표량':g.n,'완료량':x.done==null?'':Number(x.done),'단위':g.u,'상태':x.completed?'작업완료':(x.working?'작업중':'대기'),'등록 시각':x.at||'','작업 시작':x.startedAt||'','완료 시각':x.completedAt||''};};
+      const row=(x,i)=>{const g=goal(x.text);return {'번호':i+1,'대상':NAMES[x.target]||x.target,'작업 내용':x.text,'이동':(function(){const mv=(x.from&&x.to)?{from:x.from,to:x.to}:(window.jisuMoveOf?window.jisuMoveOf(x):null);return mv?(NAMES[mv.from]||mv.from)+' → '+(NAMES[mv.to]||mv.to):'';})(),'목표량':g.n,'완료량':x.done==null?'':Number(x.done),'단위':g.u,'상태':x.completed?'작업완료':(x.working?'작업중':'대기'),'작성자':x.by||'','등록 시각':x.at||'','작업 시작':x.startedAt||'','완료 시각':x.completedAt||''};};
       btn.disabled=true; const label=btn.innerHTML; btn.lastChild.textContent='만드는 중…';
       const fname='금일작업완료_'+y+m+d;
       try{
         const XLSX=await loadLib(); const wb=XLSX.utils.book_new();
-        const s1=XLSX.utils.json_to_sheet(doneToday.map(row),{header:['번호','대상','작업 내용','이동','목표량','완료량','단위','상태','등록 시각','작업 시작','완료 시각']});
-        s1['!cols']=[{wch:5},{wch:10},{wch:30},{wch:16},{wch:8},{wch:8},{wch:6},{wch:9},{wch:13},{wch:13},{wch:13}];
+        const s1=XLSX.utils.json_to_sheet(doneToday.map(row),{header:['번호','대상','작업 내용','이동','목표량','완료량','단위','상태','작성자','등록 시각','작업 시작','완료 시각']});
+        s1['!cols']=[{wch:5},{wch:10},{wch:30},{wch:16},{wch:8},{wch:8},{wch:6},{wch:9},{wch:10},{wch:13},{wch:13},{wch:13}];
         XLSX.utils.book_append_sheet(wb,s1,'금일 작업완료');
         const s2=XLSX.utils.json_to_sheet(work.map(row)); s2['!cols']=s1['!cols']; XLSX.utils.book_append_sheet(wb,s2,'전체 금일작업');
         XLSX.writeFile(wb,fname+'.xlsx');
       }catch(e){
         // fallback: CSV that Excel opens directly
-        const rows=doneToday.map(row); const head=['번호','대상','작업 내용','이동','목표량','완료량','단위','상태','등록 시각','작업 시작','완료 시각'];
+        const rows=doneToday.map(row); const head=['번호','대상','작업 내용','이동','목표량','완료량','단위','상태','작성자','등록 시각','작업 시작','완료 시각'];
         const csv='\ufeff'+[head.join(',')].concat(rows.map(r=>head.map(k=>'"'+String(r[k]).replace(/"/g,'""')+'"').join(','))).join('\r\n');
         const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download=fname+'.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
       }finally{ btn.disabled=false; btn.innerHTML=label; }
@@ -1555,6 +1574,24 @@
       if(t && t.id==='cmdText'){ e.preventDefault(); const b=document.getElementById('cmdSubmit'); if(b && !b.disabled) b.click(); return; }
       e.preventDefault(); toggleFull();
     });
+  })();
+  </script>
+  <script>
+  (function(){
+    const KEY='jisu-user', $=id=>document.getElementById(id);
+    const modal=$('loginModal'), btn=$('loginBtn'), lbl=$('loginLabel'), inp=$('loginName');
+    if(!modal||!btn) return;
+    const cur=()=>{try{return localStorage.getItem(KEY)||''}catch(e){return ''}};
+    function paint(){ const u=cur(); lbl.textContent=u?u:'로그인'; btn.classList.toggle('is-in',!!u); btn.title=u?(u+' (누르면 로그아웃/변경)'):'작업자 로그인'; $('logoutBtn').hidden=!u; $('loginOk').textContent=u?'변경':'로그인'; }
+    function open(){ inp.value=cur(); modal.hidden=false; setTimeout(()=>inp.focus(),30); }
+    function close(){ modal.hidden=true; }
+    btn.addEventListener('click',open);
+    $('loginCancel').addEventListener('click',close);
+    modal.addEventListener('click',e=>{ if(e.target===modal) close(); });
+    $('loginOk').addEventListener('click',()=>{ const v=inp.value.trim(); if(!v){inp.focus();return;} try{localStorage.setItem(KEY,v)}catch(e){} paint(); close(); });
+    $('logoutBtn').addEventListener('click',()=>{ try{localStorage.removeItem(KEY)}catch(e){} paint(); close(); });
+    inp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'){ e.preventDefault(); $('loginOk').click(); } if(e.key==='Escape') close(); });
+    paint();
   })();
   </script>
 </body>
