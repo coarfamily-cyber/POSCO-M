@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061238">
+  <meta name="jisu-build" content="202611061245">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -574,6 +574,36 @@
     .cmd-side .cmd-kind button{background:#e6d9c3 !important;}
     .cmd-side .work-complete:not(.is-working):not(.is-done){background:#f7f1e6 !important;}
     .cmd-side .cmd-submit:disabled{background:#ddd0b9 !important;color:#9a8669 !important;}
+    /* Sidebar: calm dark charcoal #282D37 */
+    .cmd-side{background:#282D37 !important;border:1px solid rgba(255,255,255,.08) !important;color:#e5e7eb;box-shadow:0 14px 34px rgba(40,28,14,.30),inset 0 1px 0 rgba(255,255,255,.05) !important;}
+    .cmd-side h2{color:#f3f4f6 !important;}
+    .cmd-side label,.cmd-side .cmd-move-h,.cmd-side .cmd-summary-h{color:#9aa3b2 !important;}
+    .cmd-side .cmd-move-h small{color:#6b7280 !important;}
+    .cmd-side select,.cmd-side textarea{background:#1f232b !important;border:1px solid #3a404c !important;color:#e5e7eb !important;}
+    .cmd-side textarea::placeholder{color:#6b7280;}
+    .cmd-side select:focus,.cmd-side textarea:focus{border-color:#818cf8 !important;box-shadow:0 0 0 3px rgba(129,140,248,.18);}
+    .cmd-side .cmd-kind button{background:#323844 !important;border-color:#3a404c !important;color:#cbd5e1 !important;}
+    .cmd-side .cmd-kind button[aria-pressed="true"]{background:#4f46e5 !important;border-color:#4f46e5 !important;color:#fff !important;}
+    .cmd-side .cmd-submit:disabled{background:#323844 !important;color:#6b7280 !important;}
+    .cmd-side .cmd-move-arrow{color:#fbbf24 !important;}
+    .cmd-side .cmd-sum-chip{background:#323844 !important;border-color:#3a404c !important;color:#e5e7eb !important;}
+    .cmd-side .cmd-sum-chip b{color:#f87171 !important;}.cmd-side .cmd-sum-chip i{color:#fbbf24 !important;}
+    .cmd-side .cmd-sum-chip.is-on{border-color:#818cf8 !important;background:rgba(99,102,241,.18) !important;}
+    .cmd-side .cmd-item{background:#303642 !important;border:1px solid #3a404c !important;box-shadow:none;}
+    .cmd-side .cmd-item .meta{color:#9aa3b2 !important;}
+    .cmd-side .cmd-item .tag.notice{color:#fbbf24 !important;}.cmd-side .cmd-item .tag.instruction{color:#4ade80 !important;}
+    .cmd-side .cmd-item [data-cmd-del]{color:#f87171 !important;}
+    .cmd-side .cmd-text{color:#f3f4f6 !important;}
+    .cmd-side .cmd-item.is-completed{border-color:rgba(74,222,128,.35) !important;}
+    .cmd-side .cmd-item.is-completed .cmd-text{color:#6b7280 !important;}
+    .cmd-side .work-done-num{color:#9aa3b2 !important;}
+    .cmd-side .work-done-num input{background:#1f232b !important;border:1px solid #3a404c !important;color:#fff !important;}
+    .cmd-side .work-unit{color:#cbd5e1 !important;}
+    .cmd-side .work-complete:not(.is-working):not(.is-done){background:#323844 !important;border:1px solid #4b5262 !important;color:#e5e7eb !important;box-shadow:none !important;}
+    .cmd-side .work-complete:not(.is-working):not(.is-done):hover{border-color:#818cf8 !important;color:#fff !important;}
+    .cmd-side .move-tag{color:#fde68a !important;background:rgba(251,191,36,.14) !important;border-color:rgba(251,191,36,.45) !important;}
+    .cmd-side .cmd-empty{color:#9aa3b2 !important;}
+    .cmd-side .jisu-ver{color:#6b7280 !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
