@@ -435,6 +435,7 @@
     .move-glow{stroke-linejoin:round;}
     .move-start{fill:#fbbf24;stroke:#1f2937;stroke-width:2;}
     .move-start.is-working{fill:#4ade80;}
+    .cmd-notice-count{display:inline-flex;align-items:center;justify-content:center;min-width:1.35em;height:1.35em;padding:0 .35em;border-radius:9999px;background:#f59e0b;color:#1f2937;font-size:.7em;font-weight:900;margin-left:.3em;line-height:1;box-shadow:0 0 8px rgba(245,158,11,.6);}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -1086,11 +1087,17 @@
         const mine=all.filter(x=>x.target===k); const work=mine.filter(x=>x.kind!=='notice'); const done=work.filter(x=>x.completed).length;
         const active=work.some(x=>x.working&&!x.completed); b.classList.toggle('has-active-work',active);
         document.querySelectorAll('[data-zone-btn="'+k+'"]').forEach(z=>z.classList.toggle('has-active-work',active));
-        let badge=b.querySelector('.cmd-count'); if(!mine.length){ if(badge) badge.remove(); return; }
-        if(!badge){ badge=document.createElement('span'); badge.className='cmd-count'; b.appendChild(badge); }
-        badge.textContent = work.length ? (done ? work.length+'/'+done : String(work.length)) : String(mine.length);
-        badge.classList.toggle('all-done', work.length>0 && done===work.length);
-        badge.title = work.length ? ('금일작업 '+work.length+'건 중 '+done+'건 완료') : ('공지 '+mine.length+'건');
+        const notices=mine.length-work.length;
+        let badge=b.querySelector('.cmd-count');
+        if(work.length){ if(!badge){ badge=document.createElement('span'); badge.className='cmd-count'; b.appendChild(badge); }
+          badge.textContent = done ? work.length+'/'+done : String(work.length);
+          badge.classList.toggle('all-done', done===work.length);
+          badge.title='금일작업 '+work.length+'건 중 '+done+'건 완료'; }
+        else if(badge) badge.remove();
+        let nb=b.querySelector('.cmd-notice-count');
+        if(notices){ if(!nb){ nb=document.createElement('span'); nb.className='cmd-notice-count'; b.appendChild(nb); }
+          nb.textContent=String(notices); nb.title='공지 '+notices+'건'; }
+        else if(nb) nb.remove();
       });
     }
     let modalKey=null;
@@ -1132,7 +1139,7 @@
       // building footprints (% of map) and road centre-lines (% of map) traced from the background image
       const BLD={A:[6.0,49.5,23.2,86.7],B:[25.6,10.4,31.3,86.7],C:[57.35,11.4,82.5,45.4],D:[57.35,55.4,82.6,87.9]};
       const ZONE_BLD={packaging:'C',pitch:'C','production-a':'C','production-b':'C','production-c':'C','production-d':'C'};
-      const ROADS=[['v',3.0,5,92],['v',24.4,5,92],['v',32.7,5,92],['v',56.0,5,92],['v',84.1,5,92],['h',5,3.0,84.1],['h',92,3.0,84.1],['h',50.4,56.0,84.1]]
+      const ROADS=[['v',3.0,5,92],['v',24.4,5,92],['v',32.7,5,92],['v',43.7,5,92],['v',56.0,5,50.4],['v',84.1,5,92],['h',5,3.0,84.1],['h',92,3.0,84.1],['h',50.4,43.7,84.1]] /* 43.7 = centre lane of the yard between B and C/D */
         .map(([o,c,a,b])=>o==='v'?{o,x:c/100*W,a:a/100*H,b:b/100*H}:{o,y:c/100*H,a:a/100*W,b:b/100*W});
       function exitsOf(k){
         const bk=BLD[k]?k:ZONE_BLD[k];
@@ -1190,8 +1197,9 @@
     document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.addEventListener('click',()=>setKind(b.dataset.cmdKind)));
     submit.addEventListener('click',()=>{const v=text.value.trim();if(!v){text.focus();return;}const all=load();const rec={id:Date.now().toString(36),target:sel.value,kind,text:v,at:nowStr()};const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);text.value='';if(fr)fr.value='';if(to)to.value='';render();});
     list.addEventListener('click',e=>{const id=e.target.getAttribute('data-cmd-del');if(!id)return;save(load().filter(x=>x.id!==id));render();});
-    sel.addEventListener('change',render);
-    document.querySelectorAll('[data-toggle-zone],[data-bldg],[data-zone-btn]').forEach(b=>b.addEventListener('click',()=>{const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg')||b.getAttribute('data-zone-btn');if(NAMES[k]){sel.value=k;render();}if(b.hasAttribute('data-bldg'))fillModal(k);}));
+    sel.addEventListener('change',()=>{try{localStorage.setItem('jisu-cmd-target',sel.value)}catch(e){}render();});
+    try{const last=localStorage.getItem('jisu-cmd-target');if(last&&[...sel.options].some(o=>o.value===last))sel.value=last;}catch(e){}
+    document.querySelectorAll('[data-toggle-zone],[data-bldg],[data-zone-btn]').forEach(b=>b.addEventListener('click',()=>{const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg')||b.getAttribute('data-zone-btn');if(NAMES[k]){sel.value=k;try{localStorage.setItem('jisu-cmd-target',k)}catch(e){}render();}if(b.hasAttribute('data-bldg'))fillModal(k);}));
     window.addEventListener('storage',e=>{if(e.key===KEY)render();});
     window.addEventListener('resize',()=>{drawMoves();setTimeout(drawMoves,500);}); if(window.ResizeObserver){new ResizeObserver(()=>drawMoves()).observe(document.getElementById('mapStage'));} setTimeout(drawMoves,800);
     render();
