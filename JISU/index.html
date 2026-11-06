@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061142">
+  <meta name="jisu-build" content="202611061148">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>POSCO M 실시간 관제 상황실 대시보드</title>
@@ -455,6 +455,8 @@
     .cmd-notice-banner time{font-size:10px;color:#fcd34d;opacity:.8;white-space:nowrap;}
     .prod-grid.prod-grid-d{top:82.5% !important;}
     .cmd-submit:disabled{background:#1e293b;color:#64748b;cursor:not-allowed;}
+    .hotspot-wrapper.is-open .expand-card.opens-up{transform-origin:bottom center;}
+    html,body{overflow-x:hidden;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -1422,6 +1424,41 @@
     setTimeout(check,1500); setInterval(check,60000);
     document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') check(); });
     const ft=document.querySelector('body > footer'); if(ft&&cur){ const s=document.createElement('span'); s.style.cssText='opacity:.55;font-size:10px;margin-left:8px'; s.textContent='v'+cur; (ft.firstElementChild||ft).appendChild(s); }
+  })();
+  </script>
+  <script>
+  /* Keep expanded cards inside the factory map: open below or above (whichever fits), shift sideways, and scroll inside the card if needed */
+  (function(){
+    const stage=document.getElementById('mapStage'); if(!stage) return;
+    const M=10;
+    function reset(card){ ['top','bottom','maxHeight','transform','marginTop','marginBottom','width'].forEach(p=>card.style[p]=''); card.classList.remove('opens-up'); }
+    function fitCard(wrap){
+      const card=wrap.querySelector(':scope > .expand-card'); if(!card) return;
+      if(!wrap.classList.contains('is-open')){ reset(card); return; }
+      const btn=wrap.querySelector(':scope > button, :scope > .hotspot-pill') || wrap.firstElementChild;
+      const sr=stage.getBoundingClientRect(), br=btn.getBoundingClientRect();
+      // width: never wider than the map
+      const maxW=sr.width-2*M; card.style.width = card.offsetWidth>maxW ? maxW+'px' : '';
+      const natural=card.scrollHeight;
+      const below=sr.bottom-br.bottom-M-8, above=br.top-sr.top-M-8;
+      let up=false, maxH;
+      if(natural<=below){ maxH=below; } else if(natural<=above){ up=true; maxH=above; } else { up=above>below; maxH=Math.max(above,below); }
+      if(up){ card.style.top='auto'; card.style.bottom='100%'; card.style.marginTop='0'; card.style.marginBottom='8px'; card.classList.add('opens-up'); }
+      else { card.style.top='100%'; card.style.bottom='auto'; card.style.marginTop='8px'; card.style.marginBottom='0'; card.classList.remove('opens-up'); }
+      card.style.maxHeight=Math.max(120,Math.floor(maxH))+'px';
+      // horizontal clamp
+      const w=card.offsetWidth, cx=br.left+br.width/2; let left=cx-w/2, dx=0;
+      if(left<sr.left+M) dx=sr.left+M-left; else if(left+w>sr.right-M) dx=(sr.right-M)-(left+w);
+      card.style.transform='translate(calc(-50% + '+Math.round(dx)+'px), 0)';
+    }
+    const fitOpen=()=>document.querySelectorAll('.hotspot-wrapper.is-open').forEach(fitCard);
+    const wraps=[...document.querySelectorAll('.hotspot-wrapper')];
+    const mo=new MutationObserver(list=>{ list.forEach(m=>{ const w=m.target; if(m.type==='attributes'){ fitCard(w); requestAnimationFrame(()=>fitCard(w)); setTimeout(()=>fitCard(w),450); } }); });
+    wraps.forEach(w=>mo.observe(w,{attributes:true,attributeFilter:['class']}));
+    const mo2=new MutationObserver(()=>requestAnimationFrame(fitOpen));
+    document.querySelectorAll('.hotspot-wrapper > .expand-card').forEach(c=>mo2.observe(c,{childList:true,subtree:true}));
+    window.addEventListener('resize',()=>{ fitOpen(); setTimeout(fitOpen,450); });
+    if(window.ResizeObserver) new ResizeObserver(()=>fitOpen()).observe(stage);
   })();
   </script>
 </body>
