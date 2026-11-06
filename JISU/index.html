@@ -360,6 +360,20 @@
     .work-complete{padding:6px 10px;}
     .cmd-count{min-width:1.35em;width:auto;padding:0 .4em;}
     .cmd-count.all-done{background:#16a34a;}
+
+    /* 작업완료 button: glass pill with check circle (redesign) */
+    .work-complete{position:relative;display:inline-flex !important;align-items:center;gap:6px;font-size:11.5px !important;font-weight:800;letter-spacing:-.01em;
+      padding:6px 12px 6px 7px !important;border-radius:9999px !important;color:#e2e8f0 !important;
+      background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.05)) !important;
+      border:1px solid rgba(255,255,255,.28) !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 4px 12px rgba(0,0,0,.25);
+      backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:all .2s ease;}
+    .work-complete::before{content:'';width:15px;height:15px;border-radius:50%;border:2px solid rgba(226,232,240,.75);box-sizing:border-box;flex:0 0 auto;}
+    .work-complete:hover{border-color:#7dd3fc !important;color:#fff !important;background:linear-gradient(135deg,rgba(125,211,252,.22),rgba(255,255,255,.06)) !important;}
+    .work-complete:hover::before{border-color:#7dd3fc;}
+    .work-complete:active{transform:scale(.96);}
+    .work-complete.is-done{color:#fff !important;border-color:transparent !important;
+      background:linear-gradient(135deg,#38bdf8,#6366f1) !important;box-shadow:0 0 0 1px rgba(255,255,255,.18) inset,0 6px 16px rgba(99,102,241,.45);}
+    .work-complete.is-done::before{content:'✓';display:inline-flex;align-items:center;justify-content:center;background:#fff;border:none;color:#4f46e5;font-size:10px;font-weight:900;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -990,7 +1004,7 @@
       if(isWork){
         right='<div class="work-ctrl">'
           +'<label class="work-done-num">완료 <input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" enterkeyhint="done" data-cmd-progress="'+x.id+'" value="'+(x.done!=null?esc(x.done):'')+'" placeholder="0"'+(x.completed?' disabled':'')+'>'+(g?'<span>/ '+esc(g.n)+(g.u?' '+esc(g.u):'')+'</span>':'')+'</label>'
-          +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?'✓ 작업완료':'작업완료')+'</button>'
+          +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?'완료됨':'작업완료')+'</button>'
           +'</div>';
       }
       return '<div class="cmd-item'+(x.completed?' is-completed':'')+'"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'금일작업')+'</span><span>'+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):'')+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
