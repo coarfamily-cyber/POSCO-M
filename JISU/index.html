@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611061230">
+  <meta name="jisu-build" content="202611061234">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -567,6 +567,13 @@
     .cmd-side .move-tag{color:#92400e !important;background:rgba(251,191,36,.18) !important;border-color:rgba(217,119,6,.45) !important;}
     .cmd-side .cmd-empty{color:#8a7660 !important;}
     .cmd-side .jisu-ver{color:#a8977f !important;}
+    /* softer sand tone sidebar (less bright) */
+    .cmd-side{background:rgba(236,226,208,.94) !important;border-color:rgba(122,92,52,.30) !important;box-shadow:0 14px 34px rgba(84,58,28,.20),inset 0 1px 0 rgba(255,255,255,.45) !important;}
+    .cmd-side select,.cmd-side textarea,.cmd-side .work-done-num input{background:#f7f1e6 !important;}
+    .cmd-side .cmd-item,.cmd-side .cmd-sum-chip{background:#f5eee2 !important;}
+    .cmd-side .cmd-kind button{background:#e6d9c3 !important;}
+    .cmd-side .work-complete:not(.is-working):not(.is-done){background:#f7f1e6 !important;}
+    .cmd-side .cmd-submit:disabled{background:#ddd0b9 !important;color:#9a8669 !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
@@ -1652,6 +1659,19 @@
     $('logoutBtn').addEventListener('click',()=>{ try{localStorage.removeItem(KEY)}catch(e){} paint(); close(); });
     inp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter'){ e.preventDefault(); $('loginOk').click(); } if(e.key==='Escape') close(); });
     paint();
+  })();
+  </script>
+  <script>
+  /* Click anywhere outside an open card (map background, empty page area) to close it */
+  (function(){
+    document.addEventListener('click',e=>{
+      const t=e.target; if(!(t instanceof Element)) return;
+      if(t.closest('.hotspot-wrapper, .cmd-side, #detailModal, #loginModal, .hdr-tools, .bldg-badge')) return;
+      const open=document.querySelectorAll('.hotspot-wrapper.is-open'); if(!open.length) return;
+      open.forEach(w=>w.classList.remove('is-open'));
+      document.querySelectorAll('[data-production-btn],[data-warehouse-btn]').forEach(b=>{b.classList.remove('is-selected');b.setAttribute('aria-pressed','false');});
+      document.querySelectorAll('.chevron').forEach(c=>c.style.transform='rotate(0deg)');
+    });
   })();
   </script>
 </body>
