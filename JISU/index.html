@@ -431,6 +431,10 @@
     .move-labels{position:absolute;inset:0;pointer-events:none;z-index:23;}
     .move-label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:clamp(10px,1.05cqw,13px);font-weight:800;color:#1f2937;background:#fbbf24;border-radius:9999px;padding:3px 9px;box-shadow:0 4px 12px rgba(0,0,0,.4);}
     .move-label.is-working{background:#4ade80;color:#052e16;}
+    .move-path{stroke-linejoin:round;}
+    .move-glow{stroke-linejoin:round;}
+    .move-start{fill:#fbbf24;stroke:#1f2937;stroke-width:2;}
+    .move-start.is-working{fill:#4ade80;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between bg-[#070a10] text-slate-100">
@@ -1124,19 +1128,53 @@
       const moves=load().map(x=>({x,m:moveOf(x)})).filter(o=>o.m&&!o.x.completed);
       let defs='<defs><marker id="mvHead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fbbf24"/></marker><marker id="mvHeadW" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4ade80"/></marker></defs>';
       let paths=''; let lab='';
+      const W=sr.width, H=sr.height, P=(x,y)=>[x/100*W,y/100*H];
+      // building footprints (% of map) and road centre-lines (% of map) traced from the background image
+      const BLD={A:[6.0,49.5,23.2,86.7],B:[25.6,10.4,31.3,86.7],C:[57.35,11.4,82.5,45.4],D:[57.35,55.4,82.6,87.9]};
+      const ZONE_BLD={packaging:'C',pitch:'C','production-a':'C','production-b':'C','production-c':'C','production-d':'C'};
+      const ROADS=[['v',3.0,5,92],['v',24.4,5,92],['v',32.7,5,92],['v',56.0,5,92],['v',84.1,5,92],['h',5,3.0,84.1],['h',92,3.0,84.1],['h',50.4,56.0,84.1]]
+        .map(([o,c,a,b])=>o==='v'?{o,x:c/100*W,a:a/100*H,b:b/100*H}:{o,y:c/100*H,a:a/100*W,b:b/100*W});
+      function exitsOf(k){
+        const bk=BLD[k]?k:ZONE_BLD[k];
+        if(bk){const [x1,y1,x2,y2]=BLD[bk];return [P(x1,y1),P(x2,y1),P(x1,y2),P(x2,y2)];}
+        const el=anchorEl(k); if(!el) return [];
+        const r=el.getBoundingClientRect(); return [[r.left+r.width/2-sr.left,r.top+r.height/2-sr.top]];
+      }
+      function projections(pt,isPoint){
+        const out=[]; ROADS.forEach((rd,ri)=>{let q,d;
+          if(rd.o==='v'){const y=Math.min(Math.max(pt[1],rd.a),rd.b);q=[rd.x,y];}else{const x=Math.min(Math.max(pt[0],rd.a),rd.b);q=[x,rd.y];}
+          d=Math.hypot(q[0]-pt[0],q[1]-pt[1]); out.push({ri,q,d});});
+        out.sort((a,b)=>a.d-b.d); const lim=isPoint?out.slice(0,2):out.filter(o=>o.d<=Math.max(W,H)*0.035).slice(0,2);
+        return lim.length?lim:out.slice(0,1);
+      }
+      function route(fromK,toK){
+        const nodes=[], adj=[], key=p=>Math.round(p[0])+','+Math.round(p[1]), idx={};
+        const node=p=>{const k=key(p);if(idx[k]==null){idx[k]=nodes.length;nodes.push(p);adj.push([]);}return idx[k];};
+        const link=(i,j)=>{if(i===j)return;const d=Math.hypot(nodes[i][0]-nodes[j][0],nodes[i][1]-nodes[j][1]);adj[i].push([j,d]);adj[j].push([i,d]);};
+        const onRoad=ROADS.map(()=>[]);
+        ROADS.forEach((r1,i)=>ROADS.forEach((r2,j)=>{if(j<=i||r1.o===r2.o)return;const v=r1.o==='v'?r1:r2,hh=r1.o==='v'?r2:r1;
+          if(v.x>=hh.a-1&&v.x<=hh.b+1&&hh.y>=v.a-1&&hh.y<=v.b+1){const n=node([v.x,hh.y]);onRoad[i].push(n);onRoad[j].push(n);}}));
+        ROADS.forEach((rd,i)=>{onRoad[i].push(node(rd.o==='v'?[rd.x,rd.a]:[rd.a,rd.y]));onRoad[i].push(node(rd.o==='v'?[rd.x,rd.b]:[rd.b,rd.y]));});
+        const S=nodes.length; nodes.push(null); adj.push([]); const T=nodes.length; nodes.push(null); adj.push([]);
+        const attach=(k,virt)=>{const isPt=!(BLD[k]||ZONE_BLD[k]); exitsOf(k).forEach(c=>{const ci=node(c); adj[virt].push([ci,0]); adj[ci].push([virt,0]);
+          projections(c,isPt).forEach(p=>{const pi=node(p.q); link(ci,pi); onRoad[p.ri].push(pi);});});};
+        attach(fromK,S); attach(toK,T);
+        ROADS.forEach((rd,i)=>{const ns=[...new Set(onRoad[i])].sort((a,b)=>rd.o==='v'?nodes[a][1]-nodes[b][1]:nodes[a][0]-nodes[b][0]);for(let t=1;t<ns.length;t++)link(ns[t-1],ns[t]);});
+        const dist=new Array(nodes.length).fill(Infinity), prev=new Array(nodes.length).fill(-1), done=new Array(nodes.length).fill(false); dist[S]=0;
+        for(;;){let u=-1,best=Infinity;for(let i=0;i<nodes.length;i++)if(!done[i]&&dist[i]<best){best=dist[i];u=i;} if(u<0||u===T)break; done[u]=true;
+          adj[u].forEach(([v,d])=>{if(u===S&&v===T)return; const nd=dist[u]+d; if(nd<dist[v]){dist[v]=nd;prev[v]=u;}});}
+        if(!isFinite(dist[T])) return null; const pts=[]; for(let v=prev[T];v!==S&&v>=0;v=prev[v]) pts.unshift(nodes[v]);
+        return pts.filter((p,i)=>i===0||Math.hypot(p[0]-pts[i-1][0],p[1]-pts[i-1][1])>0.5);
+      }
       moves.forEach((o,idx)=>{
-        const a=anchorEl(o.m.from), b=anchorEl(o.m.to); if(!a||!b) return;
-        const ra=a.getBoundingClientRect(), rb=b.getBoundingClientRect();
-        const x1=ra.left+ra.width/2-sr.left, y1=ra.top+ra.height/2-sr.top, x2=rb.left+rb.width/2-sr.left, y2=rb.top+rb.height/2-sr.top;
-        const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy)||1, nx=-dy/len, ny=dx/len, bend=Math.min(140,len*0.22)*(idx%2?-1:1);
-        const cx=(x1+x2)/2+nx*bend, cy=(y1+y2)/2+ny*bend;
-        // shorten ends so the arrow stops at the label edge
-        const sh=(px,py,qx,qy,d)=>{const L=Math.hypot(qx-px,qy-py)||1;return [px+(qx-px)*d/L,py+(qy-py)*d/L];};
-        const [sx,sy]=sh(x1,y1,cx,cy,Math.max(ra.width,ra.height)/2+4), [ex,ey]=sh(x2,y2,cx,cy,Math.max(rb.width,rb.height)/2+6);
+        const pts=route(o.m.from,o.m.to); if(!pts||pts.length<2) return;
+        const off=(idx%3)*4-4; const pp=pts.map(p=>[p[0]+off,p[1]+off]);
+        const d='M'+pp.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
         const working=!!o.x.working; const cls='move-path'+(working?' is-working':'');
-        paths+='<path class="move-glow" d="M'+sx+','+sy+' Q'+cx+','+cy+' '+ex+','+ey+'"/>'
-              +'<path class="'+cls+'" d="M'+sx+','+sy+' Q'+cx+','+cy+' '+ex+','+ey+'" marker-end="url(#'+(working?'mvHeadW':'mvHead')+')"/>';
-        const mx=0.25*sx+0.5*cx+0.25*ex, my=0.25*sy+0.5*cy+0.25*ey;
+        paths+='<path class="move-glow" d="'+d+'"/><path class="'+cls+'" d="'+d+'" marker-end="url(#'+(working?'mvHeadW':'mvHead')+')"/>'
+              +'<circle class="move-start'+(working?' is-working':'')+'" cx="'+pp[0][0]+'" cy="'+pp[0][1]+'" r="5"/>';
+        let total=0; const segs=[]; for(let i=1;i<pp.length;i++){const l=Math.hypot(pp[i][0]-pp[i-1][0],pp[i][1]-pp[i-1][1]);segs.push(l);total+=l;}
+        let half=total/2, mx=pp[0][0], my=pp[0][1]; for(let i=1;i<pp.length;i++){if(half<=segs[i-1]){const t=half/segs[i-1];mx=pp[i-1][0]+(pp[i][0]-pp[i-1][0])*t;my=pp[i-1][1]+(pp[i][1]-pp[i-1][1])*t;break;} half-=segs[i-1];}
         const g=goalOf(o.x.text); const prog=g?((o.x.done!=null?o.x.done:0)+' / '+g.n+(g.u?' '+g.u:'')):'';
         lab+='<div class="move-label'+(working?' is-working':'')+'" style="left:'+mx+'px;top:'+my+'px">'+esc(PLACE_LABEL[o.m.from]||o.m.from)+' → '+esc(PLACE_LABEL[o.m.to]||o.m.to)+(prog?' · '+esc(prog):'')+(working?' · 작업중':'')+'</div>';
       });
