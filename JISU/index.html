@@ -331,7 +331,7 @@
     .ob-item .ob-del{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.65);color:#fca5a5;font-size:12px;line-height:20px;text-align:center;}
 
     /* Production buttons: one row A B C D on the former 창고 line (생산A centered under 포장) */
-    .prod-grid{position:absolute;left:59.8%;top:42%;transform:translate(0,-50%);display:grid;grid-template-columns:repeat(4,max-content);gap:6px;z-index:45;}
+    .prod-grid{position:absolute;left:59.8%;top:40%;transform:translate(0,-50%);display:grid;grid-template-columns:repeat(4,max-content);gap:6px;z-index:45;}
     .prod-grid > .hotspot-wrapper{position:relative;left:auto !important;top:auto !important;transform:none;}
     .prod-grid > .hotspot-wrapper .hotspot-pill{width:100%;justify-content:center;}
   </style>
@@ -1024,7 +1024,13 @@
       const grid=document.createElement('div'); grid.className='prod-grid';
       stage.appendChild(grid); wraps.forEach(w=>grid.appendChild(w));
       const firstBtn=wraps[0].querySelector('.hotspot-pill');
-      const place=()=>{ const half=firstBtn ? firstBtn.getBoundingClientRect().width/2 : 0; grid.style.transform='translate('+(-half)+'px,-50%)'; };
+      const pack=document.querySelector('[data-toggle-zone="packaging"]');
+      const place=()=>{
+        const half=firstBtn ? firstBtn.getBoundingClientRect().width/2 : 0;
+        const sr=stage.getBoundingClientRect();
+        if(pack && sr.width){ const pr=pack.getBoundingClientRect(); grid.style.left=((pr.left+pr.width/2-sr.left)/sr.width*100).toFixed(3)+'%'; }
+        grid.style.transform='translate('+(-half)+'px,-50%)';
+      };
       place(); window.addEventListener('resize',place); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(place);
     })();
   })();
