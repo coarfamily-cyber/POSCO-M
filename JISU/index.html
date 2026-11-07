@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611062230">
+  <meta name="jisu-build" content="202611080750">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -906,9 +906,9 @@
     .cal-box.rv-box .cal-body{grid-template-columns:minmax(0,1.7fr) minmax(270px,1fr) !important;}
     .cal-box.rv-box .cal-side{display:flex !important;flex-direction:column;gap:10px;}
     @media(max-width:720px){.cal-box.rv-box .cal-body{grid-template-columns:1fr !important;}}
-    /* ===== 모든 확대창(달력·이월·지수가 확인·로그인·건물 상세)은 지도 영역 안 가운데에만 ===== */
-    body.map-modals :is(#loginModal,#calModal,#detailModal,#jisuNote,.rv-modal){inset:auto !important;left:var(--map-l) !important;top:var(--map-t) !important;width:var(--map-w) !important;height:var(--map-h) !important;padding:12px !important;border-radius:var(--map-r,0px);overflow:hidden;}
-    body.map-modals :is(#loginModal,#calModal,#detailModal,#jisuNote,.rv-modal) > *{max-height:calc(var(--map-h) - 24px) !important;overflow:auto;}
+    /* ===== 모든 확대창(달력·이월·지수가 확인·로그인·건물 상세·코드)은 지도 영역 안 가운데에만 ===== */
+    body.map-modals :is(#loginModal,#calModal,#detailModal,#jisuNote,.rv-modal,#codeModal){inset:auto !important;left:var(--map-l) !important;top:var(--map-t) !important;width:var(--map-w) !important;height:var(--map-h) !important;padding:12px !important;border-radius:var(--map-r,0px);overflow:hidden;}
+    body.map-modals :is(#loginModal,#calModal,#detailModal,#jisuNote,.rv-modal,#codeModal) > *{max-height:calc(var(--map-h) - 24px) !important;overflow:auto;}
     body.map-modals #detailModal > *{max-width:min(32rem,100%) !important;}
     /* 투명창(유리)에는 색 틴트 없이 다른 창과 동일하게. 핑크는 태그·글씨에만 */
     .rv-box .rv-row,.rv-box .rv-row.short{background:rgba(255,255,255,.07) !important;}
@@ -931,6 +931,10 @@
           <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> LIVE
           </span>
+          <button type="button" id="codeBtn" class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 hover:bg-sky-500/35 flex items-center gap-1 cursor-pointer transition shadow-sm" title="전체 소스코드 보기">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+            <span>Code</span>
+          </button>
           
         </div>
         
@@ -1307,6 +1311,23 @@
 
 
   <!-- Full Detail Modal (Opens when clicking '상세 관제 보기 >' inside any expanded card or clicking A~G buildings) -->
+  <div id="codeModal" class="cal-modal" hidden><div class="cal-box" style="width:min(960px,100%);display:flex;flex-direction:column;padding:16px;" role="dialog" aria-label="전체 소스코드">
+    <div class="cal-head" style="margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+      <h3 style="font-size:18px;font-weight:900;color:#fff;display:flex;align-items:center;gap:6px;">
+        <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+        전체 소스코드
+      </h3>
+      <span id="codeLineCount" style="font-size:11.5px;font-weight:700;color:#94a3b8;background:rgba(255,255,255,.08);padding:2px 8px;border-radius:6px;"></span>
+      <button type="button" id="codeCopyBtn" class="cal-today" style="margin-left:auto;display:flex;align-items:center;gap:4px;cursor:pointer;" title="전체 코드 클립보드 복사">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        <span id="codeCopyLabel">복사</span>
+      </button>
+      <button type="button" class="cal-close" id="codeClose" aria-label="닫기">✕</button>
+    </div>
+    <div style="flex:1;min-height:0;overflow:hidden;border-radius:12px;background:#181b22;border:1px solid #323844;position:relative;">
+      <pre style="margin:0;padding:12px;height:100%;max-height:68vh;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;font-size:11.5px;line-height:1.5;color:#e2e8f0;white-space:pre;"><code id="codeContent">불러오는 중...</code></pre>
+    </div>
+  </div></div>
   <div id="loginModal" class="login-modal" hidden><div class="login-box" role="dialog" aria-label="작업자 로그인"><h3>작업자 로그인</h3><p class="login-note">이름을 넣으면 등록하는 금일작업·공지에 작성자로 남고, 액셀에도 들어갑니다.</p><input id="loginName" type="text" maxlength="20" placeholder="이름 (예: 지수)" autocomplete="name"><div class="login-actions"><button type="button" id="loginCancel" class="lg-ghost">닫기</button><button type="button" id="logoutBtn" class="lg-ghost" hidden>로그아웃</button><button type="button" id="loginOk" class="lg-primary">로그인</button></div></div></div>
   <div id="calModal" class="cal-modal" hidden><div class="cal-box" role="dialog" aria-label="작업 스케줄 달력">
     <div class="cal-head"><button type="button" class="cal-nav" id="calPrev" aria-label="이전 달">‹</button><h3 id="calTitle"></h3><button type="button" class="cal-nav" id="calNext" aria-label="다음 달">›</button><button type="button" class="cal-today" id="calToday">오늘</button><button type="button" class="cal-close" id="calClose" aria-label="닫기">✕</button></div>
@@ -2347,7 +2368,7 @@
       root.style.setProperty('--map-w',Math.round(r.width)+'px'); root.style.setProperty('--map-h',Math.round(r.height)+'px');
       root.style.setProperty('--map-r',getComputedStyle(map).borderTopLeftRadius||'0px'); }
     /* 한 번에 하나의 확대창만: 새 창이 열리면 나머지는 닫기 */
-    const SEL=['#calModal','.rv-modal','#jisuNote','#loginModal','#detailModal'];
+    const SEL=['#calModal','.rv-modal','#jisuNote','#loginModal','#detailModal','#codeModal'];
     const isOpen=el=>el && !el.hidden && !el.classList.contains('hidden') && getComputedStyle(el).display!=='none';
     const hide=el=>{ if(el.id==='detailModal'){ el.classList.add('hidden'); el.classList.remove('flex'); } else el.hidden=true; };
     let prev=new Set();
@@ -2359,6 +2380,51 @@
     fit(); window.addEventListener('resize',fit); window.addEventListener('scroll',fit,true); document.addEventListener('fullscreenchange',()=>setTimeout(fit,60));
     if(window.ResizeObserver) new ResizeObserver(fit).observe(map);
     new MutationObserver(fit).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden','class']});
+  })();
+  </script>
+  <script>
+  /* 전체 소스코드 모달 */
+  (function(){
+    const btn=document.getElementById('codeBtn'), modal=document.getElementById('codeModal');
+    const close=document.getElementById('codeClose'), copyBtn=document.getElementById('codeCopyBtn');
+    const copyLabel=document.getElementById('codeCopyLabel'), codeEl=document.getElementById('codeContent');
+    const lineCountEl=document.getElementById('codeLineCount');
+    if(!btn||!modal) return;
+    let cached='';
+    function display(txt){
+      codeEl.textContent=txt;
+      const cnt=txt.split('\n').length;
+      if(lineCountEl) lineCountEl.textContent=cnt.toLocaleString()+'줄';
+    }
+    function load(){
+      if(cached){ display(cached); return; }
+      codeEl.textContent='소스를 불러오는 중...';
+      fetch(location.href,{cache:'no-store'})
+        .then(r=>r.text())
+        .then(t=>{ cached=t; display(t); })
+        .catch(()=>{
+          const fb='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+          cached=fb; display(fb);
+        });
+    }
+    btn.addEventListener('click',()=>{ modal.hidden=false; load(); });
+    if(close) close.addEventListener('click',()=>{ modal.hidden=true; });
+    modal.addEventListener('click',e=>{ if(e.target===modal) modal.hidden=true; });
+    document.addEventListener('keydown',e=>{ if(!modal.hidden && e.key==='Escape') modal.hidden=true; });
+    if(copyBtn){
+      copyBtn.addEventListener('click',()=>{
+        if(!cached) return;
+        navigator.clipboard.writeText(cached).then(()=>{
+          if(copyLabel) copyLabel.textContent='복사됨 ✓';
+          setTimeout(()=>{ if(copyLabel) copyLabel.textContent='복사'; },2000);
+        }).catch(()=>{
+          const ta=document.createElement('textarea'); ta.value=cached; document.body.appendChild(ta); ta.select();
+          document.execCommand('copy'); document.body.removeChild(ta);
+          if(copyLabel) copyLabel.textContent='복사됨 ✓';
+          setTimeout(()=>{ if(copyLabel) copyLabel.textContent='복사'; },2000);
+        });
+      });
+    }
   })();
   </script>
 </body>
