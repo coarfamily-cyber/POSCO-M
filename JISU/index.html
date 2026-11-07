@@ -911,6 +911,10 @@
     .cal-box.rv-box .cal-body{grid-template-columns:minmax(0,1.7fr) minmax(270px,1fr) !important;}
     .cal-box.rv-box .cal-side{display:flex !important;flex-direction:column;gap:10px;}
     @media(max-width:720px){.cal-box.rv-box .cal-body{grid-template-columns:1fr !important;}}
+    /* ===== 모든 확대창(달력·이월·지수가 확인·로그인·건물 상세)은 지도 영역 안 가운데에만 ===== */
+    body.map-modals :is(#loginModal,#calModal,#detailModal,#jisuNote,.rv-modal){inset:auto !important;left:var(--map-l) !important;top:var(--map-t) !important;width:var(--map-w) !important;height:var(--map-h) !important;padding:12px !important;border-radius:var(--map-r,0px);overflow:hidden;}
+    body.map-modals :is(#loginModal,#calModal,#detailModal,#jisuNote,.rv-modal) > *{max-height:calc(var(--map-h) - 24px) !important;overflow:auto;}
+    body.map-modals #detailModal > *{max-width:min(32rem,100%) !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
@@ -2331,6 +2335,30 @@
     window.addEventListener('storage',e=>{ if(e.key===CKEY) refresh(); });
     window.jisuRollover=rollover;
     rollover(); refresh(); setInterval(rollover,30000); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') rollover(); });
+  })();
+  </script>
+  <script>
+  /* 확대창 위치를 지도(#mapStage) 영역에 맞춤. 지도가 너무 작은 화면(모바일)에서는 원래처럼 전체 화면 */
+  (function(){
+    const map=document.getElementById('mapStage'); if(!map) return; const root=document.documentElement;
+    function fit(){ const r=map.getBoundingClientRect(); const ok=r.width>=520 && r.height>=360 && getComputedStyle(map).display!=='none';
+      document.body.classList.toggle('map-modals',ok); if(!ok) return;
+      root.style.setProperty('--map-l',Math.round(r.left)+'px'); root.style.setProperty('--map-t',Math.round(r.top)+'px');
+      root.style.setProperty('--map-w',Math.round(r.width)+'px'); root.style.setProperty('--map-h',Math.round(r.height)+'px');
+      root.style.setProperty('--map-r',getComputedStyle(map).borderTopLeftRadius||'0px'); }
+    /* 한 번에 하나의 확대창만: 새 창이 열리면 나머지는 닫기 */
+    const SEL=['#calModal','.rv-modal','#jisuNote','#loginModal','#detailModal'];
+    const isOpen=el=>el && !el.hidden && !el.classList.contains('hidden') && getComputedStyle(el).display!=='none';
+    const hide=el=>{ if(el.id==='detailModal'){ el.classList.add('hidden'); el.classList.remove('flex'); } else el.hidden=true; };
+    let prev=new Set();
+    function single(){ const els=SEL.map(s=>document.querySelector(s)).filter(Boolean), now=new Set(els.filter(isOpen));
+      const fresh=[...now].filter(e=>!prev.has(e)); if(fresh.length){ const keep=fresh[fresh.length-1]; now.forEach(e=>{ if(e!==keep) hide(e); }); prev=new Set([keep]); } else prev=now; }
+    new MutationObserver(single).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden','class']});
+    /* 달력 입력칸에 커서가 있어도 Esc로 달력 닫기 */
+    document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return; const cal=document.getElementById('calModal'); if(cal&&!cal.hidden&&cal.contains(e.target)&&!(e.target.matches&&e.target.matches('[data-cz-input]'))){ cal.hidden=true; } },true);
+    fit(); window.addEventListener('resize',fit); window.addEventListener('scroll',fit,true); document.addEventListener('fullscreenchange',()=>setTimeout(fit,60));
+    if(window.ResizeObserver) new ResizeObserver(fit).observe(map);
+    new MutationObserver(fit).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden','class']});
   })();
   </script>
 </body>
