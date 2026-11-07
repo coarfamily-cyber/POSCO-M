@@ -891,6 +891,26 @@
     .cal-box .cal-side .cz-hist .ch-head{padding-top:0;}
     .cal-box .cal-grid .cal-cell{min-height:64px;}
     @media(max-width:720px){.cal-box .cal-side{grid-template-columns:1fr;grid-template-areas:"head" "add" "list" "hist" "note";}}
+    /* ===== 이월 색: 핑크 (#EC4899) — 작업중(주황)과 구분, 3회 이상은 빨강 유지 ===== */
+    .carry-tag:not(.hot){background:#ec4899 !important;box-shadow:0 0 6px rgba(236,72,153,.55) !important;}
+    .carry-sub{color:#f9a8d4 !important;}
+    .pend-tag{color:#f9a8d4 !important;}
+    .cmd-item.is-carry{background-color:rgba(236,72,153,.10) !important;}
+    .cmd-count.has-carry::after{background:#ec4899 !important;box-shadow:0 0 6px rgba(236,72,153,.9) !important;}
+    .rv-btn{background:rgba(236,72,153,.18) !important;color:#fbcfe8 !important;}
+    .rv-btn.has-pending{background:#ec4899 !important;color:#fff !important;animation:rvPulsePink 2s ease-in-out infinite !important;}
+    .rv-btn b{color:#be185d !important;}
+    @keyframes rvPulsePink{0%,100%{box-shadow:0 0 6px rgba(236,72,153,.45)}50%{box-shadow:0 0 16px rgba(236,72,153,.9)}}
+    .rv-box .rv-count,.rv-box .rv-colh:not(.ok){color:#f9a8d4 !important;}
+    .rv-st.part{background:rgba(236,72,153,.22) !important;color:#fbcfe8 !important;}
+    .rv-row:not(.okrow){background:rgba(236,72,153,.07) !important;}
+    .cal-carry{background:rgba(236,72,153,.78) !important;}
+    .ch-st.carry{background:rgba(236,72,153,.28) !important;color:#fbcfe8 !important;}
+    .ch-item.carry{background:rgba(236,72,153,.09) !important;}
+    /* 이월 창은 달력 배치 변경과 무관하게 2단 유지 */
+    .cal-box.rv-box .cal-body{grid-template-columns:minmax(0,1.7fr) minmax(270px,1fr) !important;}
+    .cal-box.rv-box .cal-side{display:flex !important;flex-direction:column;gap:10px;}
+    @media(max-width:720px){.cal-box.rv-box .cal-body{grid-template-columns:1fr !important;}}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
