@@ -912,6 +912,9 @@
     body.map-modals #detailModal > *{max-width:min(32rem,100%) !important;}
     /* 투명창(유리)에는 색 틴트 없이 다른 창과 동일하게. 핑크는 태그·글씨에만 */
     .rv-box .rv-row,.rv-box .rv-row.short{background:rgba(255,255,255,.07) !important;}
+    /* 이월 창 글씨: 제목 "이월 작업"만 핑크, 나머지 글씨는 다른 창과 같은 색 */
+    .rv-box .cal-head h3{color:#f472b6 !important;}
+    .rv-box .rv-count,.rv-box .rv-colh,.rv-box .rv-colh.ok,.rv-box .rv-colh:not(.ok),.rv-box .rv-dh{color:#e5e7eb !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
