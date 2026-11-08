@@ -1218,12 +1218,12 @@
     body:not(#zz) .move-runner.fl, body:not(#zz) .move-runner.fl.is-working, body:not(#zz) .move-runner.fl:not(.is-working){filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.65)) !important;}
   </style>
   <style>
-    /* 금일작업 탭·등록 버튼 배경: 한 단계 더 연한 하늘색 */
-    body:not(#zz) .cmd-side .cmd-kind button[data-cmd-kind="instruction"][aria-pressed="true"]{background:#caf0f8 !important;border-color:#caf0f8 !important;color:#062a33 !important;}
-    body:not(#zz) .cmd-side .cmd-submit:not(:disabled){background:#caf0f8 !important;color:#062a33 !important;}
-    body:not(#zz) .cmd-side .cmd-submit:not(:disabled):hover{background:#e0f7fb !important;}
+    /* 금일작업 탭·등록 버튼: 어두운 화면에 맞춘 반투명 하늘색 (눈부시지 않게) */
+    body:not(#zz) .cmd-side .cmd-kind button[data-cmd-kind="instruction"][aria-pressed="true"]{background:rgba(72,202,228,.32) !important;border-color:transparent !important;color:#e6fbff !important;}
+    body:not(#zz) .cmd-side .cmd-submit:not(:disabled){background:rgba(72,202,228,.32) !important;color:#e6fbff !important;}
+    body:not(#zz) .cmd-side .cmd-submit:not(:disabled):hover{background:rgba(72,202,228,.44) !important;}
     body:not(#zz) .cmd-side:has([data-cmd-kind="notice"][aria-pressed="true"]) .cmd-submit:not(:disabled){background:#fff4e9 !important;color:#3b2a1a !important;}
-    body:not(#zz) .cmd-side:not(:has([data-cmd-kind="notice"][aria-pressed="true"])) .cmd-submit .cmd-submit-target{background:rgba(6,42,51,.10) !important;color:#062a33 !important;box-shadow:inset 0 0 0 1px rgba(6,42,51,.10) !important;}
+    body:not(#zz) .cmd-side:not(:has([data-cmd-kind="notice"][aria-pressed="true"])) .cmd-submit .cmd-submit-target{background:rgba(255,255,255,.16) !important;color:#ffffff !important;box-shadow:none !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
