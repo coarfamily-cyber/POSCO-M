@@ -964,6 +964,11 @@
     /* 긴 카드: 안쪽 여백 조금 줄임 */
     .hotspot-wrapper.is-open > .expand-card{overflow-y:auto !important;}
     body.map-modals #detailModal > *{max-width:min(32rem,calc((var(--map-w) - 24px) / var(--ui-z,1))) !important;}
+    /* 오늘 작업이 다 완료된 버튼: 버튼 전체를 파란색으로 (생산C 노란색은 제외) */
+    [data-toggle-zone].st-done:not([data-production-btn="C"]){background:rgba(96,165,250,.34) !important;color:#fff !important;box-shadow:0 0 10px rgba(96,165,250,.45),inset 0 1px 0 rgba(255,255,255,.22) !important;}
+    [data-toggle-zone].st-done:not([data-production-btn="C"]) span{color:#fff !important;}
+    [data-toggle-zone].st-done:not([data-production-btn="C"]) .pulse-ring{background:#fff !important;color:#dbeafe !important;}
+    [data-toggle-zone].st-done:not([data-production-btn="C"]) .cmd-count{background:rgba(255,255,255,.92) !important;color:#2563eb !important;box-shadow:none !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
