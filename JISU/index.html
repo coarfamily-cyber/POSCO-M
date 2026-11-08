@@ -927,6 +927,12 @@
     select{color-scheme:dark;}
     select option,select optgroup{background-color:#282D37 !important;color:#e5e7eb !important;}
     select option:checked{background-color:#4f46e5 !important;color:#fff !important;}
+    /* 달력 기록 안 이월 판단 버튼 */
+    .ch-acts{margin-top:7px;}
+    .ch-acts .rv-btns,.ch-acts .rv-form{display:flex;flex-wrap:wrap;gap:5px;margin-top:0;}
+    .ch-acts .rv-form{margin-top:6px;}
+    .ch-acts .rv-b{padding:4px 10px;font-size:11.5px;}
+    .ch-acts .rv-in{flex:1;min-width:140px;font-size:13px;padding:6px 9px;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
@@ -2108,6 +2114,20 @@
     function histOf(day){ return { cmds:load(CKEY).filter(x=>dayOf(x)===day), memos:load(MKEY).filter(x=>dayOf(x)===day) }; }
     function carryCnt(){ const c={}; load(CKEY).forEach(x=>{ if(x.carryCount&&x.carryFrom&&x.kind!=='notice'){ const d=dayOf(x); if(d) c[d]=(c[d]||0)+1; } }); return c; }
     function histCount(){ const c={}; load(CKEY).concat(load(MKEY)).forEach(x=>{ const d=dayOf(x); if(d) c[d]=(c[d]||0)+1; }); return c; }
+    /* 달력 기록에서도 이월 작업 판단: 계속 · 날짜 변경 · 수량 수정 · 종료 (부족 완료는 잔량 이월 · 이대로 종료) */
+    let chForm=null, chMsg=null;
+    function chActs(x){
+      if(x.kind==='notice' || !window.jisuCarryAct) return '';
+      const pend=x.review==='pending', shortPend=pend&&x.short, openCarry=!x.closed&&x.carryCount&&!x.completed;
+      if(!(openCarry||shortPend)) return '';
+      const B=(t,label,cls)=>'<button type="button" class="rv-b'+(cls?' '+cls:'')+'" data-ch-act="'+t+'">'+label+'</button>';
+      const btns=shortPend?B('carry','잔량 이월','pri')+B('accept','이대로 종료'):(pend?B('ok','계속','pri'):'')+B('move','날짜 변경')+B('qty','수량 수정')+B('end','종료','del');
+      let f=''; if(chForm&&chForm.id===x.id){ const t=chForm.type, tm=window.jisuTomorrow?window.jisuTomorrow():'';
+        const g=String(x.text).match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||String(x.text).match(/(\d+(?:[.,]\d+)?)/);
+        const inp=t==='move'?'<input type="date" class="rv-in" min="'+tm+'" value="'+tm+'">':(t==='qty'?'<input type="text" inputmode="decimal" class="rv-in" value="'+(g?esc(g[1]):'')+'" placeholder="새 수량">':'<input type="text" class="rv-in" maxlength="80" placeholder="종료 사유 (예: 주문 취소)">');
+        f='<div class="rv-form">'+inp+'<button type="button" class="rv-b pri" data-ch-go>'+(t==='move'?'옮기기':(t==='qty'?'바꾸기':'종료하기'))+'</button><button type="button" class="rv-b" data-ch-cancel>취소</button></div>'; }
+      return '<div class="ch-acts" data-ch-id="'+esc(x.id)+'"><div class="rv-btns">'+btns+'</div>'+f+(chMsg&&chMsg.id===x.id?'<div class="rv-msg">'+esc(chMsg.t)+'</div>':'')+'</div>';
+    }
     function drawHist(day,today){
       const box=$('czHist'); if(!box) return; if(day>today){ box.innerHTML=''; return; }
       const {cmds,memos}=histOf(day), work=cmds.filter(x=>x.kind!=='notice'), notes=cmds.filter(x=>x.kind==='notice');
@@ -2119,7 +2139,7 @@
       if(work.length){ html+='<div class="ch-sec">금일작업</div>'+work.map(x=>{ const m=String(x.text).match(/(\d+(?:\.\d+)?)\s*TON/i);
           const q2=v=>String(Math.round(v*100)/100), mdk=k=>{const p=String(k).split('-');return (+p[1])+'/'+(+p[2]);};
           const st=x.ended?'<span class="ch-st end">종료</span>':(x.review==='moved'&&x.movedTo?'<span class="ch-st carry">'+mdk(x.movedTo)+'로 변경</span>':((x.carried&&!x.short)?'<span class="ch-st carry">'+(x.carriedQty!=null?q2(x.carriedQty)+' 이월':'이월')+'</span>':(x.completed?'<span class="ch-st '+(x.short?'short':'ok')+'">'+(x.short?'부족 완료 ':'완료 ')+esc((dayOf({at:x.completedAt})!==day?md(x.completedAt):'')+hm(x.completedAt))+'</span>':(x.working?'<span class="ch-st run">작업중</span>':'<span class="ch-st no">미완료</span>'))));
-          return '<div class="ch-item'+(x.completed&&!x.short?' done':'')+(x.carryCount||x.carried?' carry':'')+(x.ended?' ended':'')+'"><div class="ch-top"><b>'+esc(NAMES[x.target]||x.target)+'</b>'+(x.carryCount?'<span class="carry-tag'+(x.carryCount>=3?' hot':'')+'">이월'+(x.carryCount>1?' '+x.carryCount+'회':'')+'</span>':'')+st+'</div><div class="ch-txt">'+esc(x.text)+'</div><div class="ch-meta">'+(m?'완료 '+esc(x.done||0)+' / '+m[1]+' TON · ':'')+'등록 '+esc(hm(x.at))+(x.startedAt?' · 시작 '+esc(hm(x.startedAt)):'')+(x.by?' · '+esc(x.by):'')+(x.reviewNote?' · 판단: '+esc(x.reviewNote)+(x.reviewBy?' ('+esc(x.reviewBy)+')':''):(x.review==='pending'?' · 확인 대기':''))+'</div></div>'; }).join(''); }
+          return '<div class="ch-item'+(x.completed&&!x.short?' done':'')+(x.carryCount||x.carried?' carry':'')+(x.ended?' ended':'')+'"><div class="ch-top"><b>'+esc(NAMES[x.target]||x.target)+'</b>'+(x.carryCount?'<span class="carry-tag'+(x.carryCount>=3?' hot':'')+'">이월'+(x.carryCount>1?' '+x.carryCount+'회':'')+'</span>':'')+st+'</div><div class="ch-txt">'+esc(x.text)+'</div><div class="ch-meta">'+(m?'완료 '+esc(x.done||0)+' / '+m[1]+' TON · ':'')+'등록 '+esc(hm(x.at))+(x.startedAt?' · 시작 '+esc(hm(x.startedAt)):'')+(x.by?' · '+esc(x.by):'')+(x.reviewNote?' · 판단: '+esc(x.reviewNote)+(x.reviewBy?' ('+esc(x.reviewBy)+')':''):(x.review==='pending'?' · 확인 대기':''))+'</div>'+chActs(x)+'</div>'; }).join(''); }
       if(notes.length){ html+='<div class="ch-sec">공지</div>'+notes.map(x=>'<div class="ch-item n"><div class="ch-top"><b>'+esc(NAMES[x.target]||x.target)+'</b><span class="ch-time">'+esc(hm(x.at))+'</span></div><div class="ch-txt">'+esc(x.text)+'</div></div>').join(''); }
       if(memos.length){ html+='<div class="ch-sec m">특이사항</div>'+memos.map(x=>'<div class="ch-item m"><div class="ch-top"><b>'+esc(NAMES[x.target]||x.target)+'</b><span class="ch-time">'+esc(hm(x.at))+(x.by?' · '+esc(x.by):'')+'</span></div><div class="ch-txt">'+esc(x.text)+'</div></div>').join(''); }
       box.innerHTML=html;
@@ -2152,7 +2172,7 @@
       const items=load(SKEY).filter(s=>s.date===picked);
       $('czList').innerHTML=items.length?items.map(s=>{
         if(editing===s.id) return '<div class="cz-item editing"><input class="cz-edit" data-cz-input="'+s.id+'" value="'+esc(lineOf(s))+'"><div class="cz-btns"><button type="button" class="cz-b ok" data-cz-ok="'+s.id+'">저장</button><button type="button" class="cz-b" data-cz-cancel="'+s.id+'">취소</button></div></div>';
-        return '<div class="cz-item'+(s.applied?' done':'')+'"><span class="cal-tag '+(s.kind==='notice'?'n':'w')+'">'+(s.kind==='notice'?'공지':'금일작업')+'</span><b>'+esc(NAMES[s.target]||s.target)+'</b><span class="cz-t">'+esc(s.text)+'</span>'
+        return '<div class="cz-item'+(s.applied?' done':'')+'"><span class="cal-tag '+(s.kind==='notice'?'n':'w')+'">'+(s.kind==='notice'?'공지':'금일작업')+'</span><b>'+esc(NAMES[s.target]||s.target)+'</b>'+(s.carryCount?'<span class="carry-tag'+(s.carryCount>=3?' hot':'')+'">이월'+(s.carryCount>1?' '+s.carryCount+'회':'')+'</span>':'')+'<span class="cz-t">'+esc(s.text)+'</span>'
           +(s.applied?'<span class="cz-state">등록됨</span>':'<div class="cz-btns"><button type="button" class="cz-b" data-cz-edit="'+s.id+'">수정</button><button type="button" class="cz-b del" data-cz-del="'+s.id+'">삭제</button></div>')+'</div>'; }).join(''):'<div class="cz-empty">아직 스케줄이 없어요.</div>';
       const addBox=$('czText').closest('.cz-add'); if(addBox) addBox.hidden=past; const note=modal.querySelector('.cal-note'); if(note) note.hidden=past;
       if(past && !items.length) $('czList').innerHTML='';
@@ -2176,6 +2196,17 @@
       const sch=load(SKEY); lines.forEach((x,i)=>{ const rec={id:Date.now().toString(36)+i,date:picked,target:x.target,kind:x.kind,text:x.text,created:nowStr()}; if(u) rec.by=u; sch.push(rec); });
       save(SKEY,sch); $('czText').value=''; msg.textContent=lines.length+'건 저장 · '+lines.map(x=>(NAMES[x.target]||x.target)+(x.kind==='notice'?' 공지':'')).join(', '); msg.className='cz-msg ok'; apply(); drawZoom(); draw(); }
     $('czSave').addEventListener('click',saveNew);
+    (function(){ const hb=$('czHist'); if(!hb) return;
+      const after=(focus)=>{ drawZoom(); draw(); if(focus){ const fi=$('czHist').querySelector('.rv-in'); if(fi){ fi.focus(); if(fi.type==='text') fi.select(); } } };
+      const go=box=>{ const id=box.getAttribute('data-ch-id'), inp=box.querySelector('.rv-in'); const err=window.jisuCarryAct(id,chForm.type,inp?inp.value:''); if(err){ chMsg={id,t:err}; after(true); } else { chForm=null; chMsg=null; after(false); } };
+      hb.addEventListener('click',e=>{ const box=e.target.closest('[data-ch-id]'); if(!box) return; e.stopPropagation(); const id=box.getAttribute('data-ch-id');
+        const b=e.target.closest('[data-ch-act]'); if(b){ const t=b.getAttribute('data-ch-act'); chMsg=null;
+          if(t==='move'||t==='qty'||t==='end'){ chForm={id,type:t}; after(true); return; }
+          const err=window.jisuCarryAct(id,t); if(err) chMsg={id,t:err}; chForm=null; after(false); return; }
+        if(e.target.closest('[data-ch-go]')){ go(box); return; }
+        if(e.target.closest('[data-ch-cancel]')){ chForm=null; chMsg=null; after(false); } });
+      hb.addEventListener('keydown',e=>{ if(!e.target.classList.contains('rv-in')) return; e.stopPropagation(); if(e.key==='Escape'){ chForm=null; chMsg=null; after(false); return; } if(e.key==='Enter'&&!e.isComposing){ e.preventDefault(); go(e.target.closest('[data-ch-id]')); } });
+    })();
     $('czText').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter' && (e.ctrlKey||e.metaKey)){ e.preventDefault(); saveNew(); } });
     $('czList').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; const sch=load(SKEY);
       if(b.dataset.czEdit){ editing=b.dataset.czEdit; drawZoom(); return; }
@@ -2292,6 +2323,8 @@
     }
     const queue=()=>load(CKEY).filter(x=>x.kind!=='notice' && x.review==='pending' && (!x.closed || x.short));
     window.jisuReviewCount=()=>queue().length;
+    window.jisuCarryAct=(id,type,val)=>{ const err=act(id,type,val); if(!err){ redraw(); if(window.jisuCarryRefresh) window.jisuCarryRefresh(); } return err; };
+    window.jisuTomorrow=()=>tomorrow();
 
     function act(id,type,val){
       const all=load(CKEY), x=all.find(r=>r.id===id); if(!x) return '';
@@ -2388,7 +2421,7 @@
       const fresh=[...now].filter(e=>!prev.has(e)); if(fresh.length){ const keep=fresh[fresh.length-1]; now.forEach(e=>{ if(e!==keep) hide(e); }); prev=new Set([keep]); } else prev=now; }
     new MutationObserver(single).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden','class']});
     /* 달력 입력칸에 커서가 있어도 Esc로 달력 닫기 */
-    document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return; const cal=document.getElementById('calModal'); if(cal&&!cal.hidden&&cal.contains(e.target)&&!(e.target.matches&&e.target.matches('[data-cz-input]'))){ cal.hidden=true; } },true);
+    document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return; const cal=document.getElementById('calModal'); if(cal&&!cal.hidden&&cal.contains(e.target)&&!(e.target.matches&&e.target.matches('[data-cz-input],.rv-in'))){ cal.hidden=true; } },true);
     fit(); window.addEventListener('resize',fit); window.addEventListener('scroll',fit,true); document.addEventListener('fullscreenchange',()=>setTimeout(fit,60));
     if(window.ResizeObserver) new ResizeObserver(fit).observe(map);
     new MutationObserver(fit).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden','class']});
