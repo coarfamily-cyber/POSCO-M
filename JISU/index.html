@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611082141">
+  <meta name="jisu-build" content="202611082156">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1177,6 +1177,26 @@
     .move-runner.is-working{fill:#eafff1;stroke:#4ade80;filter:drop-shadow(0 0 6px rgba(74,222,128,.95)) drop-shadow(0 0 2px rgba(0,0,0,.6));}
     @media (prefers-reduced-motion: reduce){ body:not(#zz) .move-path{animation:none !important;} }
   </style>
+  <style>
+    /* 이동작업: 경로를 따라 움직이는 지게차 (위에서 본 모습, 진행 방향으로 회전) */
+    .move-runner.fl{fill:none;stroke:none;filter:drop-shadow(0 0 4px rgba(251,191,36,.9)) drop-shadow(0 1px 2px rgba(0,0,0,.7));}
+    .move-runner.fl.is-working{filter:drop-shadow(0 0 5px rgba(74,222,128,.95)) drop-shadow(0 1px 2px rgba(0,0,0,.7));}
+    .move-runner.fl .fl-body{fill:#fbbf24;stroke:#1f2937;stroke-width:1;}
+    .move-runner.fl.is-working .fl-body{fill:#4ade80;}
+    .move-runner.fl .fl-cab{fill:#1f2937;stroke:#e5e7eb;stroke-width:.8;}
+    .move-runner.fl .fl-weight{fill:#374151;}
+    .move-runner.fl .fl-wheel{fill:#111827;}
+    .move-runner.fl .fl-mast{fill:#4b5563;}
+    .move-runner.fl .fl-fork{fill:#d1d5db;stroke:#374151;stroke-width:.5;}
+  </style>
+  <style>
+    /* 이동작업 색 구분 (작업중이 아니면 각자 색) */
+    .move-path:not(.is-working){stroke:var(--mv,#fbbf24);}
+    .move-start:not(.is-working){fill:var(--mv,#fbbf24);}
+    .move-label:not(.is-working){background:var(--mv,#fbbf24) !important;}
+    .move-runner.fl:not(.is-working) .fl-body{fill:var(--mv,#fbbf24);}
+    .move-runner.fl:not(.is-working){filter:drop-shadow(0 0 4px var(--mv,#fbbf24)) drop-shadow(0 1px 2px rgba(0,0,0,.7));}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -2036,16 +2056,18 @@
       const sr=stage.getBoundingClientRect(); svg.setAttribute('viewBox','0 0 '+sr.width+' '+sr.height); svg.setAttribute('width',sr.width); svg.setAttribute('height',sr.height);
       const moves=load().filter(x=>!x.closed).map(x=>({x,m:moveOf(x)})).filter(o=>o.m&&!o.x.completed);
       let defs='<defs><marker id="mvHead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fbbf24"/></marker><marker id="mvHeadW" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4ade80"/></marker></defs>';
-      let paths=''; let lab='';
+      let paths=''; let lab=''; let runners='';
+      const MVC=['#fbbf24','#fb923c','#a78bfa','#38bdf8']; /* 이동작업 색: 1번 노랑, 2번 주황, 3번 보라, 4번 하늘 (작업중은 초록) */
+      defs=defs.replace('</defs>',MVC.map((c,i)=>'<marker id="mvHead'+i+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="'+c+'"/></marker>').join('')+'</defs>');
       const W=sr.width, H=sr.height, P=(x,y)=>[x/100*W,y/100*H];
       // building footprints (% of map) and road centre-lines (% of map) traced from the background image
       const BLD={A:[6.0,49.5,23.2,86.7],B:[25.6,10.4,31.3,86.7],C:[57.35,11.4,82.5,45.4],D:[57.35,55.4,82.6,87.9]};
       const ZONE_BLD={environment:'A',packaging:'C','packaging-d':'D',pitch:'C','production-a':'C','production-b':'C','production-c':'C','production-d':'C','production-e':'D','production-f':'D','production-g':'D','production-h':'D'};
-      const ROADS=[['v',3.0,5,92],['v',24.4,5,92],['v',32.7,5,92],['v',43.7,5,92],['v',56.0,5,50.4],['v',84.1,5,92],['h',5,3.0,84.1],['h',92,3.0,84.1],['h',50.4,43.7,84.1]] /* 43.7 = centre lane of the yard between B and C/D */
+      const ROADS=[['v',43.8,16.9,91.4],['h',16.9,43.8,57.35],['h',44.2,43.8,57.35],['h',59.8,43.8,57.35],['h',84.7,43.8,57.35],['h',91.4,22.2,43.8],['v',22.2,86.4,91.4],['v',28.45,86.7,91.4]] /* 사용자가 그려준 동선: 가운데 세로 통로 + C·D동 입출고(왼쪽 벽 위·아래) + 아래 통로로 A동 입출고(오른쪽 아래) */
         .map(([o,c,a,b])=>o==='v'?{o,x:c/100*W,a:a/100*H,b:b/100*H}:{o,y:c/100*H,a:a/100*W,b:b/100*W});
       function exitsOf(k){
         const bk=BLD[k]?k:ZONE_BLD[k];
-        if(bk){const [x1,y1,x2,y2]=BLD[bk];return [P(x1,y2),P(x2,y2)];} /* loading docks: bottom corners only */
+        if(bk){const DOCKS={A:[[22.2,86.4]],B:[[28.45,86.7]],C:[[57.35,16.9],[57.35,44.2]],D:[[57.35,59.8],[57.35,84.7]]}; return (DOCKS[bk]||[]).map(p=>P(p[0],p[1]));} /* 입출고 지점 (사용자 지정) */
         const el=anchorEl(k); if(!el) return [];
         const r=el.getBoundingClientRect(); return [[r.left+r.width/2-sr.left,r.top+r.height/2-sr.top]];
       }
@@ -2079,17 +2101,17 @@
         const pts=route(o.m.from,o.m.to); if(!pts||pts.length<2) return;
         const off=(idx%3)*4-4; const pp=pts.map(p=>[p[0]+off,p[1]+off]);
         const d='M'+pp.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
-        const working=!!o.x.working; const cls='move-path'+(working?' is-working':'');
-        paths+='<path class="move-glow" d="'+d+'"/><path class="'+cls+'" d="'+d+'" marker-end="url(#'+(working?'mvHeadW':'mvHead')+')"/>'
-              +'<circle class="move-start'+(working?' is-working':'')+'" cx="'+pp[0][0]+'" cy="'+pp[0][1]+'" r="5"/>';
+        const working=!!o.x.working; const cls='move-path'+(working?' is-working':''); const ci=idx%MVC.length, mvs=' style="--mv:'+MVC[ci]+'"';
+        paths+='<path class="move-glow" d="'+d+'"/><path class="'+cls+'"'+mvs+' d="'+d+'" marker-end="url(#'+(working?'mvHeadW':'mvHead'+ci)+')"/>'
+              +'<circle class="move-start'+(working?' is-working':'')+'"'+mvs+' cx="'+pp[0][0]+'" cy="'+pp[0][1]+'" r="5"/>';
         let total=0; const segs=[]; for(let i=1;i<pp.length;i++){const l=Math.hypot(pp[i][0]-pp[i-1][0],pp[i][1]-pp[i-1][1]);segs.push(l);total+=l;}
         { const dur=Math.max(2.5,Math.min(9,total/(working?160:110))).toFixed(2); /* 움직이는 점: 출발 → 도착으로 계속 흐름 */
-          paths+='<circle class="move-runner'+(working?' is-working':'')+'" r="5"><animateMotion dur="'+dur+'s" repeatCount="indefinite" rotate="auto" path="'+d+'"/></circle>'; }
+          runners+='<g class="move-runner fl'+(working?' is-working':'')+'"'+mvs+'><g transform="scale(1.35) translate(-15,-9)"><rect x="22" y="3.2" width="9" height="2.6" rx="1" class="fl-fork"/><rect x="22" y="12.2" width="9" height="2.6" rx="1" class="fl-fork"/><rect x="20" y="1.5" width="2.6" height="15" rx="1" class="fl-mast"/><rect x="3" y="0" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="3" y="15" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="14" y="0" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="14" y="15" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="0" y="2" width="20.5" height="14" rx="3" class="fl-body"/><rect x="8" y="4" width="9" height="10" rx="1.6" class="fl-cab"/><rect x="0.8" y="4" width="4" height="10" rx="1.4" class="fl-weight"/></g><animateMotion dur="'+dur+'s" repeatCount="indefinite" rotate="auto" path="'+d+'"/></g>'; }
         let half=total/2, mx=pp[0][0], my=pp[0][1]; for(let i=1;i<pp.length;i++){if(half<=segs[i-1]){const t=half/segs[i-1];mx=pp[i-1][0]+(pp[i][0]-pp[i-1][0])*t;my=pp[i-1][1]+(pp[i][1]-pp[i-1][1])*t;break;} half-=segs[i-1];}
         const g=goalOf(o.x.text); const prog=g?((o.x.done!=null?o.x.done:0)+' / '+g.n+(g.u?' '+g.u:'')):'';
-        lab+='<div class="move-label'+(working?' is-working':'')+'" style="left:'+mx+'px;top:'+my+'px">'+esc(PLACE_LABEL[o.m.from]||o.m.from)+' → '+esc(PLACE_LABEL[o.m.to]||o.m.to)+(prog?' · '+esc(prog):'')+(working?' · 작업중':'')+'</div>';
+        lab+='<div class="move-label'+(working?' is-working':'')+'" style="--mv:'+MVC[ci]+';left:'+mx+'px;top:'+my+'px">'+esc(PLACE_LABEL[o.m.from]||o.m.from)+' → '+esc(PLACE_LABEL[o.m.to]||o.m.to)+(prog?' · '+esc(prog):'')+(working?' · 작업중':'')+'</div>';
       });
-      svg.innerHTML=defs+paths; labels.innerHTML=lab;
+      svg.innerHTML=defs+paths+runners; labels.innerHTML=lab;
     }
     function render(){
       renderCards(); drawMoves(); if(window.jisuCarryRefresh) window.jisuCarryRefresh(); if(window.jisuStateRefresh) window.jisuStateRefresh();
