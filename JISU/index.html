@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611082132">
+  <meta name="jisu-build" content="202611082141">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1169,6 +1169,14 @@
     body:not(#zz) .cmd-item .meta > span:not([class]){margin-left:auto !important;}
     body:not(#zz) .cmd-item .meta > button[data-cmd-del]{margin-left:6px !important;}
   </style>
+  <style>
+    /* 이동작업 모션: 점선이 출발→도착 방향으로 흐르고, 빛나는 점이 경로를 따라 이동 */
+    body:not(#zz) .move-path{animation:moveFlow 1.1s linear infinite !important;}
+    body:not(#zz) .move-path.is-working{animation:moveFlow .55s linear infinite !important;}
+    .move-runner{fill:#fff7d6;stroke:#fbbf24;stroke-width:2.5;filter:drop-shadow(0 0 5px rgba(251,191,36,.95)) drop-shadow(0 0 2px rgba(0,0,0,.6));}
+    .move-runner.is-working{fill:#eafff1;stroke:#4ade80;filter:drop-shadow(0 0 6px rgba(74,222,128,.95)) drop-shadow(0 0 2px rgba(0,0,0,.6));}
+    @media (prefers-reduced-motion: reduce){ body:not(#zz) .move-path{animation:none !important;} }
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -2075,6 +2083,8 @@
         paths+='<path class="move-glow" d="'+d+'"/><path class="'+cls+'" d="'+d+'" marker-end="url(#'+(working?'mvHeadW':'mvHead')+')"/>'
               +'<circle class="move-start'+(working?' is-working':'')+'" cx="'+pp[0][0]+'" cy="'+pp[0][1]+'" r="5"/>';
         let total=0; const segs=[]; for(let i=1;i<pp.length;i++){const l=Math.hypot(pp[i][0]-pp[i-1][0],pp[i][1]-pp[i-1][1]);segs.push(l);total+=l;}
+        { const dur=Math.max(2.5,Math.min(9,total/(working?160:110))).toFixed(2); /* 움직이는 점: 출발 → 도착으로 계속 흐름 */
+          paths+='<circle class="move-runner'+(working?' is-working':'')+'" r="5"><animateMotion dur="'+dur+'s" repeatCount="indefinite" rotate="auto" path="'+d+'"/></circle>'; }
         let half=total/2, mx=pp[0][0], my=pp[0][1]; for(let i=1;i<pp.length;i++){if(half<=segs[i-1]){const t=half/segs[i-1];mx=pp[i-1][0]+(pp[i][0]-pp[i-1][0])*t;my=pp[i-1][1]+(pp[i][1]-pp[i-1][1])*t;break;} half-=segs[i-1];}
         const g=goalOf(o.x.text); const prog=g?((o.x.done!=null?o.x.done:0)+' / '+g.n+(g.u?' '+g.u:'')):'';
         lab+='<div class="move-label'+(working?' is-working':'')+'" style="left:'+mx+'px;top:'+my+'px">'+esc(PLACE_LABEL[o.m.from]||o.m.from)+' → '+esc(PLACE_LABEL[o.m.to]||o.m.to)+(prog?' · '+esc(prog):'')+(working?' · 작업중':'')+'</div>';
@@ -2886,6 +2896,16 @@
     function wake(){ root.classList.remove('kiosk-idle'); clearTimeout(t); t=setTimeout(()=>{ if(root.classList.contains('kiosk')) root.classList.add('kiosk-idle'); },3000); }
     ['mousemove','mousedown','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,wake,{passive:true})); wake();
     if(root.classList.contains('kiosk')) setTimeout(refit,50);
+  })();
+  </script>
+  <script>
+  /* 지도 버튼 상세 카드는 한 번에 하나만: 다른 버튼을 누르면 열려 있던 카드(출고·입고·포장·피치·환경 포함)를 닫음 */
+  (function(){
+    document.addEventListener('click',e=>{
+      const b=e.target.closest&&e.target.closest('[data-toggle-zone]'); if(!b) return;
+      const k=b.getAttribute('data-toggle-zone'); const mine=document.getElementById('hotspot-'+k)||b.closest('.hotspot-wrapper');
+      document.querySelectorAll('.hotspot-wrapper.is-open').forEach(w=>{ if(w===mine) return; w.classList.remove('is-open'); const c=w.querySelector('.chevron'); if(c) c.style.transform='rotate(0deg)'; });
+    },true);
   })();
   </script>
 </body>
