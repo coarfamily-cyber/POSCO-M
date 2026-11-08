@@ -953,6 +953,10 @@
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
             <span>Code</span>
           </button>
+          <button type="button" id="kioskBtn" class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-violet-500/20 text-violet-200 border border-violet-500/30 hover:bg-violet-500/35 flex items-center gap-1 cursor-pointer transition shadow-sm" title="상황실 PC용 키오스크(전체화면) 실행 파일 받기">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"/></svg>
+            <span>키오스크</span>
+          </button>
           
         </div>
         
@@ -2504,6 +2508,22 @@
     async function req(){ if(document.visibilityState!=='visible' || lock) return; try{ lock=await navigator.wakeLock.request('screen'); lock.addEventListener('release',()=>{ lock=null; }); }catch(e){} }
     req(); document.addEventListener('visibilitychange',req); ['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,req,{passive:true})); setInterval(req,60000);
     window.jisuWakeLockActive=()=>!!lock;
+  })();
+  </script>
+  <script>
+  /* 키오스크 바로가기 받기: 크롬(없으면 엣지)을 키오스크 모드로 대시보드를 여는 실행 파일(.bat)을 내려받음 */
+  (function(){
+    const btn=document.getElementById('kioskBtn'); if(!btn) return;
+    const URL_='https://coarfamily-cyber.github.io/POSCO-M/JISU/';
+    const bat=['@echo off','rem JISU control room - open the dashboard in kiosk (full screen) mode. Exit with Alt+F4.',
+      'set "URL='+URL_+'"','set "CH="',
+      'if exist "%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe" set "CH=%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe"',
+      'if not defined CH if exist "%ProgramFiles(x86)%\\Google\\Chrome\\Application\\chrome.exe" set "CH=%ProgramFiles(x86)%\\Google\\Chrome\\Application\\chrome.exe"',
+      'if not defined CH if exist "%LocalAppData%\\Google\\Chrome\\Application\\chrome.exe" set "CH=%LocalAppData%\\Google\\Chrome\\Application\\chrome.exe"',
+      'if defined CH ( start "" "%CH%" --kiosk --new-window "%URL%" & exit /b )',
+      'start "" msedge --kiosk "%URL%" --edge-kiosk-type=fullscreen',''].join('\r\n');
+    btn.addEventListener('click',e=>{ e.stopPropagation(); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([bat],{type:'application/octet-stream'})); a.download='JISU_kiosk.bat'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),3000); });
+    window.jisuKioskBat=()=>bat;
   })();
   </script>
 </body>
