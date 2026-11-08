@@ -2762,7 +2762,7 @@
     const ST=['st-none','st-wait','st-work','st-done','st-carry'];
     function refresh(){ const all=load().filter(x=>!x.closed&&x.kind!=='notice');
       document.querySelectorAll('[data-toggle-zone]').forEach(b=>{ const k=b.getAttribute('data-toggle-zone'), w=all.filter(x=>x.target===k);
-        const st=!w.length?'st-none':(w.some(x=>x.working&&!x.completed)?'st-work':(w.some(x=>x.carryCount&&!x.completed)?'st-carry':(w.every(x=>x.completed)?'st-done':'st-wait')));
+        const st=!w.length?'st-none':(w.some(x=>x.working&&!x.completed)?'st-work':(w.every(x=>x.completed)?'st-done':'st-wait') /* 이월은 점 색이 아니라 분홍 -N 배지로만 표시 */);
         ST.forEach(c=>b.classList.toggle(c,c===st));
         const urg=w.some(x=>x.urgent&&!x.completed); let um=b.querySelector('.urgent-mark'); if(urg&&!um){ um=document.createElement('span'); um.className='urgent-mark'; um.textContent='!'; um.title='긴급 작업'; b.appendChild(um); } else if(!urg&&um) um.remove(); }); }
     window.jisuStateRefresh=refresh; refresh(); window.addEventListener('storage',e=>{ if(e.key===KEY) refresh(); });
