@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611080750">
+  <meta name="jisu-build" content="202611080936">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -923,6 +923,10 @@
     #mapStage{container-type:inline-size;}
     .prod-grid > .hotspot-wrapper .hotspot-pill{font-size:clamp(11px,0.95cqw,18.4px) !important;}
     #hotspot-packaging-d{left:59.8% !important;}
+    /* 선택 상자(대상 버튼·이동작업)를 펼쳤을 때 흰색 목록 대신 사이드바와 같은 어두운 목록 */
+    select{color-scheme:dark;}
+    select option,select optgroup{background-color:#282D37 !important;color:#e5e7eb !important;}
+    select option:checked{background-color:#4f46e5 !important;color:#fff !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
