@@ -1213,6 +1213,10 @@
     body:not(#zz) .move-runner.fl.is-working .fl-body{fill:var(--mvw,#4ade80) !important;}
     body:not(#zz) .move-runner.fl.is-working{filter:drop-shadow(0 0 5px var(--mvw,#4ade80)) drop-shadow(0 1px 2px rgba(0,0,0,.7)) !important;}
   </style>
+  <style>
+    /* 지게차 주변 색 번짐(glow) 제거: 그림자만 살짝 */
+    body:not(#zz) .move-runner.fl, body:not(#zz) .move-runner.fl.is-working, body:not(#zz) .move-runner.fl:not(.is-working){filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.65)) !important;}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
