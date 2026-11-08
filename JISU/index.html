@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611082131">
+  <meta name="jisu-build" content="202611082132">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1164,7 +1164,7 @@
     /* 긴급 작업: 왼쪽 빨간 선 제거 */
     body:not(#zz) .cmd-item.is-urgent{box-shadow:none !important;border-left-color:transparent !important;}
     /* 태그 줄 맞춤: 금일작업 · 긴급 · 이월 태그는 같은 높이로 왼쪽에, 시간 · 삭제는 오른쪽 끝에 고정 */
-    body:not(#zz) .cmd-item .meta{display:flex !important;align-items:center !important;column-gap:5px;}
+    body:not(#zz) .cmd-item .meta{display:flex !important;align-items:center !important;justify-content:flex-start !important;column-gap:5px;}
     body:not(#zz) .cmd-item .meta :is(.urg-tag,.carry-tag,.all-tag){height:18px !important;line-height:18px !important;padding:0 8px !important;margin-left:0 !important;font-size:10.5px !important;display:inline-flex !important;align-items:center !important;}
     body:not(#zz) .cmd-item .meta > span:not([class]){margin-left:auto !important;}
     body:not(#zz) .cmd-item .meta > button[data-cmd-del]{margin-left:6px !important;}
