@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611081057">
+  <meta name="jisu-build" content="202611081102">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -970,6 +970,9 @@
     [data-toggle-zone].st-done:not([data-production-btn="C"]) span{color:#fff !important;}
     [data-toggle-zone].st-done:not([data-production-btn="C"]) .pulse-ring{background:#fff !important;color:#dbeafe !important;}
     [data-toggle-zone].st-done:not([data-production-btn="C"]) .cmd-count{background:rgba(255,255,255,.92) !important;color:#2563eb !important;box-shadow:none !important;}
+    /* 작업중 = 앞 점 초록 깜빡임 (이월과 겹쳐도 작업중 우선, 이월은 숫자 배지의 분홍 표시로) */
+    @keyframes workBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.8)}}
+    [data-toggle-zone]:not([data-production-btn="C"]).st-work .pulse-ring{animation:workBlink 1s ease-in-out infinite !important;box-shadow:0 0 8px #22c55e !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
@@ -2581,7 +2584,7 @@
     const ST=['st-none','st-wait','st-work','st-done','st-carry'];
     function refresh(){ const all=load().filter(x=>!x.closed&&x.kind!=='notice');
       document.querySelectorAll('[data-toggle-zone]').forEach(b=>{ const k=b.getAttribute('data-toggle-zone'), w=all.filter(x=>x.target===k);
-        const st=!w.length?'st-none':(w.some(x=>x.carryCount&&!x.completed)?'st-carry':(w.some(x=>x.working&&!x.completed)?'st-work':(w.every(x=>x.completed)?'st-done':'st-wait')));
+        const st=!w.length?'st-none':(w.some(x=>x.working&&!x.completed)?'st-work':(w.some(x=>x.carryCount&&!x.completed)?'st-carry':(w.every(x=>x.completed)?'st-done':'st-wait')));
         ST.forEach(c=>b.classList.toggle(c,c===st)); }); }
     window.jisuStateRefresh=refresh; refresh(); window.addEventListener('storage',e=>{ if(e.key===KEY) refresh(); });
     const stage=document.getElementById('mapStage'); if(stage){ const lg=document.createElement('div'); lg.className='state-legend'; lg.innerHTML='<span><i class="n"></i>작업 없음</span><span><i class="w"></i>대기</span><span><i class="r"></i>작업중</span><span><i class="d"></i>완료</span><span><i class="c"></i>이월</span>'; stage.appendChild(lg); }
