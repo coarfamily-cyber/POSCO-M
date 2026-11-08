@@ -1019,6 +1019,15 @@
     /* 실적 창 좌우 이동 버튼: 확대·떠오름 없이 밝아지기만 (위 ✕ 버튼과 겹치지 않게) */
     .perf-box .perf-arrow,.perf-box .perf-arrow:hover,.perf-box .perf-arrow:focus-visible,.perf-box .perf-arrow:active{scale:1 !important;translate:0 0 !important;box-shadow:none !important;}
     .perf-box .perf-arrow:hover{background:rgba(255,255,255,.14) !important;color:#fff !important;}
+    /* HOME 오늘 특이사항 */
+    .home-memo{margin:0 0 10px;padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.06);}
+    .home-memo .hs-h span{display:inline-flex;align-items:center;justify-content:center;min-width:1.5em;height:1.5em;margin-left:4px;padding:0 .4em;border-radius:9999px;background:#8b5cf6;color:#fff;font-size:11px;}
+    .hm-list{display:grid;gap:6px;max-height:38vh;overflow:auto;}
+    .hm-item{display:block;width:100%;text-align:left;padding:7px 9px;border-radius:10px;background:rgba(139,92,246,.12);color:#e5e7eb;cursor:pointer;}
+    .hm-item:hover{scale:1 !important;translate:0 0 !important;background:rgba(139,92,246,.22);}
+    .hm-top{display:flex;align-items:center;gap:6px;font-size:11.5px;} .hm-top b{color:#fff;} .hm-top span{margin-left:auto;color:#94a3b8;}
+    .hm-txt{margin-top:2px;font-size:12.5px;font-weight:700;color:#f1f5f9;word-break:break-all;}
+    .home-memo .hs-h{font-size:12px;font-weight:800;color:#cbd5e1;margin-bottom:6px;} .home-memo .hs-empty{font-size:12.5px;color:#94a3b8;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
@@ -1791,7 +1800,15 @@
         +'<div class="cmd-row"><div class="cmd-text">'+esc(x.text)+carrySub(x)+(function(){const mv=moveOf(x);return mv?'<span class="move-tag">이동 '+esc(PLACE_LABEL[mv.from]||mv.from)+' → '+esc(PLACE_LABEL[mv.to]||mv.to)+'</span>':'';})()+'</div>'+right+'</div></div>';
     }
     /* HOME 상태 사이드바: 오늘 전체 현황 (등록된 금일작업 기준, 임의 숫자 없음) */
-    function homeSummary(){
+    function homeSummary(){ return homeWork()+homeMemos(); }
+    function homeMemos(){
+      let ms=[]; try{ ms=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]'); }catch(e){}
+      const t=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()), md=t.slice(5,7)+'. '+t.slice(8,10)+'.';
+      const today=ms.filter(m=>m.day?m.day===t:String(m.at||'').startsWith(md)).reverse();
+      const hm=s=>{const m=String(s||'').match(/(\d{1,2}:\d{2})/); return m?m[1]:'';};
+      return '<div class="home-memo"><div class="hs-h">오늘 특이사항 <span>'+today.length+'</span></div>'+(today.length?'<div class="hm-list">'+today.slice(0,12).map(m=>'<button type="button" class="hm-item" data-memo-goto="'+esc(m.target)+'"><div class="hm-top"><b>'+esc(NAMES[m.target]||m.target)+'</b><span>'+esc(hm(m.at))+(m.by?' · '+esc(m.by):'')+'</span></div><div class="hm-txt">'+esc(m.text)+'</div></button>').join('')+(today.length>12?'<div class="hs-empty">외 '+(today.length-12)+'건</div>':'')+'</div>':'<div class="hs-empty">오늘 남긴 특이사항이 없어요.</div>')+'</div>';
+    }
+    function homeWork(){
       const work=load().filter(x=>!x.closed&&x.kind!=='notice'); if(!work.length) return '<div class="home-sum"><div class="hs-h">오늘 전체 현황</div><div class="hs-empty">오늘 등록된 금일작업이 없어요.</div></div>';
       const done=work.filter(x=>x.completed).length, run=work.filter(x=>x.working&&!x.completed).length, carry=work.filter(x=>x.carryCount).length;
       let goal=0, got=0; work.forEach(x=>{ const g=goalOf(x.text); if(!g||!/^(TON|톤)$/i.test(g.u)) return; const n=Number(g.n); if(!(n>0)) return; goal+=n; const d=x.completed&&!x.short&&(x.done==null||x.done==='')?n:Number(x.done)||0; got+=Math.min(Math.max(d,0),n); });
@@ -1946,6 +1963,8 @@
     document.querySelectorAll('[data-toggle-zone],[data-bldg],[data-zone-btn]').forEach(b=>b.addEventListener('click',()=>{const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg')||b.getAttribute('data-zone-btn');if(NAMES[k]){sel.value=k;try{localStorage.setItem('jisu-cmd-target',k)}catch(e){}render();}if(b.hasAttribute('data-bldg'))fillModal(k);}));
     window.addEventListener('storage',e=>{if(e.key===KEY)render();});
     window.jisuCmdRender=()=>render();
+    list.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-memo-goto]'); if(!b) return; const k=b.getAttribute('data-memo-goto'); if(![...sel.options].some(o=>o.value===k)) return; sel.value=k; try{localStorage.setItem('jisu-cmd-target',k)}catch(_){} render(); });
+    window.addEventListener('storage',e=>{ if(e.key==='jisu-memos-v1') render(); });
     list.addEventListener('change',e=>{const id=e.target.getAttribute&&e.target.getAttribute('data-cmd-retarget');if(!id)return;const nt=e.target.value;const all=load();const it=all.find(x=>x.id===id);if(!it)return;it.target=nt;save(all);sel.value=nt;try{localStorage.setItem('jisu-cmd-target',nt)}catch(_){}render();});
     document.getElementById('cmdSummary').addEventListener('click',e=>{const b=e.target.closest('[data-cmd-goto]');if(!b)return;sel.value=b.getAttribute('data-cmd-goto');try{localStorage.setItem('jisu-cmd-target',sel.value)}catch(_){}render();});
     window.addEventListener('resize',()=>{drawMoves();setTimeout(drawMoves,500);}); if(window.ResizeObserver){new ResizeObserver(()=>drawMoves()).observe(document.getElementById('mapStage'));} setTimeout(drawMoves,800);
@@ -2213,9 +2232,9 @@
       const t=kstToday(), ty=+t.slice(0,4); let k=ty+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); if(k>t) k=(ty-1)+k.slice(4); return k; }
     const hm=s=>{ const m=String(s||'').match(/(\d{1,2}:\d{2})/); return m?m[1]:''; };
     const md=s=>{ const m=String(s||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); return m?(+m[1])+'/'+(+m[2])+' ':''; };
-    function histOf(day){ return { cmds:load(CKEY).filter(x=>dayOf(x)===day), memos:load(MKEY).filter(x=>dayOf(x)===day) }; }
+    function histOf(day){ return { cmds:load(CKEY).filter(x=>dayOf(x)===day), memos:[] }; } /* 특이사항은 달력에 표시하지 않음 (사이드바 HOME에서 보기) */
     function carryCnt(){ const c={}; load(CKEY).forEach(x=>{ if(x.carryCount&&x.carryFrom&&x.kind!=='notice'){ const d=dayOf(x); if(d) c[d]=(c[d]||0)+1; } }); return c; }
-    function histCount(){ const c={}; load(CKEY).concat(load(MKEY)).forEach(x=>{ const d=dayOf(x); if(d) c[d]=(c[d]||0)+1; }); return c; }
+    function histCount(){ const c={}; load(CKEY).forEach(x=>{ const d=dayOf(x); if(d) c[d]=(c[d]||0)+1; }); return c; }
     /* 달력 기록에서도 이월 작업 판단: 계속 · 날짜 변경 · 수량 수정 · 종료 (부족 완료는 잔량 이월 · 이대로 종료) */
     let chForm=null, chMsg=null;
     function chActs(x){
@@ -2344,11 +2363,11 @@
       });
     }
     function send(b){ const inp=b.querySelector('.memo-input'), v=inp.value.trim(); if(!v){ inp.focus(); return; } const k=b.dataset.memoFor;
-      const all=load(); const rec={id:Date.now().toString(36),target:k,tag:'issue',text:v,at:nowStr()}; const u=me(); if(u) rec.by=u; all.push(rec); save(all); inp.value=''; render();
+      const all=load(); const rec={id:Date.now().toString(36),target:k,tag:'issue',text:v,at:nowStr()}; const u=me(); if(u) rec.by=u; all.push(rec); save(all); inp.value=''; render(); if(window.jisuCmdRender) window.jisuCmdRender();
       const ni=document.querySelector('.memo-box[data-memo-for="'+k+'"] .memo-input'); if(ni) ni.focus(); }
     document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('.memo-box'); if(!b) return; e.stopPropagation();
       if(e.target.closest('.memo-send')){ send(b); return; }
-      const del=e.target.closest('[data-memo-del]'); if(del){ if(!confirm('이 특이사항을 삭제할까요?')) return; save(load().filter(x=>x.id!==del.dataset.memoDel)); render(); } },true);
+      const del=e.target.closest('[data-memo-del]'); if(del){ if(!confirm('이 특이사항을 삭제할까요?')) return; save(load().filter(x=>x.id!==del.dataset.memoDel)); render(); if(window.jisuCmdRender) window.jisuCmdRender(); } },true);
     document.addEventListener('keydown',e=>{ if(!(e.target.classList&&e.target.classList.contains('memo-input'))) return; e.stopPropagation(); if(e.key==='Enter'&&!e.isComposing){ e.preventDefault(); send(e.target.closest('.memo-box')); } },true);
     window.addEventListener('storage',e=>{ if(e.key===KEY) render(); });
     window.jisuMemoRender=render; render();
