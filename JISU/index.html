@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611081133">
+  <meta name="jisu-build" content="202611081149">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1028,6 +1028,9 @@
     .hm-top{display:flex;align-items:center;gap:6px;font-size:11.5px;} .hm-top b{color:#fff;} .hm-top span{margin-left:auto;color:#94a3b8;}
     .hm-txt{margin-top:2px;font-size:12.5px;font-weight:700;color:#f1f5f9;word-break:break-all;}
     .home-memo .hs-h{font-size:12px;font-weight:800;color:#cbd5e1;margin-bottom:6px;} .home-memo .hs-empty{font-size:12.5px;color:#94a3b8;}
+    /* 완료된 버튼의 앞 점: 파란색 깜빡임 */
+    [data-toggle-zone].st-done:not([data-production-btn="C"]) .pulse-ring{background:#38bdf8 !important;color:#7dd3fc !important;box-shadow:0 0 8px #38bdf8,0 0 0 2px rgba(255,255,255,.55) !important;animation:workBlink 1s ease-in-out infinite !important;}
+    [data-toggle-zone].st-done:not([data-production-btn="C"]) .pulse-ring::after{animation:none !important;opacity:0 !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
