@@ -1157,7 +1157,8 @@
   </style>
   <style>
     /* 이월 작업을 완료하면 분홍 "이월" 태그에 줄을 긋고 흐리게 */
-    body:not(#zz) .cmd-item.is-completed .carry-tag{text-decoration:line-through !important;text-decoration-thickness:2px !important;text-decoration-color:rgba(255,255,255,.95) !important;opacity:.55 !important;box-shadow:none !important;}
+    body:not(#zz) .cmd-item.is-completed .carry-tag{position:relative !important;opacity:.8 !important;box-shadow:none !important;background:#9d3c6b !important;color:#fbe4ef !important;}
+    body:not(#zz) .cmd-item.is-completed .carry-tag::after{content:'';position:absolute;left:2px;right:2px;top:50%;height:2px;margin-top:-1px;background:#fff;border-radius:2px;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
