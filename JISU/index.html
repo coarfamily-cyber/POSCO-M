@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611082110">
+  <meta name="jisu-build" content="202611082116">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1141,6 +1141,15 @@
     body:not(#zz) .cmd-count.has-carry::after{content:none !important;display:none !important;}
     .carry-minus{display:inline-flex;align-items:center;justify-content:center;min-width:1.35em;height:1.35em;padding:0 .4em;border-radius:9999px;background:#ec4899;color:#fff;font-size:.7em;font-weight:900;margin-left:.25em;line-height:1;box-shadow:0 0 8px rgba(236,72,153,.75);white-space:nowrap;}
   </style>
+  <style>
+    /* 확인 대기 글자 숨김 (이월은 분홍 태그·-N 배지로 표시) */
+    body:not(#zz) .pend-tag{display:none !important;}
+    /* 금일작업 탭·등록 버튼 배경: 더 연한 하늘색 */
+    body:not(#zz) .cmd-side .cmd-kind button[data-cmd-kind="instruction"][aria-pressed="true"]{background:#90e0ef !important;border-color:#90e0ef !important;color:#062a33 !important;}
+    body:not(#zz) .cmd-side .cmd-submit:not(:disabled){background:#90e0ef !important;color:#062a33 !important;}
+    body:not(#zz) .cmd-side .cmd-submit:not(:disabled):hover{background:#ade8f4 !important;}
+    body:not(#zz) .cmd-side:has([data-cmd-kind="notice"][aria-pressed="true"]) .cmd-submit:not(:disabled){background:#fff4e9 !important;color:#3b2a1a !important;}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -1399,7 +1408,7 @@
                 <button type="button" class="ob-btn ob-primary" id="obCamBtn">📷 사진 찍기</button>
                 <label class="ob-btn" for="obFile">🖼 사진 불러오기</label>
                 <input type="file" id="obFile" accept="image/*" capture="environment" multiple hidden>
-                <button type="button" class="ob-btn ob-jisu" id="obJisuBtn">🔒 지수가 피치</button>
+                <button type="button" class="ob-btn ob-jisu" id="obJisuBtn">🔒 지수가 확인</button>
               </div>
               <div class="ob-cam" id="obCam" hidden>
                 <video id="obVideo" autoplay playsinline muted></video>
