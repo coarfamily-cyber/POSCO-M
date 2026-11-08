@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611080950">
+  <meta name="jisu-build" content="202611081006">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1956,7 +1956,15 @@
     /* only move FORWARD to a newer build (prevents bouncing between cached copies),
        and never reload while full screen or while typing - wait until the user is done */
     let pending=null;
-    function busy(){ const a=document.activeElement; return !!(document.fullscreenElement||document.webkitFullscreenElement) || (a && (a.tagName==='TEXTAREA'||a.tagName==='INPUT'||a.tagName==='SELECT')); }
+    /* 상황실 상시 화면: 보고 있는 게 있으면 새로고침하지 않음 (전체화면, 입력 중, 카드·달력·이월 창 열림, 최근 1분 안에 조작) */
+    let lastAct=Date.now(); ['pointerdown','keydown','input','wheel','touchstart'].forEach(ev=>document.addEventListener(ev,()=>{ lastAct=Date.now(); },true));
+    function anyOpen(){ if(document.querySelector('.hotspot-wrapper.is-open')) return true;
+      return ['#calModal','.rv-modal','#jisuNote','#loginModal','#detailModal'].some(s=>{ const el=document.querySelector(s); return el && !el.hidden && !el.classList.contains('hidden') && getComputedStyle(el).display!=='none'; }); }
+    function busy(){ const a=document.activeElement; return !!(document.fullscreenElement||document.webkitFullscreenElement) || (a && (a.tagName==='TEXTAREA'||a.tagName==='INPUT'||a.tagName==='SELECT')) || anyOpen() || (Date.now()-lastAct<60000); }
+    /* 하루 한 번 새벽 5시(KST) 이후, 조용할 때 정리용 새로고침 (오래 켜둔 화면 느려짐 방지) */
+    const loadedAt=Date.now();
+    function dailyDue(){ const k=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); const five=new Date(k+'T05:00:00+09:00').getTime(); return Date.now()>=five && loadedAt<five; }
+    setInterval(()=>{ if(pending){ apply(); return; } if(dailyDue() && !busy()) location.reload(); },15000);
     function apply(){ if(!pending) return; if(busy()) return; const go=pending; pending=null; (function(){ const u=new URL(location.href); u.searchParams.set('v',go); location.replace(u.toString()); })(); }
     document.addEventListener('fullscreenchange',()=>setTimeout(apply,300));
     document.addEventListener('focusout',()=>setTimeout(apply,1500));
@@ -2487,6 +2495,15 @@
       sel.value=''; sel.dispatchEvent(new Event('change',{bubbles:true})); if(a && a.blur && a!==document.body) a.blur();
     }
     setInterval(tick,5000);
+  })();
+  </script>
+  <script>
+  /* 상황실 모니터 꺼짐 방지 (Wake Lock): 대시보드가 화면에 보이는 동안 화면 절전 막기 */
+  (function(){
+    if(!('wakeLock' in navigator)) return; let lock=null;
+    async function req(){ if(document.visibilityState!=='visible' || lock) return; try{ lock=await navigator.wakeLock.request('screen'); lock.addEventListener('release',()=>{ lock=null; }); }catch(e){} }
+    req(); document.addEventListener('visibilitychange',req); ['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,req,{passive:true})); setInterval(req,60000);
+    window.jisuWakeLockActive=()=>!!lock;
   })();
   </script>
 </body>
