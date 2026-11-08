@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611082123">
+  <meta name="jisu-build" content="202611082131">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1154,6 +1154,20 @@
     /* 등록 버튼 안 대상 이름 칸: 검정 대신 연한 바탕 + 진한 글씨 */
     body:not(#zz) .cmd-side .cmd-submit .cmd-submit-target{background:rgba(255,255,255,.62) !important;color:#062a33 !important;box-shadow:inset 0 0 0 1px rgba(6,42,51,.12) !important;}
     body:not(#zz) .cmd-side:has([data-cmd-kind="notice"][aria-pressed="true"]) .cmd-submit .cmd-submit-target{background:rgba(120,85,50,.14) !important;color:#3b2a1a !important;box-shadow:inset 0 0 0 1px rgba(59,42,26,.12) !important;}
+  </style>
+  <style>
+    /* 이월 작업을 완료하면 분홍 "이월" 태그에 줄을 긋고 흐리게 */
+    body:not(#zz) .cmd-item.is-completed .carry-tag{position:relative !important;opacity:.8 !important;box-shadow:none !important;background:#9d3c6b !important;color:#fbe4ef !important;}
+    body:not(#zz) .cmd-item.is-completed .carry-tag::after{content:'';position:absolute;left:2px;right:2px;top:50%;height:2px;margin-top:-1px;background:#fff;border-radius:2px;}
+  </style>
+  <style>
+    /* 긴급 작업: 왼쪽 빨간 선 제거 */
+    body:not(#zz) .cmd-item.is-urgent{box-shadow:none !important;border-left-color:transparent !important;}
+    /* 태그 줄 맞춤: 금일작업 · 긴급 · 이월 태그는 같은 높이로 왼쪽에, 시간 · 삭제는 오른쪽 끝에 고정 */
+    body:not(#zz) .cmd-item .meta{display:flex !important;align-items:center !important;column-gap:5px;}
+    body:not(#zz) .cmd-item .meta :is(.urg-tag,.carry-tag,.all-tag){height:18px !important;line-height:18px !important;padding:0 8px !important;margin-left:0 !important;font-size:10.5px !important;display:inline-flex !important;align-items:center !important;}
+    body:not(#zz) .cmd-item .meta > span:not([class]){margin-left:auto !important;}
+    body:not(#zz) .cmd-item .meta > button[data-cmd-del]{margin-left:6px !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
