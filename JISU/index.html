@@ -2048,7 +2048,7 @@
       const sr=stage.getBoundingClientRect(); svg.setAttribute('viewBox','0 0 '+sr.width+' '+sr.height); svg.setAttribute('width',sr.width); svg.setAttribute('height',sr.height);
       const moves=load().filter(x=>!x.closed).map(x=>({x,m:moveOf(x)})).filter(o=>o.m&&!o.x.completed);
       let defs='<defs><marker id="mvHead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fbbf24"/></marker><marker id="mvHeadW" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4ade80"/></marker></defs>';
-      let paths=''; let lab='';
+      let paths=''; let lab=''; let runners='';
       const W=sr.width, H=sr.height, P=(x,y)=>[x/100*W,y/100*H];
       // building footprints (% of map) and road centre-lines (% of map) traced from the background image
       const BLD={A:[6.0,49.5,23.2,86.7],B:[25.6,10.4,31.3,86.7],C:[57.35,11.4,82.5,45.4],D:[57.35,55.4,82.6,87.9]};
@@ -2096,12 +2096,12 @@
               +'<circle class="move-start'+(working?' is-working':'')+'" cx="'+pp[0][0]+'" cy="'+pp[0][1]+'" r="5"/>';
         let total=0; const segs=[]; for(let i=1;i<pp.length;i++){const l=Math.hypot(pp[i][0]-pp[i-1][0],pp[i][1]-pp[i-1][1]);segs.push(l);total+=l;}
         { const dur=Math.max(2.5,Math.min(9,total/(working?160:110))).toFixed(2); /* 움직이는 점: 출발 → 도착으로 계속 흐름 */
-          paths+='<g class="move-runner fl'+(working?' is-working':'')+'"><g transform="scale(1.35) translate(-15,-9)"><rect x="22" y="3.2" width="9" height="2.6" rx="1" class="fl-fork"/><rect x="22" y="12.2" width="9" height="2.6" rx="1" class="fl-fork"/><rect x="20" y="1.5" width="2.6" height="15" rx="1" class="fl-mast"/><rect x="3" y="0" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="3" y="15" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="14" y="0" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="14" y="15" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="0" y="2" width="20.5" height="14" rx="3" class="fl-body"/><rect x="8" y="4" width="9" height="10" rx="1.6" class="fl-cab"/><rect x="0.8" y="4" width="4" height="10" rx="1.4" class="fl-weight"/></g><animateMotion dur="'+dur+'s" repeatCount="indefinite" rotate="auto" path="'+d+'"/></g>'; }
+          runners+='<g class="move-runner fl'+(working?' is-working':'')+'"><g transform="scale(1.35) translate(-15,-9)"><rect x="22" y="3.2" width="9" height="2.6" rx="1" class="fl-fork"/><rect x="22" y="12.2" width="9" height="2.6" rx="1" class="fl-fork"/><rect x="20" y="1.5" width="2.6" height="15" rx="1" class="fl-mast"/><rect x="3" y="0" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="3" y="15" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="14" y="0" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="14" y="15" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="0" y="2" width="20.5" height="14" rx="3" class="fl-body"/><rect x="8" y="4" width="9" height="10" rx="1.6" class="fl-cab"/><rect x="0.8" y="4" width="4" height="10" rx="1.4" class="fl-weight"/></g><animateMotion dur="'+dur+'s" repeatCount="indefinite" rotate="auto" path="'+d+'"/></g>'; }
         let half=total/2, mx=pp[0][0], my=pp[0][1]; for(let i=1;i<pp.length;i++){if(half<=segs[i-1]){const t=half/segs[i-1];mx=pp[i-1][0]+(pp[i][0]-pp[i-1][0])*t;my=pp[i-1][1]+(pp[i][1]-pp[i-1][1])*t;break;} half-=segs[i-1];}
         const g=goalOf(o.x.text); const prog=g?((o.x.done!=null?o.x.done:0)+' / '+g.n+(g.u?' '+g.u:'')):'';
         lab+='<div class="move-label'+(working?' is-working':'')+'" style="left:'+mx+'px;top:'+my+'px">'+esc(PLACE_LABEL[o.m.from]||o.m.from)+' → '+esc(PLACE_LABEL[o.m.to]||o.m.to)+(prog?' · '+esc(prog):'')+(working?' · 작업중':'')+'</div>';
       });
-      svg.innerHTML=defs+paths; labels.innerHTML=lab;
+      svg.innerHTML=defs+paths+runners; labels.innerHTML=lab;
     }
     function render(){
       renderCards(); drawMoves(); if(window.jisuCarryRefresh) window.jisuCarryRefresh(); if(window.jisuStateRefresh) window.jisuStateRefresh();
