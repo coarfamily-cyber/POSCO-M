@@ -1177,6 +1177,18 @@
     .move-runner.is-working{fill:#eafff1;stroke:#4ade80;filter:drop-shadow(0 0 6px rgba(74,222,128,.95)) drop-shadow(0 0 2px rgba(0,0,0,.6));}
     @media (prefers-reduced-motion: reduce){ body:not(#zz) .move-path{animation:none !important;} }
   </style>
+  <style>
+    /* 이동작업: 경로를 따라 움직이는 지게차 (위에서 본 모습, 진행 방향으로 회전) */
+    .move-runner.fl{fill:none;stroke:none;filter:drop-shadow(0 0 4px rgba(251,191,36,.9)) drop-shadow(0 1px 2px rgba(0,0,0,.7));}
+    .move-runner.fl.is-working{filter:drop-shadow(0 0 5px rgba(74,222,128,.95)) drop-shadow(0 1px 2px rgba(0,0,0,.7));}
+    .move-runner.fl .fl-body{fill:#fbbf24;stroke:#1f2937;stroke-width:1;}
+    .move-runner.fl.is-working .fl-body{fill:#4ade80;}
+    .move-runner.fl .fl-cab{fill:#1f2937;stroke:#e5e7eb;stroke-width:.8;}
+    .move-runner.fl .fl-weight{fill:#374151;}
+    .move-runner.fl .fl-wheel{fill:#111827;}
+    .move-runner.fl .fl-mast{fill:#4b5563;}
+    .move-runner.fl .fl-fork{fill:#d1d5db;stroke:#374151;stroke-width:.5;}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -2084,7 +2096,7 @@
               +'<circle class="move-start'+(working?' is-working':'')+'" cx="'+pp[0][0]+'" cy="'+pp[0][1]+'" r="5"/>';
         let total=0; const segs=[]; for(let i=1;i<pp.length;i++){const l=Math.hypot(pp[i][0]-pp[i-1][0],pp[i][1]-pp[i-1][1]);segs.push(l);total+=l;}
         { const dur=Math.max(2.5,Math.min(9,total/(working?160:110))).toFixed(2); /* 움직이는 점: 출발 → 도착으로 계속 흐름 */
-          paths+='<circle class="move-runner'+(working?' is-working':'')+'" r="5"><animateMotion dur="'+dur+'s" repeatCount="indefinite" rotate="auto" path="'+d+'"/></circle>'; }
+          paths+='<g class="move-runner fl'+(working?' is-working':'')+'"><g transform="scale(1.35) translate(-15,-9)"><rect x="22" y="3.2" width="9" height="2.6" rx="1" class="fl-fork"/><rect x="22" y="12.2" width="9" height="2.6" rx="1" class="fl-fork"/><rect x="20" y="1.5" width="2.6" height="15" rx="1" class="fl-mast"/><rect x="3" y="0" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="3" y="15" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="14" y="0" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="14" y="15" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="0" y="2" width="20.5" height="14" rx="3" class="fl-body"/><rect x="8" y="4" width="9" height="10" rx="1.6" class="fl-cab"/><rect x="0.8" y="4" width="4" height="10" rx="1.4" class="fl-weight"/></g><animateMotion dur="'+dur+'s" repeatCount="indefinite" rotate="auto" path="'+d+'"/></g>'; }
         let half=total/2, mx=pp[0][0], my=pp[0][1]; for(let i=1;i<pp.length;i++){if(half<=segs[i-1]){const t=half/segs[i-1];mx=pp[i-1][0]+(pp[i][0]-pp[i-1][0])*t;my=pp[i-1][1]+(pp[i][1]-pp[i-1][1])*t;break;} half-=segs[i-1];}
         const g=goalOf(o.x.text); const prog=g?((o.x.done!=null?o.x.done:0)+' / '+g.n+(g.u?' '+g.u:'')):'';
         lab+='<div class="move-label'+(working?' is-working':'')+'" style="left:'+mx+'px;top:'+my+'px">'+esc(PLACE_LABEL[o.m.from]||o.m.from)+' → '+esc(PLACE_LABEL[o.m.to]||o.m.to)+(prog?' · '+esc(prog):'')+(working?' · 작업중':'')+'</div>';
