@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611080750">
+  <meta name="jisu-build" content="202611080936">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -915,6 +915,18 @@
     /* 이월 창 글씨: 제목 "이월 작업"만 핑크, 나머지 글씨는 다른 창과 같은 색 */
     .rv-box .cal-head h3{color:#f472b6 !important;}
     .rv-box .rv-count,.rv-box .rv-colh,.rv-box .rv-colh.ok,.rv-box .rv-colh:not(.ok),.rv-box .rv-dh{color:#e5e7eb !important;}
+    /* 생산 버튼: 건물(C·D동) 가운데를 기준으로 건물 폭에 4칸 고르게 배치 → 모니터 크기가 달라도 한쪽으로 몰리지 않음 */
+    .prod-grid{left:69.9% !important;transform:translate(-50%,-50%) !important;min-width:27.2%;grid-template-columns:repeat(4,minmax(max-content,1fr)) !important;justify-items:center;column-gap:6px !important;}
+    .prod-grid.prod-grid-d{left:70% !important;}
+    .prod-grid > .hotspot-wrapper .hotspot-pill{width:auto !important;}
+    /* 지도 폭에 맞춰 생산 버튼 크기 조절(작은 모니터에서 건물 밖으로 삐져나가지 않게), 큰 화면은 지금 크기 그대로 */
+    #mapStage{container-type:inline-size;}
+    .prod-grid > .hotspot-wrapper .hotspot-pill{font-size:clamp(11px,0.95cqw,18.4px) !important;}
+    #hotspot-packaging-d{left:59.8% !important;}
+    /* 선택 상자(대상 버튼·이동작업)를 펼쳤을 때 흰색 목록 대신 사이드바와 같은 어두운 목록 */
+    select{color-scheme:dark;}
+    select option,select optgroup{background-color:#282D37 !important;color:#e5e7eb !important;}
+    select option:checked{background-color:#4f46e5 !important;color:#fff !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
