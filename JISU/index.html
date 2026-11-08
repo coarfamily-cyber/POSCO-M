@@ -736,7 +736,7 @@
     /* 특이사항 배지: +N 보라색 (금일작업 숫자 빨강/파랑과 구분) */
     .memo-count{background:#8b5cf6 !important;color:#fff !important;box-shadow:0 0 8px rgba(139,92,246,.75) !important;}
     .memo-h span{background:#8b5cf6 !important;}
-    /* 지수가 확인: 사진 전송 방식 비교 */
+    /* 지수가 : 사진 전송 방식 비교 */
     .ob-jisu{background:rgba(139,92,246,.22) !important;border-color:rgba(196,181,253,.55) !important;color:#ede9fe !important;}
     .jisu-note{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(2,6,23,.45);}
     .jisu-note[hidden]{display:none;}
@@ -777,7 +777,7 @@
     .ch-st.no{background:rgba(239,68,68,.22);color:#fecaca;}
     .ch-txt{margin-top:3px;font-size:13px;font-weight:700;color:#f1f5f9;word-break:break-all;}
     .ch-meta{margin-top:3px;font-size:11px;color:#94a3b8;}
-    /* 자정 자동 이월 + 관리자 확인함 */
+    /* 자정 자동 이월 + 관리자 함 */
     .carry-tag{display:inline-flex;align-items:center;margin-left:4px;padding:0 7px;height:17px;border-radius:9999px;font-size:10.5px;font-weight:800;color:#fff;background:#f97316;box-shadow:0 0 6px rgba(249,115,22,.55);white-space:nowrap;}
     .carry-tag.hot{background:#dc2626;box-shadow:0 0 8px rgba(220,38,38,.7);}
     .short-tag{display:inline-flex;align-items:center;margin-left:4px;padding:0 7px;height:17px;border-radius:9999px;font-size:10.5px;font-weight:800;color:#fed7aa;background:rgba(249,115,22,.18);border:1px solid rgba(251,146,60,.6);white-space:nowrap;}
@@ -831,7 +831,7 @@
     .ch-top .carry-tag{margin-left:0;}
     .cmd-item .meta{flex-wrap:wrap;row-gap:3px;}
     .cmd-item .meta .tag,.cmd-item .meta > button{white-space:nowrap;flex-shrink:0;}
-    /* 사이드바 이월 · 확인 목록 */
+    /* 사이드바 이월 ·  목록 */
     .carry-panel{margin:2px 0 12px;border-radius:14px;background:rgba(249,115,22,.08);border:1px solid rgba(251,146,60,.45);overflow:hidden;}
     .carry-panel[hidden]{display:none;}
     .carry-panel .cp-head{display:flex;align-items:center;gap:6px;width:100%;padding:9px 11px;font-size:12.5px;font-weight:800;color:#fed7aa;background:rgba(249,115,22,.14);border:0;text-align:left;cursor:pointer;}
@@ -918,7 +918,7 @@
     .cal-box.rv-box .cal-body{grid-template-columns:minmax(0,1.7fr) minmax(270px,1fr) !important;}
     .cal-box.rv-box .cal-side{display:flex !important;flex-direction:column;gap:10px;}
     @media(max-width:720px){.cal-box.rv-box .cal-body{grid-template-columns:1fr !important;}}
-    /* ===== 모든 확대창(달력·이월·지수가 확인·로그인·건물 상세·코드)은 지도 영역 안 가운데에만 ===== */
+    /* ===== 모든 확대창(달력·이월·지수가 ·로그인·건물 상세·코드)은 지도 영역 안 가운데에만 ===== */
     body.map-modals :is(#loginModal,#calModal,#detailModal,#jisuNote,.rv-modal,#codeModal,#perfModal){inset:auto !important;left:var(--map-l) !important;top:var(--map-t) !important;width:var(--map-w) !important;height:var(--map-h) !important;padding:12px !important;border-radius:var(--map-r,0px);overflow:hidden;}
     body.map-modals :is(#loginModal,#calModal,#detailModal,#jisuNote,.rv-modal,#codeModal,#perfModal) > *{max-height:calc(var(--map-h) - 24px) !important;overflow:auto;}
     body.map-modals #detailModal > *{max-width:min(32rem,100%) !important;}
@@ -1153,7 +1153,7 @@
       <div class="flex items-center gap-2 flex-shrink-0">
         <h1 class="text-sm sm:text-base md:text-lg font-extrabold tracking-tight text-white whitespace-nowrap">지수 통합 관제 상황실</h1>
         <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 flex-shrink-0">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> LIVE
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse"></span> LIVE
         </span>
       </div>
     </div>
@@ -1170,7 +1170,7 @@
         <span class="w-2 h-2 rounded-full bg-purple-400"></span> 피치
       </button>
       <button type="button" data-zone-btn="inbound" class="zone-quick-btn px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-emerald-400"></span> 입고
+        <span class="w-2 h-2 rounded-full bg-slate-400"></span> 입고
       </button>
       <button type="button" id="toggleAllBtn" class="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-400/20 text-amber-300 hover:bg-amber-400/30 transition">
         전체 펼치기
@@ -1399,7 +1399,7 @@
                 <button type="button" class="ob-btn ob-primary" id="obCamBtn">📷 사진 찍기</button>
                 <label class="ob-btn" for="obFile">🖼 사진 불러오기</label>
                 <input type="file" id="obFile" accept="image/*" capture="environment" multiple hidden>
-                <button type="button" class="ob-btn ob-jisu" id="obJisuBtn">🔒 지수가 확인</button>
+                <button type="button" class="ob-btn ob-jisu" id="obJisuBtn">🔒 지수가 피치</button>
               </div>
               <div class="ob-cam" id="obCam" hidden>
                 <video id="obVideo" autoplay playsinline muted></video>
