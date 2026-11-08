@@ -1095,6 +1095,13 @@
     .all-notice-h{font-size:12px;font-weight:800;color:#fff4e9;margin:2px 0 6px;}
     .all-notice-h span{display:inline-flex;align-items:center;justify-content:center;min-width:1.5em;height:1.5em;margin-left:4px;padding:0 .4em;border-radius:9999px;background:#fff4e9;color:#3b2a1a;font-size:11px;}
   </style>
+  <style>
+    /* 이월 버튼: 위쪽 줄에 혼자 → 폭 꽉 채움 / Code·키오스크: 사이드바 맨 아래 */
+    #sideToolsRow{grid-template-columns:1fr !important;}
+    #sideToolsRow .carry-tool-btn{padding:7px 10px !important;font-size:12.5px !important;gap:6px !important;}
+    .cmd-side .side-tools-bottom{grid-template-columns:repeat(2,1fr) !important;margin:auto 0 4px !important;padding-top:12px;}
+    .cmd-side .side-tools-bottom ~ .jisu-ver{margin-top:2px !important;}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -1144,14 +1151,7 @@
 
       <!-- 사이드바 유틸 버튼 (이월 / Code / 키오스크) -->
       <div class="side-tools-row" id="sideToolsRow">
-        <button type="button" id="codeBtn" class="side-tool-btn code-tool-btn" title="전체 소스코드 보기">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-          <span>Code</span>
-        </button>
-        <button type="button" id="kioskBtn" class="side-tool-btn kiosk-tool-btn" title="상황실 PC용 키오스크(전체화면) 실행 파일 받기">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"/></svg>
-          <span>키오스크</span>
-        </button>
+        
       </div>
       
       <label for="cmdTarget">대상 버튼</label>
@@ -1190,6 +1190,17 @@
       <div class="cmd-summary" id="cmdSummary"></div>
       <label>등록 내역 <span id="cmdTargetLabel">· 창고</span></label>
       <div class="cmd-list" id="cmdList"></div>
+      <!-- 사이드바 맨 아래: Code / 키오스크 (나중에 지울 예정) -->
+      <div class="side-tools-row side-tools-bottom" id="sideToolsBottom">
+        <button type="button" id="codeBtn" class="side-tool-btn code-tool-btn" title="전체 소스코드 보기">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+          <span>Code</span>
+        </button>
+        <button type="button" id="kioskBtn" class="side-tool-btn kiosk-tool-btn" title="상황실 PC용 키오스크(전체화면) 실행 파일 받기">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"/></svg>
+          <span>키오스크</span>
+        </button>
+      </div>
     </aside>
     <div class="cmd-map-wrap">
     <div class="map-stage" id="mapStage">
