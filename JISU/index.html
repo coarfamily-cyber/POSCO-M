@@ -2571,7 +2571,7 @@
       });
       if(changed){ save(CKEY,all.concat(add)); redraw(); }
     }
-    const queue=()=>load(CKEY).filter(x=>x.kind!=='notice' && x.review==='pending' && (!x.closed || x.short));
+    const queue=()=>load(CKEY).filter(x=>x.kind!=='notice' && x.review==='pending' && (!x.closed || x.short) && !(x.completed && !x.short)); /* 다 끝낸 이월 작업은 판단 필요 숫자에서 뺌 (부족 완료는 판단 필요) */
     window.jisuReviewCount=()=>queue().length;
     window.jisuCarryAct=(id,type,val)=>{ const err=act(id,type,val); if(!err){ redraw(); if(window.jisuCarryRefresh) window.jisuCarryRefresh(); } return err; };
     window.jisuTomorrow=()=>tomorrow();
@@ -2621,7 +2621,7 @@
       const prog=x.completed?'완료':(x.working?'작업중':'대기'), pc=x.completed?'ok':(x.working?'run':'wait');
       return '<div class="rv-row okrow"><div class="rv-top"><b>'+esc(nm)+'</b><span class="rv-txt">'+esc(x.text)+'</span><span class="rv-st '+pc+'">'+prog+(g!=null?' '+fmt(Number(x.done)||0)+' / '+fmt(g)+(u?' '+u:''):'')+'</span></div>'
         +'<div class="rv-meta">'+metaOf(x).join(' · ')+(x.reviewNote?' · 판단: '+esc(x.reviewNote)+(x.reviewBy?' ('+esc(x.reviewBy)+')':''):'')+'</div></div>'; }
-    const openCarry=()=>load(CKEY).filter(x=>!x.closed&&x.carryCount&&x.kind!=='notice'&&x.review!=='pending');
+    const openCarry=()=>load(CKEY).filter(x=>!x.closed&&x.carryCount&&x.kind!=='notice'&&(x.review!=='pending'||(x.completed&&!x.short)));
     function drawModal(){
       const q=queue(), ok=openCarry(), keep=listEl.scrollTop;
       modal.querySelector('.rv-count').textContent='판단 필요 '+q.length+' · 진행 중 '+ok.length;
