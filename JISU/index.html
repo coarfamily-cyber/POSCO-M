@@ -1135,6 +1135,12 @@
     body:not(#zz) .cmd-count:not(.all-done){background:var(--c-work) !important;color:#062a33 !important;}
     body:not(#zz) .cmd-count.all-done{background:var(--c-done) !important;color:#fff !important;}
   </style>
+  <style>
+    /* 지도 버튼 배지: 상태색과 맞춤 (작업중 = 초록, 모두 완료 = 파랑, 대기 = 금일작업색) / 이월 = 분홍 -N */
+    body:not(#zz) .cmd-count.is-run:not(.all-done){background:#22c55e !important;color:#052e16 !important;box-shadow:0 0 8px rgba(34,197,94,.65) !important;}
+    body:not(#zz) .cmd-count.has-carry::after{content:none !important;display:none !important;}
+    .carry-minus{display:inline-flex;align-items:center;justify-content:center;min-width:1.35em;height:1.35em;padding:0 .4em;border-radius:9999px;background:#ec4899;color:#fff;font-size:.7em;font-weight:900;margin-left:.25em;line-height:1;box-shadow:0 0 8px rgba(236,72,153,.75);white-space:nowrap;}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -1948,9 +1954,12 @@
         let badge=b.querySelector('.cmd-count');
         if(work.length){ if(!badge){ badge=document.createElement('span'); badge.className='cmd-count'; b.appendChild(badge); }
           badge.textContent = done ? work.length+'/'+done : String(work.length);
-          badge.classList.toggle('all-done', done===work.length); badge.classList.toggle('has-carry', work.some(x=>x.carryCount));
-          badge.title='금일작업 '+work.length+'건 중 '+done+'건 완료'; }
+          badge.classList.toggle('all-done', done===work.length); badge.classList.toggle('has-carry', work.some(x=>x.carryCount)); badge.classList.toggle('is-run', active && done!==work.length);
+          badge.title='금일작업 '+work.length+'건 중 '+done+'건 완료'+(active?' · 작업중':''); }
         else if(badge) badge.remove();
+        { /* 이월 표시: 아직 안 끝난 이월 작업 수를 -N 으로 */ const cn=work.filter(x=>x.carryCount&&!x.completed).length; let cb=b.querySelector('.carry-minus');
+          if(cn){ if(!cb){ cb=document.createElement('span'); cb.className='carry-minus'; } const ref=b.querySelector('.cmd-count'); if(ref) ref.after(cb); else b.appendChild(cb); cb.textContent='-'+cn; cb.title='이월 작업 '+cn+'건 (지난 날에서 넘어온 남은 작업)'; }
+          else if(cb) cb.remove(); }
         { const nb=b.querySelector('.cmd-notice-count'); if(nb) nb.remove(); }
 
         document.querySelectorAll('[data-zone-btn="'+k+'"] .cmd-notice-count').forEach(z=>z.remove());
