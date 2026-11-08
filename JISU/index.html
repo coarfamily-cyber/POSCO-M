@@ -1991,7 +1991,7 @@
     [document.getElementById('mapStage'),document.getElementById('modalCmds'),list].forEach(el=>{if(!el)return;el.addEventListener('change',onChange,true);el.addEventListener('click',onClick,true);el.addEventListener('keydown',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){e.stopPropagation();if(e.key==='Enter')e.target.blur();}},true);el.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){const c=e.target.value.replace(/[^0-9.,]/g,'');if(c!==e.target.value)e.target.value=c;}},true);});
     const PLACE_LABEL={A:'A동',B:'B동',C:'C동',D:'D동',outbound:'출고',inbound:'입고',packaging:'포장','packaging-d':'포장(D동)',pitch:'피치',environment:'환경','production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H'};
     function detectMove(t){
-      t=String(t||''); if(!/이동|→|->|⇒|에서|운반|옮/.test(t)) return null;
+      t=String(t||'').replace(/＞/g,'>'); if(!/이동|→|->|⇒|>|에서|운반|옮/.test(t)) return null;
       const pats=[[/생산\s*([A-H])/gi,m=>'production-'+m[1].toLowerCase()],[/출고/g,()=>'outbound'],[/입고/g,()=>'inbound'],[/포장/g,()=>'packaging'],[/피치/g,()=>'pitch'],
         [/([ABCD])\s*동/gi,m=>m[1].toUpperCase()],[/(?<![A-Za-z가-힣])([ABCD])(?=\s*(?:에서|으로|로|까지|→|->|⇒|>|~))/gi,m=>m[1].toUpperCase()],[/(?:→|->|⇒|>|~)\s*([ABCD])(?![A-Za-z])/gi,m=>m[1].toUpperCase()],[/(?:^|\s)([ABCD])(?=\s*-)/gi,m=>m[1].toUpperCase()],[/-\s*([ABCD])(?![A-Za-z0-9])/gi,m=>m[1].toUpperCase()]];
       const hits=[]; pats.forEach(([re,f])=>{let m; re.lastIndex=0; while((m=re.exec(t))){hits.push({i:m.index,e:m.index+m[0].length,k:f(m)});}});
