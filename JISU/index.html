@@ -2053,11 +2053,11 @@
       // building footprints (% of map) and road centre-lines (% of map) traced from the background image
       const BLD={A:[6.0,49.5,23.2,86.7],B:[25.6,10.4,31.3,86.7],C:[57.35,11.4,82.5,45.4],D:[57.35,55.4,82.6,87.9]};
       const ZONE_BLD={environment:'A',packaging:'C','packaging-d':'D',pitch:'C','production-a':'C','production-b':'C','production-c':'C','production-d':'C','production-e':'D','production-f':'D','production-g':'D','production-h':'D'};
-      const ROADS=[['v',3.0,5,92],['v',24.4,5,92],['v',32.7,5,92],['v',43.7,5,92],['v',56.0,5,50.4],['v',84.1,5,92],['h',5,3.0,84.1],['h',92,3.0,84.1],['h',50.4,43.7,84.1]] /* 43.7 = centre lane of the yard between B and C/D */
+      const ROADS=[['v',43.8,16.9,91.4],['h',16.9,43.8,57.35],['h',44.2,43.8,57.35],['h',59.8,43.8,57.35],['h',84.7,43.8,57.35],['h',91.4,22.2,43.8],['v',22.2,86.4,91.4],['v',28.45,86.7,91.4]] /* 사용자가 그려준 동선: 가운데 세로 통로 + C·D동 입출고(왼쪽 벽 위·아래) + 아래 통로로 A동 입출고(오른쪽 아래) */
         .map(([o,c,a,b])=>o==='v'?{o,x:c/100*W,a:a/100*H,b:b/100*H}:{o,y:c/100*H,a:a/100*W,b:b/100*W});
       function exitsOf(k){
         const bk=BLD[k]?k:ZONE_BLD[k];
-        if(bk){const [x1,y1,x2,y2]=BLD[bk];return [P(x1,y2),P(x2,y2)];} /* loading docks: bottom corners only */
+        if(bk){const DOCKS={A:[[22.2,86.4]],B:[[28.45,86.7]],C:[[57.35,16.9],[57.35,44.2]],D:[[57.35,59.8],[57.35,84.7]]}; return (DOCKS[bk]||[]).map(p=>P(p[0],p[1]));} /* 입출고 지점 (사용자 지정) */
         const el=anchorEl(k); if(!el) return [];
         const r=el.getBoundingClientRect(); return [[r.left+r.width/2-sr.left,r.top+r.height/2-sr.top]];
       }
