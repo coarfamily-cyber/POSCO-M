@@ -1155,6 +1155,10 @@
     body:not(#zz) .cmd-side .cmd-submit .cmd-submit-target{background:rgba(255,255,255,.62) !important;color:#062a33 !important;box-shadow:inset 0 0 0 1px rgba(6,42,51,.12) !important;}
     body:not(#zz) .cmd-side:has([data-cmd-kind="notice"][aria-pressed="true"]) .cmd-submit .cmd-submit-target{background:rgba(120,85,50,.14) !important;color:#3b2a1a !important;box-shadow:inset 0 0 0 1px rgba(59,42,26,.12) !important;}
   </style>
+  <style>
+    /* 이월 작업을 완료하면 분홍 "이월" 태그에 줄을 긋고 흐리게 */
+    body:not(#zz) .cmd-item.is-completed .carry-tag{text-decoration:line-through !important;text-decoration-thickness:2px !important;text-decoration-color:rgba(255,255,255,.95) !important;opacity:.55 !important;box-shadow:none !important;}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
