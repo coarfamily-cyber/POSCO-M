@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611081654">
+  <meta name="jisu-build" content="202611081659">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1101,6 +1101,11 @@
     #sideToolsRow .carry-tool-btn{padding:7px 10px !important;font-size:12.5px !important;gap:6px !important;}
     .cmd-side .side-tools-bottom{grid-template-columns:repeat(2,1fr) !important;margin:auto 0 4px !important;padding-top:12px;}
     .cmd-side .side-tools-bottom ~ .jisu-ver{margin-top:2px !important;}
+  </style>
+  <style>
+    /* 사이드바 이월/Code/키오스크 hover: 이중 확대(transform + scale 속성) 제거, 사이드바 안에서 잘리지 않을 만큼만 확대 */
+    #cmdSide .side-tools-row .side-tool-btn.side-tool-btn.side-tool-btn.side-tool-btn:hover{scale:none !important;translate:none !important;transform:translateY(-2px) scale(1.06) !important;}
+    #cmdSide #sideToolsRow .side-tool-btn.side-tool-btn.side-tool-btn.side-tool-btn:hover{transform:translateY(-2px) scale(1.03) !important;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
