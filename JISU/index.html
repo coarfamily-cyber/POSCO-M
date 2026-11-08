@@ -1083,6 +1083,15 @@
     .cmd-side:has([data-cmd-kind="notice"][aria-pressed="true"]) .cmd-submit:not(:disabled):hover{background:#ffffff !important;}
     .cmd-side .cmd-submit .cmd-submit-target{background:rgba(0,0,0,.14) !important;}
   </style>
+  <style>
+    /* 사이드바 유틸 버튼 아래 밝은 줄 제거 (그림자+블러 겹침 현상) */
+    .side-tools-row .side-tool-btn.side-tool-btn.side-tool-btn.side-tool-btn{backdrop-filter:none !important;-webkit-backdrop-filter:none !important;box-shadow:0 2px 6px rgba(0,0,0,.40) !important;}
+    .side-tools-row .side-tool-btn.side-tool-btn.side-tool-btn.side-tool-btn:hover{box-shadow:0 10px 22px rgba(0,0,0,.35) !important;}
+    /* HOME 공지 = 전체 버튼 공지 */
+    .all-tag{display:inline-flex;align-items:center;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:900;background:#fff4e9;color:#3b2a1a;margin-left:2px;}
+    .all-notice-h{font-size:12px;font-weight:800;color:#fff4e9;margin:2px 0 6px;}
+    .all-notice-h span{display:inline-flex;align-items:center;justify-content:center;min-width:1.5em;height:1.5em;margin-left:4px;padding:0 .4em;border-radius:9999px;background:#fff4e9;color:#3b2a1a;font-size:11px;}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -1827,7 +1836,7 @@
   <script>
   (function(){
     const KEY='jisu-commands-v1';
-    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","environment":"환경","environment":"환경","A":"A동","B":"B동","C":"C동","D":"D동"};
+    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","environment":"환경","environment":"환경","A":"A동","B":"B동","C":"C동","D":"D동"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     let kind='instruction';
     const sel=document.getElementById('cmdTarget'), text=document.getElementById('cmdText'), submit=document.getElementById('cmdSubmit'), list=document.getElementById('cmdList'), label=document.getElementById('cmdTargetLabel');
     const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
@@ -1850,7 +1859,7 @@
           +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?(x.short?'부족 완료':'완료됨'):'작업완료')+'</button>'
           +'</div>';
       }
-      return '<div class="cmd-item'+(x.completed?' is-completed':'')+(x.review==='pending'?' is-pending':'')+(x.carryCount?' is-carry':'')+(x.urgent&&!x.completed?' is-urgent':'')+'"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'금일작업')+'</span>'+carryTags(x)+'<span>'+(x.by?esc(x.by)+' · ':'')+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):(x.working&&x.startedAt?' · 작업중 '+esc(x.startedAt):''))+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
+      return '<div class="cmd-item'+(x.completed?' is-completed':'')+(x.review==='pending'?' is-pending':'')+(x.carryCount?' is-carry':'')+(x.urgent&&!x.completed?' is-urgent':'')+'"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'금일작업')+'</span>'+(x.target==='*'?'<span class="all-tag">전체</span>':'')+carryTags(x)+'<span>'+(x.by?esc(x.by)+' · ':'')+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):(x.working&&x.startedAt?' · 작업중 '+esc(x.startedAt):''))+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
         +'<div class="cmd-row"><div class="cmd-text">'+esc(x.text)+carrySub(x)+(function(){const mv=moveOf(x);return mv?'<span class="move-tag">이동 '+esc(PLACE_LABEL[mv.from]||mv.from)+' → '+esc(PLACE_LABEL[mv.to]||mv.to)+'</span>':'';})()+'</div>'+right+'</div></div>';
     }
     /* HOME 상태 사이드바: 오늘 전체 현황 (등록된 금일작업 기준, 임의 숫자 없음) */
@@ -1877,7 +1886,7 @@
         const wrap=document.getElementById('hotspot-'+k); const card=wrap&&wrap.querySelector('.expand-card'); if(!card) return;
         const slot=card.querySelector('[data-cmd-slot]');
         let box=(slot||card).querySelector(':scope > .cmd-in-card');
-        const items=all.filter(x=>x.target===k).reverse().sort((a,b)=>((b.urgent&&!b.completed)?1:0)-((a.urgent&&!a.completed)?1:0));
+        const items=all.filter(x=>x.target===k||(x.target==='*'&&x.kind==='notice')).reverse().sort((a,b)=>((b.urgent&&!b.completed)?1:0)-((a.urgent&&!a.completed)?1:0));
         if(!items.length && !slot){ if(box) box.remove(); return; }
         if(!box){ box=document.createElement('div'); box.className='cmd-in-card'; if(slot) slot.appendChild(box); else card.insertBefore(box,card.firstChild); }
         const ns=items.filter(x=>x.kind==='notice'), ws=items.filter(x=>x.kind!=='notice');
@@ -1903,7 +1912,7 @@
     let modalKey=null;
     function fillModal(k){
       modalKey=k; const box=document.getElementById('modalCmds'); if(!box) return;
-      const items=load().filter(x=>!x.closed&&x.target===k).reverse();
+      const items=load().filter(x=>!x.closed&&(x.target===k||(x.target==='*'&&x.kind==='notice'))).reverse();
       box.innerHTML=items.length?'<div class="cmd-in-card-h">금일작업 · 공지 <span>'+items.length+'건</span></div>'+items.map(x=>itemHtml(x,false)).join(''):'';
     }
     function update(id,fn){const all=load();const it=all.find(x=>x.id===id);if(!it)return;fn(it);save(all);render();if(modalKey)fillModal(modalKey);}
@@ -1993,15 +2002,15 @@
       (function(){const box=document.getElementById('cmdSummary'); if(!box) return; const all=load().filter(x=>!x.closed); const by={}; all.forEach(x=>{const o=by[x.target]||(by[x.target]={w:0,d:0,n:0}); if(x.kind==='notice') o.n++; else {o.w++; if(x.completed) o.d++;}});
         const keys=Object.keys(by); box.innerHTML=keys.length?'<div class="cmd-summary-h">전체 등록 현황 (누르면 이동)</div>'+keys.map(k=>{const o=by[k];return '<button type="button" class="cmd-sum-chip'+(k===sel.value?' is-on':'')+'" data-cmd-goto="'+esc(k)+'">'+esc(NAMES[k]||k)+(o.w?' <b>'+(o.d?o.w+'/'+o.d:o.w)+'</b>':'')+(o.n?' <i>공지 '+o.n+'</i>':'')+'</button>';}).join(''):'';})();
       const t=sel.value; updateSubmitLabel();
-      if(!t){ label.textContent='· HOME'; list.innerHTML=homeSummary()+'<div class="cmd-empty">대상 버튼을 고르거나 지도에서 버튼을 누르면 등록 내역이 보입니다.</div>'; return; }
+      if(!t){ label.textContent='· HOME'; const allN=load().filter(x=>!x.closed&&x.target==='*'&&x.kind==='notice').reverse(); list.innerHTML=(allN.length?'<div class="all-notice-h">전체 공지 <span>'+allN.length+'</span></div>'+allN.map(x=>itemHtml(x,true)).join(''):'')+homeSummary()+'<div class="cmd-empty">대상 버튼을 고르거나 지도에서 버튼을 누르면 등록 내역이 보입니다.</div>'; return; }
       label.textContent='· '+(NAMES[t]||t);
-      const items=load().filter(x=>!x.closed&&x.target===t).reverse().sort((a,b)=>((b.urgent&&!b.completed)?1:0)-((a.urgent&&!a.completed)?1:0));
+      const items=load().filter(x=>!x.closed&&(x.target===t||(x.target==='*'&&x.kind==='notice'))).reverse().sort((a,b)=>((b.urgent&&!b.completed)?1:0)-((a.urgent&&!a.completed)?1:0));
       list.innerHTML=items.length?items.map(x=>itemHtml(x,true)).join(''):'<div class="cmd-empty">등록된 내용이 없습니다.</div>';
     }
-    function updateSubmitLabel(){if(!sel.value){submit.disabled=true;submit.textContent='대상 버튼을 먼저 선택하세요';return;} submit.disabled=false; const nm=NAMES[sel.value]||sel.value; submit.innerHTML='<span class="cmd-submit-target">'+esc(nm)+'</span>에 '+(kind==='notice'?'공지사항 등록':'금일작업 내용 등록');}
+    function updateSubmitLabel(){if(!sel.value){ if(kind==='notice'){ submit.disabled=false; submit.innerHTML='<span class="cmd-submit-target">전체 버튼</span>에 공지사항 등록'; return; } submit.disabled=true;submit.textContent='대상 버튼을 먼저 선택하세요';return;} submit.disabled=false; const nm=NAMES[sel.value]||sel.value; submit.innerHTML='<span class="cmd-submit-target">'+esc(nm)+'</span>에 '+(kind==='notice'?'공지사항 등록':'금일작업 내용 등록');}
     function setKind(k){kind=k;document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cmdKind===k)));updateSubmitLabel();text.placeholder=k==='notice'?'공지사항을 입력하세요':'금일작업 내용을 입력하세요 (예: A- 75 TON · 앞에 ! 붙이면 긴급)';}
     document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.addEventListener('click',()=>setKind(b.dataset.cmdKind)));
-    submit.addEventListener('click',()=>{if(!sel.value){sel.focus();return;}let v=text.value.trim();if(!v){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v){text.focus();return;}const all=load();const rec={id:Date.now().toString(36),target:sel.value,kind,text:v,at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);text.value='';if(fr)fr.value='';if(to)to.value='';render();});
+    submit.addEventListener('click',()=>{if(!sel.value&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v){text.focus();return;}const all=load();const rec={id:Date.now().toString(36),target:sel.value||'*',kind,text:v,at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);text.value='';if(fr)fr.value='';if(to)to.value='';render();});
     list.addEventListener('click',e=>{const id=e.target.getAttribute('data-cmd-del');if(!id)return;save(load().filter(x=>x.id!==id));render();});
     function goHome(){
       document.querySelectorAll('.hotspot-wrapper.is-open').forEach(w=>w.classList.remove('is-open'));
@@ -2181,7 +2190,7 @@
   /* 금일 작업완료 → Excel (.xlsx) */
   (function(){
     const btn=document.getElementById('xlsxDoneBtn'); if(!btn) return;
-    const NAMES={"production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","A":"A동","B":"B동","C":"C동","D":"D동"};
+    const NAMES={"production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","A":"A동","B":"B동","C":"C동","D":"D동"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     const kstParts=()=>{const p=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const g=t=>p.find(x=>x.type===t).value;return {y:g('year'),m:g('month'),d:g('day')};};
     function loadLib(){ if(window.XLSX) return Promise.resolve(window.XLSX); return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';s.onload=()=>res(window.XLSX);s.onerror=()=>rej(new Error('lib'));document.head.appendChild(s);}); }
     function goal(t){const m=String(t).match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||String(t).match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/);return m?{n:Number(m[1].replace(',','.')),u:(m[2]||'').toUpperCase()}:{n:'',u:''};}
@@ -2265,7 +2274,7 @@
     const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const kstToday=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
     const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
-    const NAMES={}; [...document.querySelectorAll('#cmdTarget option')].forEach(o=>{ if(o.value) NAMES[o.value]=o.textContent; });
+    const NAMES={}; [...document.querySelectorAll('#cmdTarget option')].forEach(o=>{ if(o.value) NAMES[o.value]=o.textContent; }); Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     const ALIAS=[]; Object.keys(NAMES).forEach(k=>{ const n=NAMES[k]; ALIAS.push([n,k]); ALIAS.push([n.replace(/[()\s]/g,''),k]); });
     ALIAS.push(['D동포장','packaging-d'],['포장D','packaging-d'],['D포장','packaging-d']); ALIAS.sort((a,b)=>b[0].length-a[0].length);
     function parseLine(line){
@@ -2273,6 +2282,7 @@
       if(/^[!！]/.test(s)){ urgent=true; s=s.replace(/^[!！]+\s*/,''); }
       if(/^공지\s*[:：]?\s*/.test(s)){ kind='notice'; s=s.replace(/^공지\s*[:：]?\s*/,''); }
       const compact=s.replace(/\s+/g,'').toUpperCase();
+      if(/^전체(\s|[:：]|공지|$)/.test(s)){ let rest=s.replace(/^전체\s*[:：]?\s*/,'').replace(/^공지\s*[:：]?\s*/,''); if(/^[!！]/.test(rest)){ urgent=true; rest=rest.replace(/^[!！]+\s*/,''); } if(!rest) return {err:'"'+line.trim()+'" - 내용이 없어요'}; return {target:'*',kind:'notice',text:rest,urgent}; }
       for(const [a,k] of ALIAS){ const ac=a.replace(/\s+/g,'').toUpperCase(); if(compact.startsWith(ac)){
           let i=0,j=0; while(i<s.length && j<ac.length){ if(/\s/.test(s[i])){i++;continue;} i++; j++; }
           let rest=s.slice(i).trim(); if(/^공지(\s|[:：]|$)/.test(rest)){ kind='notice'; rest=rest.replace(/^공지\s*[:：]?\s*/,''); }
@@ -2465,7 +2475,7 @@
     const kstToday=()=>fmtDay(new Date());
     const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
     const me=()=>{try{return localStorage.getItem('jisu-user')||''}catch(e){return ''}};
-    const NAMES={}; [...document.querySelectorAll('#cmdTarget option')].forEach(o=>{ if(o.value) NAMES[o.value]=o.textContent; });
+    const NAMES={}; [...document.querySelectorAll('#cmdTarget option')].forEach(o=>{ if(o.value) NAMES[o.value]=o.textContent; }); Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     function dayOf(rec){ if(rec.day) return rec.day; const m=String(rec.at||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); if(!m) return rec.sched||'';
       const t=kstToday(), ty=+t.slice(0,4); let k=ty+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); if(k>t) k=(ty-1)+k.slice(4); return k; }
     const RE_END=/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/, RE_ANY=/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/;
@@ -2720,7 +2730,7 @@
     ['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{ lastInput=Date.now(); if(ac&&ac.state==='suspended') ac.resume(); },true));
     function beep(){ try{ ac=ac||new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==='suspended') ac.resume(); const t=ac.currentTime;
         [[880,0],[1175,0.18]].forEach(([f,d])=>{ const o=ac.createOscillator(), g=ac.createGain(); o.type='sine'; o.frequency.value=f; g.gain.setValueAtTime(0.0001,t+d); g.gain.exponentialRampToValueAtTime(0.18,t+d+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.16); o.connect(g).connect(ac.destination); o.start(t+d); o.stop(t+d+0.18); }); }catch(e){} }
-    function flash(target,kind){ const sel='[data-toggle-zone="'+target+'"],[data-bldg="'+target+'"]'; document.querySelectorAll(sel).forEach(b=>{ b.classList.remove('alert-memo','alert-notice'); void b.offsetWidth; b.classList.add(kind==='m'?'alert-memo':'alert-notice'); clearTimeout(b._af); b._af=setTimeout(()=>b.classList.remove('alert-memo','alert-notice'),10000); }); }
+    function flash(target,kind){ const sel=target==='*'?'[data-toggle-zone],[data-bldg]':'[data-toggle-zone="'+target+'"],[data-bldg="'+target+'"]'; document.querySelectorAll(sel).forEach(b=>{ b.classList.remove('alert-memo','alert-notice'); void b.offsetWidth; b.classList.add(kind==='m'?'alert-memo':'alert-notice'); clearTimeout(b._af); b._af=setTimeout(()=>b.classList.remove('alert-memo','alert-notice'),10000); }); }
     function check(){ const now=key(); const fresh=[...now].filter(i=>!seen.has(i)); seen=now; if(!fresh.length) return;
       const ms=load(MK), cs=load(CK); fresh.forEach(i=>{ const [t,id]=i.split(':'); const r=t==='m'?ms.find(m=>m.id===id):cs.find(x=>x.id===id); if(r) flash(r.target,t); });
       if(Date.now()-lastInput>3000) beep(); }
@@ -2742,7 +2752,7 @@
     const $=id=>document.getElementById(id), CK='jisu-commands-v1', MK='jisu-memos-v1';
     const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(e){return []}};
     const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const NAMES={}; [...document.querySelectorAll('#cmdTarget option')].forEach(o=>{ if(o.value) NAMES[o.value]=o.textContent; });
+    const NAMES={}; [...document.querySelectorAll('#cmdTarget option')].forEach(o=>{ if(o.value) NAMES[o.value]=o.textContent; }); Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     const kst=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
     const today=()=>kst(new Date()), D=k=>new Date(k+'T12:00:00+09:00'), add=(k,n)=>kst(new Date(D(k).getTime()+n*864e5));
     function dayOf(r){ if(r.day) return r.day; const m=String(r.at||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); if(!m) return r.sched||''; const t=today(), y=+t.slice(0,4); let k=y+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); if(k>t) k=(y-1)+k.slice(4); return k; }
