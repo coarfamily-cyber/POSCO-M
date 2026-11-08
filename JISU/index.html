@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611082208">
+  <meta name="jisu-build" content="202611082225">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1205,6 +1205,14 @@
     ['jisu-commands-v1','jisu-schedule-v1'].forEach(k=>{ try{ const a=JSON.parse(localStorage.getItem(k)||'null'); if(!Array.isArray(a)) return; let ch=false; a.forEach(x=>{ if(x&&typeof x.text==='string'){ const n=norm(x.text); if(n!==x.text){ x.text=n; ch=true; } } }); if(ch) localStorage.setItem(k,JSON.stringify(a)); }catch(e){} });
   })();
   </script>
+  <style>
+    /* 작업중 이동작업: 팀마다 다른 녹색 계열 */
+    body:not(#zz) .move-path.is-working{stroke:var(--mvw,#4ade80) !important;}
+    body:not(#zz) .move-start.is-working{fill:var(--mvw,#4ade80) !important;}
+    body:not(#zz) .move-label.is-working{background:var(--mvw,#4ade80) !important;color:#052e16 !important;}
+    body:not(#zz) .move-runner.fl.is-working .fl-body{fill:var(--mvw,#4ade80) !important;}
+    body:not(#zz) .move-runner.fl.is-working{filter:drop-shadow(0 0 5px var(--mvw,#4ade80)) drop-shadow(0 1px 2px rgba(0,0,0,.7)) !important;}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -2065,7 +2073,9 @@
       const moves=load().filter(x=>!x.closed).map(x=>({x,m:moveOf(x)})).filter(o=>o.m&&!o.x.completed);
       let defs='<defs><marker id="mvHead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fbbf24"/></marker><marker id="mvHeadW" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4ade80"/></marker></defs>';
       let paths=''; let lab=''; let runners='';
-      const MVC=['#fbbf24','#fb923c','#a78bfa','#38bdf8']; /* 이동작업 색: 1번 노랑, 2번 주황, 3번 보라, 4번 하늘 (작업중은 초록) */
+      const MVC=['#fbbf24','#fb923c','#a78bfa','#38bdf8']; /* 이동작업 색: 1번 노랑, 2번 주황, 3번 보라, 4번 하늘 */
+      const MVW=['#4ade80','#2dd4bf','#a3e635','#10b981']; /* 작업중 색 (녹색 계열): 초록, 청록, 연두, 에메랄드 */ let wIdx=0;
+      defs=defs.replace('</defs>',MVW.map((c,i)=>'<marker id="mvHeadW'+i+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="'+c+'"/></marker>').join('')+'</defs>');
       defs=defs.replace('</defs>',MVC.map((c,i)=>'<marker id="mvHead'+i+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="'+c+'"/></marker>').join('')+'</defs>');
       const W=sr.width, H=sr.height, P=(x,y)=>[x/100*W,y/100*H];
       // building footprints (% of map) and road centre-lines (% of map) traced from the background image
@@ -2109,15 +2119,15 @@
         const pts=route(o.m.from,o.m.to); if(!pts||pts.length<2) return;
         const off=(idx%3)*4-4; const pp=pts.map(p=>[p[0]+off,p[1]+off]);
         const d='M'+pp.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
-        const working=!!o.x.working; const cls='move-path'+(working?' is-working':''); const ci=idx%MVC.length, mvs=' style="--mv:'+MVC[ci]+'"';
-        paths+='<path class="move-glow" d="'+d+'"/><path class="'+cls+'"'+mvs+' d="'+d+'" marker-end="url(#'+(working?'mvHeadW':'mvHead'+ci)+')"/>'
+        const working=!!o.x.working; const cls='move-path'+(working?' is-working':''); const ci=idx%MVC.length, wi=working?(wIdx++)%MVW.length:0, mvs=' style="--mv:'+MVC[ci]+';--mvw:'+MVW[wi]+'"';
+        paths+='<path class="move-glow" d="'+d+'"/><path class="'+cls+'"'+mvs+' d="'+d+'" marker-end="url(#'+(working?'mvHeadW'+wi:'mvHead'+ci)+')"/>'
               +'<circle class="move-start'+(working?' is-working':'')+'"'+mvs+' cx="'+pp[0][0]+'" cy="'+pp[0][1]+'" r="5"/>';
         let total=0; const segs=[]; for(let i=1;i<pp.length;i++){const l=Math.hypot(pp[i][0]-pp[i-1][0],pp[i][1]-pp[i-1][1]);segs.push(l);total+=l;}
         { const dur=Math.max(2.5,Math.min(9,total/(working?160:110))).toFixed(2); /* 움직이는 점: 출발 → 도착으로 계속 흐름 */
           runners+='<g class="move-runner fl'+(working?' is-working':'')+'"'+mvs+'><g transform="scale(1.35) translate(-15,-9)"><rect x="22" y="3.2" width="9" height="2.6" rx="1" class="fl-fork"/><rect x="22" y="12.2" width="9" height="2.6" rx="1" class="fl-fork"/><rect x="20" y="1.5" width="2.6" height="15" rx="1" class="fl-mast"/><rect x="3" y="0" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="3" y="15" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="14" y="0" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="14" y="15" width="4.5" height="3" rx="1" class="fl-wheel"/><rect x="0" y="2" width="20.5" height="14" rx="3" class="fl-body"/><rect x="8" y="4" width="9" height="10" rx="1.6" class="fl-cab"/><rect x="0.8" y="4" width="4" height="10" rx="1.4" class="fl-weight"/></g><animateMotion dur="'+dur+'s" repeatCount="indefinite" rotate="auto" path="'+d+'"/></g>'; }
         let half=total/2, mx=pp[0][0], my=pp[0][1]; for(let i=1;i<pp.length;i++){if(half<=segs[i-1]){const t=half/segs[i-1];mx=pp[i-1][0]+(pp[i][0]-pp[i-1][0])*t;my=pp[i-1][1]+(pp[i][1]-pp[i-1][1])*t;break;} half-=segs[i-1];}
         const g=goalOf(o.x.text); const prog=g?((o.x.done!=null?o.x.done:0)+' / '+g.n+(g.u?' '+g.u:'')):'';
-        lab+='<div class="move-label'+(working?' is-working':'')+'" style="--mv:'+MVC[ci]+';left:'+mx+'px;top:'+my+'px">'+esc(PLACE_LABEL[o.m.from]||o.m.from)+' → '+esc(PLACE_LABEL[o.m.to]||o.m.to)+(prog?' · '+esc(prog):'')+(working?' · 작업중':'')+'</div>';
+        lab+='<div class="move-label'+(working?' is-working':'')+'" style="--mv:'+MVC[ci]+';--mvw:'+MVW[wi]+';left:'+mx+'px;top:'+my+'px">'+esc(PLACE_LABEL[o.m.from]||o.m.from)+' → '+esc(PLACE_LABEL[o.m.to]||o.m.to)+(prog?' · '+esc(prog):'')+(working?' · 작업중':'')+'</div>';
       });
       svg.innerHTML=defs+paths+runners; labels.innerHTML=lab;
     }
