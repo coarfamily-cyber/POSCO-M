@@ -2898,5 +2898,15 @@
     if(root.classList.contains('kiosk')) setTimeout(refit,50);
   })();
   </script>
+  <script>
+  /* 지도 버튼 상세 카드는 한 번에 하나만: 다른 버튼을 누르면 열려 있던 카드(출고·입고·포장·피치·환경 포함)를 닫음 */
+  (function(){
+    document.addEventListener('click',e=>{
+      const b=e.target.closest&&e.target.closest('[data-toggle-zone]'); if(!b) return;
+      const k=b.getAttribute('data-toggle-zone'); const mine=document.getElementById('hotspot-'+k)||b.closest('.hotspot-wrapper');
+      document.querySelectorAll('.hotspot-wrapper.is-open').forEach(w=>{ if(w===mine) return; w.classList.remove('is-open'); const c=w.querySelector('.chevron'); if(c) c.style.transform='rotate(0deg)'; });
+    },true);
+  })();
+  </script>
 </body>
 </html>
