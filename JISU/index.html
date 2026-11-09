@@ -1253,6 +1253,17 @@
     .env-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;}
     .env-grid .env-unit{padding:9px 6px;font-size:12px;}
   </style>
+  <style>
+    /* 환경 카드: 호기 버튼·특이사항은 항상 고정(스크롤 없음), 등록된 금일작업 목록만 길면 그 안에서 스크롤 */
+    body:not(#zz) #hotspot-environment.is-open > .expand-card{overflow:hidden !important;display:flex !important;flex-direction:column;}
+    #hotspot-environment > .expand-card > *{flex:0 0 auto;}
+    #hotspot-environment > .expand-card > .cmd-in-card{flex:0 1 auto;min-height:0;overflow-y:auto;}
+    /* 호기 버튼 세로로 크게 (손가락으로 누르기 쉽게) */
+    body:not(#zz) .env-grid{gap:8px;}
+    body:not(#zz) .env-grid .env-unit{min-height:46px;padding:12px 6px;font-size:13.5px;border-radius:11px;touch-action:manipulation;}
+    body:not(#zz) .env-grid .env-unit i{width:9px;height:9px;}
+    @media (max-width:900px), (pointer:coarse){ body:not(#zz) .env-grid .env-unit{min-height:52px;font-size:15px;} }
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -2288,7 +2299,7 @@
       if(sr.height<360){ /* phone: map too small, let the card open below normally (page scroll), only keep it inside horizontally */
         card.style.top='100%'; card.style.bottom='auto'; card.style.maxHeight='none'; card.classList.remove('opens-up');
         const w0=card.offsetWidth, cx0=br.left+br.width/2; let l0=cx0-w0/2, d0=0; const vw=document.documentElement.clientWidth; if(l0<M) d0=M-l0; else if(l0+w0>vw-M) d0=(vw-M)-(l0+w0); card.style.transform='translate(calc(-50% + '+Math.round(d0)+'px), 0)'; return; }
-      const natural=card.scrollHeight*z, cap=Math.max(260,sr.height*0.46);
+      const natural=card.scrollHeight*z, cap=Math.max(260,sr.height*(wrap.id==='hotspot-environment'?0.98:0.46)); /* 환경 카드는 호기 버튼·특이사항이 다 보이게 높이 제한 완화 */
       const below=sr.bottom-br.bottom-M-8, above=br.top-sr.top-M-8;
       let up=false, maxH;
       if(natural<=below){ maxH=below; } else if(natural<=above){ up=true; maxH=above; } else { up=above>below; maxH=Math.max(above,below); }
