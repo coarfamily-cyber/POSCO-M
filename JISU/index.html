@@ -1268,6 +1268,31 @@
     /* 실적 요약 칸 5개 */
     body:not(#zz) .pf-kpis{grid-template-columns:repeat(auto-fit,minmax(110px,1fr)) !important;}
   </style>
+  <style>
+    /* 환경 청소중 표시: 지도의 해당 호기 자리에 🧹 + 말풍선 */
+    .env-clean-layer{position:absolute;inset:0;pointer-events:none;z-index:46;}
+    .env-clean{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;font-size:clamp(10px,1.05cqw,15px);}
+    .env-clean .ec-bubble{position:relative;margin-bottom:.55em;padding:.32em .75em;border-radius:.9em;background:#ffffff;color:#0f172a;font-weight:900;white-space:nowrap;box-shadow:0 6px 16px rgba(0,0,0,.45);animation:ecFloat 2.4s ease-in-out infinite;}
+    .env-clean .ec-bubble::after{content:'';position:absolute;left:50%;bottom:-.5em;transform:translateX(-50%);border-left:.5em solid transparent;border-right:.5em solid transparent;border-top:.6em solid #ffffff;}
+    .env-clean .ec-bubble b{color:#16a34a;}
+    .env-clean .ec-dots::after{content:'';display:inline-block;width:1.2em;text-align:left;animation:ecDots 1.4s steps(4,end) infinite;}
+    .env-clean .ec-emoji{font-size:2.1em;line-height:1;filter:drop-shadow(0 3px 4px rgba(0,0,0,.6));transform-origin:50% 90%;animation:ecSweep .9s ease-in-out infinite;}
+    @keyframes ecSweep{0%,100%{transform:rotate(-16deg) translateX(-.08em);}50%{transform:rotate(16deg) translateX(.08em);}}
+    @keyframes ecFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-.18em);}}
+    @keyframes ecDots{0%{content:'';}25%{content:'.';}50%{content:'..';}75%,100%{content:'...';}}
+    @media (prefers-reduced-motion: reduce){ .env-clean .ec-emoji,.env-clean .ec-bubble{animation:none;} }
+  </style>
+  <style>
+    /* 사람이 빗자루질하는 그림: 몸은 살짝 들썩, 팔과 빗자루만 좌우로 쓸기 */
+    .env-clean .ec-emoji.ec-person{font-size:1em;animation:ecBob .9s ease-in-out infinite;transform-origin:50% 100%;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55));}
+    .env-clean .ec-person svg{width:2.9em;height:3.3em;display:block;overflow:visible;}
+    .env-clean .ec-person .ec-broom{transform-box:view-box;transform-origin:23px 17px;animation:ecBroom .9s ease-in-out infinite;}
+    .env-clean .ec-person .ec-dust circle{fill:#e5e7eb;opacity:0;animation:ecDust .9s ease-out infinite;}
+    .env-clean .ec-person .ec-dust circle:nth-child(2){animation-delay:.15s;} .env-clean .ec-person .ec-dust circle:nth-child(3){animation-delay:.3s;}
+    @keyframes ecBroom{0%,100%{transform:rotate(-14deg);}50%{transform:rotate(16deg);}}
+    @keyframes ecBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-.06em);}}
+    @keyframes ecDust{0%{opacity:0;transform:translate(0,0);}30%{opacity:.85;}100%{opacity:0;transform:translate(.25em,-.35em);}}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -2971,6 +2996,12 @@
       box.querySelectorAll('[data-env-unit]').forEach(b=>{ const x=d.u[b.dataset.envUnit]||{}; b.classList.toggle('work',x.s==='work'); b.classList.toggle('done',x.s==='done'); if(x.s==='work') r++; if(x.s==='done') dn++;
         b.title=b.dataset.envUnit+'호기 · '+(x.s==='work'?'청소중 '+(x.ts||''):x.s==='done'?'청소완료 '+(x.td||''):'대기 (누르면 작업중)'); });
       const eb=document.querySelector('[data-toggle-zone="environment"]'); if(eb){ eb.classList.toggle('env-run',r>0); eb.classList.toggle('env-all',r===0&&dn>0); const bd=eb.querySelector('.env-badge'); if(bd) bd.remove(); }
+      { /* 지도 위 청소중 표시 (C·D동 박스 위치) */ const stage=document.getElementById('mapStage'); if(stage){ let ly=document.getElementById('envCleanLayer'); if(!ly){ ly=document.createElement('div'); ly.id='envCleanLayer'; ly.className='env-clean-layer'; stage.appendChild(ly); }
+        const POS={'13,14':[67.9,29.7],'11,12':[72.5,29.6],'9,10':[76.8,29.6],'7,8':[65.0,74.6],'5,6':[69.4,74.6],'3,4':[73.5,74.6],'1,2':[77.6,74.3]};
+        const want=Object.keys(d.u).filter(k=>d.u[k]&&d.u[k].s==='work'&&POS[k]); const have=new Set([...ly.children].map(c=>c.dataset.k));
+        [...ly.children].forEach(c=>{ if(!want.includes(c.dataset.k)) c.remove(); });
+        want.forEach(k=>{ if(have.has(k)) return; const el=document.createElement('div'); el.className='env-clean'; el.dataset.k=k; el.style.left=POS[k][0]+'%'; el.style.top=POS[k][1]+'%'; el.title=k+'호기 청소중 (시작 '+(d.u[k].ts||'')+')';
+          el.innerHTML='<div class="ec-bubble"><b>'+k+'호기</b> 청소중<span class="ec-dots"></span></div><div class="ec-emoji ec-person"><svg viewBox=\"0 0 44 50\" aria-hidden=\"true\"><ellipse cx=\"22\" cy=\"47\" rx=\"14\" ry=\"2.4\" fill=\"rgba(0,0,0,.35)\"/><g class=\"ec-dust\"><circle cx=\"36\" cy=\"43\" r=\"1.3\"/><circle cx=\"39\" cy=\"40\" r=\"1\"/><circle cx=\"33\" cy=\"40\" r=\"0.9\"/></g><line x1=\"15\" y1=\"30\" x2=\"12\" y2=\"45\" stroke=\"#1f2937\" stroke-width=\"3.2\" stroke-linecap=\"round\"/><line x1=\"19\" y1=\"30\" x2=\"21\" y2=\"45\" stroke=\"#1f2937\" stroke-width=\"3.2\" stroke-linecap=\"round\"/><rect x=\"11.5\" y=\"15\" width=\"11\" height=\"16\" rx=\"3.5\" fill=\"#f97316\"/><rect x=\"11.5\" y=\"22\" width=\"11\" height=\"2\" fill=\"#fde68a\"/><circle cx=\"17\" cy=\"9\" r=\"5\" fill=\"#fcd5b5\"/><path d=\"M11.6 8.2a5.4 5.4 0 0 1 10.8 0z\" fill=\"#facc15\"/><rect x=\"10.6\" y=\"7.6\" width=\"12.8\" height=\"1.6\" rx=\".8\" fill=\"#eab308\"/><g class=\"ec-broom\"><line x1=\"21\" y1=\"18\" x2=\"27\" y2=\"26\" stroke=\"#fcd5b5\" stroke-width=\"2.8\" stroke-linecap=\"round\"/><line x1=\"25\" y1=\"15\" x2=\"32\" y2=\"40\" stroke=\"#a16207\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><path d=\"M28.5 38.5 L36 37 L39.5 45.5 L27.5 46 Z\" fill=\"#fbbf24\" stroke=\"#92400e\" stroke-width=\"1\" stroke-linejoin=\"round\"/><line x1=\"31\" y1=\"40\" x2=\"30.5\" y2=\"45.5\" stroke=\"#92400e\" stroke-width=\".7\"/><line x1=\"34\" y1=\"39.5\" x2=\"35\" y2=\"45.5\" stroke=\"#92400e\" stroke-width=\".7\"/></g></svg></div>'; ly.appendChild(el); }); } }
       if(dn===N && !resetT){ resetT=setTimeout(()=>{ resetT=null; const d2=load(); if(Object.values(d2.u).filter(x=>x&&x.s==='done').length===N){ d2.u={}; d2.round=(d2.round||1)+1; save(d2); draw(); } },2500); } }
     box.addEventListener('click',e=>{ const u=e.target.closest('[data-env-unit]'); if(!u) return; e.stopPropagation();
       const d=load(), k=u.dataset.envUnit, cur=d.u[k]||{};
