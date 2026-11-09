@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611092042">
+  <meta name="jisu-build" content="202611092053">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1369,6 +1369,16 @@
     .move-runner.fl .fl-load{display:none;}
     .move-runner.fl.is-working .fl-load{display:inline;}
     .move-runner.fl .fl-light{fill:#fef9c3;}
+  </style>
+  <style>
+    /* 특이사항 확인 버튼: 남기기 버튼과 같은 크기 */
+    body:not(#zz) .memo-meta .memo-ack{font-size:12.5px;font-weight:900;padding:0px 14px;border-radius:10px;min-width:65px;height:38px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;color:#fff;background:rgba(139,92,246,.55);}
+    body:not(#zz) .memo-meta .memo-ack:hover{background:rgba(139,92,246,.8);}
+    body:not(#zz) .memo-item .memo-meta{align-items:center;}
+    /* 이동 동선: 색을 조금 더 연하게 */
+    body:not(#zz) #moveLayer .move-path{opacity:.62;}
+    body:not(#zz) #moveLayer .move-glow{stroke:rgba(0,0,0,.28);}
+    body:not(#zz) #moveLayer .move-start{opacity:.75;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
