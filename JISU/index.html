@@ -1483,7 +1483,7 @@
             <h4 class="mt-1 text-sm font-extrabold text-white">환경 상세내용</h4>
           </section>
           <section class="env-units" data-env-units>
-            <div class="eu-h">호기 현황<span id="envSum"></span></div>
+            <div class="eu-h">호기 현황</div>
             <div class="env-grid"><button type="button" class="env-unit" data-env-unit="1,2"><i></i>1,2호기</button><button type="button" class="env-unit" data-env-unit="3,4"><i></i>3,4호기</button><button type="button" class="env-unit" data-env-unit="5,6"><i></i>5,6호기</button><button type="button" class="env-unit" data-env-unit="7,8"><i></i>7,8호기</button><button type="button" class="env-unit" data-env-unit="9,10"><i></i>9,10호기</button><button type="button" class="env-unit" data-env-unit="11,12"><i></i>11,12호기</button><button type="button" class="env-unit" data-env-unit="13,14"><i></i>13,14호기</button></div>
             <div class="eu-tip">누르면 작업중(초록) → 한 번 더 누르면 완료(파랑) → 한 번 더 누르면 대기</div>
           </section>
@@ -2961,7 +2961,7 @@
       box.querySelectorAll('[data-env-unit]').forEach(b=>{ const x=d.u[b.dataset.envUnit]||{}; b.classList.toggle('work',x.s==='work'); b.classList.toggle('done',x.s==='done'); if(x.s==='work') r++; if(x.s==='done') dn++;
         b.title=b.dataset.envUnit+'호기 · '+(x.s==='work'?'작업중 '+(x.t||''):x.s==='done'?'완료 '+(x.t||''):'대기'); });
       const sm=document.getElementById('envSum'); if(sm) sm.innerHTML='작업중 <b class="r">'+r+'</b> · 완료 <b class="d">'+dn+'</b> / '+N;
-      const eb=document.querySelector('[data-toggle-zone="environment"]'); if(eb){ eb.classList.toggle('env-run',r>0); eb.classList.toggle('env-all',dn===N); let bd=eb.querySelector('.env-badge');
+      const eb=document.querySelector('[data-toggle-zone="environment"]'); if(eb){ eb.classList.toggle('env-run',r>0); eb.classList.toggle('env-all',r===0&&dn>0); /* 숫자 배지 없이 불만: 작업중 초록, 완료 파랑 */ let bd=eb.querySelector('.env-badge'); if(bd) bd.remove(); bd=null; if(false)
         if(r||dn){ if(!bd){ bd=document.createElement('span'); bd.className='env-badge'; const mc=eb.querySelector('.memo-count'); if(mc) eb.insertBefore(bd,mc); else eb.appendChild(bd);} bd.textContent=dn+'/'+N; bd.className='env-badge'+(dn===N?' all':(r?' run':'')); bd.title='호기 완료 '+dn+' / '+N+(r?' · 작업중 '+r:''); } else if(bd) bd.remove(); } }
     box.addEventListener('click',e=>{ const u=e.target.closest('[data-env-unit]'); if(!u) return; e.stopPropagation();
       const d=load(), k=u.dataset.envUnit, cur=(d.u[k]||{}).s, nx=!cur?'work':cur==='work'?'done':null; if(nx) d.u[k]={s:nx,t:now()}; else delete d.u[k]; save(d); draw(); });
