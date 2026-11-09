@@ -1304,6 +1304,19 @@
     body:not(#zz) .env-clean{font-size:clamp(9px,.92cqw,13px);}
     body:not(#zz) .env-clean .ec-person svg{width:2.5em;height:2.85em;}
   </style>
+  <style>
+    /* 빗자루질 동작 크게: 팔·빗자루가 크게 좌우로 쓸고, 몸도 같이 기울어짐, 먼지 더 잘 보이게 */
+    body:not(#zz) .env-clean .ec-person svg{width:3.3em;height:3.75em;}
+    body:not(#zz) .env-clean .ec-emoji.ec-person{animation:ecLean .8s ease-in-out infinite !important;transform-origin:45% 95%;}
+    body:not(#zz) .env-clean .ec-person .ec-broom{transform-origin:23px 17px;animation:ecBroom2 .8s ease-in-out infinite !important;}
+    body:not(#zz) .env-clean .ec-person .ec-dust circle{animation:ecDust2 .8s ease-out infinite !important;}
+    body:not(#zz) .env-clean .ec-person .ec-dust circle:nth-child(1){r:1.8px;}
+    @keyframes ecBroom2{0%,100%{transform:rotate(-30deg) translateX(-1.5px);}50%{transform:rotate(26deg) translateX(2px);}}
+    @keyframes ecLean{0%,100%{transform:rotate(-5deg);}50%{transform:rotate(5deg) translateY(-.04em);}}
+    @keyframes ecDust2{0%{opacity:0;transform:translate(-3px,1px);}25%{opacity:.95;}100%{opacity:0;transform:translate(6px,-6px);}}
+    /* 청소 표시는 A·B·C·D 공장동 글자보다 위, 다른 버튼(포장·피치·생산 등)보다는 아래 */
+    body:not(#zz) .env-clean-layer{z-index:20 !important;}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
