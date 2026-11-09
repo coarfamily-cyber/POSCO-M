@@ -1225,6 +1225,29 @@
     body:not(#zz) .cmd-side:has([data-cmd-kind="notice"][aria-pressed="true"]) .cmd-submit:not(:disabled){background:#fff4e9 !important;color:#3b2a1a !important;}
     body:not(#zz) .cmd-side:not(:has([data-cmd-kind="notice"][aria-pressed="true"])) .cmd-submit .cmd-submit-target{background:rgba(255,255,255,.16) !important;color:#ffffff !important;box-shadow:none !important;}
   </style>
+  <style>
+    /* 환경 상세보기: 호기 7개 버튼 (C동 3 · D동 4) */
+    .env-units{margin-top:10px;}
+    .env-units .eu-h{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#cbd5e1;margin-bottom:6px;}
+    .env-units .eu-h span{margin-left:auto;font-size:11px;font-weight:700;color:#94a3b8;}
+    .env-units .eu-h span b.r{color:#4ade80;} .env-units .eu-h span b.d{color:#60a5fa;}
+    .env-row{display:flex;align-items:center;gap:6px;margin-top:6px;}
+    .env-row > em{font-style:normal;font-size:10.5px;font-weight:900;color:#94a3b8;width:30px;flex:0 0 auto;}
+    .env-row .eu-btns{flex:1;display:grid;gap:6px;}
+    .env-row.c .eu-btns{grid-template-columns:repeat(3,1fr);} .env-row.d .eu-btns{grid-template-columns:repeat(4,1fr);}
+    .env-unit{display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 4px;border-radius:9px;font-weight:900;font-size:11.5px;color:#e5e7eb;background:rgba(255,255,255,.08);white-space:nowrap;}
+    .env-unit i{width:7px;height:7px;border-radius:50%;background:#64748b;flex:0 0 auto;}
+    .env-unit.work{background:rgba(34,197,94,.30);color:#eafff1;}
+    .env-unit.work i{background:#22c55e;box-shadow:0 0 8px #22c55e;animation:workBlink 1s ease-in-out infinite;}
+    .env-unit.done{background:rgba(59,130,246,.62);color:#fff;}
+    .env-unit.done i{background:#38bdf8;box-shadow:0 0 6px #38bdf8;animation:none;}
+    .env-units .eu-tip{margin-top:6px;font-size:10.5px;color:#94a3b8;}
+    /* 지도 환경 버튼: 호기 작업중이면 초록 깜빡임, 7개 모두 완료면 파랑 */
+    body:not(#zz) [data-toggle-zone="environment"].env-run .pulse-ring{background:#22c55e !important;color:#4ade80 !important;animation:workBlink 1s ease-in-out infinite !important;box-shadow:0 0 8px #22c55e !important;}
+    body:not(#zz) [data-toggle-zone="environment"].env-all .pulse-ring{background:#38bdf8 !important;color:#38bdf8 !important;}
+    .env-badge{display:inline-flex;align-items:center;justify-content:center;min-width:1.35em;height:1.35em;padding:0 .4em;border-radius:9999px;background:#64748b;color:#fff;font-size:.7em;font-weight:900;margin-left:.3em;line-height:1;white-space:nowrap;}
+    .env-badge.run{background:#22c55e;color:#052e16;} .env-badge.all{background:#3b82f6;}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -1442,6 +1465,12 @@
           <section class="mt-3 border-t border-white/15 pt-3">
             <div class="text-[10px] font-bold uppercase tracking-wider text-amber-200">ENVIRONMENT · 환경</div>
             <h4 class="mt-1 text-sm font-extrabold text-white">환경 상세내용</h4>
+          </section>
+          <section class="env-units" data-env-units>
+            <div class="eu-h">호기 현황<span id="envSum"></span></div>
+            <div class="env-row c"><em>C동</em><div class="eu-btns"><button type="button" class="env-unit" data-env-unit="13,14"><i></i>13,14호기</button><button type="button" class="env-unit" data-env-unit="12,11"><i></i>12,11호기</button><button type="button" class="env-unit" data-env-unit="10,9"><i></i>10,9호기</button></div></div>
+            <div class="env-row d"><em>D동</em><div class="eu-btns"><button type="button" class="env-unit" data-env-unit="8,7"><i></i>8,7호기</button><button type="button" class="env-unit" data-env-unit="6,5"><i></i>6,5호기</button><button type="button" class="env-unit" data-env-unit="4,3"><i></i>4,3호기</button><button type="button" class="env-unit" data-env-unit="2,1"><i></i>2,1호기</button></div></div>
+            <div class="eu-tip">누르면 작업중(초록) → 한 번 더 누르면 완료(파랑) → 한 번 더 누르면 대기</div>
           </section>
         </div>
       </div>
@@ -2903,6 +2932,26 @@
       const k=b.getAttribute('data-toggle-zone'); const mine=document.getElementById('hotspot-'+k)||b.closest('.hotspot-wrapper');
       document.querySelectorAll('.hotspot-wrapper.is-open').forEach(w=>{ if(w===mine) return; w.classList.remove('is-open'); const c=w.querySelector('.chevron'); if(c) c.style.transform='rotate(0deg)'; });
     },true);
+  })();
+  </script>
+  <script>
+  /* 환경 상세보기 호기 버튼: 대기 → 작업중 → 완료 → 대기, 하루 단위 저장 (자정 지나면 새로 시작, 지난 날은 기록으로 보관) */
+  (function(){
+    const KEY='jisu-env-v1', box=document.querySelector('[data-env-units]'); if(!box) return; const N=box.querySelectorAll('[data-env-unit]').length;
+    const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+    const now=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false});
+    function load(){ let d; try{ d=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){} if(!d||d.day!==today()){ if(d&&d.day&&Object.keys(d.u||{}).length){ try{ const hs=JSON.parse(localStorage.getItem(KEY+'-history')||'{}'); hs[d.day]=d.u; localStorage.setItem(KEY+'-history',JSON.stringify(hs)); }catch(e){} } d={day:today(),u:{}}; localStorage.setItem(KEY,JSON.stringify(d)); } return d; }
+    const save=d=>localStorage.setItem(KEY,JSON.stringify(d));
+    function draw(){ const d=load(); let r=0,dn=0;
+      box.querySelectorAll('[data-env-unit]').forEach(b=>{ const x=d.u[b.dataset.envUnit]||{}; b.classList.toggle('work',x.s==='work'); b.classList.toggle('done',x.s==='done'); if(x.s==='work') r++; if(x.s==='done') dn++;
+        b.title=b.dataset.envUnit+'호기 · '+(x.s==='work'?'작업중 '+(x.t||''):x.s==='done'?'완료 '+(x.t||''):'대기'); });
+      const sm=document.getElementById('envSum'); if(sm) sm.innerHTML='작업중 <b class="r">'+r+'</b> · 완료 <b class="d">'+dn+'</b> / '+N;
+      const eb=document.querySelector('[data-toggle-zone="environment"]'); if(eb){ eb.classList.toggle('env-run',r>0); eb.classList.toggle('env-all',dn===N); let bd=eb.querySelector('.env-badge');
+        if(r||dn){ if(!bd){ bd=document.createElement('span'); bd.className='env-badge'; const mc=eb.querySelector('.memo-count'); if(mc) eb.insertBefore(bd,mc); else eb.appendChild(bd);} bd.textContent=dn+'/'+N; bd.className='env-badge'+(dn===N?' all':(r?' run':'')); bd.title='호기 완료 '+dn+' / '+N+(r?' · 작업중 '+r:''); } else if(bd) bd.remove(); } }
+    box.addEventListener('click',e=>{ const u=e.target.closest('[data-env-unit]'); if(!u) return; e.stopPropagation();
+      const d=load(), k=u.dataset.envUnit, cur=(d.u[k]||{}).s, nx=!cur?'work':cur==='work'?'done':null; if(nx) d.u[k]={s:nx,t:now()}; else delete d.u[k]; save(d); draw(); });
+    window.addEventListener('storage',e=>{ if(e.key===KEY) draw(); });
+    setInterval(draw,30000); draw(); window.jisuEnvDraw=draw;
   })();
   </script>
 </body>
