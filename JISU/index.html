@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611092032">
+  <meta name="jisu-build" content="202611092042">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1345,6 +1345,11 @@
   <style>
     .env-units .eu-tip .eu-reset{display:inline-block;margin-top:3px;font-weight:inherit;color:inherit;}
   </style>
+  <style>
+    /* 특이사항 확인 버튼 */
+    .memo-meta .memo-ack{margin-left:auto;font-size:11px;font-weight:900;color:#e5e7eb;background:rgba(139,92,246,.35);border-radius:7px;padding:2px 10px;line-height:1.5;}
+    .memo-meta .memo-ack:hover{background:rgba(139,92,246,.6);color:#fff;}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -2081,7 +2086,7 @@
     function homeMemos(){
       let ms=[]; try{ ms=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]'); }catch(e){}
       const t=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()), md=t.slice(5,7)+'. '+t.slice(8,10)+'.';
-      const today=ms.filter(m=>m.day?m.day===t:String(m.at||'').startsWith(md)).reverse();
+      const today=ms.filter(m=>!m.ack&&(m.day?m.day===t:String(m.at||'').startsWith(md))).reverse();
       const hm=s=>{const m=String(s||'').match(/(\d{1,2}:\d{2})/); return m?m[1]:'';};
       return '<div class="home-memo"><div class="hs-h">오늘 특이사항 <span>'+today.length+'</span></div>'+(today.length?'<div class="hm-list">'+today.slice(0,12).map(m=>'<button type="button" class="hm-item" data-memo-goto="'+esc(m.target)+'"><div class="hm-top"><b>'+esc(NAMES[m.target]||m.target)+'</b><span>'+esc(hm(m.at))+(m.by?' · '+esc(m.by):'')+'</span></div><div class="hm-txt">'+esc(m.text)+'</div></button>').join('')+(today.length>12?'<div class="hs-empty">외 '+(today.length-12)+'건</div>':'')+'</div>':'<div class="hs-empty">오늘 남긴 특이사항이 없어요.</div>')+'</div>';
     }
@@ -2432,7 +2437,7 @@
         s1['!cols']=[{wch:5},{wch:10},{wch:30},{wch:16},{wch:8},{wch:8},{wch:6},{wch:9},{wch:9},{wch:9},{wch:28},{wch:10},{wch:13},{wch:13},{wch:13}];
         XLSX.utils.book_append_sheet(wb,s1,'금일 작업완료');
         const s2=XLSX.utils.json_to_sheet(work.map(row)); s2['!cols']=s1['!cols']; XLSX.utils.book_append_sheet(wb,s2,'전체 금일작업');
-        { let ms=[]; try{ms=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]')}catch(e){} const TAG={handover:'인수인계',extra:'추가작업',issue:'특이사항'}; const s3=XLSX.utils.json_to_sheet(ms.map((x,i)=>({'번호':i+1,'작성 시각':x.at||'','대상':NAMES[x.target]||x.target,'내용':x.text,'작성자':x.by||''})),{header:['번호','작성 시각','대상','내용','작성자']}); s3['!cols']=[{wch:5},{wch:14},{wch:10},{wch:44},{wch:10}]; XLSX.utils.book_append_sheet(wb,s3,'특이사항'); }
+        { let ms=[]; try{ms=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]')}catch(e){} const TAG={handover:'인수인계',extra:'추가작업',issue:'특이사항'}; const s3=XLSX.utils.json_to_sheet(ms.map((x,i)=>({'번호':i+1,'작성 시각':x.at||'','대상':NAMES[x.target]||x.target,'내용':x.text,'작성자':x.by||'','확인':x.ack?('확인 '+(x.ackAt||'')+(x.ackBy?' · '+x.ackBy:'')):'미확인'})),{header:['번호','작성 시각','대상','내용','작성자','확인']}); s3['!cols']=[{wch:5},{wch:14},{wch:10},{wch:44},{wch:10},{wch:22}]; XLSX.utils.book_append_sheet(wb,s3,'특이사항'); }
         { let ev=null, lg=[]; try{ev=JSON.parse(localStorage.getItem('jisu-env-v1')||'null'); lg=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]');}catch(e){} const U=['1,2','3,4','5,6','7,8','9,10','11,12','13,14'], u=(ev&&ev.u)||{}; const ST={work:'작업중',done:'작업완료'};
           const s4=XLSX.utils.json_to_sheet(U.map((k,i)=>({'번호':i+1,'호기':k+'호기','회차':(ev&&ev.round)||1,'상태':ST[(u[k]||{}).s]||'대기','작업 시작':(u[k]||{}).ts||'','작업완료 시각':(u[k]||{}).td||''})),{header:['번호','호기','회차','상태','작업 시작','작업완료 시각']}); s4['!cols']=[{wch:5},{wch:11},{wch:6},{wch:9},{wch:10},{wch:12}]; XLSX.utils.book_append_sheet(wb,s4,'환경 호기 현재');
           const s5=XLSX.utils.json_to_sheet(lg.map((x,i)=>({'번호':i+1,'날짜':x.day||'','호기':x.unit+'호기','회차':x.round||'','작업 시작':x.ts||'','작업완료':x.td||'','작업자':x.by||''})),{header:['번호','날짜','호기','회차','작업 시작','작업완료','작업자']}); s5['!cols']=[{wch:5},{wch:11},{wch:11},{wch:6},{wch:10},{wch:10},{wch:10}]; XLSX.utils.book_append_sheet(wb,s5,'환경 청소 기록'); }
@@ -2643,10 +2648,10 @@
       if(!b){ b=document.createElement('section'); b.className='memo-box'; b.dataset.memoFor=keyOf(w); card.appendChild(b); } return b; }
     function render(){
       const all=load();
-      wraps.forEach(w=>{ const k=keyOf(w), items=all.filter(m=>m.target===k).reverse(); const b=box(w);
+      wraps.forEach(w=>{ const k=keyOf(w), items=all.filter(m=>m.target===k&&!m.ack).reverse(); const b=box(w); /* 확인한 특이사항은 카드에서 숨김 (기록·액셀에는 남음) */
         const keep=(b.querySelector('.memo-input')||{}).value||'';
         b.innerHTML='<div class="memo-h">특이사항'+(items.length?' <span>'+items.length+'</span>':'')+'</div>'
-          +(items.length?'<div class="memo-list">'+items.slice(0,6).map(m=>'<div class="memo-item"><div class="memo-text">'+esc(m.text)+'</div><div class="memo-meta">'+(m.by?esc(m.by)+' · ':'')+esc(m.at)+'<button type="button" class="memo-del" data-memo-del="'+m.id+'" title="삭제">✕</button></div></div>').join('')+(items.length>6?'<div class="memo-more">외 '+(items.length-6)+'건</div>':'')+'</div>':'')
+          +(items.length?'<div class="memo-list">'+items.slice(0,6).map(m=>'<div class="memo-item"><div class="memo-text">'+esc(m.text)+'</div><div class="memo-meta">'+(m.by?esc(m.by)+' · ':'')+esc(m.at)+'<button type="button" class="memo-ack" data-memo-ack="'+m.id+'" title="확인하면 이 칸에서 사라져요 (액셀에는 남음)">확인</button></div></div>').join('')+(items.length>6?'<div class="memo-more">외 '+(items.length-6)+'건</div>':'')+'</div>':'')
           +'<div class="memo-row"><input class="memo-input" type="text" maxlength="300" placeholder="특이사항 적기"><button type="button" class="memo-send">남기기</button></div>';
         b.querySelector('.memo-input').value=keep;
         const btn=w.querySelector(':scope > button'); if(btn){ let bd=btn.querySelector('.memo-count'); if(items.length){ if(!bd){bd=document.createElement('span');bd.className='memo-count';btn.appendChild(bd);} bd.textContent='+'+items.length; bd.title='특이사항 '+items.length+'건'; } else if(bd) bd.remove(); }
@@ -2657,7 +2662,7 @@
       const ni=document.querySelector('.memo-box[data-memo-for="'+k+'"] .memo-input'); if(ni) ni.focus(); }
     document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('.memo-box'); if(!b) return; e.stopPropagation();
       if(e.target.closest('.memo-send')){ send(b); return; }
-      const del=e.target.closest('[data-memo-del]'); if(del){ if(!confirm('이 특이사항을 삭제할까요?')) return; save(load().filter(x=>x.id!==del.dataset.memoDel)); render(); if(window.jisuCmdRender) window.jisuCmdRender(); } },true);
+      const ack=e.target.closest('[data-memo-ack]'); if(ack){ const all=load(), it=all.find(x=>x.id===ack.dataset.memoAck); if(it){ it.ack=true; it.ackAt=nowStr(); const u=me(); if(u) it.ackBy=u; save(all); } render(); if(window.jisuCmdRender) window.jisuCmdRender(); } },true);
     document.addEventListener('keydown',e=>{ if(!(e.target.classList&&e.target.classList.contains('memo-input'))) return; e.stopPropagation(); if(e.key==='Enter'&&!e.isComposing){ e.preventDefault(); send(e.target.closest('.memo-box')); } },true);
     window.addEventListener('storage',e=>{ if(e.key===KEY) render(); });
     window.jisuMemoRender=render; render();
