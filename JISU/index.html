@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611092027">
+  <meta name="jisu-build" content="202611092032">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1342,6 +1342,9 @@
     body:not(#zz) .env-clean .ec-bubble{animation:ecFloat 2.4s ease-in-out infinite, ecBubbleCycle 10s ease-in-out infinite !important;}
     @keyframes ecBubbleCycle{0%{opacity:0;}5%,40%{opacity:1;}47%,100%{opacity:0;}}
   </style>
+  <style>
+    .env-units .eu-tip .eu-reset{display:inline-block;margin-top:3px;font-weight:inherit;color:inherit;}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -1563,7 +1566,7 @@
           <section class="env-units" data-env-units>
             <div class="eu-h">호기 현황</div>
             <div class="env-grid"><button type="button" class="env-unit" data-env-unit="1,2"><i></i>1,2호기</button><button type="button" class="env-unit" data-env-unit="3,4"><i></i>3,4호기</button><button type="button" class="env-unit" data-env-unit="5,6"><i></i>5,6호기</button><button type="button" class="env-unit" data-env-unit="7,8"><i></i>7,8호기</button><button type="button" class="env-unit" data-env-unit="9,10"><i></i>9,10호기</button><button type="button" class="env-unit" data-env-unit="11,12"><i></i>11,12호기</button><button type="button" class="env-unit" data-env-unit="13,14"><i></i>13,14호기</button></div>
-            <div class="eu-tip">누를 때마다 작업중(초록) ↔ 작업완료(파랑) · 7칸 모두 끝나면 처음부터 다시</div>
+            <div class="eu-tip">누를 때마다 작업중(초록) ↔ 작업완료(파랑) · 7칸 모두 끝나면 처음부터 다시<br><b class="eu-reset">완료작업 오전 08시 초기화</b></div>
           </section>
         </div>
       </div>
@@ -3044,7 +3047,12 @@
     const KEY='jisu-env-v1', LOG='jisu-env-log-v1', box=document.querySelector('[data-env-units]'); if(!box) return; const N=box.querySelectorAll('[data-env-unit]').length;
     const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
     const now=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false});
-    function load(){ let d; try{ d=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){} if(!d||typeof d!=='object') d={}; if(!d.u) d.u={}; if(!d.round) d.round=1; delete d.day; return d; }
+    /* 매일 아침 08시(KST)가 지나면 작업완료(파랑)된 칸은 대기로 초기화 (작업중인 칸과 청소 기록은 그대로) */
+    const period=()=>{ const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hour12:false}).formatToParts(new Date()).map(x=>[x.type,x.value])); let day=p.year+'-'+p.month+'-'+p.day; if(+(p.hour==='24'?0:p.hour)<8){ const t=new Date(Date.parse(day+'T00:00:00Z')-86400000); day=t.toISOString().slice(0,10); } return day; };
+    function load(){ let d; try{ d=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){} if(!d||typeof d!=='object') d={}; if(!d.u) d.u={}; if(!d.round) d.round=1; delete d.day;
+      const pid=period(); if(!d.resetDay){ d.resetDay=pid; localStorage.setItem(KEY,JSON.stringify(d)); }
+      else if(d.resetDay!==pid){ let cleared=0; Object.keys(d.u).forEach(k=>{ if(d.u[k]&&d.u[k].s==='done'){ delete d.u[k]; cleared++; } }); if(cleared) d.round=(d.round||1)+1; d.resetDay=pid; localStorage.setItem(KEY,JSON.stringify(d)); }
+      return d; }
     const save=d=>localStorage.setItem(KEY,JSON.stringify(d));
     const loadLog=()=>{ try{ return JSON.parse(localStorage.getItem(LOG)||'[]'); }catch(e){ return []; } };
     let resetT=null;
