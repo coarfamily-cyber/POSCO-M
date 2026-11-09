@@ -1317,6 +1317,25 @@
     /* 청소 표시는 A·B·C·D 공장동 글자보다 위, 다른 버튼(포장·피치·생산 등)보다는 아래 */
     body:not(#zz) .env-clean-layer{z-index:20 !important;}
   </style>
+  <style>
+    /* HOME 환경 청소 현황 */
+    .home-env{margin:0 0 10px;padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.06);}
+    .home-env .hs-h{font-size:12px;font-weight:800;color:#cbd5e1;margin-bottom:6px;}
+    .home-env .he-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;font-size:12.5px;border-top:1px solid rgba(255,255,255,.06);}
+    .home-env .he-row:first-of-type{border-top:0;}
+    .home-env .he-row b{color:#e5e7eb;font-weight:800;}
+    .home-env .he-row span{font-weight:800;color:#94a3b8;}
+    .home-env .he-row.ok span{color:#93c5fd;}
+    .home-env .he-row.run span{color:#4ade80;}
+    .home-env .he-row.late span{color:#fde68a;}
+    .home-env .he-row.warn span{color:#fb923c;}
+    .home-env .he-row.none span{color:#64748b;}
+  </style>
+  <style>
+    .home-env.alert{background:rgba(251,146,60,.12);box-shadow:inset 0 0 0 1px rgba(251,146,60,.35);}
+    .home-env.alert .hs-h{color:#fdba74;}
+    .home-env.alert .hs-h span{display:inline-flex;align-items:center;justify-content:center;min-width:1.5em;height:1.5em;margin-left:4px;padding:0 .4em;border-radius:9999px;background:#f97316;color:#fff;font-size:11px;}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -1538,7 +1557,7 @@
           <section class="env-units" data-env-units>
             <div class="eu-h">호기 현황</div>
             <div class="env-grid"><button type="button" class="env-unit" data-env-unit="1,2"><i></i>1,2호기</button><button type="button" class="env-unit" data-env-unit="3,4"><i></i>3,4호기</button><button type="button" class="env-unit" data-env-unit="5,6"><i></i>5,6호기</button><button type="button" class="env-unit" data-env-unit="7,8"><i></i>7,8호기</button><button type="button" class="env-unit" data-env-unit="9,10"><i></i>9,10호기</button><button type="button" class="env-unit" data-env-unit="11,12"><i></i>11,12호기</button><button type="button" class="env-unit" data-env-unit="13,14"><i></i>13,14호기</button></div>
-            <div class="eu-tip">한 번 누르면 작업중(초록) → 한 번 더 누르면 작업완료(파랑) · 7칸 모두 끝나면 처음부터 다시</div>
+            <div class="eu-tip">누를 때마다 작업중(초록) ↔ 작업완료(파랑) · 7칸 모두 끝나면 처음부터 다시</div>
           </section>
         </div>
       </div>
@@ -2042,7 +2061,14 @@
         +'<div class="cmd-row"><div class="cmd-text">'+esc(x.text)+carrySub(x)+(function(){const mv=moveOf(x);return mv?'<span class="move-tag">이동 '+esc(PLACE_LABEL[mv.from]||mv.from)+' → '+esc(PLACE_LABEL[mv.to]||mv.to)+'</span>':'';})()+'</div>'+right+'</div></div>';
     }
     /* HOME 상태 사이드바: 오늘 전체 현황 (등록된 금일작업 기준, 임의 숫자 없음) */
-    function homeSummary(){ return homeWork()+homeMemos(); }
+    function homeSummary(){ return homeWork()+homeEnv()+homeMemos(); }
+    /* HOME: 환경 호기별 마지막 청소 후 지난 날수 (청소 기록 기준) */
+    function homeEnv(){ let lg=[], cur=null; try{ lg=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]'); cur=JSON.parse(localStorage.getItem('jisu-env-v1')||'null'); }catch(e){}
+      const U=['1,2','3,4','5,6','7,8','9,10','11,12','13,14'], td=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()), dd=(a,b)=>Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/86400000);
+      const rows=U.map(k=>{ const last=lg.filter(x=>x.unit===k&&x.day).map(x=>x.day).sort().pop(); const working=cur&&cur.u&&cur.u[k]&&cur.u[k].s==='work'; return {k,last,days:last?dd(last,td):null,working}; }).sort((a,b)=>(b.days==null?1e9:b.days)-(a.days==null?1e9:a.days));
+      const line=r=>'<div class="he-row'+(r.working?' run':r.days==null?' none':r.days>=3?' warn':r.days>=1?' late':' ok')+'"><b>'+r.k+'호기</b><span>'+(r.working?'지금 청소중':r.days==null?'청소 기록 없음':r.days===0?'오늘 청소 완료':r.days+'일째 청소 안 됨')+'</span></div>';
+      const late=rows.filter(r=>!r.working&&r.days!=null&&r.days>=3); if(!late.length) return ''; /* 3일 이상 청소 안 된 호기만 알림 */
+      return '<div class="home-env alert"><div class="hs-h">⚠ 환경 청소 알림 <span>'+late.length+'</span></div>'+late.map(line).join('')+'</div>'; }
     function homeMemos(){
       let ms=[]; try{ ms=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]'); }catch(e){}
       const t=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()), md=t.slice(5,7)+'. '+t.slice(8,10)+'.';
@@ -3031,7 +3057,8 @@
       const d=load(), k=u.dataset.envUnit, cur=d.u[k]||{};
       if(!cur.s){ d.u[k]={s:'work',ts:now(),day:today()}; }
       else if(cur.s==='work'){ const td=now(); d.u[k]={s:'done',ts:cur.ts,td,day:today()}; const lg=loadLog(); lg.push({unit:k,round:d.round,day:today(),ts:cur.ts||'',td,by:(localStorage.getItem('jisu-user')||'')}); localStorage.setItem(LOG,JSON.stringify(lg.slice(-5000))); }
-      else return; save(d); draw(); });
+      else { d.u[k]={s:'work',ts:now(),day:today()}; } /* 3번째(홀수) = 다시 작업중, 4번째(짝수) = 작업완료 */
+      save(d); draw(); if(window.jisuCmdRender) window.jisuCmdRender(); });
     window.addEventListener('storage',e=>{ if(e.key===KEY) draw(); });
     setInterval(draw,30000); draw(); window.jisuEnvDraw=draw;
   })();
