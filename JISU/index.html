@@ -1264,6 +1264,10 @@
     body:not(#zz) .env-grid .env-unit i{width:9px;height:9px;}
     @media (max-width:900px), (pointer:coarse){ body:not(#zz) .env-grid .env-unit{min-height:52px;font-size:15px;} }
   </style>
+  <style>
+    /* 실적 요약 칸 5개 */
+    body:not(#zz) .pf-kpis{grid-template-columns:repeat(auto-fit,minmax(110px,1fr)) !important;}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -1485,7 +1489,7 @@
           <section class="env-units" data-env-units>
             <div class="eu-h">호기 현황</div>
             <div class="env-grid"><button type="button" class="env-unit" data-env-unit="1,2"><i></i>1,2호기</button><button type="button" class="env-unit" data-env-unit="3,4"><i></i>3,4호기</button><button type="button" class="env-unit" data-env-unit="5,6"><i></i>5,6호기</button><button type="button" class="env-unit" data-env-unit="7,8"><i></i>7,8호기</button><button type="button" class="env-unit" data-env-unit="9,10"><i></i>9,10호기</button><button type="button" class="env-unit" data-env-unit="11,12"><i></i>11,12호기</button><button type="button" class="env-unit" data-env-unit="13,14"><i></i>13,14호기</button></div>
-            <div class="eu-tip">누르면 작업중(초록) → 한 번 더 누르면 완료(파랑) → 한 번 더 누르면 대기</div>
+            <div class="eu-tip">한 번 누르면 작업중(초록) → 한 번 더 누르면 작업완료(파랑)</div>
           </section>
         </div>
       </div>
@@ -2345,6 +2349,7 @@
         XLSX.utils.book_append_sheet(wb,s1,'금일 작업완료');
         const s2=XLSX.utils.json_to_sheet(work.map(row)); s2['!cols']=s1['!cols']; XLSX.utils.book_append_sheet(wb,s2,'전체 금일작업');
         { let ms=[]; try{ms=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]')}catch(e){} const TAG={handover:'인수인계',extra:'추가작업',issue:'특이사항'}; const s3=XLSX.utils.json_to_sheet(ms.map((x,i)=>({'번호':i+1,'대상':NAMES[x.target]||x.target,'구분':TAG[x.tag]||x.tag,'내용':x.text,'작성자':x.by||'','작성 시각':x.at||'','확인':x.ack?((x.ackBy||'')+' '+(x.ackAt||'')).trim():''})),{header:['번호','대상','구분','내용','작성자','작성 시각','확인']}); s3['!cols']=[{wch:5},{wch:10},{wch:9},{wch:40},{wch:10},{wch:13},{wch:18}]; XLSX.utils.book_append_sheet(wb,s3,'특이사항'); }
+        { let ev=null; try{ev=JSON.parse(localStorage.getItem('jisu-env-v1')||'null')}catch(e){} const U=['1,2','3,4','5,6','7,8','9,10','11,12','13,14'], u=(ev&&ev.u)||{}; const ST={work:'작업중',done:'작업완료'}; const s4=XLSX.utils.json_to_sheet(U.map((k,i)=>({'번호':i+1,'호기':k+'호기','상태':ST[(u[k]||{}).s]||'대기','작업 시작':(u[k]||{}).ts||'','작업완료 시각':(u[k]||{}).td||''})),{header:['번호','호기','상태','작업 시작','작업완료 시각']}); s4['!cols']=[{wch:5},{wch:11},{wch:9},{wch:10},{wch:12}]; XLSX.utils.book_append_sheet(wb,s4,'환경 호기'); }
         XLSX.writeFile(wb,fname+'.xlsx');
       }catch(e){
         // fallback: CSV that Excel opens directly
@@ -2901,12 +2906,13 @@
       const work=load(CK).filter(x=>x.kind!=='notice'&&dayOf(x)>=s&&dayOf(x)<=e), memos=load(MK).filter(x=>dayOf(x)>=s&&dayOf(x)<=e);
       const units={}; work.forEach(x=>{ const g=goal(x.text); if(!g) return; const u=units[g.u]||(units[g.u]={goal:0,done:0,byDay:{}}); u.goal+=g.n; const a=doneAmt(x,g); u.done+=a; const d=dayOf(x); u.byDay[d]=(u.byDay[d]||0)+a; });
       const zones={}; const Z=t=>zones[t]||(zones[t]={n:0,done:0,carry:0,memo:0}); work.forEach(x=>{ const z=Z(x.target); z.n++; if(x.completed) z.done++; if(x.carryCount&&x.carryFrom) z.carry++; }); memos.forEach(m=>{ Z(m.target).memo++; });
-      return {s,e,days,work,memos,units,zones,done:work.filter(x=>x.completed).length,carry:work.filter(x=>x.carryCount&&x.carryFrom).length}; }
+      let envDone=0; try{ const hs=JSON.parse(localStorage.getItem('jisu-env-v1-history')||'{}'), cur=JSON.parse(localStorage.getItem('jisu-env-v1')||'null'); if(cur&&cur.day) hs[cur.day]=cur.u; Object.keys(hs).forEach(k=>{ if(k>=s&&k<=e) envDone+=Object.values(hs[k]||{}).filter(x=>x&&x.s==='done').length; }); }catch(_){}
+      return {s,e,days,work,memos,units,zones,envDone,done:work.filter(x=>x.completed).length,carry:work.filter(x=>x.carryCount&&x.carryFrom).length}; }
     function title(d){ if(mode==='week') return (shift===0?'이번 주':(shift===-1?'지난 주':md(d.s)+' 주'))+' · '+md(d.s)+' ~ '+md(d.e); return (+d.s.slice(0,4))+'년 '+(+d.s.slice(5,7))+'월'+(shift===0?' (이번 달)':''); }
     function unitChips(d){ const us=Object.keys(d.units); if(us.length<2) return ''; return '<div class="pf-units">'+us.map(u=>'<button type="button" data-pf-unit="'+esc(u)+'" class="'+(u===unit?'on':'')+'">'+esc(u)+'</button>').join('')+'</div>'; }
     const SL=[
       d=>{ const pct=d.work.length?Math.round(d.done/d.work.length*100):0; const us=Object.keys(d.units);
-        return '<h2>실적 요약</h2><p class="pf-sub">'+esc(title(d))+'</p><div class="pf-kpis"><div><b>'+d.work.length+'</b><span>작업</span></div><div class="ok"><b>'+d.done+'</b><span>완료 · '+pct+'%</span></div><div class="carry"><b>'+d.carry+'</b><span>이월</span></div><div class="memo"><b>'+d.memos.length+'</b><span>특이사항</span></div></div>'
+        return '<h2>실적 요약</h2><p class="pf-sub">'+esc(title(d))+'</p><div class="pf-kpis"><div><b>'+d.work.length+'</b><span>작업</span></div><div class="ok"><b>'+d.done+'</b><span>완료 · '+pct+'%</span></div><div class="carry"><b>'+d.carry+'</b><span>이월</span></div><div class="memo"><b>'+d.memos.length+'</b><span>특이사항</span></div><div class="ok"><b>'+d.envDone+'</b><span>환경 호기 완료</span></div></div>'
           +(us.length?'<div class="pf-units-sum">'+us.map(u=>{ const x=d.units[u], p=x.goal?Math.round(x.done/x.goal*100):0; return '<div class="pf-usum"><div class="pf-uh"><b>'+esc(u)+'</b> '+r1(x.done)+' / '+r1(x.goal)+' <i>('+p+'%)</i></div><div class="pf-bar"><span style="width:'+Math.min(100,p)+'%"></span></div></div>'; }).join('')+'</div>':(d.work.length?'':'<div class="pf-empty">이 기간에 작업 기록이 없어요.</div>')); },
       d=>{ const us=Object.keys(d.units); if(!us.length) return '<h2>날짜별 완료량</h2><p class="pf-sub">'+esc(title(d))+'</p><div class="pf-empty">수량이 적힌 작업이 없어요.</div>'; if(!unit||!d.units[unit]) unit=us.includes('TON')?'TON':us[0];
         const u=d.units[unit], mx=Math.max(1,...d.days.map(k=>u.byDay[k]||0)), many=d.days.length>10, t=today();
@@ -2959,12 +2965,12 @@
     const save=d=>localStorage.setItem(KEY,JSON.stringify(d));
     function draw(){ const d=load(); let r=0,dn=0;
       box.querySelectorAll('[data-env-unit]').forEach(b=>{ const x=d.u[b.dataset.envUnit]||{}; b.classList.toggle('work',x.s==='work'); b.classList.toggle('done',x.s==='done'); if(x.s==='work') r++; if(x.s==='done') dn++;
-        b.title=b.dataset.envUnit+'호기 · '+(x.s==='work'?'작업중 '+(x.t||''):x.s==='done'?'완료 '+(x.t||''):'대기'); });
+        b.title=b.dataset.envUnit+'호기 · '+(x.s==='work'?'작업중 '+(x.ts||x.t||''):x.s==='done'?'작업완료 '+(x.td||x.t||''):'대기 (누르면 작업중)'); });
       const sm=document.getElementById('envSum'); if(sm) sm.innerHTML='작업중 <b class="r">'+r+'</b> · 완료 <b class="d">'+dn+'</b> / '+N;
       const eb=document.querySelector('[data-toggle-zone="environment"]'); if(eb){ eb.classList.toggle('env-run',r>0); eb.classList.toggle('env-all',r===0&&dn>0); /* 숫자 배지 없이 불만: 작업중 초록, 완료 파랑 */ let bd=eb.querySelector('.env-badge'); if(bd) bd.remove(); bd=null; if(false)
         if(r||dn){ if(!bd){ bd=document.createElement('span'); bd.className='env-badge'; const mc=eb.querySelector('.memo-count'); if(mc) eb.insertBefore(bd,mc); else eb.appendChild(bd);} bd.textContent=dn+'/'+N; bd.className='env-badge'+(dn===N?' all':(r?' run':'')); bd.title='호기 완료 '+dn+' / '+N+(r?' · 작업중 '+r:''); } else if(bd) bd.remove(); } }
     box.addEventListener('click',e=>{ const u=e.target.closest('[data-env-unit]'); if(!u) return; e.stopPropagation();
-      const d=load(), k=u.dataset.envUnit, cur=(d.u[k]||{}).s, nx=!cur?'work':cur==='work'?'done':null; if(nx) d.u[k]={s:nx,t:now()}; else delete d.u[k]; save(d); draw(); });
+      const d=load(), k=u.dataset.envUnit, cur=d.u[k]||{}; if(!cur.s) d.u[k]={s:'work',t:now(),ts:now()}; else if(cur.s==='work') d.u[k]={s:'done',t:now(),ts:cur.ts||cur.t,td:now()}; else return; /* 작업완료 뒤에는 그대로 */ save(d); draw(); });
     window.addEventListener('storage',e=>{ if(e.key===KEY) draw(); });
     setInterval(draw,30000); draw(); window.jisuEnvDraw=draw;
   })();
