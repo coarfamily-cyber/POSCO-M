@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611092018">
+  <meta name="jisu-build" content="202611092027">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1335,6 +1335,12 @@
     .home-env.alert{background:rgba(251,146,60,.12);box-shadow:inset 0 0 0 1px rgba(251,146,60,.35);}
     .home-env.alert .hs-h{color:#fdba74;}
     .home-env.alert .hs-h span{display:inline-flex;align-items:center;justify-content:center;min-width:1.5em;height:1.5em;margin-left:4px;padding:0 .4em;border-radius:9999px;background:#f97316;color:#fff;font-size:11px;}
+  </style>
+  <style>
+    /* 작업자 그림은 계속 보이고, 말풍선만 10초마다 나타남 */
+    body:not(#zz) .env-clean{animation:none !important;opacity:1 !important;}
+    body:not(#zz) .env-clean .ec-bubble{animation:ecFloat 2.4s ease-in-out infinite, ecBubbleCycle 10s ease-in-out infinite !important;}
+    @keyframes ecBubbleCycle{0%{opacity:0;}5%,40%{opacity:1;}47%,100%{opacity:0;}}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
