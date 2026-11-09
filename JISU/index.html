@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611092053">
+  <meta name="jisu-build" content="202611092100">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1353,7 +1353,7 @@
   <style>
     /* 현실적인 지게차 (위에서 본 모습, 배경 항공사진 톤): 그림자·바퀴·카운터웨이트·운전석 보호대·마스트·포크, 작업중이면 팔레트 적재 + 경광등 */
     body:not(#zz) .move-runner.fl{filter:none !important;}
-    .move-runner.fl .fl-shadow{fill:rgba(0,0,0,.42);}
+    .move-runner.fl .fl-shadow{display:none;}
     .move-runner.fl .fl-tire{fill:#141414;}
     body:not(#zz) .move-runner.fl .fl-body{stroke:rgba(0,0,0,.55);stroke-width:.5;}
     .move-runner.fl .fl-weight{fill:#2b2b2b;stroke:rgba(0,0,0,.6);stroke-width:.4;}
@@ -1379,6 +1379,13 @@
     body:not(#zz) #moveLayer .move-path{opacity:.62;}
     body:not(#zz) #moveLayer .move-glow{stroke:rgba(0,0,0,.28);}
     body:not(#zz) #moveLayer .move-start{opacity:.75;}
+  </style>
+  <style>
+    /* 특이사항: 확인 버튼을 항목 오른쪽 세로 가운데, 남기기 버튼과 같은 열(같은 폭·같은 오른쪽 끝) */
+    body:not(#zz) .memo-list .memo-item{position:relative;padding-right:80px;min-height:52px;}
+    body:not(#zz) .memo-list .memo-item .memo-meta .memo-ack{position:absolute;right:-1px;top:50%;transform:translateY(-50%);margin:0;width:66px;min-width:66px;}
+    body:not(#zz) .memo-list .memo-item .memo-meta .memo-ack:hover{transform:translateY(-50%) scale(1.06);}
+    body:not(#zz) .memo-row .memo-send{width:66px;min-width:66px;flex:0 0 66px;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
