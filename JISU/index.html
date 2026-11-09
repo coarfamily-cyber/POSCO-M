@@ -2496,7 +2496,37 @@
         { let ev=null, lg=[]; try{ev=JSON.parse(localStorage.getItem('jisu-env-v1')||'null'); lg=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]');}catch(e){} const U=['1,2','3,4','5,6','7,8','9,10','11,12','13,14'], u=(ev&&ev.u)||{}; const ST={work:'작업중',done:'작업완료'};
           const s4=XLSX.utils.json_to_sheet(U.map((k,i)=>({'번호':i+1,'호기':k+'호기','회차':(ev&&ev.round)||1,'상태':ST[(u[k]||{}).s]||'대기','작업 시작':(u[k]||{}).ts||'','작업완료 시각':(u[k]||{}).td||''})),{header:['번호','호기','회차','상태','작업 시작','작업완료 시각']}); s4['!cols']=[{wch:5},{wch:11},{wch:6},{wch:9},{wch:10},{wch:12}]; XLSX.utils.book_append_sheet(wb,s4,'환경 호기 현재');
           const s5=XLSX.utils.json_to_sheet(lg.map((x,i)=>({'번호':i+1,'날짜':x.day||'','호기':x.unit+'호기','회차':x.round||'','작업 시작':x.ts||'','작업완료':x.td||'','작업자':x.by||''})),{header:['번호','날짜','호기','회차','작업 시작','작업완료','작업자']}); s5['!cols']=[{wch:5},{wch:11},{wch:11},{wch:6},{wch:10},{wch:10},{wch:10}]; XLSX.utils.book_append_sheet(wb,s5,'환경 청소 기록'); }
-        XLSX.writeFile(wb,fname+'.xlsx');
+        /* 출고 사진(오늘 찍은 것)을 액셀 '출고 사진' 시트에 사진째 넣기 */
+        let photos=[]; try{ const db=await new Promise((res,rej)=>{const r=indexedDB.open('jisu-photos',1); r.onupgradeneeded=()=>r.result.createObjectStore('outbound',{keyPath:'id'}); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);}); photos=await new Promise(res=>{const q=db.transaction('outbound','readonly').objectStore('outbound').getAll(); q.onsuccess=()=>res(q.result||[]); q.onerror=()=>res([]);}); db.close(); }catch(e){ photos=[]; }
+        photos=photos.filter(p=>String(p.at||'').startsWith(today)&&/^data:image\/jpe?g;base64,/.test(p.data||'')).sort((p,q)=>p.id<q.id?-1:1);
+        const PH=photos.map((p,i)=>[i+1,p.at||'',p.name||'','']);
+        const s6=XLSX.utils.aoa_to_sheet([['번호','촬영 시각','파일 이름','사진']].concat(PH.length?PH:[['','오늘 찍은 출고 사진이 없습니다.','','']]));
+        s6['!cols']=[{wch:5},{wch:16},{wch:26},{wch:42}]; if(PH.length) s6['!rows']=[{hpx:22}].concat(PH.map(()=>({hpx:170})));
+        XLSX.utils.book_append_sheet(wb,s6,'출고 사진');
+        let saved=false;
+        if(photos.length){ try{
+          const JSZip=await (window.JSZip?Promise.resolve(window.JSZip):new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';s.onload=()=>res(window.JSZip);s.onerror=()=>rej(new Error('zip'));document.head.appendChild(s);}));
+          const zip=await JSZip.loadAsync(XLSX.write(wb,{bookType:'xlsx',type:'array'}));
+          const sheetNo=wb.SheetNames.indexOf('출고 사진')+1, sp='xl/worksheets/sheet'+sheetNo+'.xml';
+          const E=9525; let anchors='', drels='';
+          for(let i=0;i<photos.length;i++){ const p=photos[i]; const dim=await new Promise(res=>{const im=new Image(); im.onload=()=>res([im.naturalWidth,im.naturalHeight]); im.onerror=()=>res([4,3]); im.src=p.data;});
+            const sc=Math.min(280/dim[0],210/dim[1]); const w=Math.round(dim[0]*sc), hh=Math.round(dim[1]*sc);
+            zip.file('xl/media/jisuphoto'+(i+1)+'.jpeg',p.data.split(',')[1],{base64:true});
+            drels+='<Relationship Id="rIdP'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/jisuphoto'+(i+1)+'.jpeg"/>';
+            anchors+='<xdr:oneCellAnchor><xdr:from><xdr:col>3</xdr:col><xdr:colOff>'+(6*E)+'</xdr:colOff><xdr:row>'+(i+1)+'</xdr:row><xdr:rowOff>'+(6*E)+'</xdr:rowOff></xdr:from><xdr:ext cx="'+(w*E)+'" cy="'+(hh*E)+'"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="'+(i+2)+'" name="출고사진 '+(i+1)+'"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rIdP'+(i+1)+'"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+(w*E)+'" cy="'+(hh*E)+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>'; }
+          zip.file('xl/drawings/jisuphotos.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+anchors+'</xdr:wsDr>');
+          zip.file('xl/drawings/_rels/jisuphotos.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+drels+'</Relationships>');
+          const rp='xl/worksheets/_rels/sheet'+sheetNo+'.xml.rels'; let rx=zip.file(rp)?await zip.file(rp).async('string'):'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>';
+          rx=rx.split('</Relationships>').join('<Relationship Id="rIdJisuDr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/jisuphotos.xml"/></Relationships>'); zip.file(rp,rx);
+          let sx=await zip.file(sp).async('string'); if(sx.indexOf('xmlns:r=')<0) sx=sx.replace('<worksheet ','<worksheet xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ');
+          const cut=['<legacyDrawing','<legacyDrawingHF','<picture','<oleObjects','<controls','<webPublishItems','<tableParts','<extLst','</worksheet>'].map(t=>sx.indexOf(t)).filter(n=>n>=0); const at=Math.min(...cut);
+          sx=sx.slice(0,at)+'<drawing r:id="rIdJisuDr"/>'+sx.slice(at); zip.file(sp,sx);
+          let ct=await zip.file('[Content_Types].xml').async('string'); if(ct.indexOf('Extension="jpeg"')<0){ const ti=ct.indexOf('>',ct.indexOf('<Types'))+1; ct=ct.slice(0,ti)+'<Default Extension="jpeg" ContentType="image/jpeg"/>'+ct.slice(ti); }
+          ct=ct.split('</Types>').join('<Override PartName="/xl/drawings/jisuphotos.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/></Types>'); zip.file('[Content_Types].xml',ct);
+          const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+          const al=document.createElement('a'); al.href=URL.createObjectURL(blob); al.download=fname+'.xlsx'; document.body.appendChild(al); al.click(); setTimeout(()=>{URL.revokeObjectURL(al.href); al.remove();},4000); saved=true;
+        }catch(e){ console.warn('photo embed failed',e); } }
+        if(!saved) XLSX.writeFile(wb,fname+'.xlsx');
       }catch(e){
         // fallback: CSV that Excel opens directly
         const rows=doneToday.map(row); const head=['번호','대상','작업 내용','이동','목표량','완료량','단위','상태','구분','원래 목표','관리자 판단','작성자','등록 시각','작업 시작','완료 시각'];
