@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611092100">
+  <meta name="jisu-build" content="202611092116">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1387,6 +1387,23 @@
     body:not(#zz) .memo-list .memo-item .memo-meta .memo-ack:hover{transform:translateY(-50%) scale(1.06);}
     body:not(#zz) .memo-row .memo-send{width:66px;min-width:66px;flex:0 0 66px;}
   </style>
+  <style>
+    /* 청소 작업자 아이콘 (세련된 버전): 흰 안전모·주황 반사조끼·남색 작업복·산업용 밀대 빗자루, 바닥 초록 링 펄스, 유리 말풍선 */
+    body:not(#zz) .env-clean .ec-person svg{width:4.1em;height:4.45em;}
+    body:not(#zz) .env-clean .ec-emoji.ec-person{filter:drop-shadow(0 1.5px 2px rgba(0,0,0,.55));animation:ecLean2 1s ease-in-out infinite !important;transform-origin:45% 92%;}
+    body:not(#zz) .env-clean .ec-person .ec-broom{transform-box:view-box;transform-origin:23.5px 19.5px;animation:ecBroom3 1s ease-in-out infinite !important;}
+    body:not(#zz) .env-clean .ec-person .ec-dust circle{fill:#e2e8f0;animation:ecDust2 1s ease-out infinite !important;}
+    .env-clean .ec-person .ec-ring{fill:rgba(34,197,94,.10);stroke:#22c55e;stroke-width:1;transform-box:fill-box;transform-origin:center;animation:ecRing 2s ease-out infinite;}
+    @keyframes ecRing{0%{opacity:.9;transform:scale(.55);}100%{opacity:0;transform:scale(1.15);}}
+    @keyframes ecBroom3{0%,100%{transform:rotate(-22deg);}50%{transform:rotate(18deg);}}
+    @keyframes ecLean2{0%,100%{transform:rotate(-3deg);}50%{transform:rotate(3deg) translateY(-.03em);}}
+    body:not(#zz) .env-clean .ec-bubble{background:rgba(15,23,42,.72);color:#e2e8f0;font-weight:800;letter-spacing:-.01em;padding:.38em .8em .38em .7em;border-radius:999px;box-shadow:0 6px 18px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.14);backdrop-filter:blur(8px) saturate(1.3);-webkit-backdrop-filter:blur(8px) saturate(1.3);}
+    body:not(#zz) .env-clean .ec-bubble::before{content:'';display:inline-block;width:.55em;height:.55em;border-radius:50%;background:#22c55e;margin-right:.45em;vertical-align:.05em;box-shadow:0 0 0 .18em rgba(34,197,94,.25);animation:ecPulse 1.6s ease-in-out infinite;}
+    body:not(#zz) .env-clean .ec-bubble::after{border-top-color:rgba(15,23,42,.72);}
+    body:not(#zz) .env-clean .ec-bubble b{color:#4ade80;}
+    @keyframes ecPulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+    @media (prefers-reduced-motion: reduce){ .env-clean .ec-person .ec-ring{animation:none;} }
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -2479,7 +2496,37 @@
         { let ev=null, lg=[]; try{ev=JSON.parse(localStorage.getItem('jisu-env-v1')||'null'); lg=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]');}catch(e){} const U=['1,2','3,4','5,6','7,8','9,10','11,12','13,14'], u=(ev&&ev.u)||{}; const ST={work:'작업중',done:'작업완료'};
           const s4=XLSX.utils.json_to_sheet(U.map((k,i)=>({'번호':i+1,'호기':k+'호기','회차':(ev&&ev.round)||1,'상태':ST[(u[k]||{}).s]||'대기','작업 시작':(u[k]||{}).ts||'','작업완료 시각':(u[k]||{}).td||''})),{header:['번호','호기','회차','상태','작업 시작','작업완료 시각']}); s4['!cols']=[{wch:5},{wch:11},{wch:6},{wch:9},{wch:10},{wch:12}]; XLSX.utils.book_append_sheet(wb,s4,'환경 호기 현재');
           const s5=XLSX.utils.json_to_sheet(lg.map((x,i)=>({'번호':i+1,'날짜':x.day||'','호기':x.unit+'호기','회차':x.round||'','작업 시작':x.ts||'','작업완료':x.td||'','작업자':x.by||''})),{header:['번호','날짜','호기','회차','작업 시작','작업완료','작업자']}); s5['!cols']=[{wch:5},{wch:11},{wch:11},{wch:6},{wch:10},{wch:10},{wch:10}]; XLSX.utils.book_append_sheet(wb,s5,'환경 청소 기록'); }
-        XLSX.writeFile(wb,fname+'.xlsx');
+        /* 출고 사진(오늘 찍은 것)을 액셀 '출고 사진' 시트에 사진째 넣기 */
+        let photos=[]; try{ const db=await new Promise((res,rej)=>{const r=indexedDB.open('jisu-photos',1); r.onupgradeneeded=()=>r.result.createObjectStore('outbound',{keyPath:'id'}); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);}); photos=await new Promise(res=>{const q=db.transaction('outbound','readonly').objectStore('outbound').getAll(); q.onsuccess=()=>res(q.result||[]); q.onerror=()=>res([]);}); db.close(); }catch(e){ photos=[]; }
+        photos=photos.filter(p=>String(p.at||'').startsWith(today)&&/^data:image\/jpe?g;base64,/.test(p.data||'')).sort((p,q)=>p.id<q.id?-1:1);
+        const PH=photos.map((p,i)=>[i+1,p.at||'',p.name||'','']);
+        const s6=XLSX.utils.aoa_to_sheet([['번호','촬영 시각','파일 이름','사진']].concat(PH.length?PH:[['','오늘 찍은 출고 사진이 없습니다.','','']]));
+        s6['!cols']=[{wch:5},{wch:16},{wch:26},{wch:42}]; if(PH.length) s6['!rows']=[{hpx:22}].concat(PH.map(()=>({hpx:170})));
+        XLSX.utils.book_append_sheet(wb,s6,'출고 사진');
+        let saved=false;
+        if(photos.length){ try{
+          const JSZip=await (window.JSZip?Promise.resolve(window.JSZip):new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';s.onload=()=>res(window.JSZip);s.onerror=()=>rej(new Error('zip'));document.head.appendChild(s);}));
+          const zip=await JSZip.loadAsync(XLSX.write(wb,{bookType:'xlsx',type:'array'}));
+          const sheetNo=wb.SheetNames.indexOf('출고 사진')+1, sp='xl/worksheets/sheet'+sheetNo+'.xml';
+          const E=9525; let anchors='', drels='';
+          for(let i=0;i<photos.length;i++){ const p=photos[i]; const dim=await new Promise(res=>{const im=new Image(); im.onload=()=>res([im.naturalWidth,im.naturalHeight]); im.onerror=()=>res([4,3]); im.src=p.data;});
+            const sc=Math.min(280/dim[0],210/dim[1]); const w=Math.round(dim[0]*sc), hh=Math.round(dim[1]*sc);
+            zip.file('xl/media/jisuphoto'+(i+1)+'.jpeg',p.data.split(',')[1],{base64:true});
+            drels+='<Relationship Id="rIdP'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/jisuphoto'+(i+1)+'.jpeg"/>';
+            anchors+='<xdr:oneCellAnchor><xdr:from><xdr:col>3</xdr:col><xdr:colOff>'+(6*E)+'</xdr:colOff><xdr:row>'+(i+1)+'</xdr:row><xdr:rowOff>'+(6*E)+'</xdr:rowOff></xdr:from><xdr:ext cx="'+(w*E)+'" cy="'+(hh*E)+'"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="'+(i+2)+'" name="출고사진 '+(i+1)+'"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rIdP'+(i+1)+'"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+(w*E)+'" cy="'+(hh*E)+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>'; }
+          zip.file('xl/drawings/jisuphotos.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+anchors+'</xdr:wsDr>');
+          zip.file('xl/drawings/_rels/jisuphotos.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+drels+'</Relationships>');
+          const rp='xl/worksheets/_rels/sheet'+sheetNo+'.xml.rels'; let rx=zip.file(rp)?await zip.file(rp).async('string'):'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>';
+          rx=rx.split('</Relationships>').join('<Relationship Id="rIdJisuDr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/jisuphotos.xml"/></Relationships>'); zip.file(rp,rx);
+          let sx=await zip.file(sp).async('string'); if(sx.indexOf('xmlns:r=')<0) sx=sx.replace('<worksheet ','<worksheet xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ');
+          const cut=['<legacyDrawing','<legacyDrawingHF','<picture','<oleObjects','<controls','<webPublishItems','<tableParts','<extLst','</worksheet>'].map(t=>sx.indexOf(t)).filter(n=>n>=0); const at=Math.min(...cut);
+          sx=sx.slice(0,at)+'<drawing r:id="rIdJisuDr"/>'+sx.slice(at); zip.file(sp,sx);
+          let ct=await zip.file('[Content_Types].xml').async('string'); if(ct.indexOf('Extension="jpeg"')<0){ const ti=ct.indexOf('>',ct.indexOf('<Types'))+1; ct=ct.slice(0,ti)+'<Default Extension="jpeg" ContentType="image/jpeg"/>'+ct.slice(ti); }
+          ct=ct.split('</Types>').join('<Override PartName="/xl/drawings/jisuphotos.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/></Types>'); zip.file('[Content_Types].xml',ct);
+          const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+          const al=document.createElement('a'); al.href=URL.createObjectURL(blob); al.download=fname+'.xlsx'; document.body.appendChild(al); al.click(); setTimeout(()=>{URL.revokeObjectURL(al.href); al.remove();},4000); saved=true;
+        }catch(e){ console.warn('photo embed failed',e); } }
+        if(!saved) XLSX.writeFile(wb,fname+'.xlsx');
       }catch(e){
         // fallback: CSV that Excel opens directly
         const rows=doneToday.map(row); const head=['번호','대상','작업 내용','이동','목표량','완료량','단위','상태','구분','원래 목표','관리자 판단','작성자','등록 시각','작업 시작','완료 시각'];
@@ -3108,7 +3155,7 @@
         const want=Object.keys(d.u).filter(k=>d.u[k]&&d.u[k].s==='work'&&POS[k]); const have=new Set([...ly.children].map(c=>c.dataset.k));
         [...ly.children].forEach(c=>{ if(!want.includes(c.dataset.k)) c.remove(); });
         want.forEach(k=>{ if(have.has(k)) return; const el=document.createElement('div'); el.className='env-clean'; el.dataset.k=k; el.style.left=POS[k][0]+'%'; el.style.top=POS[k][1]+'%'; el.title=k+'호기 청소중 (시작 '+(d.u[k].ts||'')+')';
-          el.innerHTML='<div class="ec-bubble"><b>'+k+'호기</b> 청소중<span class="ec-dots"></span></div><div class="ec-emoji ec-person"><svg viewBox=\"0 0 44 50\" aria-hidden=\"true\"><ellipse cx=\"22\" cy=\"47\" rx=\"14\" ry=\"2.4\" fill=\"rgba(0,0,0,.35)\"/><g class=\"ec-dust\"><circle cx=\"36\" cy=\"43\" r=\"1.3\"/><circle cx=\"39\" cy=\"40\" r=\"1\"/><circle cx=\"33\" cy=\"40\" r=\"0.9\"/></g><line x1=\"15\" y1=\"30\" x2=\"12\" y2=\"45\" stroke=\"#1f2937\" stroke-width=\"3.2\" stroke-linecap=\"round\"/><line x1=\"19\" y1=\"30\" x2=\"21\" y2=\"45\" stroke=\"#1f2937\" stroke-width=\"3.2\" stroke-linecap=\"round\"/><rect x=\"11.5\" y=\"15\" width=\"11\" height=\"16\" rx=\"3.5\" fill=\"#f97316\"/><rect x=\"11.5\" y=\"22\" width=\"11\" height=\"2\" fill=\"#fde68a\"/><circle cx=\"17\" cy=\"9\" r=\"5\" fill=\"#fcd5b5\"/><path d=\"M11.6 8.2a5.4 5.4 0 0 1 10.8 0z\" fill=\"#facc15\"/><rect x=\"10.6\" y=\"7.6\" width=\"12.8\" height=\"1.6\" rx=\".8\" fill=\"#eab308\"/><g class=\"ec-broom\"><line x1=\"21\" y1=\"18\" x2=\"27\" y2=\"26\" stroke=\"#fcd5b5\" stroke-width=\"2.8\" stroke-linecap=\"round\"/><line x1=\"25\" y1=\"15\" x2=\"32\" y2=\"40\" stroke=\"#a16207\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><path d=\"M28.5 38.5 L36 37 L39.5 45.5 L27.5 46 Z\" fill=\"#fbbf24\" stroke=\"#92400e\" stroke-width=\"1\" stroke-linejoin=\"round\"/><line x1=\"31\" y1=\"40\" x2=\"30.5\" y2=\"45.5\" stroke=\"#92400e\" stroke-width=\".7\"/><line x1=\"34\" y1=\"39.5\" x2=\"35\" y2=\"45.5\" stroke=\"#92400e\" stroke-width=\".7\"/></g></svg></div>'; ly.appendChild(el); }); } }
+          el.innerHTML='<div class="ec-bubble"><b>'+k+'호기</b> 청소중<span class="ec-dots"></span></div><div class="ec-emoji ec-person"><svg viewBox=\"0 0 48 52\" aria-hidden=\"true\"><ellipse class=\"ec-ring\" cx=\"22\" cy=\"47.5\" rx=\"15\" ry=\"3.6\"/><ellipse cx=\"21\" cy=\"47.4\" rx=\"10\" ry=\"2.1\" fill=\"rgba(0,0,0,.38)\"/><g class=\"ec-dust\"><circle cx=\"40\" cy=\"45\" r=\"1.4\"/><circle cx=\"43\" cy=\"42\" r=\"1\"/><circle cx=\"37.5\" cy=\"41.5\" r=\".9\"/></g><rect x=\"15\" y=\"31\" width=\"4.4\" height=\"14\" rx=\"2.2\" fill=\"#1e293b\"/><rect x=\"20.2\" y=\"31\" width=\"4.4\" height=\"14\" rx=\"2.2\" fill=\"#273449\"/><rect x=\"13.8\" y=\"43.4\" width=\"6.2\" height=\"3.2\" rx=\"1.6\" fill=\"#0b1220\"/><rect x=\"19.8\" y=\"43.4\" width=\"6.2\" height=\"3.2\" rx=\"1.6\" fill=\"#0b1220\"/><line x1=\"15.2\" y1=\"20.5\" x2=\"12.4\" y2=\"28.5\" stroke=\"#334155\" stroke-width=\"3.2\" stroke-linecap=\"round\"/><rect x=\"13.2\" y=\"17\" width=\"13\" height=\"16.5\" rx=\"5.2\" fill=\"#334155\"/><path d=\"M14 19.5q0-2 2-2h7.4q2 0 2 2v9.6H14z\" fill=\"#ea580c\"/><rect x=\"14\" y=\"23.2\" width=\"11.4\" height=\"1.3\" fill=\"#e2e8f0\" opacity=\".9\"/><rect x=\"14\" y=\"26.2\" width=\"11.4\" height=\"1.3\" fill=\"#e2e8f0\" opacity=\".9\"/><rect x=\"19.1\" y=\"17.5\" width=\"1.2\" height=\"11.6\" fill=\"#c2410c\"/><rect x=\"17.8\" y=\"13.8\" width=\"3.8\" height=\"3.6\" rx=\"1.2\" fill=\"#e8b48f\"/><circle cx=\"19.7\" cy=\"11\" r=\"4.5\" fill=\"#f1c7a5\"/><path d=\"M14.6 10.4a5.1 5.1 0 0 1 10.2 0z\" fill=\"#f8fafc\"/><rect x=\"13.6\" y=\"9.9\" width=\"12.3\" height=\"1.7\" rx=\".85\" fill=\"#e2e8f0\"/><path d=\"M16.4 8.2a3.6 3.6 0 0 1 3-2.3\" stroke=\"#fff\" stroke-width=\".9\" fill=\"none\" stroke-linecap=\"round\" opacity=\".9\"/><rect x=\"19.2\" y=\"5.5\" width=\"1.1\" height=\"4.5\" rx=\".5\" fill=\"#22c55e\"/><g class=\"ec-broom\"><line x1=\"23.5\" y1=\"19.5\" x2=\"28.6\" y2=\"24.6\" stroke=\"#3b4a60\" stroke-width=\"3.2\" stroke-linecap=\"round\"/><circle cx=\"29\" cy=\"25\" r=\"1.6\" fill=\"#f1c7a5\"/><line x1=\"27.2\" y1=\"17.5\" x2=\"33.2\" y2=\"43\" stroke=\"#cbd5e1\" stroke-width=\"1.7\" stroke-linecap=\"round\"/><line x1=\"27.5\" y1=\"18.8\" x2=\"28.1\" y2=\"21.3\" stroke=\"#22c55e\" stroke-width=\"1.9\" stroke-linecap=\"round\"/><rect x=\"26.6\" y=\"42\" width=\"13.4\" height=\"2.8\" rx=\"1.3\" fill=\"#111827\"/><rect x=\"27.3\" y=\"44.5\" width=\"12\" height=\"2.3\" rx=\".8\" fill=\"#22c55e\" opacity=\".9\"/></g></svg></div>'; ly.appendChild(el); }); } }
       if(dn===N && !resetT){ resetT=setTimeout(()=>{ resetT=null; const d2=load(); if(Object.values(d2.u).filter(x=>x&&x.s==='done').length===N){ d2.u={}; d2.round=(d2.round||1)+1; save(d2); draw(); } },2500); } }
     box.addEventListener('click',e=>{ const u=e.target.closest('[data-env-unit]'); if(!u) return; e.stopPropagation();
       const d=load(), k=u.dataset.envUnit, cur=d.u[k]||{};
