@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611082242">
+  <meta name="jisu-build" content="202611092018">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1225,6 +1225,117 @@
     body:not(#zz) .cmd-side:has([data-cmd-kind="notice"][aria-pressed="true"]) .cmd-submit:not(:disabled){background:#fff4e9 !important;color:#3b2a1a !important;}
     body:not(#zz) .cmd-side:not(:has([data-cmd-kind="notice"][aria-pressed="true"])) .cmd-submit .cmd-submit-target{background:rgba(255,255,255,.16) !important;color:#ffffff !important;box-shadow:none !important;}
   </style>
+  <style>
+    /* 환경 상세보기: 호기 7개 버튼 (C동 3 · D동 4) */
+    .env-units{margin-top:10px;}
+    .env-units .eu-h{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#cbd5e1;margin-bottom:6px;}
+    .env-units .eu-h span{margin-left:auto;font-size:11px;font-weight:700;color:#94a3b8;}
+    .env-units .eu-h span b.r{color:#4ade80;} .env-units .eu-h span b.d{color:#60a5fa;}
+    .env-row{display:flex;align-items:center;gap:6px;margin-top:6px;}
+    .env-row > em{font-style:normal;font-size:10.5px;font-weight:900;color:#94a3b8;width:30px;flex:0 0 auto;}
+    .env-row .eu-btns{flex:1;display:grid;gap:6px;}
+    .env-row.c .eu-btns{grid-template-columns:repeat(3,1fr);} .env-row.d .eu-btns{grid-template-columns:repeat(4,1fr);}
+    .env-unit{display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 4px;border-radius:9px;font-weight:900;font-size:11.5px;color:#e5e7eb;background:rgba(255,255,255,.08);white-space:nowrap;}
+    .env-unit i{width:7px;height:7px;border-radius:50%;background:#64748b;flex:0 0 auto;}
+    .env-unit.work{background:rgba(34,197,94,.30);color:#eafff1;}
+    .env-unit.work i{background:#22c55e;box-shadow:0 0 8px #22c55e;animation:workBlink 1s ease-in-out infinite;}
+    .env-unit.done{background:rgba(59,130,246,.62);color:#fff;}
+    .env-unit.done i{background:#38bdf8;box-shadow:0 0 6px #38bdf8;animation:none;}
+    .env-units .eu-tip{margin-top:6px;font-size:10.5px;color:#94a3b8;}
+    /* 지도 환경 버튼: 호기 작업중이면 초록 깜빡임, 7개 모두 완료면 파랑 */
+    body:not(#zz) [data-toggle-zone="environment"].env-run .pulse-ring{background:#22c55e !important;color:#4ade80 !important;animation:workBlink 1s ease-in-out infinite !important;box-shadow:0 0 8px #22c55e !important;}
+    body:not(#zz) [data-toggle-zone="environment"].env-all .pulse-ring{background:#38bdf8 !important;color:#38bdf8 !important;}
+    .env-badge{display:inline-flex;align-items:center;justify-content:center;min-width:1.35em;height:1.35em;padding:0 .4em;border-radius:9999px;background:#64748b;color:#fff;font-size:.7em;font-weight:900;margin-left:.3em;line-height:1;white-space:nowrap;}
+    .env-badge.run{background:#22c55e;color:#052e16;} .env-badge.all{background:#3b82f6;}
+  </style>
+  <style>
+    /* 호기 버튼: 위에서부터 2칸씩 4줄 (1,2 · 3,4 / 5,6 · 7,8 / 9,10 · 11,12 / 13,14) */
+    .env-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;}
+    .env-grid .env-unit{padding:9px 6px;font-size:12px;}
+  </style>
+  <style>
+    /* 환경 카드: 호기 버튼·특이사항은 항상 고정(스크롤 없음), 등록된 금일작업 목록만 길면 그 안에서 스크롤 */
+    body:not(#zz) #hotspot-environment.is-open > .expand-card{overflow:hidden !important;display:flex !important;flex-direction:column;}
+    #hotspot-environment > .expand-card > *{flex:0 0 auto;}
+    #hotspot-environment > .expand-card > .cmd-in-card{flex:0 1 auto;min-height:0;overflow-y:auto;}
+    /* 호기 버튼 세로로 크게 (손가락으로 누르기 쉽게) */
+    body:not(#zz) .env-grid{gap:8px;}
+    body:not(#zz) .env-grid .env-unit{min-height:46px;padding:12px 6px;font-size:13.5px;border-radius:11px;touch-action:manipulation;}
+    body:not(#zz) .env-grid .env-unit i{width:9px;height:9px;}
+    @media (max-width:900px), (pointer:coarse){ body:not(#zz) .env-grid .env-unit{min-height:52px;font-size:15px;} }
+  </style>
+  <style>
+    /* 실적 요약 칸 5개 */
+    body:not(#zz) .pf-kpis{grid-template-columns:repeat(auto-fit,minmax(110px,1fr)) !important;}
+  </style>
+  <style>
+    /* 환경 청소중 표시: 지도의 해당 호기 자리에 🧹 + 말풍선 */
+    .env-clean-layer{position:absolute;inset:0;pointer-events:none;z-index:46;}
+    .env-clean{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;font-size:clamp(10px,1.05cqw,15px);}
+    .env-clean .ec-bubble{position:relative;margin-bottom:.55em;padding:.32em .75em;border-radius:.9em;background:#ffffff;color:#0f172a;font-weight:900;white-space:nowrap;box-shadow:0 6px 16px rgba(0,0,0,.45);animation:ecFloat 2.4s ease-in-out infinite;}
+    .env-clean .ec-bubble::after{content:'';position:absolute;left:50%;bottom:-.5em;transform:translateX(-50%);border-left:.5em solid transparent;border-right:.5em solid transparent;border-top:.6em solid #ffffff;}
+    .env-clean .ec-bubble b{color:#16a34a;}
+    .env-clean .ec-dots::after{content:'';display:inline-block;width:1.2em;text-align:left;animation:ecDots 1.4s steps(4,end) infinite;}
+    .env-clean .ec-emoji{font-size:2.1em;line-height:1;filter:drop-shadow(0 3px 4px rgba(0,0,0,.6));transform-origin:50% 90%;animation:ecSweep .9s ease-in-out infinite;}
+    @keyframes ecSweep{0%,100%{transform:rotate(-16deg) translateX(-.08em);}50%{transform:rotate(16deg) translateX(.08em);}}
+    @keyframes ecFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-.18em);}}
+    @keyframes ecDots{0%{content:'';}25%{content:'.';}50%{content:'..';}75%,100%{content:'...';}}
+    @media (prefers-reduced-motion: reduce){ .env-clean .ec-emoji,.env-clean .ec-bubble{animation:none;} }
+  </style>
+  <style>
+    /* 사람이 빗자루질하는 그림: 몸은 살짝 들썩, 팔과 빗자루만 좌우로 쓸기 */
+    .env-clean .ec-emoji.ec-person{font-size:1em;animation:ecBob .9s ease-in-out infinite;transform-origin:50% 100%;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55));}
+    .env-clean .ec-person svg{width:2.9em;height:3.3em;display:block;overflow:visible;}
+    .env-clean .ec-person .ec-broom{transform-box:view-box;transform-origin:23px 17px;animation:ecBroom .9s ease-in-out infinite;}
+    .env-clean .ec-person .ec-dust circle{fill:#e5e7eb;opacity:0;animation:ecDust .9s ease-out infinite;}
+    .env-clean .ec-person .ec-dust circle:nth-child(2){animation-delay:.15s;} .env-clean .ec-person .ec-dust circle:nth-child(3){animation-delay:.3s;}
+    @keyframes ecBroom{0%,100%{transform:rotate(-14deg);}50%{transform:rotate(16deg);}}
+    @keyframes ecBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-.06em);}}
+    @keyframes ecDust{0%{opacity:0;transform:translate(0,0);}30%{opacity:.85;}100%{opacity:0;transform:translate(.25em,-.35em);}}
+  </style>
+  <style>
+    /* 청소중 말풍선·그림: 10초마다 나타남 (약 4초 보였다가 사라짐) */
+    .env-clean{animation:ecCycle 10s ease-in-out infinite;}
+    @keyframes ecCycle{0%{opacity:0;transform:translate(-50%,-38%) scale(.9);}5%,40%{opacity:1;transform:translate(-50%,-50%) scale(1);}47%,100%{opacity:0;transform:translate(-50%,-50%) scale(.96);}}
+  </style>
+  <style>
+    /* 청소중 표시는 버튼·건물 글자 아래에 깔림 (버튼은 절대 안 가려짐), 크기 조금 작게 */
+    body:not(#zz) .env-clean-layer{z-index:12 !important;}
+    body:not(#zz) .env-clean{font-size:clamp(9px,.92cqw,13px);}
+    body:not(#zz) .env-clean .ec-person svg{width:2.5em;height:2.85em;}
+  </style>
+  <style>
+    /* 빗자루질 동작 크게: 팔·빗자루가 크게 좌우로 쓸고, 몸도 같이 기울어짐, 먼지 더 잘 보이게 */
+    body:not(#zz) .env-clean .ec-person svg{width:3.3em;height:3.75em;}
+    body:not(#zz) .env-clean .ec-emoji.ec-person{animation:ecLean .8s ease-in-out infinite !important;transform-origin:45% 95%;}
+    body:not(#zz) .env-clean .ec-person .ec-broom{transform-origin:23px 17px;animation:ecBroom2 .8s ease-in-out infinite !important;}
+    body:not(#zz) .env-clean .ec-person .ec-dust circle{animation:ecDust2 .8s ease-out infinite !important;}
+    body:not(#zz) .env-clean .ec-person .ec-dust circle:nth-child(1){r:1.8px;}
+    @keyframes ecBroom2{0%,100%{transform:rotate(-30deg) translateX(-1.5px);}50%{transform:rotate(26deg) translateX(2px);}}
+    @keyframes ecLean{0%,100%{transform:rotate(-5deg);}50%{transform:rotate(5deg) translateY(-.04em);}}
+    @keyframes ecDust2{0%{opacity:0;transform:translate(-3px,1px);}25%{opacity:.95;}100%{opacity:0;transform:translate(6px,-6px);}}
+    /* 청소 표시는 A·B·C·D 공장동 글자보다 위, 다른 버튼(포장·피치·생산 등)보다는 아래 */
+    body:not(#zz) .env-clean-layer{z-index:20 !important;}
+  </style>
+  <style>
+    /* HOME 환경 청소 현황 */
+    .home-env{margin:0 0 10px;padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.06);}
+    .home-env .hs-h{font-size:12px;font-weight:800;color:#cbd5e1;margin-bottom:6px;}
+    .home-env .he-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;font-size:12.5px;border-top:1px solid rgba(255,255,255,.06);}
+    .home-env .he-row:first-of-type{border-top:0;}
+    .home-env .he-row b{color:#e5e7eb;font-weight:800;}
+    .home-env .he-row span{font-weight:800;color:#94a3b8;}
+    .home-env .he-row.ok span{color:#93c5fd;}
+    .home-env .he-row.run span{color:#4ade80;}
+    .home-env .he-row.late span{color:#fde68a;}
+    .home-env .he-row.warn span{color:#fb923c;}
+    .home-env .he-row.none span{color:#64748b;}
+  </style>
+  <style>
+    .home-env.alert{background:rgba(251,146,60,.12);box-shadow:inset 0 0 0 1px rgba(251,146,60,.35);}
+    .home-env.alert .hs-h{color:#fdba74;}
+    .home-env.alert .hs-h span{display:inline-flex;align-items:center;justify-content:center;min-width:1.5em;height:1.5em;margin-left:4px;padding:0 .4em;border-radius:9999px;background:#f97316;color:#fff;font-size:11px;}
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -1442,6 +1553,11 @@
           <section class="mt-3 border-t border-white/15 pt-3">
             <div class="text-[10px] font-bold uppercase tracking-wider text-amber-200">ENVIRONMENT · 환경</div>
             <h4 class="mt-1 text-sm font-extrabold text-white">환경 상세내용</h4>
+          </section>
+          <section class="env-units" data-env-units>
+            <div class="eu-h">호기 현황</div>
+            <div class="env-grid"><button type="button" class="env-unit" data-env-unit="1,2"><i></i>1,2호기</button><button type="button" class="env-unit" data-env-unit="3,4"><i></i>3,4호기</button><button type="button" class="env-unit" data-env-unit="5,6"><i></i>5,6호기</button><button type="button" class="env-unit" data-env-unit="7,8"><i></i>7,8호기</button><button type="button" class="env-unit" data-env-unit="9,10"><i></i>9,10호기</button><button type="button" class="env-unit" data-env-unit="11,12"><i></i>11,12호기</button><button type="button" class="env-unit" data-env-unit="13,14"><i></i>13,14호기</button></div>
+            <div class="eu-tip">누를 때마다 작업중(초록) ↔ 작업완료(파랑) · 7칸 모두 끝나면 처음부터 다시</div>
           </section>
         </div>
       </div>
@@ -1945,7 +2061,14 @@
         +'<div class="cmd-row"><div class="cmd-text">'+esc(x.text)+carrySub(x)+(function(){const mv=moveOf(x);return mv?'<span class="move-tag">이동 '+esc(PLACE_LABEL[mv.from]||mv.from)+' → '+esc(PLACE_LABEL[mv.to]||mv.to)+'</span>':'';})()+'</div>'+right+'</div></div>';
     }
     /* HOME 상태 사이드바: 오늘 전체 현황 (등록된 금일작업 기준, 임의 숫자 없음) */
-    function homeSummary(){ return homeWork()+homeMemos(); }
+    function homeSummary(){ return homeWork()+homeEnv()+homeMemos(); }
+    /* HOME: 환경 호기별 마지막 청소 후 지난 날수 (청소 기록 기준) */
+    function homeEnv(){ let lg=[], cur=null; try{ lg=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]'); cur=JSON.parse(localStorage.getItem('jisu-env-v1')||'null'); }catch(e){}
+      const U=['1,2','3,4','5,6','7,8','9,10','11,12','13,14'], td=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()), dd=(a,b)=>Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/86400000);
+      const rows=U.map(k=>{ const last=lg.filter(x=>x.unit===k&&x.day).map(x=>x.day).sort().pop(); const working=cur&&cur.u&&cur.u[k]&&cur.u[k].s==='work'; return {k,last,days:last?dd(last,td):null,working}; }).sort((a,b)=>(b.days==null?1e9:b.days)-(a.days==null?1e9:a.days));
+      const line=r=>'<div class="he-row'+(r.working?' run':r.days==null?' none':r.days>=3?' warn':r.days>=1?' late':' ok')+'"><b>'+r.k+'호기</b><span>'+(r.working?'지금 청소중':r.days==null?'청소 기록 없음':r.days===0?'오늘 청소 완료':r.days+'일째 청소 안 됨')+'</span></div>';
+      const late=rows.filter(r=>!r.working&&r.days!=null&&r.days>=3); if(!late.length) return ''; /* 3일 이상 청소 안 된 호기만 알림 */
+      return '<div class="home-env alert"><div class="hs-h">⚠ 환경 청소 알림 <span>'+late.length+'</span></div>'+late.map(line).join('')+'</div>'; }
     function homeMemos(){
       let ms=[]; try{ ms=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]'); }catch(e){}
       const t=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()), md=t.slice(5,7)+'. '+t.slice(8,10)+'.';
@@ -2255,7 +2378,7 @@
       if(sr.height<360){ /* phone: map too small, let the card open below normally (page scroll), only keep it inside horizontally */
         card.style.top='100%'; card.style.bottom='auto'; card.style.maxHeight='none'; card.classList.remove('opens-up');
         const w0=card.offsetWidth, cx0=br.left+br.width/2; let l0=cx0-w0/2, d0=0; const vw=document.documentElement.clientWidth; if(l0<M) d0=M-l0; else if(l0+w0>vw-M) d0=(vw-M)-(l0+w0); card.style.transform='translate(calc(-50% + '+Math.round(d0)+'px), 0)'; return; }
-      const natural=card.scrollHeight*z, cap=Math.max(260,sr.height*0.46);
+      const natural=card.scrollHeight*z, cap=Math.max(260,sr.height*(wrap.id==='hotspot-environment'?0.98:0.46)); /* 환경 카드는 호기 버튼·특이사항이 다 보이게 높이 제한 완화 */
       const below=sr.bottom-br.bottom-M-8, above=br.top-sr.top-M-8;
       let up=false, maxH;
       if(natural<=below){ maxH=below; } else if(natural<=above){ up=true; maxH=above; } else { up=above>below; maxH=Math.max(above,below); }
@@ -2281,7 +2404,7 @@
   /* 금일 작업완료 → Excel (.xlsx) */
   (function(){
     const btn=document.getElementById('xlsxDoneBtn'); if(!btn) return;
-    const NAMES={"production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","A":"A동","B":"B동","C":"C동","D":"D동"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
+    const NAMES={"production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","A":"A동","B":"B동","C":"C동","D":"D동","environment":"환경"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     const kstParts=()=>{const p=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const g=t=>p.find(x=>x.type===t).value;return {y:g('year'),m:g('month'),d:g('day')};};
     function loadLib(){ if(window.XLSX) return Promise.resolve(window.XLSX); return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';s.onload=()=>res(window.XLSX);s.onerror=()=>rej(new Error('lib'));document.head.appendChild(s);}); }
     function goal(t){const m=String(t).match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||String(t).match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/);return m?{n:Number(m[1].replace(',','.')),u:({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()}:{n:'',u:''};}
@@ -2300,7 +2423,10 @@
         s1['!cols']=[{wch:5},{wch:10},{wch:30},{wch:16},{wch:8},{wch:8},{wch:6},{wch:9},{wch:9},{wch:9},{wch:28},{wch:10},{wch:13},{wch:13},{wch:13}];
         XLSX.utils.book_append_sheet(wb,s1,'금일 작업완료');
         const s2=XLSX.utils.json_to_sheet(work.map(row)); s2['!cols']=s1['!cols']; XLSX.utils.book_append_sheet(wb,s2,'전체 금일작업');
-        { let ms=[]; try{ms=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]')}catch(e){} const TAG={handover:'인수인계',extra:'추가작업',issue:'특이사항'}; const s3=XLSX.utils.json_to_sheet(ms.map((x,i)=>({'번호':i+1,'대상':NAMES[x.target]||x.target,'구분':TAG[x.tag]||x.tag,'내용':x.text,'작성자':x.by||'','작성 시각':x.at||'','확인':x.ack?((x.ackBy||'')+' '+(x.ackAt||'')).trim():''})),{header:['번호','대상','구분','내용','작성자','작성 시각','확인']}); s3['!cols']=[{wch:5},{wch:10},{wch:9},{wch:40},{wch:10},{wch:13},{wch:18}]; XLSX.utils.book_append_sheet(wb,s3,'특이사항'); }
+        { let ms=[]; try{ms=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]')}catch(e){} const TAG={handover:'인수인계',extra:'추가작업',issue:'특이사항'}; const s3=XLSX.utils.json_to_sheet(ms.map((x,i)=>({'번호':i+1,'작성 시각':x.at||'','대상':NAMES[x.target]||x.target,'내용':x.text,'작성자':x.by||''})),{header:['번호','작성 시각','대상','내용','작성자']}); s3['!cols']=[{wch:5},{wch:14},{wch:10},{wch:44},{wch:10}]; XLSX.utils.book_append_sheet(wb,s3,'특이사항'); }
+        { let ev=null, lg=[]; try{ev=JSON.parse(localStorage.getItem('jisu-env-v1')||'null'); lg=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]');}catch(e){} const U=['1,2','3,4','5,6','7,8','9,10','11,12','13,14'], u=(ev&&ev.u)||{}; const ST={work:'작업중',done:'작업완료'};
+          const s4=XLSX.utils.json_to_sheet(U.map((k,i)=>({'번호':i+1,'호기':k+'호기','회차':(ev&&ev.round)||1,'상태':ST[(u[k]||{}).s]||'대기','작업 시작':(u[k]||{}).ts||'','작업완료 시각':(u[k]||{}).td||''})),{header:['번호','호기','회차','상태','작업 시작','작업완료 시각']}); s4['!cols']=[{wch:5},{wch:11},{wch:6},{wch:9},{wch:10},{wch:12}]; XLSX.utils.book_append_sheet(wb,s4,'환경 호기 현재');
+          const s5=XLSX.utils.json_to_sheet(lg.map((x,i)=>({'번호':i+1,'날짜':x.day||'','호기':x.unit+'호기','회차':x.round||'','작업 시작':x.ts||'','작업완료':x.td||'','작업자':x.by||''})),{header:['번호','날짜','호기','회차','작업 시작','작업완료','작업자']}); s5['!cols']=[{wch:5},{wch:11},{wch:11},{wch:6},{wch:10},{wch:10},{wch:10}]; XLSX.utils.book_append_sheet(wb,s5,'환경 청소 기록'); }
         XLSX.writeFile(wb,fname+'.xlsx');
       }catch(e){
         // fallback: CSV that Excel opens directly
@@ -2857,12 +2983,13 @@
       const work=load(CK).filter(x=>x.kind!=='notice'&&dayOf(x)>=s&&dayOf(x)<=e), memos=load(MK).filter(x=>dayOf(x)>=s&&dayOf(x)<=e);
       const units={}; work.forEach(x=>{ const g=goal(x.text); if(!g) return; const u=units[g.u]||(units[g.u]={goal:0,done:0,byDay:{}}); u.goal+=g.n; const a=doneAmt(x,g); u.done+=a; const d=dayOf(x); u.byDay[d]=(u.byDay[d]||0)+a; });
       const zones={}; const Z=t=>zones[t]||(zones[t]={n:0,done:0,carry:0,memo:0}); work.forEach(x=>{ const z=Z(x.target); z.n++; if(x.completed) z.done++; if(x.carryCount&&x.carryFrom) z.carry++; }); memos.forEach(m=>{ Z(m.target).memo++; });
-      return {s,e,days,work,memos,units,zones,done:work.filter(x=>x.completed).length,carry:work.filter(x=>x.carryCount&&x.carryFrom).length}; }
+      let envDone=0; try{ envDone=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]').filter(x=>x.day>=s&&x.day<=e).length; }catch(_){}
+      return {s,e,days,work,memos,units,zones,envDone,done:work.filter(x=>x.completed).length,carry:work.filter(x=>x.carryCount&&x.carryFrom).length}; }
     function title(d){ if(mode==='week') return (shift===0?'이번 주':(shift===-1?'지난 주':md(d.s)+' 주'))+' · '+md(d.s)+' ~ '+md(d.e); return (+d.s.slice(0,4))+'년 '+(+d.s.slice(5,7))+'월'+(shift===0?' (이번 달)':''); }
     function unitChips(d){ const us=Object.keys(d.units); if(us.length<2) return ''; return '<div class="pf-units">'+us.map(u=>'<button type="button" data-pf-unit="'+esc(u)+'" class="'+(u===unit?'on':'')+'">'+esc(u)+'</button>').join('')+'</div>'; }
     const SL=[
       d=>{ const pct=d.work.length?Math.round(d.done/d.work.length*100):0; const us=Object.keys(d.units);
-        return '<h2>실적 요약</h2><p class="pf-sub">'+esc(title(d))+'</p><div class="pf-kpis"><div><b>'+d.work.length+'</b><span>작업</span></div><div class="ok"><b>'+d.done+'</b><span>완료 · '+pct+'%</span></div><div class="carry"><b>'+d.carry+'</b><span>이월</span></div><div class="memo"><b>'+d.memos.length+'</b><span>특이사항</span></div></div>'
+        return '<h2>실적 요약</h2><p class="pf-sub">'+esc(title(d))+'</p><div class="pf-kpis"><div><b>'+d.work.length+'</b><span>작업</span></div><div class="ok"><b>'+d.done+'</b><span>완료 · '+pct+'%</span></div><div class="carry"><b>'+d.carry+'</b><span>이월</span></div><div class="memo"><b>'+d.memos.length+'</b><span>특이사항</span></div><div class="ok"><b>'+d.envDone+'</b><span>환경 청소 완료</span></div></div>'
           +(us.length?'<div class="pf-units-sum">'+us.map(u=>{ const x=d.units[u], p=x.goal?Math.round(x.done/x.goal*100):0; return '<div class="pf-usum"><div class="pf-uh"><b>'+esc(u)+'</b> '+r1(x.done)+' / '+r1(x.goal)+' <i>('+p+'%)</i></div><div class="pf-bar"><span style="width:'+Math.min(100,p)+'%"></span></div></div>'; }).join('')+'</div>':(d.work.length?'':'<div class="pf-empty">이 기간에 작업 기록이 없어요.</div>')); },
       d=>{ const us=Object.keys(d.units); if(!us.length) return '<h2>날짜별 완료량</h2><p class="pf-sub">'+esc(title(d))+'</p><div class="pf-empty">수량이 적힌 작업이 없어요.</div>'; if(!unit||!d.units[unit]) unit=us.includes('TON')?'TON':us[0];
         const u=d.units[unit], mx=Math.max(1,...d.days.map(k=>u.byDay[k]||0)), many=d.days.length>10, t=today();
@@ -2903,6 +3030,37 @@
       const k=b.getAttribute('data-toggle-zone'); const mine=document.getElementById('hotspot-'+k)||b.closest('.hotspot-wrapper');
       document.querySelectorAll('.hotspot-wrapper.is-open').forEach(w=>{ if(w===mine) return; w.classList.remove('is-open'); const c=w.querySelector('.chevron'); if(c) c.style.transform='rotate(0deg)'; });
     },true);
+  })();
+  </script>
+  <script>
+  /* 환경 상세보기 호기 버튼 (청소 순환): 한 번 누르면 작업중, 한 번 더 누르면 작업완료. 7칸이 모두 작업완료되면 다음 회차로 처음부터 다시 (날짜와 상관없이 계속 순환). 완료할 때마다 기록에 남김 */
+  (function(){
+    const KEY='jisu-env-v1', LOG='jisu-env-log-v1', box=document.querySelector('[data-env-units]'); if(!box) return; const N=box.querySelectorAll('[data-env-unit]').length;
+    const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+    const now=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false});
+    function load(){ let d; try{ d=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){} if(!d||typeof d!=='object') d={}; if(!d.u) d.u={}; if(!d.round) d.round=1; delete d.day; return d; }
+    const save=d=>localStorage.setItem(KEY,JSON.stringify(d));
+    const loadLog=()=>{ try{ return JSON.parse(localStorage.getItem(LOG)||'[]'); }catch(e){ return []; } };
+    let resetT=null;
+    function draw(){ const d=load(); let r=0,dn=0;
+      box.querySelectorAll('[data-env-unit]').forEach(b=>{ const x=d.u[b.dataset.envUnit]||{}; b.classList.toggle('work',x.s==='work'); b.classList.toggle('done',x.s==='done'); if(x.s==='work') r++; if(x.s==='done') dn++;
+        b.title=b.dataset.envUnit+'호기 · '+(x.s==='work'?'청소중 '+(x.ts||''):x.s==='done'?'청소완료 '+(x.td||''):'대기 (누르면 작업중)'); });
+      const eb=document.querySelector('[data-toggle-zone="environment"]'); if(eb){ eb.classList.toggle('env-run',r>0); eb.classList.toggle('env-all',r===0&&dn>0); const bd=eb.querySelector('.env-badge'); if(bd) bd.remove(); }
+      { /* 지도 위 청소중 표시 (C·D동 박스 위치) */ const stage=document.getElementById('mapStage'); if(stage){ let ly=document.getElementById('envCleanLayer'); if(!ly){ ly=document.createElement('div'); ly.id='envCleanLayer'; ly.className='env-clean-layer'; stage.appendChild(ly); }
+        const POS={'1,2':[65.0,30.2],'3,4':[69.4,30.2],'5,6':[73.4,30.2],'7,8':[77.5,30.2],'9,10':[67.9,73.4],'11,12':[72.5,73.4],'13,14':[76.8,73.4]}; /* C동(위)=1~8호기, D동(아래)=9~14호기 */
+        const want=Object.keys(d.u).filter(k=>d.u[k]&&d.u[k].s==='work'&&POS[k]); const have=new Set([...ly.children].map(c=>c.dataset.k));
+        [...ly.children].forEach(c=>{ if(!want.includes(c.dataset.k)) c.remove(); });
+        want.forEach(k=>{ if(have.has(k)) return; const el=document.createElement('div'); el.className='env-clean'; el.dataset.k=k; el.style.left=POS[k][0]+'%'; el.style.top=POS[k][1]+'%'; el.title=k+'호기 청소중 (시작 '+(d.u[k].ts||'')+')';
+          el.innerHTML='<div class="ec-bubble"><b>'+k+'호기</b> 청소중<span class="ec-dots"></span></div><div class="ec-emoji ec-person"><svg viewBox=\"0 0 44 50\" aria-hidden=\"true\"><ellipse cx=\"22\" cy=\"47\" rx=\"14\" ry=\"2.4\" fill=\"rgba(0,0,0,.35)\"/><g class=\"ec-dust\"><circle cx=\"36\" cy=\"43\" r=\"1.3\"/><circle cx=\"39\" cy=\"40\" r=\"1\"/><circle cx=\"33\" cy=\"40\" r=\"0.9\"/></g><line x1=\"15\" y1=\"30\" x2=\"12\" y2=\"45\" stroke=\"#1f2937\" stroke-width=\"3.2\" stroke-linecap=\"round\"/><line x1=\"19\" y1=\"30\" x2=\"21\" y2=\"45\" stroke=\"#1f2937\" stroke-width=\"3.2\" stroke-linecap=\"round\"/><rect x=\"11.5\" y=\"15\" width=\"11\" height=\"16\" rx=\"3.5\" fill=\"#f97316\"/><rect x=\"11.5\" y=\"22\" width=\"11\" height=\"2\" fill=\"#fde68a\"/><circle cx=\"17\" cy=\"9\" r=\"5\" fill=\"#fcd5b5\"/><path d=\"M11.6 8.2a5.4 5.4 0 0 1 10.8 0z\" fill=\"#facc15\"/><rect x=\"10.6\" y=\"7.6\" width=\"12.8\" height=\"1.6\" rx=\".8\" fill=\"#eab308\"/><g class=\"ec-broom\"><line x1=\"21\" y1=\"18\" x2=\"27\" y2=\"26\" stroke=\"#fcd5b5\" stroke-width=\"2.8\" stroke-linecap=\"round\"/><line x1=\"25\" y1=\"15\" x2=\"32\" y2=\"40\" stroke=\"#a16207\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><path d=\"M28.5 38.5 L36 37 L39.5 45.5 L27.5 46 Z\" fill=\"#fbbf24\" stroke=\"#92400e\" stroke-width=\"1\" stroke-linejoin=\"round\"/><line x1=\"31\" y1=\"40\" x2=\"30.5\" y2=\"45.5\" stroke=\"#92400e\" stroke-width=\".7\"/><line x1=\"34\" y1=\"39.5\" x2=\"35\" y2=\"45.5\" stroke=\"#92400e\" stroke-width=\".7\"/></g></svg></div>'; ly.appendChild(el); }); } }
+      if(dn===N && !resetT){ resetT=setTimeout(()=>{ resetT=null; const d2=load(); if(Object.values(d2.u).filter(x=>x&&x.s==='done').length===N){ d2.u={}; d2.round=(d2.round||1)+1; save(d2); draw(); } },2500); } }
+    box.addEventListener('click',e=>{ const u=e.target.closest('[data-env-unit]'); if(!u) return; e.stopPropagation();
+      const d=load(), k=u.dataset.envUnit, cur=d.u[k]||{};
+      if(!cur.s){ d.u[k]={s:'work',ts:now(),day:today()}; }
+      else if(cur.s==='work'){ const td=now(); d.u[k]={s:'done',ts:cur.ts,td,day:today()}; const lg=loadLog(); lg.push({unit:k,round:d.round,day:today(),ts:cur.ts||'',td,by:(localStorage.getItem('jisu-user')||'')}); localStorage.setItem(LOG,JSON.stringify(lg.slice(-5000))); }
+      else { d.u[k]={s:'work',ts:now(),day:today()}; } /* 3번째(홀수) = 다시 작업중, 4번째(짝수) = 작업완료 */
+      save(d); draw(); if(window.jisuCmdRender) window.jisuCmdRender(); });
+    window.addEventListener('storage',e=>{ if(e.key===KEY) draw(); });
+    setInterval(draw,30000); draw(); window.jisuEnvDraw=draw;
   })();
   </script>
 </body>
