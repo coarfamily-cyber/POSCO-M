@@ -3008,7 +3008,7 @@
         b.title=b.dataset.envUnit+'호기 · '+(x.s==='work'?'청소중 '+(x.ts||''):x.s==='done'?'청소완료 '+(x.td||''):'대기 (누르면 작업중)'); });
       const eb=document.querySelector('[data-toggle-zone="environment"]'); if(eb){ eb.classList.toggle('env-run',r>0); eb.classList.toggle('env-all',r===0&&dn>0); const bd=eb.querySelector('.env-badge'); if(bd) bd.remove(); }
       { /* 지도 위 청소중 표시 (C·D동 박스 위치) */ const stage=document.getElementById('mapStage'); if(stage){ let ly=document.getElementById('envCleanLayer'); if(!ly){ ly=document.createElement('div'); ly.id='envCleanLayer'; ly.className='env-clean-layer'; stage.appendChild(ly); }
-        const POS={'7,8':[65.0,30.2],'5,6':[69.4,30.2],'3,4':[73.4,30.2],'1,2':[77.5,30.2],'13,14':[67.9,61.2],'11,12':[72.5,61.2],'9,10':[76.8,61.2]}; /* C동(위)=1~8호기, D동(아래)=9~14호기 */
+        const POS={'7,8':[65.0,30.2],'5,6':[69.4,30.2],'3,4':[73.4,30.2],'1,2':[77.5,30.2],'13,14':[67.9,73.4],'11,12':[72.5,73.4],'9,10':[76.8,73.4]}; /* C동(위)=1~8호기, D동(아래)=9~14호기 */
         const want=Object.keys(d.u).filter(k=>d.u[k]&&d.u[k].s==='work'&&POS[k]); const have=new Set([...ly.children].map(c=>c.dataset.k));
         [...ly.children].forEach(c=>{ if(!want.includes(c.dataset.k)) c.remove(); });
         want.forEach(k=>{ if(have.has(k)) return; const el=document.createElement('div'); el.className='env-clean'; el.dataset.k=k; el.style.left=POS[k][0]+'%'; el.style.top=POS[k][1]+'%'; el.title=k+'호기 청소중 (시작 '+(d.u[k].ts||'')+')';
