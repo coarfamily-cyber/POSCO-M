@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611092118">
+  <meta name="jisu-build" content="202611101922">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1387,7 +1387,12 @@
     body:not(#zz) .memo-list .memo-item .memo-meta .memo-ack:hover{transform:translateY(-50%) scale(1.06);}
     body:not(#zz) .memo-row .memo-send{width:66px;min-width:66px;flex:0 0 66px;}
   </style>
-</head>
+<style>.pitch-log{margin-top:8px;padding:11px;border-radius:14px;background:rgba(15,23,42,.58);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:#e2e8f0;font-size:12px}.pitch-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.1)}.pitch-eyebrow{font-size:9px;font-weight:900;letter-spacing:.12em;color:#c4b5fd}.pitch-head h4{margin-top:3px;font-size:14px;font-weight:900;color:#f8fafc}.pitch-head time{font-size:11px;color:#cbd5e1;font-weight:800}.pitch-section{padding-top:9px}.pitch-section-title{font-size:11px;font-weight:900;color:#c4b5fd;margin-bottom:5px}.pitch-row{min-height:32px;display:flex;align-items:center;gap:8px;padding:3px 0;color:#cbd5e1}.pitch-row>span:first-child{width:48px;flex:0 0 48px;color:#e2e8f0;font-weight:800}.pitch-input{box-sizing:border-box;width:100%;min-width:0;height:30px;padding:4px 8px;border:0;border-radius:8px;background:rgba(255,255,255,.1);color:#f8fafc;font-size:12px;font-weight:700;outline:none}.pitch-input:focus{box-shadow:0 0 0 1px rgba(196,181,253,.6)}.pitch-input::placeholder{color:#94a3b8}.pitch-num-wrap{display:flex;align-items:center;gap:7px;flex:1}.pitch-num-wrap .pitch-num{max-width:110px;text-align:right}.pitch-num-wrap b{font-size:11px;color:#cbd5e1}.pitch-photo{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:11px;padding-top:9px;border-top:1px solid rgba(255,255,255,.1)}.pitch-photo-btn{border:0;border-radius:10px;padding:8px 12px;background:#2563eb;color:#fff;font-size:12px;font-weight:900}.pitch-photo-btn:hover{background:#1d4ed8;color:#fff}.pitch-photo>span{font-size:11px;color:#94a3b8}.pitch-photo-thumbs{display:flex;gap:5px;flex-wrap:wrap;width:100%}.pitch-photo-thumbs img{width:48px;height:40px;object-fit:cover;border-radius:6px}</style><style>
+/* 피치 버튼/폼 색은 출고 버튼 계열의 무색 유리 + 하늘색 상태 강조 + 파란 액션 버튼으로 통일 */
+body:not(#zz) .hotspot-pill[data-toggle-zone="pitch"]{background:rgba(255,255,255,.1);color:#f8fafc;}
+body:not(#zz) #hotspot-pitch .pitch-eyebrow,body:not(#zz) #hotspot-pitch .pitch-section-title{color:#7dd3fc;}
+body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,211,252,.72);}
+</style></head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
   <!-- Top Navigation / Situation Room Header (Always 1 single line) -->
@@ -1711,16 +1716,11 @@
       <!-- 4. 피치 (Pitch) Expandable Hotspot -->
       <div class="hotspot-wrapper" id="hotspot-pitch" style="left: 71.0%; top: 20.3%;">
         <button type="button" class="hotspot-pill" data-toggle-zone="pitch">
-          <span class="pulse-ring bg-purple-500 text-purple-400"></span>
+          <span class="pulse-ring bg-sky-500 text-sky-400"></span>
           <span>피치</span>
           
         </button>
-        <div class="expand-card p-3.5">
-          <section class="mt-3 border-t border-white/15 pt-3">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-amber-200">PITCH · 피치</div>
-            <h4 class="mt-1 text-sm font-extrabold text-white">피치 상세내용</h4>
-          </section>
-        </div>
+        <div class="expand-card p-3.5"><section class="pitch-log" id="pitchLog"><div class="pitch-head"><div><div class="pitch-eyebrow">PITCH · 피치</div><h4>피치 작업 현황</h4></div><time id="pitchDate"></time></div><div class="pitch-section"><div class="pitch-section-title">부원료 투입 현황</div><label class="pitch-row"><span>1호기</span><input class="pitch-input" data-pitch-field="add1" type="text" maxlength="40" placeholder="원료번호 입력"></label><label class="pitch-row"><span>2호기</span><input class="pitch-input" data-pitch-field="add2" type="text" maxlength="40" placeholder="원료번호 입력"></label></div><div class="pitch-section"><div class="pitch-section-title">분쇄 현황</div><label class="pitch-row"><span>1호기</span><span class="pitch-num-wrap"><input class="pitch-input pitch-num" data-pitch-field="grind1" type="number" min="0" step="1" inputmode="numeric" placeholder="0"><b>BAG</b></span></label><label class="pitch-row"><span>2호기</span><span class="pitch-num-wrap"><input class="pitch-input pitch-num" data-pitch-field="grind2" type="number" min="0" step="1" inputmode="numeric" placeholder="0"><b>BAG</b></span></label></div><div class="pitch-section"><div class="pitch-section-title">원료 이동</div><label class="pitch-row"><span>1.</span><input class="pitch-input" data-pitch-field="move1" type="text" maxlength="40" placeholder="원료번호 입력"></label></div><div class="pitch-photo"><input id="pitchPhotoInput" type="file" accept="image/*" capture="environment" multiple hidden><button type="button" id="pitchPhotoBtn" class="pitch-photo-btn">📷 사진 찍기</button><span id="pitchPhotoCount">0장</span><div id="pitchPhotoThumbs" class="pitch-photo-thumbs"></div></div></section></div>
       </div>
 
     </div>
@@ -2479,12 +2479,17 @@
         { let ev=null, lg=[]; try{ev=JSON.parse(localStorage.getItem('jisu-env-v1')||'null'); lg=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]');}catch(e){} const U=['1,2','3,4','5,6','7,8','9,10','11,12','13,14'], u=(ev&&ev.u)||{}; const ST={work:'작업중',done:'작업완료'};
           const s4=XLSX.utils.json_to_sheet(U.map((k,i)=>({'번호':i+1,'호기':k+'호기','회차':(ev&&ev.round)||1,'상태':ST[(u[k]||{}).s]||'대기','작업 시작':(u[k]||{}).ts||'','작업완료 시각':(u[k]||{}).td||''})),{header:['번호','호기','회차','상태','작업 시작','작업완료 시각']}); s4['!cols']=[{wch:5},{wch:11},{wch:6},{wch:9},{wch:10},{wch:12}]; XLSX.utils.book_append_sheet(wb,s4,'환경 호기 현재');
           const s5=XLSX.utils.json_to_sheet(lg.map((x,i)=>({'번호':i+1,'날짜':x.day||'','호기':x.unit+'호기','회차':x.round||'','작업 시작':x.ts||'','작업완료':x.td||'','작업자':x.by||''})),{header:['번호','날짜','호기','회차','작업 시작','작업완료','작업자']}); s5['!cols']=[{wch:5},{wch:11},{wch:11},{wch:6},{wch:10},{wch:10},{wch:10}]; XLSX.utils.book_append_sheet(wb,s5,'환경 청소 기록'); }
+        /* 피치 날짜별 현황 시트 */
+        {let pr={};try{pr=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}')}catch(e){} const pd=kstParts(), pkey=pd.y+'-'+pd.m+'-'+pd.d, pv=pr[pkey]||{};
+          const ps=XLSX.utils.aoa_to_sheet([['날짜','부원료 투입 1호기','부원료 투입 2호기','분쇄 1호기 (BAG)','분쇄 2호기 (BAG)','원료 이동 1번'],[pkey,pv.add1??'RPB20250722-003',pv.add2??'RPB20250722-003',pv.grind1??'4',pv.grind2??'3',pv.move1??'RPB20250722-003']]);
+          ps['!cols']=[{wch:14},{wch:26},{wch:26},{wch:22},{wch:22},{wch:26}]; XLSX.utils.book_append_sheet(wb,ps,'피치 현황'); }
         /* 출고 사진(오늘 찍은 것)을 액셀 '출고 사진' 시트에 사진째 넣기 */
         let photos=[]; try{ const db=await new Promise((res,rej)=>{const r=indexedDB.open('jisu-photos',1); r.onupgradeneeded=()=>r.result.createObjectStore('outbound',{keyPath:'id'}); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);}); photos=await new Promise(res=>{const q=db.transaction('outbound','readonly').objectStore('outbound').getAll(); q.onsuccess=()=>res(q.result||[]); q.onerror=()=>res([]);}); db.close(); }catch(e){ photos=[]; }
-        photos=photos.filter(p=>String(p.at||'').startsWith(today)&&/^data:image\/jpe?g;base64,/.test(p.data||'')).sort((p,q)=>p.id<q.id?-1:1);
-        const PH=photos.map((p,i)=>[i+1,p.at||'',p.name||'','']);
-        const s6=XLSX.utils.aoa_to_sheet([['번호','촬영 시각','파일 이름','사진']].concat(PH.length?PH:[['','오늘 찍은 출고 사진이 없습니다.','','']]));
-        s6['!cols']=[{wch:5},{wch:16},{wch:26},{wch:42}]; if(PH.length) s6['!rows']=[{hpx:22}].concat(PH.map(()=>({hpx:170})));
+        photos=photos.filter(p=>String(p.at||'').startsWith(today)&&/^data:image\/jpe?g;base64,/.test(p.data||'')).map(p=>({...p,kind:'출고'}));
+        try{const db=await new Promise((res,rej)=>{const r=indexedDB.open('jisu-pitch-photos',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('pitch'))r.result.createObjectStore('pitch',{keyPath:'id'});};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});const pp=await new Promise(res=>{const q=db.transaction('pitch','readonly').objectStore('pitch').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([])});db.close();const pd=kstParts();photos=photos.concat(pp.filter(p=>p.day===pd.y+'-'+pd.m+'-'+pd.d&&/^data:image\/jpe?g;base64,/.test(p.data||'')).map(p=>({...p,kind:'피치'})))}catch(e){}
+        photos.sort((p,q)=>p.id<q.id?-1:1);const PH=photos.map((p,i)=>[i+1,p.kind||'출고',p.at||'',p.name||'','']);
+        const s6=XLSX.utils.aoa_to_sheet([['번호','구분','촬영 시각','파일 이름','사진']].concat(PH.length?PH:[['','오늘 찍은 출고·피치 사진이 없습니다.','','','']]));
+        s6['!cols']=[{wch:5},{wch:9},{wch:16},{wch:28},{wch:42}]; if(PH.length) s6['!rows']=[{hpx:22}].concat(PH.map(()=>({hpx:170})));
         XLSX.utils.book_append_sheet(wb,s6,'출고 사진');
         let saved=false;
         if(photos.length){ try{
@@ -2496,7 +2501,7 @@
             const sc=Math.min(280/dim[0],210/dim[1]); const w=Math.round(dim[0]*sc), hh=Math.round(dim[1]*sc);
             zip.file('xl/media/jisuphoto'+(i+1)+'.jpeg',p.data.split(',')[1],{base64:true});
             drels+='<Relationship Id="rIdP'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/jisuphoto'+(i+1)+'.jpeg"/>';
-            anchors+='<xdr:oneCellAnchor><xdr:from><xdr:col>3</xdr:col><xdr:colOff>'+(6*E)+'</xdr:colOff><xdr:row>'+(i+1)+'</xdr:row><xdr:rowOff>'+(6*E)+'</xdr:rowOff></xdr:from><xdr:ext cx="'+(w*E)+'" cy="'+(hh*E)+'"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="'+(i+2)+'" name="출고사진 '+(i+1)+'"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rIdP'+(i+1)+'"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+(w*E)+'" cy="'+(hh*E)+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>'; }
+            anchors+='<xdr:oneCellAnchor><xdr:from><xdr:col>4</xdr:col><xdr:colOff>'+(6*E)+'</xdr:colOff><xdr:row>'+(i+1)+'</xdr:row><xdr:rowOff>'+(6*E)+'</xdr:rowOff></xdr:from><xdr:ext cx="'+(w*E)+'" cy="'+(hh*E)+'"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="'+(i+2)+'" name="출고사진 '+(i+1)+'"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rIdP'+(i+1)+'"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+(w*E)+'" cy="'+(hh*E)+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>'; }
           zip.file('xl/drawings/jisuphotos.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+anchors+'</xdr:wsDr>');
           zip.file('xl/drawings/_rels/jisuphotos.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+drels+'</Relationships>');
           const rp='xl/worksheets/_rels/sheet'+sheetNo+'.xml.rels'; let rx=zip.file(rp)?await zip.file(rp).async('string'):'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>';
@@ -3150,5 +3155,5 @@
     setInterval(draw,30000); draw(); window.jisuEnvDraw=draw;
   })();
   </script>
-</body>
+<script>(function(){const root=document.getElementById('pitchLog');if(!root)return;const KEY='jisu-pitch-records-v1',DB='jisu-pitch-photos',STORE='pitch';const DEF={add1:'RPB20250722-003',add2:'RPB20250722-003',grind1:'4',grind2:'3',move1:'RPB20250722-003'};const kstDate=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());const pretty=d=>{const [y,m,day]=d.split('-');return y+'. '+m+'. '+day+'.'};let active=kstDate();const dbOpen=()=>new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE,{keyPath:'id'});};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});const records=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}};function paint(){const row=records()[active]||{};document.getElementById('pitchDate').textContent=pretty(active);root.querySelectorAll('[data-pitch-field]').forEach(i=>i.value=row[i.dataset.pitchField]??DEF[i.dataset.pitchField]??'');loadPhotos()}function save(){const all=records(),row=all[active]||{};root.querySelectorAll('[data-pitch-field]').forEach(i=>row[i.dataset.pitchField]=i.value);all[active]=row;localStorage.setItem(KEY,JSON.stringify(all))}root.addEventListener('input',e=>{if(e.target.matches('[data-pitch-field]')){if(e.target.type==='number'&&e.target.value!==''&&Number(e.target.value)<0)e.target.value='0';save()}});setInterval(()=>{const d=kstDate();if(d!==active){save();active=d;paint()}},15000);async function loadPhotos(){try{const db=await dbOpen();const rows=await new Promise((res,rej)=>{const q=db.transaction(STORE,'readonly').objectStore(STORE).getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error)});db.close();const list=rows.filter(p=>p.day===active).sort((a,b)=>a.id.localeCompare(b.id));document.getElementById('pitchPhotoCount').textContent=list.length+'장';document.getElementById('pitchPhotoThumbs').innerHTML=list.map(p=>'<img src="'+p.data+'" alt="피치 사진">').join('')}catch(e){document.getElementById('pitchPhotoCount').textContent='사진 저장 오류'}}document.getElementById('pitchPhotoBtn').addEventListener('click',()=>document.getElementById('pitchPhotoInput').click());document.getElementById('pitchPhotoInput').addEventListener('change',async e=>{for(const f of [...e.target.files])await new Promise(resolve=>{const im=new Image();im.onload=async()=>{try{const sc=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*sc);c.height=Math.round(im.naturalHeight*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);const data=c.toDataURL('image/jpeg',.82),db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close()}catch(err){console.error(err)}URL.revokeObjectURL(im.src);resolve()};im.onerror=()=>resolve();im.src=URL.createObjectURL(f)});e.target.value='';loadPhotos()});paint()})();</script></body>
 </html>
