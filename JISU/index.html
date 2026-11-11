@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611112005">
+  <meta name="jisu-build" content="202611112025">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1423,7 +1423,156 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
 #hotspot-pitch > .expand-card > .pitch-scroll-body{flex:1 1 auto;min-height:0;width:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;border-radius:14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.28) transparent;scrollbar-gutter:stable;}
 #hotspot-pitch .pitch-scroll-body::-webkit-scrollbar{width:6px;}
 #hotspot-pitch .pitch-scroll-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28);border-radius:9px;}
-</style></head>
+</style>
+  <style>
+    /* ==========================================================================
+       입고(INBOUND) 전용 모듈 스타일: 실물 중량일지 전산화, 달력 연동, PHOTO, 엑셀
+       ========================================================================== */
+    #hotspot-inbound > .expand-card {
+      width: min(480px, 94vw) !important;
+      max-height: 88vh !important;
+      display: flex !important;
+      flex-direction: column !important;
+      padding: 14px !important;
+      overflow: hidden !important;
+    }
+    #hotspot-inbound .inbound-scroll-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      border-radius: 14px;
+      padding-right: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,.28) transparent;
+    }
+    #hotspot-inbound .inbound-scroll-body::-webkit-scrollbar { width: 6px; }
+    #hotspot-inbound .inbound-scroll-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.28); border-radius: 3px; }
+
+    .inbound-log { display: flex; flex-direction: column; gap: 10px; }
+    .inbound-head { display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid rgba(255,255,255,.12); padding-bottom: 8px; }
+    .inbound-head-top { display: flex; align-items: center; justify-content: space-between; }
+    .inbound-eyebrow { font-size: 10px; font-weight: 800; letter-spacing: .08em; color: #34d399; text-transform: uppercase; }
+    #inboundDate { font-size: 11px; color: #94a3b8; font-family: monospace; font-weight: 700; }
+    .inbound-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; }
+    .inbound-title-row h4 { font-size: 14.5px; font-weight: 900; color: #fff; margin: 0; }
+
+    /* PHOTO 버튼 */
+    .inbound-photo-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      box-sizing: border-box; width: 88px; height: 32px; padding: 0 8px;
+      background: rgba(255,255,255,.12); color: #f8fafc; font-size: 11.5px; font-weight: 800;
+      border-radius: 9px; border: 1px solid rgba(255,255,255,.2);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); cursor: pointer; transition: all .15s;
+    }
+    .inbound-photo-btn:hover { background: rgba(255,255,255,.22); color: #fff; transform: translateY(-1px); }
+
+    /* 3번: 달력 연동 입고 예정 목표 & 달성률 바 */
+    .inbound-sched-box {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(52, 211, 153, 0.28);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .inbound-sched-head { display: flex; align-items: center; justify-content: space-between; }
+    .isb-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; color: #6ee7b7; }
+    .isb-dot { width: 7px; height: 7px; border-radius: 9999px; background: #34d399; box-shadow: 0 0 6px #34d399; }
+    .inbound-cal-link {
+      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+      color: #cbd5e1; font-size: 10.5px; font-weight: 700; border-radius: 6px; padding: 2px 7px;
+      cursor: pointer; transition: all .15s;
+    }
+    .inbound-cal-link:hover { background: rgba(255,255,255,.2); color: #fff; }
+    .isb-target-row { display: flex; align-items: baseline; justify-content: space-between; }
+    .isb-target-row b { font-size: 13.5px; font-weight: 900; color: #fff; }
+    .isb-target-row span { font-size: 12px; font-weight: 900; color: #34d399; }
+    .isb-progress-bg { height: 7px; background: rgba(0,0,0,.45); border-radius: 9999px; overflow: hidden; }
+    .isb-progress-bar { height: 100%; background: linear-gradient(90deg, #10b981, #34d399); border-radius: 9999px; transition: width .4s cubic-bezier(.2,.8,.3,1); }
+    .isb-sub-info { display: flex; justify-content: space-between; font-size: 10.5px; color: #94a3b8; }
+
+    /* 1번: 입고원료 중량 기록일지 테이블 */
+    .inbound-table-section { display: flex; flex-direction: column; gap: 6px; }
+    .inbound-sec-head { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+    .inbound-sec-title { font-size: 12px; font-weight: 900; color: #e2e8f0; }
+    .inbound-add-btn {
+      background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(52, 211, 153, 0.4);
+      color: #a7f3d0; font-size: 11px; font-weight: 800; border-radius: 7px; padding: 3px 9px;
+      cursor: pointer; transition: all .15s;
+    }
+    .inbound-add-btn:hover { background: rgba(16, 185, 129, 0.35); color: #fff; transform: translateY(-1px); }
+
+    .inbound-table-wrap {
+      max-height: 240px; overflow-y: auto; overflow-x: auto;
+      border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: rgba(0,0,0,.35);
+    }
+    .inbound-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .inbound-tbl th {
+      position: sticky; top: 0; background: #1e293b; color: #94a3b8; font-weight: 800;
+      padding: 6px 4px; text-align: center; border-bottom: 1px solid rgba(255,255,255,.12); z-index: 2;
+    }
+    .inbound-tbl td { padding: 4px 3px; border-bottom: 1px solid rgba(255,255,255,.06); vertical-align: middle; }
+    .inbound-tbl input {
+      width: 100%; box-sizing: border-box; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 5px; color: #fff; font-size: 11px; font-weight: 700; padding: 4px 5px; text-align: center;
+    }
+    .inbound-tbl input:focus { border-color: #34d399; outline: none; background: rgba(255,255,255,.14); box-shadow: 0 0 0 1px rgba(52,211,153,.5); }
+    .inbound-tbl .inb-del-btn {
+      background: transparent; border: 0; color: #f87171; font-size: 13px; font-weight: 900;
+      cursor: pointer; padding: 2px 4px; border-radius: 4px;
+    }
+    .inbound-tbl .inb-del-btn:hover { background: rgba(239,68,68,.2); }
+
+    /* 합계 요약 바 */
+    .inbound-tbl-summary {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 9px; padding: 6px 10px; font-size: 11px;
+    }
+    .inbound-sum-item { display: flex; align-items: baseline; gap: 4px; color: #cbd5e1; }
+    .inbound-sum-item b { font-size: 13px; font-weight: 900; color: #34d399; }
+    .inbound-sum-item small { font-size: 9.5px; color: #94a3b8; }
+
+    /* 2번: PHOTO 썸네일 그리드 */
+    .inbound-photo-thumbs {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px;
+      margin-top: 4px;
+    }
+    .inbound-photo-thumb-wrap { position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 1; border: 1px solid rgba(255,255,255,.2); }
+    .inbound-photo-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+    .inbound-photo-del {
+      position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border-radius: 9999px;
+      background: rgba(0,0,0,.7); color: #fff; font-size: 10px; border: 0; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* 4번: 워크플로 버튼 (피치와 완벽 통일) */
+    .inbound-workflow { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+    .inbound-work-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .inbound-work-btn {
+      height: 38px; border-radius: 9px; border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.1); color: #e2e8f0; font-size: 12px; font-weight: 800;
+      cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center;
+    }
+    .inbound-work-btn:hover { background: rgba(255,255,255,.2); color: #fff; }
+    .inbound-work-btn.is-active-work {
+      background: #10b981 !important; color: #042f1d !important; font-weight: 900 !important;
+      border-color: #34d399 !important; box-shadow: 0 0 14px rgba(16,185,129,.6) !important;
+    }
+    .inbound-work-btn.is-active-done {
+      background: #3b82f6 !important; color: #eff6ff !important; font-weight: 900 !important;
+      border-color: #60a5fa !important; box-shadow: 0 0 14px rgba(59,130,246,.6) !important;
+    }
+    .inbound-work-status { font-size: 11px; color: #34d399; text-align: center; font-weight: 700; min-height: 16px; }
+    .inbound-save-status { font-size: 10px; color: #94a3b8; text-align: center; }
+    .inbound-download-again {
+      background: transparent; border: 0; color: #60a5fa; font-size: 11px; text-decoration: underline;
+      cursor: pointer; text-align: center; margin-top: -2px;
+    }
+  </style>
+</head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
   <!-- Top Navigation / Situation Room Header (Always 1 single line) -->
@@ -1704,13 +1853,95 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         <button type="button" class="hotspot-pill" data-toggle-zone="inbound">
           <span class="pulse-ring bg-emerald-500 text-emerald-400"></span>
           <span>입고</span>
-          
         </button>
         <div class="expand-card p-3.5">
-          <section class="mt-3 border-t border-white/15 pt-3">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-amber-200">INBOUND · 입고</div>
-            <h4 class="mt-1 text-sm font-extrabold text-white">입고 상세내용</h4>
-          </section>
+          <div class="inbound-scroll-body">
+            <section class="inbound-log" id="inboundLog">
+              <div class="inbound-head">
+                <div class="inbound-head-top">
+                  <div class="inbound-eyebrow">INBOUND · 입고 관리</div>
+                  <time id="inboundDate"></time>
+                </div>
+                <div class="inbound-title-row">
+                  <h4>입고원료 중량 기록일지</h4>
+                  <button type="button" id="inboundPhotoBtn" class="inbound-photo-btn">
+                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span>PHOTO</span>
+                  </button>
+                  <input id="inboundPhotoInput" type="file" accept="image/*" capture="environment" multiple hidden />
+                </div>
+              </div>
+
+              <!-- 3번: 달력 연동 입고 예정 목표 & 달성률 바 -->
+              <div class="inbound-sched-box">
+                <div class="inbound-sched-head">
+                  <div class="isb-badge"><span class="isb-dot"></span><span id="inboundGoalLabel">달력 연동 입고 예정</span></div>
+                  <button type="button" id="inboundCalLink" class="inbound-cal-link">📅 달력 예정 등록</button>
+                </div>
+                <div class="isb-target-row">
+                  <b id="inboundGoalTonText">입고 예정: 36.0 TON</b>
+                  <span id="inboundAchieveRate">달성률 0%</span>
+                </div>
+                <div class="isb-progress-bg">
+                  <div id="inboundProgressBar" class="isb-progress-bar" style="width: 0%;"></div>
+                </div>
+                <div class="isb-sub-info">
+                  <span id="inboundLiveActual">금일 실적: 0 BAG · 0.00 TON</span>
+                  <span id="inboundRemainTon">잔여: 36.0 TON</span>
+                </div>
+              </div>
+
+              <!-- 1번: 입고원료 중량 기록일지 테이블 -->
+              <div class="inbound-table-section">
+                <div class="inbound-sec-head">
+                  <span class="inbound-sec-title">중량 기록 목록</span>
+                  <button type="button" id="inboundAddRowBtn" class="inbound-add-btn">+ Bag 추가</button>
+                </div>
+                <div class="inbound-table-wrap">
+                  <table class="inbound-tbl">
+                    <thead>
+                      <tr>
+                        <th style="width: 28%;">LOT 번호</th>
+                        <th style="width: 14%;">Bag</th>
+                        <th style="width: 22%;">중량(kg)</th>
+                        <th style="width: 18%;">적재위치</th>
+                        <th style="width: 18%;">작업자</th>
+                        <th style="width: 8%;"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="inboundTbody">
+                      <!-- 동적 행들 -->
+                    </tbody>
+                  </table>
+                </div>
+                <div class="inbound-tbl-summary">
+                  <div class="inbound-sum-item">
+                    <span>총 입고</span><b id="inboundSumBags">0</b><small>BAG</small>
+                  </div>
+                  <div class="inbound-sum-item">
+                    <span>실측 총중량</span><b id="inboundSumKg">0</b><small>kg</small> (<b id="inboundSumTon">0.00</b><small>TON</small>)
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2번: PHOTO 증적 썸네일 그리드 -->
+              <div class="inbound-photo-section">
+                <div id="inboundPhotoThumbs" class="inbound-photo-thumbs"></div>
+              </div>
+
+              <!-- 4번: 워크플로 버튼 (입고시작/임시저장/입고완료 엑셀) -->
+              <div class="inbound-workflow">
+                <div class="inbound-work-actions">
+                  <button type="button" id="inboundStartBtn" class="inbound-work-btn">입고시작</button>
+                  <button type="button" id="inboundSaveBtn" class="inbound-work-btn">임시저장</button>
+                  <button type="button" id="inboundCompleteBtn" class="inbound-work-btn">입고완료 (엑셀)</button>
+                </div>
+                <div id="inboundWorkStatus" class="inbound-work-status" aria-live="polite"></div>
+                <span id="inboundSaveStatus" class="inbound-save-status" aria-live="polite"></span>
+                <button type="button" id="inboundDownloadAgain" class="inbound-download-again" hidden>완료 파일 다시 받기</button>
+              </div>
+            </section>
+          </div>
         </div>
       </div>
 
@@ -2513,6 +2744,33 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         const s1=XLSX.utils.json_to_sheet(doneToday.map(row),{header:['번호','대상','작업 내용','이동','목표량','완료량','단위','상태','구분','원래 목표','관리자 판단','작성자','등록 시각','작업 시작','완료 시각']});
         s1['!cols']=[{wch:5},{wch:10},{wch:30},{wch:16},{wch:8},{wch:8},{wch:6},{wch:9},{wch:9},{wch:9},{wch:28},{wch:10},{wch:13},{wch:13},{wch:13}];
         XLSX.utils.book_append_sheet(wb,s1,'금일 작업완료');
+        // [입고원료 중량 기록일지 시트 연동]
+        try {
+          if (window.jisuInboundArchive) {
+            const inb = window.jisuInboundArchive.getToday();
+            const irows = inb && inb.rows ? inb.rows : [];
+            if (irows.length) {
+              let tKg = 0;
+              const sInb = [
+                ["입고원료 중량 기록일지"],
+                ["입고일자: " + (inb.day || ""), "", "확인자: 출하/파트장"],
+                [],
+                ["번호", "입고일자", "LOT 번호", "Bag No.", "실측 중량(kg)", "작업자", "적재위치"]
+              ];
+              irows.forEach((r, i) => {
+                const kg = parseFloat(r.kg) || 0;
+                tKg += kg;
+                sInb.push([i + 1, inb.day || "", r.lot || "", r.bag || "", kg, r.worker || "김지수", r.loc || ""]);
+              });
+              sInb.push([]);
+              sInb.push(["합계", "", "", irows.length + " BAG", tKg, "", (tKg / 1000).toFixed(2) + " TON"]);
+              const wsInb = XLSX.utils.aoa_to_sheet(sInb);
+              wsInb["!cols"] = [{wch:6},{wch:12},{wch:16},{wch:10},{wch:14},{wch:12},{wch:16}];
+              XLSX.utils.book_append_sheet(wb, wsInb, "입고원료 중량 기록일지");
+            }
+          }
+        } catch(e) { console.error("Inbound sheet error:", e); }
+
         const s2=XLSX.utils.json_to_sheet(work.map(row)); s2['!cols']=s1['!cols']; XLSX.utils.book_append_sheet(wb,s2,'전체 금일작업');
         { let ms=[]; try{ms=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]')}catch(e){} const TAG={handover:'인수인계',extra:'추가작업',issue:'특이사항'}; const s3=XLSX.utils.json_to_sheet(ms.map((x,i)=>({'번호':i+1,'작성 시각':x.at||'','대상':NAMES[x.target]||x.target,'내용':x.text,'작성자':x.by||'','확인':x.ack?('확인 '+(x.ackAt||'')+(x.ackBy?' · '+x.ackBy:'')):'미확인'})),{header:['번호','작성 시각','대상','내용','작성자','확인']}); s3['!cols']=[{wch:5},{wch:14},{wch:10},{wch:44},{wch:10},{wch:22}]; XLSX.utils.book_append_sheet(wb,s3,'특이사항'); }
         { let ev=null, lg=[]; try{ev=JSON.parse(localStorage.getItem('jisu-env-v1')||'null'); lg=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]');}catch(e){} const U=['1,2','3,4','5,6','7,8','9,10','11,12','13,14'], u=(ev&&ev.u)||{}; const ST={work:'작업중',done:'작업완료'};
@@ -3210,5 +3468,474 @@ document.getElementById('pitchDownloadAgain').addEventListener('click',async()=>
 root.addEventListener('input',e=>{if(e.target.matches('[data-pitch-list-field],[data-pitch-field]')){if(e.target.matches('.pitch-num'))e.target.value=e.target.value.replace(/\D/g,'');save();updateWork();document.getElementById('pitchSaveStatus').textContent='입력값은 이 기기 브라우저에만 저장됩니다.';}});root.addEventListener('click',e=>{const b=e.target.closest('[data-pitch-add]');if(!b)return;const k=b.dataset.pitchAdd;save();const row=records()[active]||{},vals=listValues(row,k);vals.push('');drawList(k,vals);save();updateWork();[...root.querySelectorAll('[data-pitch-list="'+k+'"] input')].at(-1)?.focus()});setInterval(()=>{const d=kstDate();if(d!==active&&!busy){save();active=d;paint()}},15000);
 async function migrateLegacy(){const all=records();for(const day of Object.keys(all)){const row=all[day];if(row&&row.workState==='done'&&!row.completionId){const snap=await makeSnapshot(row,'legacy-'+day+'-'+String(row.completedAt||'done').replace(/[^0-9]/g,''),day);await window.jisuPitchArchive.put(snap);const fresh=records(),current=fresh[day];if(current&&current.workState==='done'&&!current.completionId&&current.completedAt===row.completedAt){current.completionId=snap.id;localStorage.setItem(KEY,JSON.stringify(fresh));}}}}
 window.jisuPitchMigration=migrateLegacy().then(()=>{updateWork();}).catch(e=>console.error('피치 이전 완료기록 보관 실패',e));
-async function loadPhotos(){try{const db=await dbOpen();const rows=await new Promise((res,rej)=>{const q=db.transaction(STORE,'readonly').objectStore(STORE).getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error)});db.close();const list=rows.filter(p=>p.day===active).sort((a,b)=>a.id.localeCompare(b.id));document.getElementById('pitchPhotoThumbs').innerHTML=list.map(p=>'<img src="'+p.data+'" alt="피치 사진">').join('')}catch(e){console.error(e)}}document.getElementById('pitchPhotoBtn').addEventListener('click',()=>document.getElementById('pitchPhotoInput').click());document.getElementById('pitchPhotoInput').addEventListener('change',async e=>{for(const f of [...e.target.files])await new Promise(resolve=>{const im=new Image();im.onload=async()=>{try{const sc=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*sc);c.height=Math.round(im.naturalHeight*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);const data=c.toDataURL('image/jpeg',.82),db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close()}catch(err){console.error(err)}URL.revokeObjectURL(im.src);resolve()};im.onerror=()=>resolve();im.src=URL.createObjectURL(f)});e.target.value='';loadPhotos()});paint()})();</script></body>
+async function loadPhotos(){try{const db=await dbOpen();const rows=await new Promise((res,rej)=>{const q=db.transaction(STORE,'readonly').objectStore(STORE).getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error)});db.close();const list=rows.filter(p=>p.day===active).sort((a,b)=>a.id.localeCompare(b.id));document.getElementById('pitchPhotoThumbs').innerHTML=list.map(p=>'<img src="'+p.data+'" alt="피치 사진">').join('')}catch(e){console.error(e)}}document.getElementById('pitchPhotoBtn').addEventListener('click',()=>document.getElementById('pitchPhotoInput').click());document.getElementById('pitchPhotoInput').addEventListener('change',async e=>{for(const f of [...e.target.files])await new Promise(resolve=>{const im=new Image();im.onload=async()=>{try{const sc=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*sc);c.height=Math.round(im.naturalHeight*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);const data=c.toDataURL('image/jpeg',.82),db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close()}catch(err){console.error(err)}URL.revokeObjectURL(im.src);resolve()};im.onerror=()=>resolve();im.src=URL.createObjectURL(f)});e.target.value='';loadPhotos()});paint()})();</script>
+<script>
+/* ==========================================================================
+   입고(INBOUND) 전용 모듈: 입고원료 중량 기록일지, 사진 증적, 달력 목표 연동, 엑셀
+   ========================================================================== */
+(function(){
+  const KEY = "jisu-inbound-records-v1";
+  const PHOTO_DB = "jisu-inbound-photos";
+  const STORE = "inbound";
+
+  const $ = id => document.getElementById(id);
+  const root = $("inboundLog");
+  if(!root) return;
+
+  const kstDate = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const kstTime = () => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
+  const activeDay = kstDate();
+
+  // IndexedDB Helpers
+  function openDb(name, storeName) {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(name, 1);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(storeName)) {
+          db.createObjectStore(storeName, { keyPath: "id" });
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function getPhotos(day) {
+    try {
+      const db = await openDb(PHOTO_DB, STORE);
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE, "readonly");
+        const req = tx.objectStore(STORE).getAll();
+        req.onsuccess = () => {
+          db.close();
+          const list = (req.result || []).filter(p => p.day === day);
+          resolve(list);
+        };
+        req.onerror = () => { db.close(); resolve([]); };
+      });
+    } catch(e) { return []; }
+  }
+
+  async function savePhoto(photoObj) {
+    const db = await openDb(PHOTO_DB, STORE);
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, "readwrite");
+      tx.objectStore(STORE).put(photoObj);
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onerror = () => { db.close(); reject(tx.error); };
+    });
+  }
+
+  async function deletePhoto(id) {
+    const db = await openDb(PHOTO_DB, STORE);
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, "readwrite");
+      tx.objectStore(STORE).delete(id);
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onerror = () => { db.close(); reject(tx.error); };
+    });
+  }
+
+  function loadAllRecords() {
+    try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e) { return {}; }
+  }
+  function saveAllRecords(data) {
+    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch(e) {}
+  }
+
+  // Prepopulate today with the 8 real rows from today paper log if empty
+  const DEFAULT_ROWS_TODAY = [
+    { lot: "SH2609007", bag: "6", kg: "924.2", loc: "5710", worker: "김지수" },
+    { lot: "SH2609007", bag: "12", kg: "923.4", loc: "6508", worker: "김지수" },
+    { lot: "SH2609021", bag: "16", kg: "922.4", loc: "2809", worker: "김지수" },
+    { lot: "SH2609021", bag: "20", kg: "923.0", loc: "6508", worker: "김지수" },
+    { lot: "SH2609020", bag: "20", kg: "923.8", loc: "2595", worker: "김지수" },
+    { lot: "SH2609005", bag: "8", kg: "922.1", loc: "6025", worker: "김지수" },
+    { lot: "SH2609020", bag: "3", kg: "922.9", loc: "2934", worker: "김지수" },
+    { lot: "SH2609005", bag: "10", kg: "922.3", loc: "2934", worker: "김지수" }
+  ];
+
+  function getTodayRecord() {
+    const all = loadAllRecords();
+    if (!all[activeDay]) {
+      all[activeDay] = {
+        day: activeDay,
+        workState: "idle",
+        rows: DEFAULT_ROWS_TODAY.map(r => ({ ...r }))
+      };
+      saveAllRecords(all);
+    }
+    return all[activeDay];
+  }
+
+  const dateEl = $("inboundDate");
+  const tbody = $("inboundTbody");
+  const addBtn = $("inboundAddRowBtn");
+  const sumBagsEl = $("inboundSumBags");
+  const sumKgEl = $("inboundSumKg");
+  const sumTonEl = $("inboundSumTon");
+  
+  const goalLabelEl = $("inboundGoalLabel");
+  const goalTonTextEl = $("inboundGoalTonText");
+  const achieveRateEl = $("inboundAchieveRate");
+  const progressBarEl = $("inboundProgressBar");
+  const liveActualEl = $("inboundLiveActual");
+  const remainTonEl = $("inboundRemainTon");
+  const calLinkBtn = $("inboundCalLink");
+
+  const photoBtn = $("inboundPhotoBtn");
+  const photoInput = $("inboundPhotoInput");
+  const photoThumbs = $("inboundPhotoThumbs");
+
+  const startBtn = $("inboundStartBtn");
+  const saveBtn = $("inboundSaveBtn");
+  const completeBtn = $("inboundCompleteBtn");
+  const workStatusEl = $("inboundWorkStatus");
+  const saveStatusEl = $("inboundSaveStatus");
+  const downloadAgainBtn = $("inboundDownloadAgain");
+
+  if (dateEl) {
+    const [y, m, d] = activeDay.split("-");
+    dateEl.textContent = `${y}. ${m}. ${d}.`;
+  }
+
+  function getCalendarGoal() {
+    let goalTon = 36.0;
+    let label = "달력 연동 입고 예정";
+    try {
+      const sch = JSON.parse(localStorage.getItem("jisu-schedule-v1") || "[]");
+      const todaySch = sch.filter(s => s && s.date === activeDay && s.target === "inbound");
+      if (todaySch.length) {
+        const txt = todaySch.map(s => s.text).join(" ");
+        const m = txt.match(/(\d+(?:[.,]\d+)?)\s*(?:TON|톤|T)?/i);
+        if (m) { goalTon = parseFloat(m[1].replace(",", ".")); label = "달력 금일 예정"; }
+      } else {
+        const future = sch.filter(s => s && s.target === "inbound" && s.date > activeDay);
+        if (future.length) {
+          const next = future[0];
+          label = `달력 차기 예정 (${next.date.slice(5)})`;
+        }
+      }
+    } catch(e) {}
+    return { goalTon, label };
+  }
+
+  function updateKpi(totalKg, bagCount) {
+    const totalTon = (totalKg / 1000).toFixed(2);
+    const { goalTon, label } = getCalendarGoal();
+    if (goalLabelEl) goalLabelEl.textContent = label;
+    if (goalTonTextEl) goalTonTextEl.textContent = `입고 목표: ${goalTon.toFixed(1)} TON`;
+    
+    const rate = Math.min(100, Math.round((totalKg / (goalTon * 1000)) * 100));
+    if (achieveRateEl) achieveRateEl.textContent = `달성률 ${rate}%`;
+    if (progressBarEl) progressBarEl.style.width = `${rate}%`;
+    if (liveActualEl) liveActualEl.textContent = `금일 실적: ${bagCount} BAG · ${totalTon} TON`;
+    
+    const remain = Math.max(0, goalTon - (totalKg / 1000)).toFixed(2);
+    if (remainTonEl) remainTonEl.textContent = `잔여: ${remain} TON`;
+  }
+
+  function renderRows() {
+    const rec = getTodayRecord();
+    const rows = rec.rows || [];
+    tbody.innerHTML = "";
+    let totalKg = 0;
+    let count = 0;
+
+    rows.forEach((r, idx) => {
+      const kgVal = parseFloat(r.kg) || 0;
+      if (kgVal > 0) { totalKg += kgVal; count++; }
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><input type="text" class="inb-inp-lot" data-idx="${idx}" value="${r.lot || ""}" placeholder="LOT 번호"></td>
+        <td><input type="text" class="inb-inp-bag" data-idx="${idx}" value="${r.bag || ""}" placeholder="Bag"></td>
+        <td><input type="number" step="0.1" class="inb-inp-kg" data-idx="${idx}" value="${r.kg || ""}" placeholder="중량"></td>
+        <td><input type="text" class="inb-inp-loc" data-idx="${idx}" value="${r.loc || ""}" placeholder="위치"></td>
+        <td><input type="text" class="inb-inp-worker" data-idx="${idx}" value="${r.worker || "김지수"}" placeholder="작업자"></td>
+        <td><button type="button" class="inb-del-btn" data-del="${idx}" title="삭제">×</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    if (sumBagsEl) sumBagsEl.textContent = count;
+    if (sumKgEl) sumKgEl.textContent = totalKg.toLocaleString("ko-KR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    if (sumTonEl) sumTonEl.textContent = (totalKg / 1000).toFixed(2);
+
+    updateKpi(totalKg, count);
+  }
+
+  tbody.addEventListener("input", e => {
+    const t = e.target;
+    const idx = parseInt(t.dataset.idx, 10);
+    if (isNaN(idx)) return;
+    const rec = getTodayRecord();
+    if (!rec.rows[idx]) return;
+
+    if (t.classList.contains("inb-inp-lot")) rec.rows[idx].lot = t.value.trim();
+    if (t.classList.contains("inb-inp-bag")) rec.rows[idx].bag = t.value.trim();
+    if (t.classList.contains("inb-inp-kg")) rec.rows[idx].kg = t.value.trim();
+    if (t.classList.contains("inb-inp-loc")) rec.rows[idx].loc = t.value.trim();
+    if (t.classList.contains("inb-inp-worker")) rec.rows[idx].worker = t.value.trim();
+
+    let totalKg = 0, count = 0;
+    rec.rows.forEach(r => {
+      const v = parseFloat(r.kg) || 0;
+      if (v > 0) { totalKg += v; count++; }
+    });
+    if (sumBagsEl) sumBagsEl.textContent = count;
+    if (sumKgEl) sumKgEl.textContent = totalKg.toLocaleString("ko-KR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    if (sumTonEl) sumTonEl.textContent = (totalKg / 1000).toFixed(2);
+    updateKpi(totalKg, count);
+  });
+
+  tbody.addEventListener("click", e => {
+    const btn = e.target.closest(".inb-del-btn");
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.del, 10);
+    const rec = getTodayRecord();
+    rec.rows.splice(idx, 1);
+    saveAllRecords(loadAllRecords());
+    renderRows();
+  });
+
+  addBtn.addEventListener("click", () => {
+    const rec = getTodayRecord();
+    const rows = rec.rows || [];
+    const lastRow = rows[rows.length - 1] || {};
+    const nextBag = lastRow.bag ? String(parseInt(lastRow.bag, 10) + 1 || "") : "";
+    const nextLot = lastRow.lot || "SH2609020";
+    const nextWorker = localStorage.getItem("jisu-user") || "김지수";
+
+    rows.push({ lot: nextLot, bag: nextBag, kg: "", loc: lastRow.loc || "", worker: nextWorker });
+    rec.rows = rows;
+    saveAllRecords(loadAllRecords());
+    renderRows();
+    const wrap = tbody.closest(".inbound-table-wrap");
+    if (wrap) wrap.scrollTop = wrap.scrollHeight;
+  });
+
+  if (calLinkBtn) {
+    calLinkBtn.addEventListener("click", () => {
+      const clock = $("liveClock");
+      if (clock) clock.click();
+    });
+  }
+
+  if (photoBtn && photoInput) {
+    photoBtn.addEventListener("click", () => photoInput.click());
+    photoInput.addEventListener("change", async e => {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      photoBtn.disabled = true;
+      photoBtn.querySelector("span").textContent = "저장중…";
+      for (const file of files) {
+        try {
+          const dataUrl = await resizeImage(file, 1600, 1600, 0.82);
+          const photoId = "inb-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6);
+          await savePhoto({ id: photoId, day: activeDay, data: dataUrl, at: new Date().toISOString() });
+        } catch(err) { console.error("Photo save err:", err); }
+      }
+      photoInput.value = "";
+      photoBtn.disabled = false;
+      photoBtn.querySelector("span").textContent = "PHOTO";
+      renderPhotos();
+    });
+  }
+
+  function resizeImage(file, maxW, maxH, q) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width, h = img.height;
+          if (w > maxW || h > maxH) {
+            if (w / h > maxW / maxH) { h = Math.round(h * maxW / w); w = maxW; }
+            else { w = Math.round(w * maxH / h); h = maxH; }
+          }
+          const cvs = document.createElement("canvas");
+          cvs.width = w; cvs.height = h;
+          const ctx = cvs.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(cvs.toDataURL("image/jpeg", q));
+        };
+        img.onerror = reject;
+        img.src = ev.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function renderPhotos() {
+    if (!photoThumbs) return;
+    const list = await getPhotos(activeDay);
+    if (!list.length) { photoThumbs.innerHTML = ""; return; }
+    photoThumbs.innerHTML = list.map(p => `
+      <div class="inbound-photo-thumb-wrap">
+        <img src="${p.data}" alt="입고 증적 사진" onclick="window.open('${p.data}')">
+        <button type="button" class="inbound-photo-del" data-pdel="${p.id}" title="사진 삭제">×</button>
+      </div>
+    `).join("");
+  }
+
+  if (photoThumbs) {
+    photoThumbs.addEventListener("click", async e => {
+      const del = e.target.closest(".inbound-photo-del");
+      if (!del) return;
+      e.stopPropagation();
+      if (!confirm("이 입고 사진을 삭제할까요?")) return;
+      await deletePhoto(del.dataset.pdel);
+      renderPhotos();
+    });
+  }
+
+  function loadXLSX() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    return new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";
+      s.onload = () => resolve(window.XLSX);
+      s.onerror = () => reject(new Error("XLSX failed to load"));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function exportInboundExcel() {
+    try {
+      const XLSX = await loadXLSX();
+      const rec = getTodayRecord();
+      const rows = rec.rows || [];
+      const wb = XLSX.utils.book_new();
+
+      let totalKg = 0;
+      const sheetData = [
+        ["입고원료 중량 기록일지"],
+        [`입고일자: ${activeDay}`, "", `확인자: 출하 / 파트장`, "", `작업자: ${localStorage.getItem("jisu-user") || "김지수"}`],
+        [],
+        ["번호", "입고일자", "LOT 번호", "Bag No.", "실측 중량(kg)", "작업자", "적재위치"]
+      ];
+
+      rows.forEach((r, i) => {
+        const kg = parseFloat(r.kg) || 0;
+        totalKg += kg;
+        sheetData.push([
+          i + 1,
+          activeDay,
+          r.lot || "",
+          r.bag || "",
+          kg,
+          r.worker || "김지수",
+          r.loc || ""
+        ]);
+      });
+
+      const totalTon = (totalKg / 1000).toFixed(2);
+      sheetData.push([]);
+      sheetData.push(["합계", "", "", `${rows.length} BAG`, totalKg, "", `${totalTon} TON`]);
+
+      const ws = XLSX.utils.aoa_to_sheet(sheetData);
+      ws["!cols"] = [
+        { wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 10 }, { wch: 14 }, { wch: 12 }, { wch: 16 }
+      ];
+      XLSX.utils.book_append_sheet(wb, ws, "입고원료 중량 기록일지");
+
+      const fname = `입고원료_중량기록일지_${activeDay.replace(/-/g, "")}.xlsx`;
+      XLSX.writeFile(wb, fname);
+      return true;
+    } catch(e) {
+      console.error("Inbound excel export error:", e);
+      return false;
+    }
+  }
+
+  function updateWorkflowUI() {
+    const rec = getTodayRecord();
+    const st = rec.workState || "idle";
+    startBtn.classList.toggle("is-active-work", st === "work");
+    completeBtn.classList.toggle("is-active-done", st === "done");
+    completeBtn.disabled = (st !== "work" && st !== "done");
+    
+    if (st === "work") {
+      workStatusEl.textContent = `● 입고 작업 진행중 (${rec.startedAt || ""})`;
+      workStatusEl.style.color = "#34d399";
+    } else if (st === "done") {
+      workStatusEl.textContent = `✓ 입고 작업 완료 (${rec.completedAt || ""})`;
+      workStatusEl.style.color = "#60a5fa";
+      if (downloadAgainBtn) downloadAgainBtn.hidden = false;
+    } else {
+      workStatusEl.textContent = "대기중";
+      workStatusEl.style.color = "#94a3b8";
+      if (downloadAgainBtn) downloadAgainBtn.hidden = true;
+    }
+
+    const pill = document.querySelector("#hotspot-inbound .pulse-ring");
+    if (pill) {
+      if (st === "work") { pill.className = "pulse-ring bg-emerald-500 text-emerald-400"; }
+      else if (st === "done") { pill.className = "pulse-ring bg-blue-500 text-blue-400"; }
+    }
+  }
+
+  startBtn.addEventListener("click", () => {
+    const all = loadAllRecords();
+    const rec = all[activeDay] || getTodayRecord();
+    if (rec.workState === "work") {
+      rec.workState = "idle";
+      delete rec.startedAt;
+      if (saveStatusEl) saveStatusEl.textContent = "입고시작이 취소되었습니다.";
+    } else {
+      rec.workState = "work";
+      rec.startedAt = kstTime();
+      if (saveStatusEl) saveStatusEl.textContent = `입고 작업이 시작되었습니다. (${rec.startedAt})`;
+    }
+    all[activeDay] = rec;
+    saveAllRecords(all);
+    updateWorkflowUI();
+  });
+
+  saveBtn.addEventListener("click", () => {
+    const all = loadAllRecords();
+    saveAllRecords(all);
+    if (saveStatusEl) {
+      saveStatusEl.textContent = `임시저장 완료 (${kstTime()})`;
+      setTimeout(() => { if (saveStatusEl.textContent.includes("임시저장")) saveStatusEl.textContent = ""; }, 3000);
+    }
+  });
+
+  completeBtn.addEventListener("click", async () => {
+    const all = loadAllRecords();
+    const rec = all[activeDay] || getTodayRecord();
+    rec.workState = "done";
+    rec.completedAt = kstTime();
+    all[activeDay] = rec;
+    saveAllRecords(all);
+    updateWorkflowUI();
+
+    completeBtn.disabled = true;
+    completeBtn.textContent = "엑셀 생성중…";
+    await exportInboundExcel();
+    completeBtn.disabled = false;
+    completeBtn.textContent = "입고완료 (엑셀)";
+
+    if (saveStatusEl) saveStatusEl.textContent = `입고완료 및 엑셀 일지 다운로드 완료! (${rec.completedAt})`;
+  });
+
+  if (downloadAgainBtn) {
+    downloadAgainBtn.addEventListener("click", () => exportInboundExcel());
+  }
+
+  renderRows();
+  renderPhotos();
+  updateWorkflowUI();
+
+  window.jisuInboundArchive = {
+    getToday: () => getTodayRecord(),
+    photos: () => getPhotos(activeDay),
+    exportExcel: exportInboundExcel
+  };
+})();
+</script>
+</body>
 </html>
