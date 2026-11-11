@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611102215">
+  <meta name="jisu-build" content="202611111935">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -425,9 +425,11 @@
     .cmd-move-arrow{color:#fbbf24;font-weight:900;}
     .move-tag{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:800;color:#fde68a;background:rgba(251,191,36,.14);border:1px solid rgba(251,191,36,.45);border-radius:9999px;padding:1px 7px;vertical-align:middle;}
     .move-layer{position:absolute;inset:0;pointer-events:none;z-index:22;overflow:visible;}
-    .move-glow{fill:none;stroke:rgba(0,0,0,.45);stroke-width:7;stroke-linecap:round;}
-    .move-path{fill:none;stroke:#fbbf24;stroke-width:3.5;stroke-linecap:round;stroke-dasharray:10 8;}
-    .move-path.is-working{stroke:#4ade80;animation:moveFlow .9s linear infinite;}
+    .move-glow{fill:none;stroke:var(--mv,#ff9900);stroke-width:12;stroke-linecap:round;opacity:.35;filter:drop-shadow(0 0 6px var(--mv,#ff9900));}
+    .move-path-outer{fill:none;stroke:var(--mv,#ff9900);stroke-width:5.2;stroke-linecap:round;stroke-linejoin:round;opacity:.95;filter:drop-shadow(0 0 4px var(--mv,#ff9900));}
+    .move-path-inner{fill:none;stroke:#0b0f19;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+    .move-path{fill:none;stroke:#ffffff;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:10 8;opacity:.9;}
+    .move-path.is-working{stroke:#ffffff;animation:moveFlow .5s linear infinite;}
     @keyframes moveFlow{to{stroke-dashoffset:-18;}}
     .move-labels{position:absolute;inset:0;pointer-events:none;z-index:23;}
     .move-label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:clamp(10px,1.05cqw,13px);font-weight:800;color:#1f2937;background:#fbbf24;border-radius:9999px;padding:3px 9px;box-shadow:0 4px 12px rgba(0,0,0,.4);}
@@ -464,7 +466,7 @@
     .jisu-ver{font-size:10px;opacity:.45;margin-left:6px;align-self:center;}
     body > main{padding:6px !important;}
     body > header{padding-top:6px !important;padding-bottom:6px !important;}
-    .cmd-layout{gap:8px !important;}
+    .cmd-layout{gap:0 !important;}
     /* Deep Slate Navy situation room surroundings */
     html,body{background-color:#0b0f19 !important;}
     body{background-image:radial-gradient(1200px 700px at 15% 0%,rgba(30,41,59,.45),transparent 65%),radial-gradient(900px 600px at 100% 100%,rgba(15,23,42,.65),transparent 65%) !important;background-attachment:fixed;}
@@ -550,7 +552,7 @@
     .expand-card .bg-white\/5{background:rgba(255,255,255,.06) !important;}
     #detailModal > div{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,0) 40%),rgba(12,18,28,.55) !important;backdrop-filter:blur(10px) saturate(150%) !important;-webkit-backdrop-filter:blur(10px) saturate(150%) !important;}
     /* Sidebar: calm dark charcoal #282D37 */
-    .cmd-side{background:#282D37 !important;border:1px solid rgba(255,255,255,.08) !important;color:#e5e7eb;box-shadow:0 14px 34px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.05) !important;}
+    .cmd-side{background:#282D37 !important;border:1px solid rgba(255,255,255,.08) !important;border-right:none !important;border-top-right-radius:0 !important;border-bottom-right-radius:0 !important;color:#e5e7eb;box-shadow:14px 0 28px -4px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.05) !important;z-index:20;position:relative;}
     .cmd-side h2{color:#f3f4f6 !important;}
     .cmd-side label,.cmd-side .cmd-move-h,.cmd-side .cmd-summary-h{color:#9aa3b2 !important;}
     .cmd-side .cmd-move-h small{color:#6b7280 !important;}
@@ -1181,13 +1183,17 @@
     /* 이동작업: 경로를 따라 움직이는 지게차 (위에서 본 모습, 진행 방향으로 회전) */
     .move-runner.fl{fill:none;stroke:none;filter:drop-shadow(0 0 4px rgba(251,191,36,.9)) drop-shadow(0 1px 2px rgba(0,0,0,.7));}
     .move-runner.fl.is-working{filter:drop-shadow(0 0 5px rgba(74,222,128,.95)) drop-shadow(0 1px 2px rgba(0,0,0,.7));}
-    .move-runner.fl .fl-body{fill:#fbbf24;stroke:#1f2937;stroke-width:1;}
-    .move-runner.fl.is-working .fl-body{fill:#4ade80;}
-    .move-runner.fl .fl-cab{fill:#1f2937;stroke:#e5e7eb;stroke-width:.8;}
-    .move-runner.fl .fl-weight{fill:#374151;}
-    .move-runner.fl .fl-wheel{fill:#111827;}
-    .move-runner.fl .fl-mast{fill:#4b5563;}
-    .move-runner.fl .fl-fork{fill:#d1d5db;stroke:#374151;stroke-width:.5;}
+    .move-runner.fl{fill:none;stroke:none;filter:drop-shadow(0 0 6px var(--mv,#ff9900)) drop-shadow(0 2px 4px rgba(0,0,0,.8));}
+    .move-runner.fl.is-working{filter:drop-shadow(0 0 8px var(--mvw,#39ff14)) drop-shadow(0 2px 4px rgba(0,0,0,.8));}
+    .move-runner.fl .fl-body{fill:#181c24 !important;stroke:var(--mv,#ff9900) !important;stroke-width:1.2;}
+    .move-runner.fl.is-working .fl-body{stroke:var(--mvw,#39ff14) !important;}
+    .move-runner.fl .fl-cab{fill:#111827;stroke:rgba(255,255,255,.75);stroke-width:.8;}
+    .move-runner.fl .fl-weight{fill:#0f172a;}
+    .move-runner.fl .fl-wheel{fill:#0f172a;stroke:var(--mv,#ff9900);stroke-width:1.2;}
+    .move-runner.fl.is-working .fl-wheel{stroke:var(--mvw,#39ff14);}
+    .move-runner.fl .fl-mast{fill:#334155;}
+    .move-runner.fl .fl-fork{fill:#e2e8f0;stroke:var(--mv,#ff9900);stroke-width:.8;}
+    .move-runner.fl .fl-light{fill:#ffffff !important;filter:drop-shadow(0 0 4px #ffffff);}
   </style>
   <style>
     /* 이동작업 색 구분 (작업중이 아니면 각자 색) */
@@ -1375,10 +1381,10 @@
     body:not(#zz) .memo-meta .memo-ack{font-size:12.5px;font-weight:900;padding:0px 14px;border-radius:10px;min-width:65px;height:38px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;color:#fff;background:rgba(139,92,246,.55);}
     body:not(#zz) .memo-meta .memo-ack:hover{background:rgba(139,92,246,.8);}
     body:not(#zz) .memo-item .memo-meta{align-items:center;}
-    /* 이동 동선: 색을 조금 더 연하게 */
-    body:not(#zz) #moveLayer .move-path{opacity:.62;}
-    body:not(#zz) #moveLayer .move-glow{stroke:rgba(0,0,0,.28);}
-    body:not(#zz) #moveLayer .move-start{opacity:.75;}
+    /* 트론 네온 레이저 이동 동선 */
+    body:not(#zz) #moveLayer .move-path{opacity:.95;}
+    body:not(#zz) #moveLayer .move-glow{opacity:.4;stroke:var(--mv,#ff9900);}
+    body:not(#zz) #moveLayer .move-start{opacity:.95;}
   </style>
   <style>
     /* 특이사항: 확인 버튼을 항목 오른쪽 세로 가운데, 남기기 버튼과 같은 열(같은 폭·같은 오른쪽 끝) */
@@ -2222,8 +2228,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const moves=load().filter(x=>!x.closed).map(x=>({x,m:moveOf(x)})).filter(o=>o.m&&!o.x.completed);
       let defs='<defs><marker id="mvHead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fbbf24"/></marker><marker id="mvHeadW" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4ade80"/></marker></defs>';
       let paths=''; let lab=''; let runners='';
-      const MVC=['#fbbf24','#fb923c','#a78bfa','#38bdf8']; /* 이동작업 색: 1번 노랑, 2번 주황, 3번 보라, 4번 하늘 */
-      const MVW=['#4ade80','#2dd4bf','#a3e635','#10b981']; /* 작업중 색 (녹색 계열): 초록, 청록, 연두, 에메랄드 */ let wIdx=0;
+      const MVC=['#ff9900','#4ade80','#00f0ff','#a78bfa']; /* 1번 앰버 오렌지, 2번 라임 그린, 3번 시안, 4번 바이올렛 */ /* 이동작업 색: 1번 노랑, 2번 주황, 3번 보라, 4번 하늘 */
+      const MVW=['#ffaa00','#39ff14','#38bdf8','#c084fc']; /* 작업중 고휘도 네온 */ /* 작업중 색 (녹색 계열): 초록, 청록, 연두, 에메랄드 */ let wIdx=0;
       defs=defs.replace('</defs>','<linearGradient id="flShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient></defs>');
       defs=defs.replace('</defs>',MVW.map((c,i)=>'<marker id="mvHeadW'+i+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="'+c+'"/></marker>').join('')+'</defs>');
       defs=defs.replace('</defs>',MVC.map((c,i)=>'<marker id="mvHead'+i+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="'+c+'"/></marker>').join('')+'</defs>');
@@ -2270,7 +2276,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         const off=(idx%3)*4-4; const pp=pts.map(p=>[p[0]+off,p[1]+off]);
         const d='M'+pp.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
         const working=!!o.x.working; const cls='move-path'+(working?' is-working':''); const ci=idx%MVC.length, wi=working?(wIdx++)%MVW.length:0, mvs=' style="--mv:'+MVC[ci]+';--mvw:'+MVW[wi]+'"';
-        paths+='<path class="move-glow" d="'+d+'"/><path class="'+cls+'"'+mvs+' d="'+d+'" marker-end="url(#'+(working?'mvHeadW'+wi:'mvHead'+ci)+')"/>'
+        paths+='<path class="move-glow" d="'+d+'"'+mvs+'/><path class="move-path-outer" d="'+d+'"'+mvs+'/><path class="move-path-inner" d="'+d+'"/><path class="'+cls+'"'+mvs+' d="'+d+'" marker-end="url(#'+(working?'mvHeadW'+wi:'mvHead'+ci)+')"/>'
               +'<circle class="move-start'+(working?' is-working':'')+'"'+mvs+' cx="'+pp[0][0]+'" cy="'+pp[0][1]+'" r="5"/>';
         let total=0; const segs=[]; for(let i=1;i<pp.length;i++){const l=Math.hypot(pp[i][0]-pp[i-1][0],pp[i][1]-pp[i-1][1]);segs.push(l);total+=l;}
         { const dur=Math.max(2.5,Math.min(9,total/(working?160:110))).toFixed(2); /* 움직이는 점: 출발 → 도착으로 계속 흐름 */
