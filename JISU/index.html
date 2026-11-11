@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611111935">
+  <meta name="jisu-build" content="202611111942">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -425,15 +425,15 @@
     .cmd-move-arrow{color:#fbbf24;font-weight:900;}
     .move-tag{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:800;color:#fde68a;background:rgba(251,191,36,.14);border:1px solid rgba(251,191,36,.45);border-radius:9999px;padding:1px 7px;vertical-align:middle;}
     .move-layer{position:absolute;inset:0;pointer-events:none;z-index:22;overflow:visible;}
-    .move-glow{fill:none;stroke:var(--mv,#ff9900);stroke-width:12;stroke-linecap:round;opacity:.35;filter:drop-shadow(0 0 6px var(--mv,#ff9900));}
-    .move-path-outer{fill:none;stroke:var(--mv,#ff9900);stroke-width:5.2;stroke-linecap:round;stroke-linejoin:round;opacity:.95;filter:drop-shadow(0 0 4px var(--mv,#ff9900));}
-    .move-path-inner{fill:none;stroke:#0b0f19;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
-    .move-path{fill:none;stroke:#ffffff;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:10 8;opacity:.9;}
-    .move-path.is-working{stroke:#ffffff;animation:moveFlow .5s linear infinite;}
+    .move-glow{fill:none;stroke:var(--mv,#ff9900);stroke-width:8;stroke-linecap:round;opacity:.20;filter:drop-shadow(0 0 5px var(--mv,#ff9900));}
+    .move-path-outer{fill:none;stroke:var(--mv,#ff9900);stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;opacity:.65;filter:drop-shadow(0 0 3px var(--mv,#ff9900));}
+    .move-path-inner{display:none;}
+    .move-path{fill:none;stroke:#ffffff;stroke-width:1.0;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:8 6;opacity:.70;}
+    .move-path.is-working{stroke:#ffffff;animation:moveFlow .5s linear infinite;opacity:.85;}
     @keyframes moveFlow{to{stroke-dashoffset:-18;}}
     .move-labels{position:absolute;inset:0;pointer-events:none;z-index:23;}
     .move-label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:clamp(10px,1.05cqw,13px);font-weight:800;color:#1f2937;background:#fbbf24;border-radius:9999px;padding:3px 9px;box-shadow:0 4px 12px rgba(0,0,0,.4);}
-    .move-label.is-working{background:#4ade80;color:#052e16;}
+    .move-label.is-working{background:rgba(15,23,42,.82) !important;color:#f8fafc !important;border:1px solid var(--mvw,#39ff14) !important;box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 8px rgba(57,255,20,.35) !important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
     .move-path{stroke-linejoin:round;}
     .move-glow{stroke-linejoin:round;}
     .move-start{fill:#fbbf24;stroke:#1f2937;stroke-width:2;}
@@ -1183,7 +1183,7 @@
     /* 이동작업: 경로를 따라 움직이는 지게차 (위에서 본 모습, 진행 방향으로 회전) */
     .move-runner.fl{fill:none;stroke:none;filter:drop-shadow(0 0 4px rgba(251,191,36,.9)) drop-shadow(0 1px 2px rgba(0,0,0,.7));}
     .move-runner.fl.is-working{filter:drop-shadow(0 0 5px rgba(74,222,128,.95)) drop-shadow(0 1px 2px rgba(0,0,0,.7));}
-    .move-runner.fl{fill:none;stroke:none;filter:drop-shadow(0 0 6px var(--mv,#ff9900)) drop-shadow(0 2px 4px rgba(0,0,0,.8));}
+    .move-runner.fl{fill:none;stroke:none;filter:drop-shadow(0 0 4px var(--mv,#ff9900)) drop-shadow(0 1px 3px rgba(0,0,0,.6));opacity:.92;}
     .move-runner.fl.is-working{filter:drop-shadow(0 0 8px var(--mvw,#39ff14)) drop-shadow(0 2px 4px rgba(0,0,0,.8));}
     .move-runner.fl .fl-body{fill:#181c24 !important;stroke:var(--mv,#ff9900) !important;stroke-width:1.2;}
     .move-runner.fl.is-working .fl-body{stroke:var(--mvw,#39ff14) !important;}
@@ -1199,7 +1199,7 @@
     /* 이동작업 색 구분 (작업중이 아니면 각자 색) */
     .move-path:not(.is-working){stroke:var(--mv,#fbbf24);}
     .move-start:not(.is-working){fill:var(--mv,#fbbf24);}
-    .move-label:not(.is-working){background:var(--mv,#fbbf24) !important;}
+    .move-label:not(.is-working){background:rgba(15,23,42,.78) !important;color:#f8fafc !important;border:1px solid var(--mv,#ff9900) !important;box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 8px rgba(255,153,0,.35) !important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
     .move-runner.fl:not(.is-working) .fl-body{fill:var(--mv,#fbbf24);}
     .move-runner.fl:not(.is-working){filter:drop-shadow(0 0 4px var(--mv,#fbbf24)) drop-shadow(0 1px 2px rgba(0,0,0,.7));}
   </style>
@@ -1215,7 +1215,7 @@
     /* 작업중 이동작업: 팀마다 다른 녹색 계열 */
     body:not(#zz) .move-path.is-working{stroke:var(--mvw,#4ade80) !important;}
     body:not(#zz) .move-start.is-working{fill:var(--mvw,#4ade80) !important;}
-    body:not(#zz) .move-label.is-working{background:var(--mvw,#4ade80) !important;color:#052e16 !important;}
+    body:not(#zz) .move-label.is-working{background:rgba(15,23,42,.82) !important;color:#f8fafc !important;border:1px solid var(--mvw,#39ff14) !important;box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 8px rgba(57,255,20,.35) !important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
     body:not(#zz) .move-runner.fl.is-working .fl-body{fill:var(--mvw,#4ade80) !important;}
     body:not(#zz) .move-runner.fl.is-working{filter:drop-shadow(0 0 5px var(--mvw,#4ade80)) drop-shadow(0 1px 2px rgba(0,0,0,.7)) !important;}
   </style>
@@ -1381,10 +1381,10 @@
     body:not(#zz) .memo-meta .memo-ack{font-size:12.5px;font-weight:900;padding:0px 14px;border-radius:10px;min-width:65px;height:38px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;color:#fff;background:rgba(139,92,246,.55);}
     body:not(#zz) .memo-meta .memo-ack:hover{background:rgba(139,92,246,.8);}
     body:not(#zz) .memo-item .memo-meta{align-items:center;}
-    /* 트론 네온 레이저 이동 동선 */
-    body:not(#zz) #moveLayer .move-path{opacity:.95;}
-    body:not(#zz) #moveLayer .move-glow{opacity:.4;stroke:var(--mv,#ff9900);}
-    body:not(#zz) #moveLayer .move-start{opacity:.95;}
+    /* 트론 네온 레이저 이동 동선: 연하고 부드러운 투명도 */
+    body:not(#zz) #moveLayer .move-path{opacity:.70;}
+    body:not(#zz) #moveLayer .move-glow{opacity:.22;stroke:var(--mv,#ff9900);}
+    body:not(#zz) #moveLayer .move-start{opacity:.75;}
   </style>
   <style>
     /* 특이사항: 확인 버튼을 항목 오른쪽 세로 가운데, 남기기 버튼과 같은 열(같은 폭·같은 오른쪽 끝) */
