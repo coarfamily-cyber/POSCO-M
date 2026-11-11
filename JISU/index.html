@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611111942">
+  <meta name="jisu-build" content="202611112005">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -425,18 +425,25 @@
     .cmd-move-arrow{color:#fbbf24;font-weight:900;}
     .move-tag{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:800;color:#fde68a;background:rgba(251,191,36,.14);border:1px solid rgba(251,191,36,.45);border-radius:9999px;padding:1px 7px;vertical-align:middle;}
     .move-layer{position:absolute;inset:0;pointer-events:none;z-index:22;overflow:visible;}
-    .move-glow{fill:none;stroke:var(--mv,#ff9900);stroke-width:8;stroke-linecap:round;opacity:.20;filter:drop-shadow(0 0 5px var(--mv,#ff9900));}
-    .move-path-outer{fill:none;stroke:var(--mv,#ff9900);stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;opacity:.65;filter:drop-shadow(0 0 3px var(--mv,#ff9900));}
+    .move-glow{fill:none;stroke:var(--mv,#ff9900);stroke-width:6;stroke-linecap:round;opacity:.15;filter:drop-shadow(0 0 3px var(--mv,#ff9900));}
+    .move-path-outer{display:none;}
     .move-path-inner{display:none;}
-    .move-path{fill:none;stroke:#ffffff;stroke-width:1.0;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:8 6;opacity:.70;}
-    .move-path.is-working{stroke:#ffffff;animation:moveFlow .5s linear infinite;opacity:.85;}
-    @keyframes moveFlow{to{stroke-dashoffset:-18;}}
+    .move-path{fill:none;stroke:var(--mv,#ff9900);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.50;}
+    .move-path.is-working{stroke:var(--mvw,#4ade80);opacity:.70;}
     .move-labels{position:absolute;inset:0;pointer-events:none;z-index:23;}
-    .move-label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:clamp(10px,1.05cqw,13px);font-weight:800;color:#1f2937;background:#fbbf24;border-radius:9999px;padding:3px 9px;box-shadow:0 4px 12px rgba(0,0,0,.4);}
-    .move-label.is-working{background:rgba(15,23,42,.82) !important;color:#f8fafc !important;border:1px solid var(--mvw,#39ff14) !important;box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 8px rgba(57,255,20,.35) !important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+    .move-label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:clamp(10px,1.05cqw,13px);font-weight:700;color:#f8fafc;background:rgba(15,23,42,.78);border:1px solid var(--mv,#ff9900);border-radius:9999px;padding:3px 10px;box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 8px rgba(255,153,0,.25);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+    .move-label.is-working{background:rgba(15,23,42,.82) !important;color:#f8fafc !important;border:1px solid var(--mvw,#39ff14) !important;box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 8px rgba(57,255,20,.25) !important;}
     .move-path{stroke-linejoin:round;}
     .move-glow{stroke-linejoin:round;}
-    .move-start{fill:#fbbf24;stroke:#1f2937;stroke-width:2;}
+    .move-start{fill:var(--mv,#ff9900);stroke:#ffffff;stroke-width:1;opacity:.8;}
+    .move-start.is-working{fill:var(--mvw,#39ff14);}
+    /* 2안: 스마트팩토리 디지털 펄스 러너 */
+    .move-runner.pulse{pointer-events:none;}
+    .pulse-aura{fill:var(--mv,#ff9900);opacity:.35;filter:drop-shadow(0 0 4px var(--mv,#ff9900));}
+    .pulse-core{fill:var(--mv,#ff9900);opacity:.95;filter:drop-shadow(0 0 2px #ffffff);}
+    .pulse-spark{fill:#ffffff;opacity:.95;}
+    .move-runner.pulse.is-working .pulse-aura{fill:var(--mvw,#39ff14);filter:drop-shadow(0 0 5px var(--mvw,#39ff14));}
+    .move-runner.pulse.is-working .pulse-core{fill:var(--mvw,#39ff14);}
     .move-start.is-working{fill:#4ade80;}
     .cmd-notice-count{display:inline-flex;align-items:center;justify-content:center;min-width:1.35em;height:1.35em;padding:0 .35em;border-radius:9999px;background:#f59e0b;color:#1f2937;font-size:.7em;font-weight:900;margin-left:.3em;line-height:1;box-shadow:0 0 8px rgba(245,158,11,.6);}
     .cmd-notice-count{padding:0 .45em !important;white-space:nowrap;}
@@ -1382,8 +1389,8 @@
     body:not(#zz) .memo-meta .memo-ack:hover{background:rgba(139,92,246,.8);}
     body:not(#zz) .memo-item .memo-meta{align-items:center;}
     /* 트론 네온 레이저 이동 동선: 연하고 부드러운 투명도 */
-    body:not(#zz) #moveLayer .move-path{opacity:.70;}
-    body:not(#zz) #moveLayer .move-glow{opacity:.22;stroke:var(--mv,#ff9900);}
+    body:not(#zz) #moveLayer .move-path{opacity:.50;}
+    body:not(#zz) #moveLayer .move-glow{opacity:.15;stroke:var(--mv,#ff9900);}
     body:not(#zz) #moveLayer .move-start{opacity:.75;}
   </style>
   <style>
@@ -2279,8 +2286,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         paths+='<path class="move-glow" d="'+d+'"'+mvs+'/><path class="move-path-outer" d="'+d+'"'+mvs+'/><path class="move-path-inner" d="'+d+'"/><path class="'+cls+'"'+mvs+' d="'+d+'" marker-end="url(#'+(working?'mvHeadW'+wi:'mvHead'+ci)+')"/>'
               +'<circle class="move-start'+(working?' is-working':'')+'"'+mvs+' cx="'+pp[0][0]+'" cy="'+pp[0][1]+'" r="5"/>';
         let total=0; const segs=[]; for(let i=1;i<pp.length;i++){const l=Math.hypot(pp[i][0]-pp[i-1][0],pp[i][1]-pp[i-1][1]);segs.push(l);total+=l;}
-        { const dur=Math.max(2.5,Math.min(9,total/(working?160:110))).toFixed(2); /* 움직이는 점: 출발 → 도착으로 계속 흐름 */
-          runners+='<g class="move-runner fl'+(working?' is-working':'')+'"'+mvs+'><g transform="scale(1.3) translate(-17,-9)"><rect class="fl-shadow" x="1.6" y="2.6" width="33" height="15.4" rx="3"/><rect class="fl-tire" x="2" y="-0.3" width="5.4" height="3.2" rx="1.2"/><rect class="fl-tire" x="2" y="15.1" width="5.4" height="3.2" rx="1.2"/><rect class="fl-tire" x="14.6" y="-0.6" width="6.2" height="3.6" rx="1.3"/><rect class="fl-tire" x="14.6" y="15" width="6.2" height="3.6" rx="1.3"/><rect class="fl-weight" x="0" y="1.6" width="8.5" height="14.8" rx="4.2"/><rect class="fl-body" x="3" y="1.8" width="17.8" height="14.4" rx="2.6"/><rect x="3" y="1.8" width="17.8" height="14.4" rx="2.6" fill="url(#flShade)"/><rect class="fl-guard" x="7.6" y="2.9" width="10.6" height="12.2" rx="1.3"/><path class="fl-slat" d="M10.2 3.4V14.6M12.9 3.4V14.6M15.6 3.4V14.6"/><circle class="fl-beacon" cx="9" cy="9" r="1.15"/><rect class="fl-mast" x="20.6" y="2.2" width="2.6" height="13.6" rx=".6"/><path class="fl-chain" d="M21.9 3.2V14.8"/><rect class="fl-carriage" x="23.1" y="2.8" width="1.4" height="12.4" rx=".4"/><rect class="fl-fork" x="24.3" y="4" width="10" height="1.8" rx=".6"/><rect class="fl-fork" x="24.3" y="12.2" width="10" height="1.8" rx=".6"/><g class="fl-load"><rect x="24.6" y="2.6" width="10.6" height="12.8" rx=".8" fill="#9a6a3a"/><rect x="25.4" y="3.4" width="4.4" height="5.2" rx=".5" fill="#c9a36b"/><rect x="30.2" y="3.4" width="4.4" height="5.2" rx=".5" fill="#bf9660"/><rect x="25.4" y="9.4" width="4.4" height="5.2" rx=".5" fill="#bf9660"/><rect x="30.2" y="9.4" width="4.4" height="5.2" rx=".5" fill="#c9a36b"/></g><rect class="fl-light" x="19.6" y="2.3" width="1.3" height="1.3" rx=".4"/><rect class="fl-light" x="19.6" y="14.4" width="1.3" height="1.3" rx=".4"/></g><animateMotion dur="'+dur+'s" repeatCount="indefinite" rotate="auto" path="'+d+'"/></g>'; }
+        { const dur=Math.max(2.5,Math.min(9,total/(working?160:110))).toFixed(2); /* 스마트 디지털 펄스: 은은한 유선형 빛의 흐름 */
+          runners+='<g class="move-runner pulse'+(working?' is-working':'')+'"'+mvs+'><circle class="pulse-aura" cx="0" cy="0" r="7"/><ellipse class="pulse-core" cx="0" cy="0" rx="6" ry="3.2"/><circle class="pulse-spark" cx="2.5" cy="0" r="1.4"/><animateMotion dur="'+dur+'s" repeatCount="indefinite" rotate="auto" path="'+d+'"/></g>'; }
         let half=total/2, mx=pp[0][0], my=pp[0][1]; for(let i=1;i<pp.length;i++){if(half<=segs[i-1]){const t=half/segs[i-1];mx=pp[i-1][0]+(pp[i][0]-pp[i-1][0])*t;my=pp[i-1][1]+(pp[i][1]-pp[i-1][1])*t;break;} half-=segs[i-1];}
         const g=goalOf(o.x.text); const prog=g?((o.x.done!=null?o.x.done:0)+' / '+g.n+(g.u?' '+g.u:'')):'';
         lab+='<div class="move-label'+(working?' is-working':'')+'" style="--mv:'+MVC[ci]+';--mvw:'+MVW[wi]+';left:'+mx+'px;top:'+my+'px">'+esc(PLACE_LABEL[o.m.from]||o.m.from)+' → '+esc(PLACE_LABEL[o.m.to]||o.m.to)+(prog?' · '+esc(prog):'')+(working?' · 작업중':'')+'</div>';
