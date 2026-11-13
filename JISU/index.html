@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140055">
+  <meta name="jisu-build" content="202611140110">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -2844,6 +2844,17 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const clean=String(t||'').replace(/^\[[^\]]+\]\s*/,'');
       const m=clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)/);
       return m?{n:m[1].replace(',','.'),u:({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()}:null;
+    }
+    function dayOf(rec){
+      if(!rec) return '';
+      if(rec.day) return rec.day;
+      const m=String(rec.at||'').match(/(\d{1,2})\.\s*(\d{1,2})\./);
+      if(!m) return rec.sched||'';
+      const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+      const ty=+today.slice(0,4);
+      let k=ty+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0');
+      if(k>today) k=(ty-1)+k.slice(4);
+      return k;
     }
     function isCarryover(x){
       if(!x || x.kind==='notice' || x.completed) return false;
