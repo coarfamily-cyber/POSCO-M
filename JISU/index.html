@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140845">
+  <meta name="jisu-build" content="202611140850">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -2497,14 +2497,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         <option value="production-f">생산F</option>
         <option value="production-g">생산G</option>
         <option value="production-h">생산H</option>
-        <option value="outbound">출고 (전체)</option>
-        <option value="outbound:RAS-2">출고 · RAS-2</option>
-        <option value="outbound:L1">출고 · L1</option>
-        <option value="outbound:CP3K">출고 · CP3K</option>
-        <option value="outbound:C3B">출고 · C3B</option>
-        <option value="outbound:연구요청">출고 · 연구요청</option>
-        <option value="outbound:2공장→1공장">출고 · 공장간이송(2공장→1공장)</option>
-        <option value="outbound:1공장→2공장">출고 · 공장간이송(1공장→2공장)</option>
+        <option value="outbound">출고</option>
         <option value="inbound">입고</option>
         <option value="packaging">포장</option>
         <option value="packaging-d">포장(D동)</option>
@@ -3594,11 +3587,19 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       });
       svg.innerHTML=defs+paths+runners; labels.innerHTML=lab;
     }
+    let obSubTarget='';
+    const getTarget=()=>(sel.value==='outbound'&&obSubTarget)?obSubTarget:sel.value;
+    const setTarget=(val)=>{
+      if(val&&val.startsWith('outbound:')){ obSubTarget=val; sel.value='outbound'; }
+      else { obSubTarget=''; sel.value=val||''; }
+      try{localStorage.setItem('jisu-cmd-target',getTarget());}catch(_){}
+    };
     function render(){
       renderCards(); drawMoves(); if(window.jisuCarryRefresh) window.jisuCarryRefresh(); if(window.jisuStateRefresh) window.jisuStateRefresh();
+      const t=getTarget();
       (function(){const box=document.getElementById('cmdSummary'); if(!box) return; const all=load().filter(x=>!x.closed); const by={}; all.forEach(x=>{const o=by[x.target]||(by[x.target]={w:0,d:0,n:0}); if(x.kind==='notice') o.n++; else {o.w++; if(x.completed) o.d++;}});
-        const keys=Object.keys(by); box.innerHTML=keys.length?'<div class="cmd-summary-h">전체 등록 현황 (누르면 이동)</div>'+keys.map(k=>{const o=by[k];return '<button type="button" class="cmd-sum-chip'+(k===sel.value?' is-on':'')+'" data-cmd-goto="'+esc(k)+'">'+esc(NAMES[k]||k)+(o.w?' <b>'+(o.d?o.w+'/'+o.d:o.w)+'</b>':'')+(o.n?' <i>공지 '+o.n+'</i>':'')+'</button>';}).join(''):'';})();
-      const t=sel.value; updateSubmitLabel();
+        const keys=Object.keys(by); box.innerHTML=keys.length?'<div class="cmd-summary-h">전체 등록 현황 (누르면 이동)</div>'+keys.map(k=>{const o=by[k];return '<button type="button" class="cmd-sum-chip'+(k===t?' is-on':'')+'" data-cmd-goto="'+esc(k)+'">'+esc(NAMES[k]||k)+(o.w?' <b>'+(o.d?o.w+'/'+o.d:o.w)+'</b>':'')+(o.n?' <i>공지 '+o.n+'</i>':'')+'</button>';}).join(''):'';})();
+      updateSubmitLabel();
       const obSub=document.getElementById('obSubSelector');
       if(obSub){
         const isOb = t && (t==='outbound' || t.startsWith('outbound:'));
@@ -3614,10 +3615,10 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const items=load().filter(x=>!x.closed&&(x.target===t||(t==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(x.target==='*'&&x.kind==='notice'))).reverse().sort((a,b)=>((b.urgent&&!b.completed)?1:0)-((a.urgent&&!a.completed)?1:0));
       list.innerHTML=items.length?items.map(x=>itemHtml(x,true)).join(''):'<div class="cmd-empty">등록된 내용이 없습니다.</div>';
     }
-    function updateSubmitLabel(){if(!sel.value){ if(kind==='notice'){ submit.disabled=false; submit.innerHTML='<span class="cmd-submit-target">전체 버튼</span>에 공지사항 등록'; return; } submit.disabled=true;submit.textContent='대상 버튼을 먼저 선택하세요';return;} submit.disabled=false; const nm=NAMES[sel.value]||sel.value; submit.innerHTML='<span class="cmd-submit-target">'+esc(nm)+'</span>에 '+(kind==='notice'?'공지사항 등록':'금일작업 내용 등록');}
+    function updateSubmitLabel(){const t=getTarget();if(!t){ if(kind==='notice'){ submit.disabled=false; submit.innerHTML='<span class="cmd-submit-target">전체 버튼</span>에 공지사항 등록'; return; } submit.disabled=true;submit.textContent='대상 버튼을 먼저 선택하세요';return;} submit.disabled=false; const nm=NAMES[t]||t; submit.innerHTML='<span class="cmd-submit-target">'+esc(nm)+'</span>에 '+(kind==='notice'?'공지사항 등록':'금일작업 내용 등록');}
     function setKind(k){kind=k;document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cmdKind===k)));updateSubmitLabel();text.placeholder=k==='notice'?'공지사항을 입력하세요':'금일작업 내용을 입력하세요 (예: A- 75 TON · 앞에 ! 붙이면 긴급)';}
     document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.addEventListener('click',()=>setKind(b.dataset.cmdKind)));
-    submit.addEventListener('click',()=>{if(!sel.value&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v){text.focus();return;}const all=load();const rec={id:Date.now().toString(36),target:sel.value||'*',kind,text:(window.jisuNormUnit?window.jisuNormUnit(v):v),at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);text.value='';if(fr)fr.value='';if(to)to.value='';render();});
+    submit.addEventListener('click',()=>{const t=getTarget();if(!t&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v){text.focus();return;}const all=load();const rec={id:Date.now().toString(36),target:t||'*',kind,text:(window.jisuNormUnit?window.jisuNormUnit(v):v),at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);text.value='';if(fr)fr.value='';if(to)to.value='';render();});
     list.addEventListener('click',e=>{const id=e.target.getAttribute('data-cmd-del');if(!id)return;save(load().filter(x=>x.id!==id));render();});
     function goHome(){
       document.querySelectorAll('.hotspot-wrapper.is-open').forEach(w=>w.classList.remove('is-open'));
@@ -3627,16 +3628,16 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const t=document.getElementById('toggleAllBtn'); if(t) t.textContent='전체 펼치기';
       const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo'); if(fr)fr.value=''; if(to)to.value=''; text.value='';
     }
-    sel.addEventListener('change',()=>{try{localStorage.setItem('jisu-cmd-target',sel.value)}catch(e){} if(!sel.value) goHome(); render();});
-    sel.value='';
-    try{const last=localStorage.getItem('jisu-cmd-target');if(last&&[...sel.options].some(o=>o.value===last))sel.value=last;}catch(e){}
-    document.querySelectorAll('[data-toggle-zone],[data-bldg],[data-zone-btn]').forEach(b=>b.addEventListener('click',()=>{const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg')||b.getAttribute('data-zone-btn');if(NAMES[k]){sel.value=k;try{localStorage.setItem('jisu-cmd-target',k)}catch(e){}render();}if(b.hasAttribute('data-bldg'))fillModal(k);}));
+    sel.addEventListener('change',()=>{obSubTarget='';try{localStorage.setItem('jisu-cmd-target',sel.value)}catch(e){} if(!sel.value) goHome(); render();});
+    setTarget('');
+    try{const last=localStorage.getItem('jisu-cmd-target');if(last&&(last.startsWith('outbound:')||[...sel.options].some(o=>o.value===last)))setTarget(last);}catch(e){}
+    document.querySelectorAll('[data-toggle-zone],[data-bldg],[data-zone-btn]').forEach(b=>b.addEventListener('click',()=>{const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg')||b.getAttribute('data-zone-btn');if(NAMES[k]){setTarget(k);render();}if(b.hasAttribute('data-bldg'))fillModal(k);}));
     window.addEventListener('storage',e=>{if(e.key===KEY)render();});
     window.jisuCmdRender=()=>render();
-    list.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-memo-goto]'); if(!b) return; const k=b.getAttribute('data-memo-goto'); if(![...sel.options].some(o=>o.value===k)) return; sel.value=k; try{localStorage.setItem('jisu-cmd-target',k)}catch(_){} render(); });
+    list.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-memo-goto]'); if(!b) return; const k=b.getAttribute('data-memo-goto'); if(!k.startsWith('outbound:')&&![...sel.options].some(o=>o.value===k)) return; setTarget(k); render(); });
     window.addEventListener('storage',e=>{ if(e.key==='jisu-memos-v1') render(); });
-    list.addEventListener('change',e=>{const id=e.target.getAttribute&&e.target.getAttribute('data-cmd-retarget');if(!id)return;const nt=e.target.value;const all=load();const it=all.find(x=>x.id===id);if(!it)return;it.target=nt;save(all);sel.value=nt;try{localStorage.setItem('jisu-cmd-target',nt)}catch(_){}render();});
-    document.getElementById('cmdSummary').addEventListener('click',e=>{const b=e.target.closest('[data-cmd-goto]');if(!b)return;sel.value=b.getAttribute('data-cmd-goto');try{localStorage.setItem('jisu-cmd-target',sel.value)}catch(_){}render();});
+    list.addEventListener('change',e=>{const id=e.target.getAttribute&&e.target.getAttribute('data-cmd-retarget');if(!id)return;const nt=e.target.value;const all=load();const it=all.find(x=>x.id===id);if(!it)return;it.target=nt;save(all);setTarget(nt);render();});
+    document.getElementById('cmdSummary').addEventListener('click',e=>{const b=e.target.closest('[data-cmd-goto]');if(!b)return;setTarget(b.getAttribute('data-cmd-goto'));render();});
     const obSubEl=document.getElementById('obSubSelector');
     if(obSubEl){
       obSubEl.addEventListener('click',e=>{
@@ -3644,10 +3645,10 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         if(!btn) return;
         const rawVal=btn.getAttribute('data-ob-val')||btn.getAttribute('data-ob-item');
         const chipLabel=btn.getAttribute('data-ob-item');
-        if(!rawVal){ sel.value='outbound'; }
-        else if(sel.value==='outbound:'+rawVal){ sel.value='outbound'; }
-        else { sel.value='outbound:'+rawVal; }
-        try{localStorage.setItem('jisu-cmd-target',sel.value);}catch(_){}
+        const curT=getTarget();
+        if(!rawVal){ setTarget('outbound'); }
+        else if(curT==='outbound:'+rawVal){ setTarget('outbound'); }
+        else { setTarget('outbound:'+rawVal); }
         render();
         if(rawVal && text){
           let cur=text.value.trim();
