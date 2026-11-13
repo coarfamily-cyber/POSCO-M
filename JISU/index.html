@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140750">
+  <meta name="jisu-build" content="202611140800">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -529,18 +529,21 @@
     .hdr-tools .xlsx-btn:hover,.hdr-tools .xlsx-btn:focus-visible{background:linear-gradient(135deg,#15803d,#166534) !important;border-color:rgba(74,222,128,.55) !important;color:#fff !important;box-shadow:0 2px 8px rgba(0,0,0,.25) !important;}
     .hdr-tools .xlsx-btn:hover svg,.hdr-tools .xlsx-btn:focus-visible svg{opacity:1;}
     /* ==========================================================================
-       Glassmorphism Floating Detail Card (Enscape AI Style - High Contrast Black Text)
+       Glassmorphism Floating Detail Card (Exact 1:1 Enscape AI Style)
        ========================================================================== */
     .expand-card {
-      background: linear-gradient(155deg, rgba(255, 255, 255, 0.92) 0%, rgba(246, 249, 253, 0.86) 40%, rgba(232, 240, 250, 0.90) 100%) !important;
-      backdrop-filter: blur(32px) saturate(190%) !important;
-      -webkit-backdrop-filter: blur(32px) saturate(190%) !important;
-      border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
-      border-radius: 30px !important;
-      box-shadow: 0 32px 80px -10px rgba(0, 0, 0, 0.35), 0 12px 32px -4px rgba(0, 0, 0, 0.18), inset 0 2px 3px 0 #ffffff !important;
+      /* Translucent Liquid Frosted Glass: pure glassmorphism over the 3D map */
+      background: linear-gradient(165deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0.18) 35%, rgba(235, 245, 255, 0.10) 70%, rgba(15, 23, 42, 0.28) 100%), rgba(255, 255, 255, 0.12) !important;
+      backdrop-filter: blur(36px) saturate(190%) brightness(1.06) !important;
+      -webkit-backdrop-filter: blur(36px) saturate(190%) !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.50) !important;
+      border-top: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+      border-left: 1.5px solid rgba(255, 255, 255, 0.70) !important;
+      border-radius: 32px !important;
+      box-shadow: 0 32px 80px -12px rgba(0, 0, 0, 0.55), 0 12px 36px -4px rgba(0, 0, 0, 0.35), inset 0 2px 2px 0 rgba(255, 255, 255, 0.85), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.18) !important;
       color: #0f172a !important;
       text-shadow: none !important;
-      padding: 18px 18px 16px !important;
+      padding: 20px 20px 18px !important;
     }
     .expand-card::before {
       content: '' !important;
@@ -548,16 +551,56 @@
       inset: 0 !important;
       border-radius: inherit !important;
       pointer-events: none !important;
-      background: radial-gradient(120% 70% at 20% 0%, rgba(255, 255, 255, 0.40), transparent 60%), linear-gradient(180deg, rgba(255, 255, 255, 0.25), transparent 35%) !important;
-      mix-blend-mode: normal !important;
+      background: radial-gradient(120% 70% at 20% 0%, rgba(255, 255, 255, 0.38), transparent 60%), linear-gradient(180deg, rgba(255, 255, 255, 0.20), transparent 35%) !important;
+      mix-blend-mode: screen !important;
     }
     .hotspot-wrapper.is-open .expand-card {
       transition: max-height .45s cubic-bezier(.2,.9,.2,1), opacity .28s ease, transform .45s cubic-bezier(.2,.9,.2,1.15), margin-top .3s ease !important;
     }
 
-    /* All text inside expand-card: deep bold black / dark charcoal, crisp high contrast */
-    .expand-card h2, .expand-card h3, .expand-card h4, .expand-card h5,
-    .expand-card .text-white, .expand-card .font-extrabold, .expand-card .font-bold {
+    /* Enscape Brand Header: Square Gradient Logo Badge + Category Eyebrow + Bold Title */
+    .expand-card .enscape-header {
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      margin-bottom: 12px !important;
+    }
+    .expand-card .enscape-logo-badge {
+      width: 44px !important;
+      height: 44px !important;
+      border-radius: 12px !important;
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
+      box-shadow: 0 4px 14px rgba(234, 88, 12, 0.40) !important;
+      border: 1px solid rgba(255, 255, 255, 0.45) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      flex-shrink: 0 !important;
+    }
+    .expand-card .enscape-title-group {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      line-height: 1.25 !important;
+    }
+    .expand-card .enscape-eyebrow {
+      font-size: 11px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.04em !important;
+      color: rgba(255, 255, 255, 0.85) !important;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+    }
+    .expand-card .enscape-title {
+      font-size: 18px !important;
+      font-weight: 900 !important;
+      color: #ffffff !important;
+      margin: 0 !important;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    /* All text inside expand-card: crisp deep black / dark charcoal on liquid glass */
+    .expand-card h2, .expand-card h3:not(.enscape-title), .expand-card h4, .expand-card h5,
+    .expand-card .font-extrabold, .expand-card .font-bold {
       color: #0f172a !important;
       text-shadow: none !important;
     }
@@ -566,24 +609,68 @@
       color: #334155 !important;
       font-weight: 600 !important;
     }
-    .expand-card .text-amber-200 {
-      color: #b45309 !important;
+
+    /* Enscape Style First Inner Card Block (Prompt card / Chips container) */
+    .expand-card .ob-card-items-bar, .expand-card .enscape-inner-card {
+      margin-top: 8px !important;
+      margin-bottom: 12px !important;
+      padding: 12px 14px !important;
+      border-radius: 20px !important;
+      background: rgba(255, 255, 255, 0.28) !important;
+      backdrop-filter: blur(14px) !important;
+      -webkit-backdrop-filter: blur(14px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.45) !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.70) !important;
+      box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.50), 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+    }
+    .expand-card .ob-card-items-head {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      margin-bottom: 8px !important;
+    }
+    .expand-card .ob-card-items-head span:first-child {
+      color: #0f172a !important;
       font-weight: 800 !important;
+      font-size: 12.5px !important;
+    }
+    .expand-card .ob-card-hint {
+      color: #475569 !important;
+      font-weight: 700 !important;
+      font-size: 10.5px !important;
+    }
+    .expand-card .ob-card-chip {
+      height: 28px !important;
+      padding: 0 12px !important;
+      border-radius: 9999px !important;
+      background: rgba(255, 255, 255, 0.45) !important;
+      border: 1px solid rgba(255, 255, 255, 0.65) !important;
+      color: #0f172a !important;
+      font-size: 11px !important;
+      font-weight: 800 !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+      transition: all 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.25) !important;
+    }
+    .expand-card .ob-card-chip:hover {
+      background: #0284c7 !important;
+      border-color: #0284c7 !important;
+      color: #ffffff !important;
+      transform: scale(1.06) translateY(-1px) !important;
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.45) !important;
     }
 
-    /* Inner card blocks (prompts, instruction containers) */
+    /* Middle Work List (Floating clean items on glass) */
     .expand-card .cmd-in-card {
-      background: rgba(255, 255, 255, 0.70) !important;
-      backdrop-filter: blur(16px) !important;
-      -webkit-backdrop-filter: blur(16px) !important;
-      border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
-      border-radius: 20px !important;
-      box-shadow: inset 0 1px 1.5px #ffffff, 0 4px 16px rgba(0, 0, 0, 0.05) !important;
-      padding: 11px 13px !important;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 2px 0 !important;
     }
     .expand-card .cmd-in-card-h {
       color: #0f172a !important;
       font-weight: 800 !important;
+      font-size: 13px !important;
+      margin-bottom: 6px !important;
     }
     .expand-card .cmd-in-card-h span {
       background: #0284c7 !important;
@@ -594,121 +681,115 @@
       font-weight: 800 !important;
     }
     .expand-card .cmd-item {
-      background: #ffffff !important;
-      border: 1.5px solid #cbd5e1 !important;
-      border-radius: 16px !important;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+      background: rgba(255, 255, 255, 0.26) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.45) !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.70) !important;
+      border-radius: 18px !important;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06), inset 0 1px 1px rgba(255, 255, 255, 0.40) !important;
       padding: 10px 12px !important;
       margin-top: 8px !important;
     }
     .expand-card .cmd-text {
       color: #0f172a !important;
       font-weight: 800 !important;
-      font-size: 13px !important;
+      font-size: 13.5px !important;
       text-shadow: none !important;
     }
     .expand-card .cmd-item .meta {
-      color: #475569 !important;
+      color: #334155 !important;
       font-weight: 600 !important;
       display: flex !important;
       align-items: center !important;
       column-gap: 6px !important;
     }
     .expand-card .cmd-item .meta span {
-      color: #475569 !important;
+      color: #334155 !important;
     }
     .expand-card .cmd-item [data-cmd-del] {
       color: #ef4444 !important;
       font-weight: 700 !important;
     }
     .expand-card .cmd-item .tag.instruction {
-      background: #dcfce7 !important;
+      background: rgba(34, 197, 94, 0.20) !important;
       color: #15803d !important;
-      border: 1px solid #86efac !important;
+      border: 1px solid rgba(34, 197, 94, 0.45) !important;
       font-weight: 800 !important;
       border-radius: 9999px !important;
       padding: 2px 7px !important;
     }
     .expand-card .cmd-item .tag.notice {
-      background: #fef3c7 !important;
+      background: rgba(245, 158, 11, 0.20) !important;
       color: #b45309 !important;
-      border: 1px solid #fcd34d !important;
+      border: 1px solid rgba(245, 158, 11, 0.45) !important;
       font-weight: 800 !important;
       border-radius: 9999px !important;
       padding: 2px 7px !important;
     }
     .expand-card .cmd-item .tag.ob-item-tag.ob-tag-prod {
-      background: #e0f2fe !important;
+      background: rgba(14, 165, 233, 0.22) !important;
       color: #0284c7 !important;
-      border: 1.5px solid #7dd3fc !important;
+      border: 1.5px solid rgba(14, 165, 233, 0.55) !important;
       font-weight: 900 !important;
       border-radius: 9999px !important;
       padding: 2px 8px !important;
     }
     .expand-card .cmd-item .tag.ob-item-tag.ob-tag-res {
-      background: #f3e8ff !important;
+      background: rgba(168, 85, 247, 0.22) !important;
       color: #7c3aed !important;
-      border: 1.5px solid #d8b4fe !important;
+      border: 1.5px solid rgba(168, 85, 247, 0.55) !important;
       font-weight: 900 !important;
       border-radius: 9999px !important;
       padding: 2px 8px !important;
     }
     .expand-card .cmd-item .tag.ob-item-tag.ob-tag-trans {
-      background: #ecfdf5 !important;
+      background: rgba(16, 185, 129, 0.22) !important;
       color: #059669 !important;
-      border: 1.5px solid #6ee7b7 !important;
+      border: 1.5px solid rgba(16, 185, 129, 0.55) !important;
       font-weight: 900 !important;
       border-radius: 9999px !important;
       padding: 2px 8px !important;
     }
     .expand-card .cmd-item .carry-tag {
-      background: #ffe4e6 !important;
+      background: rgba(244, 63, 94, 0.22) !important;
       color: #e11d48 !important;
-      border: 1.5px solid #fda4af !important;
+      border: 1.5px solid rgba(244, 63, 94, 0.55) !important;
       font-weight: 900 !important;
       border-radius: 9999px !important;
       padding: 2px 8px !important;
     }
     .expand-card .cmd-item .date-tag {
-      background: #e0f2fe !important;
+      background: rgba(14, 165, 233, 0.20) !important;
       color: #0284c7 !important;
-      border: 1.5px solid #bae6fd !important;
+      border: 1.5px solid rgba(14, 165, 233, 0.45) !important;
       font-weight: 800 !important;
       border-radius: 9999px !important;
       padding: 2px 8px !important;
     }
     .expand-card .cmd-item .all-tag {
-      background: #f1f5f9 !important;
+      background: rgba(255, 255, 255, 0.38) !important;
       color: #334155 !important;
-      border: 1px solid #cbd5e1 !important;
+      border: 1px solid rgba(255, 255, 255, 0.60) !important;
       border-radius: 9999px !important;
       padding: 2px 7px !important;
     }
     .expand-card .move-tag {
-      background: #fef3c7 !important;
+      background: rgba(245, 158, 11, 0.22) !important;
       color: #b45309 !important;
-      border: 1px solid #fcd34d !important;
+      border: 1px solid rgba(245, 158, 11, 0.50) !important;
       border-radius: 9999px !important;
       padding: 2px 8px !important;
       font-weight: 700 !important;
     }
 
-    .expand-card .bg-white\/5 {
-      background: rgba(255, 255, 255, 0.70) !important;
-    }
-    .expand-card .border-white\/10, .expand-card .border-white\/15 {
-      border-color: rgba(0, 0, 0, 0.12) !important;
-    }
-    .expand-card .rounded-xl {
-      border-radius: 18px !important;
-    }
     .expand-card .work-done-num {
       color: #0f172a !important;
       font-weight: 800 !important;
     }
     .expand-card .work-done-num input {
-      background: #ffffff !important;
-      border: 1.5px solid #94a3b8 !important;
+      background: rgba(255, 255, 255, 0.55) !important;
+      border: 1.5px solid rgba(15, 23, 42, 0.25) !important;
       border-radius: 10px !important;
       color: #0f172a !important;
       font-weight: 800 !important;
@@ -718,14 +799,14 @@
       font-weight: 700 !important;
     }
     .expand-card .cmd-notice-banner {
-      background: #fffbeb !important;
-      border: 1.5px solid #f59e0b !important;
+      background: rgba(254, 243, 199, 0.50) !important;
+      border: 1.5px solid rgba(245, 158, 11, 0.65) !important;
       border-radius: 14px !important;
       color: #92400e !important;
       font-weight: 700 !important;
     }
 
-    /* Work action buttons inside card */
+    /* Work action buttons: Frosted Pill Style */
     .expand-card .work-complete {
       border-radius: 9999px !important;
       font-weight: 800 !important;
@@ -735,80 +816,33 @@
       transition: all 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.25) !important;
     }
     .expand-card .work-complete:not(.is-working):not(.is-done) {
-      background: #f1f5f9 !important;
-      border: 1.5px solid #cbd5e1 !important;
+      background: rgba(255, 255, 255, 0.45) !important;
+      border: 1px solid rgba(255, 255, 255, 0.65) !important;
       color: #0f172a !important;
     }
     .expand-card .work-complete:not(.is-working):not(.is-done):hover {
-      background: #e2e8f0 !important;
-      border-color: #94a3b8 !important;
-      color: #0f172a !important;
+      background: rgba(255, 255, 255, 0.75) !important;
+      border-color: #0284c7 !important;
+      color: #0284c7 !important;
       transform: scale(1.04) translateY(-1px) !important;
     }
     .expand-card .work-complete.is-done {
       background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
       color: #ffffff !important;
-      border: 1.5px solid #059669 !important;
-      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
+      border: 1px solid #059669 !important;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.40) !important;
     }
     .expand-card .work-progress.is-working {
       border-radius: 9999px !important;
       background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;
       color: #ffffff !important;
-      border: 1.5px solid #ea580c !important;
-      box-shadow: 0 4px 14px rgba(249, 115, 22, 0.40) !important;
-    }
-
-    /* Outbound quick chips */
-    .expand-card .ob-card-items-bar {
-      margin-top: 12px !important;
-      margin-bottom: 10px !important;
-      padding: 10px 12px !important;
-      border-radius: 20px !important;
-      background: rgba(255, 255, 255, 0.70) !important;
-      backdrop-filter: blur(14px) !important;
-      border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
-      box-shadow: inset 0 1px 1px #ffffff, 0 4px 14px rgba(0, 0, 0, 0.05) !important;
-    }
-    .expand-card .ob-card-items-head {
-      display: flex !important;
-      align-items: center !important;
-      justify-content: space-between !important;
-      margin-bottom: 8px !important;
-    }
-    .expand-card .ob-card-items-head span:first-child {
-      color: #0369a1 !important;
-      font-weight: 800 !important;
-      font-size: 11.5px !important;
-    }
-    .expand-card .ob-card-hint {
-      color: #64748b !important;
-      font-weight: 700 !important;
-      font-size: 10px !important;
-    }
-    .expand-card .ob-card-chip {
-      height: 28px !important;
-      padding: 0 12px !important;
-      border-radius: 9999px !important;
-      background: #ffffff !important;
-      border: 1.5px solid #cbd5e1 !important;
-      color: #0f172a !important;
-      font-size: 11px !important;
-      font-weight: 800 !important;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
-      transition: all 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.25) !important;
-    }
-    .expand-card .ob-card-chip:hover {
-      background: #0284c7 !important;
-      border-color: #0284c7 !important;
-      color: #ffffff !important;
-      transform: scale(1.06) translateY(-1px) !important;
-      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35) !important;
+      border: 1px solid #ea580c !important;
+      box-shadow: 0 4px 14px rgba(249, 115, 22, 0.45) !important;
     }
 
     /* Photo & fork lift UI inside card */
     .expand-card .ob-photo {
-      border-top: 1.5px solid rgba(0, 0, 0, 0.08) !important;
+      border-top: 1.5px solid rgba(255, 255, 255, 0.25) !important;
       margin-top: 12px !important;
       padding-top: 10px !important;
     }
@@ -821,12 +855,12 @@
       margin-bottom: 8px !important;
     }
     .expand-card .ob-photo-head .ob-count {
-      color: #64748b !important;
+      color: #475569 !important;
       font-weight: 700 !important;
     }
     .expand-card .ob-btn:not(.ob-primary):not(.ob-jisu) {
-      background: #ffffff !important;
-      border: 1.5px solid #cbd5e1 !important;
+      background: rgba(255, 255, 255, 0.45) !important;
+      border: 1px solid rgba(255, 255, 255, 0.65) !important;
       color: #0f172a !important;
       font-weight: 800 !important;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
@@ -838,20 +872,20 @@
       border: 1px solid rgba(255, 255, 255, 0.40) !important;
     }
     .expand-card .ob-btn.ob-jisu {
-      background: #f1f5f9 !important;
-      border: 1.5px solid #cbd5e1 !important;
-      color: #475569 !important;
+      background: rgba(255, 255, 255, 0.30) !important;
+      border: 1px solid rgba(255, 255, 255, 0.50) !important;
+      color: #334155 !important;
       font-weight: 800 !important;
     }
 
-    /* Bottom input action container (Matches image: "Start writing... (+) [Generate >]") */
+    /* Bottom input action container (Exact 1:1 Enscape Match: "Start writing... (+) [Generate >]") */
     .expand-card .memo-box {
       margin-top: 14px !important;
-      border-top: 1.5px solid rgba(0, 0, 0, 0.08) !important;
+      border-top: 1.5px solid rgba(255, 255, 255, 0.22) !important;
       padding-top: 12px !important;
       display: flex !important;
       flex-direction: column !important;
-      gap: 8px !important;
+      gap: 10px !important;
     }
     .expand-card .memo-h {
       font-size: 12px !important;
@@ -870,8 +904,9 @@
       font-weight: 800 !important;
     }
     .expand-card .memo-item {
-      background: #ffffff !important;
-      border: 1.5px solid #cbd5e1 !important;
+      background: rgba(255, 255, 255, 0.28) !important;
+      backdrop-filter: blur(10px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.50) !important;
       border-radius: 16px !important;
       padding: 8px 12px !important;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
@@ -881,25 +916,35 @@
       font-weight: 700 !important;
     }
     .expand-card .memo-meta {
-      color: #64748b !important;
+      color: #475569 !important;
       font-weight: 600 !important;
     }
-    .expand-card .memo-row {
-      background: rgba(10, 16, 28, 0.90) !important;
-      backdrop-filter: blur(18px) !important;
-      -webkit-backdrop-filter: blur(18px) !important;
-      border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
-      border-radius: 28px !important;
-      padding: 5px 6px 5px 16px !important;
+
+    /* Enscape Prompt Box: Dark frosted glass container with top input/plus and bottom-right button */
+    .expand-card .memo-row, .expand-card .enscape-prompt-box {
+      background: rgba(15, 30, 48, 0.58) !important;
+      backdrop-filter: blur(24px) !important;
+      -webkit-backdrop-filter: blur(24px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.22) !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.38) !important;
+      border-radius: 26px !important;
+      padding: 12px 14px 12px 16px !important;
       display: flex !important;
-      align-items: center !important;
-      gap: 8px !important;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.20) !important;
+      flex-direction: column !important;
+      gap: 10px !important;
+      box-shadow: inset 0 1.5px 2px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.20) !important;
       transition: border-color 0.2s, box-shadow 0.2s !important;
     }
-    .expand-card .memo-row:focus-within {
+    .expand-card .memo-row:focus-within, .expand-card .enscape-prompt-box:focus-within {
       border-color: rgba(56, 189, 248, 0.8) !important;
-      box-shadow: 0 0 18px rgba(14, 165, 233, 0.40) !important;
+      box-shadow: inset 0 1.5px 2px rgba(0, 0, 0, 0.25), 0 0 20px rgba(14, 165, 233, 0.40) !important;
+    }
+    .expand-card .memo-enscape-top {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 10px !important;
+      width: 100% !important;
     }
     .expand-card .memo-input {
       flex: 1 !important;
@@ -908,205 +953,72 @@
       border: none !important;
       outline: none !important;
       color: #ffffff !important;
-      font-size: 13px !important;
+      font-size: 14.5px !important;
       font-weight: 600 !important;
-      padding: 6px 0 !important;
+      padding: 4px 0 !important;
     }
     .expand-card .memo-input::placeholder {
-      color: rgba(255, 255, 255, 0.55) !important;
+      color: rgba(255, 255, 255, 0.52) !important;
     }
     .expand-card .memo-plus-circle {
-      width: 26px !important;
-      height: 26px !important;
+      width: 32px !important;
+      height: 32px !important;
       border-radius: 50% !important;
       border: 1.5px dashed rgba(255, 255, 255, 0.45) !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      color: #ffffff !important;
-      font-size: 15px !important;
+      color: rgba(255, 255, 255, 0.85) !important;
+      font-size: 18px !important;
       font-weight: 300 !important;
       line-height: 1 !important;
       flex-shrink: 0 !important;
       cursor: default !important;
       user-select: none !important;
+      transition: all 0.18s ease !important;
+    }
+    .expand-card .memo-enscape-bottom {
+      display: flex !important;
+      justify-content: flex-end !important;
+      align-items: center !important;
+      width: 100% !important;
     }
     body:not(#zz) .expand-card .memo-row .memo-send {
       width: auto !important;
       min-width: max-content !important;
       flex: 0 0 auto !important;
       white-space: nowrap !important;
-      height: 38px !important;
-      padding: 0 18px !important;
+      height: 40px !important;
+      padding: 0 22px !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      gap: 6px !important;
+      gap: 8px !important;
       border-radius: 9999px !important;
-      background: linear-gradient(135deg, #0284c7 0%, #0099e6 45%, #0ea5e9 100%) !important;
+      background: linear-gradient(135deg, #0284c7 0%, #00a3e0 50%, #0ea5e9 100%) !important;
       color: #ffffff !important;
       font-weight: 800 !important;
-      font-size: 12.5px !important;
-      border: 1px solid rgba(255, 255, 255, 0.38) !important;
-      box-shadow: 0 4px 14px rgba(14, 165, 233, 0.50) !important;
+      font-size: 13.5px !important;
+      border: 1px solid rgba(255, 255, 255, 0.40) !important;
+      box-shadow: 0 4px 16px rgba(14, 165, 233, 0.60), inset 0 1px 1px rgba(255, 255, 255, 0.50) !important;
       cursor: pointer !important;
       transition: all 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.25) !important;
     }
     body:not(#zz) .expand-card .memo-row .memo-send::after {
-      content: '';
-      display: inline-block;
-      width: 13px;
-      height: 13px;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='22' y1='2' x2='11' y2='13'%3E%3C/line%3E%3Cpolygon points='22 2 15 22 11 13 2 9 22 2'%3E%3C/polygon%3E%3C/svg%3E");
-      background-size: contain;
-      background-repeat: no-repeat;
-      margin-left: 2px;
+      content: '' !important;
+      display: inline-block !important;
+      width: 14px !important;
+      height: 14px !important;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='22' y1='2' x2='11' y2='13'%3E%3C/line%3E%3Cpolygon points='22 2 15 22 11 13 2 9 22 2'%3E%3C/polygon%3E%3C/svg%3E") !important;
+      background-size: contain !important;
+      background-repeat: no-repeat !important;
+      margin-left: 2px !important;
     }
     body:not(#zz) .expand-card .memo-row .memo-send:hover {
       transform: scale(1.04) translateY(-1px) !important;
-      box-shadow: 0 6px 20px rgba(14, 165, 233, 0.70) !important;
-    }
-    body:not(#zz) .expand-card .memo-list .memo-item .memo-meta .memo-ack {
-      border-radius: 9999px !important;
-      background: #f1f5f9 !important;
-      border: 1.5px solid #cbd5e1 !important;
-      color: #0f172a !important;
-      font-weight: 800 !important;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
-      transition: all 0.18s ease !important;
-    }
-    body:not(#zz) .expand-card .memo-list .memo-item .memo-meta .memo-ack:hover {
-      background: #e2e8f0 !important;
-      color: #0f172a !important;
+      box-shadow: 0 6px 22px rgba(14, 165, 233, 0.75), inset 0 1px 1px rgba(255, 255, 255, 0.60) !important;
     }
 
-    /* Workflow buttons in Inbound and Pitch cards */
-    .expand-card .inbound-work-btn, .expand-card .pitch-work-btn {
-      border-radius: 9999px !important;
-      background: #ffffff !important;
-      border: 1.5px solid #cbd5e1 !important;
-      color: #0f172a !important;
-      font-weight: 800 !important;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
-      transition: all 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.25) !important;
-    }
-    .expand-card .inbound-work-btn:hover, .expand-card .pitch-work-btn:hover {
-      background: #e2e8f0 !important;
-      color: #0f172a !important;
-      transform: scale(1.03) translateY(-1px) !important;
-    }
-
-    /* Inbound & Pitch module elements */
-    .expand-card .inbound-eyebrow { color: #059669 !important; font-weight: 800 !important; }
-    .expand-card #inboundDate { color: #475569 !important; font-weight: 700 !important; }
-    .expand-card .inbound-title-row h4 { color: #0f172a !important; font-weight: 900 !important; }
-    .expand-card .inbound-sched-box {
-      background: rgba(240, 253, 244, 0.90) !important;
-      border: 1.5px solid #86efac !important;
-      border-radius: 14px !important;
-    }
-    .expand-card .isb-badge { color: #15803d !important; font-weight: 800 !important; }
-    .expand-card .isb-dot { background: #16a34a !important; }
-    .expand-card .isb-pct { color: #0f172a !important; font-weight: 800 !important; }
-    .expand-card .inbound-cal-link {
-      background: #ffffff !important;
-      border: 1.5px solid #cbd5e1 !important;
-      color: #0f172a !important;
-      font-weight: 700 !important;
-      border-radius: 6px !important;
-    }
-    .expand-card .inbound-stock-h, .expand-card .pitch-route-head, .expand-card .pitch-title {
-      color: #0f172a !important;
-      font-weight: 800 !important;
-    }
-    .expand-card .inbound-stock-row, .expand-card .pitch-route-item, .expand-card .pitch-stat {
-      background: #ffffff !important;
-      border: 1.5px solid #cbd5e1 !important;
-      color: #0f172a !important;
-      border-radius: 12px !important;
-    }
-    .expand-card .inbound-stock-name, .expand-card .pitch-route-name {
-      color: #0f172a !important;
-      font-weight: 800 !important;
-    }
-    .expand-card .inbound-stock-meta, .expand-card .pitch-route-desc, .expand-card .pitch-sub {
-      color: #475569 !important;
-    }
-    .expand-card .inbound-stock-num, .expand-card .pitch-route-tons, .expand-card .pitch-stat-val {
-      color: #0f172a !important;
-      font-weight: 900 !important;
-    }
-    .expand-card .pitch-work-status {
-      color: #475569 !important;
-      font-weight: 700 !important;
-    }
-    .expand-card .pitch-work-status[data-state="work"] { color: #15803d !important; }
-    .expand-card .pitch-work-status[data-state="done"] { color: #0369a1 !important; }
-    .expand-card .pitch-input {
-      background: #ffffff !important;
-      border: 1.5px solid #cbd5e1 !important;
-      color: #0f172a !important;
-      border-radius: 8px !important;
-    }
-    body:not(#zz) #hotspot-pitch .pitch-eyebrow, body:not(#zz) #hotspot-pitch .pitch-section-title {
-      color: #0284c7 !important;
-      font-weight: 800 !important;
-    }
-
-    /* Environment module inside expand-card */
-    .expand-card .env-units .eu-h { color: #0f172a !important; font-weight: 800 !important; }
-    .expand-card .env-units .eu-h span { color: #475569 !important; font-weight: 700 !important; }
-    .expand-card .env-unit:not(.work):not(.done) {
-      background: #ffffff !important;
-      border: 1.5px solid #cbd5e1 !important;
-      color: #0f172a !important;
-      font-weight: 800 !important;
-    }
-    .expand-card .env-units .eu-tip { color: #64748b !important; font-weight: 600 !important; }
-
-    /* Inbound table & schedule box high contrast */
-    .expand-card .isb-target-row b { color: #0f172a !important; font-weight: 900 !important; }
-    .expand-card .isb-target-row span { color: #059669 !important; font-weight: 900 !important; }
-    .expand-card .isb-sub-info { color: #475569 !important; font-weight: 700 !important; }
-    .expand-card .isb-progress-bg { background: #cbd5e1 !important; }
-    .expand-card .inbound-sec-title { color: #0f172a !important; font-weight: 800 !important; }
-    .expand-card .inbound-add-btn { background: #10b981 !important; color: #ffffff !important; font-weight: 800 !important; border: 1px solid #059669 !important; }
-    .expand-card .inbound-table-wrap { background: #ffffff !important; border: 1.5px solid #cbd5e1 !important; }
-    .expand-card .inbound-tbl th { background: #f1f5f9 !important; color: #0f172a !important; font-weight: 800 !important; border-bottom: 1.5px solid #cbd5e1 !important; }
-    .expand-card .inbound-tbl td { border-bottom: 1px solid #e2e8f0 !important; }
-    .expand-card .inbound-tbl input { background: #ffffff !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; font-weight: 700 !important; }
-    .expand-card .inbound-tbl input:focus { border-color: #0284c7 !important; background: #f0f9ff !important; }
-    .expand-card .inbound-tbl-summary { background: #f8fafc !important; border: 1.5px solid #cbd5e1 !important; }
-    .expand-card .inbound-sum-item { color: #334155 !important; font-weight: 700 !important; }
-    .expand-card .inbound-sum-item b { color: #0f172a !important; font-weight: 900 !important; }
-    .expand-card .inbound-sum-item small { color: #64748b !important; }
-
-    /* Scrollbars inside expand-card */
-    .expand-card::-webkit-scrollbar { width: 6px; }
-    .expand-card::-webkit-scrollbar-thumb { background: #94a3b8 !important; border-radius: 9px; }
-
-    /* Building detail window (#detailModal): same Enscape glass with crisp dark text */
-    #detailModal > div {
-      background: linear-gradient(155deg, rgba(255, 255, 255, 0.92) 0%, rgba(246, 249, 253, 0.86) 40%, rgba(232, 240, 250, 0.90) 100%) !important;
-      backdrop-filter: blur(32px) saturate(190%) !important;
-      -webkit-backdrop-filter: blur(32px) saturate(190%) !important;
-      border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
-      border-radius: 30px !important;
-      box-shadow: 0 32px 80px -10px rgba(0, 0, 0, 0.35), 0 12px 32px -4px rgba(0, 0, 0, 0.18), inset 0 2px 3px 0 #ffffff !important;
-      color: #0f172a !important;
-    }
-    #detailModal h2, #detailModal h3, #detailModal h4, #detailModal h5, #detailModal p, #detailModal span, #detailModal div {
-      color: #0f172a !important;
-    }
-    #detailModal .text-slate-400, #detailModal .text-slate-300 {
-      color: #475569 !important;
-    }
-    #detailModal .border-white/10, #detailModal .border-white/15 {
-      border-color: rgba(0, 0, 0, 0.12) !important;
-    }
-    #detailModal .bg-white/5 {
-      background: rgba(255, 255, 255, 0.70) !important;
-    }
     /* Sidebar: calm dark charcoal #282D37 */
     .cmd-side{background:#282D37 !important;border:1px solid rgba(255,255,255,.08) !important;border-right:none !important;border-top-right-radius:0 !important;border-bottom-right-radius:0 !important;color:#e5e7eb;box-shadow:14px 0 28px -4px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.05) !important;z-index:20;position:relative;}
     .cmd-side h2{color:#f3f4f6 !important;}
@@ -2654,10 +2566,15 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <span class="pulse-ring bg-amber-500 text-amber-400"></span><span>생산A</span>
         </button>
         <div class="expand-card p-3.5">
-          <section class="mt-3 border-t border-white/15 pt-3">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-amber-200">PRODUCTION LINE · A</div>
-            <h4 class="mt-1 text-sm font-extrabold text-white">생산A 상세내용</h4>
-          </section>
+          <div class="enscape-header">
+            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+              <span style="color:#fff;font-weight:900;font-size:18px;">A</span>
+            </div>
+            <div class="enscape-title-group min-w-0 flex-1">
+              <span class="enscape-eyebrow">PRODUCTION LINE</span>
+              <h3 class="enscape-title">생산라인 A</h3>
+            </div>
+          </div>
         </div>
       </div>
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-b" style="left: 73.7%; top: 46%;">
@@ -2665,10 +2582,15 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <span class="pulse-ring bg-purple-500 text-purple-400"></span><span>생산B</span>
         </button>
         <div class="expand-card p-3.5">
-          <section class="mt-3 border-t border-white/15 pt-3">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-amber-200">PRODUCTION LINE · B</div>
-            <h4 class="mt-1 text-sm font-extrabold text-white">생산B 상세내용</h4>
-          </section>
+          <div class="enscape-header">
+            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+              <span style="color:#fff;font-weight:900;font-size:18px;">B</span>
+            </div>
+            <div class="enscape-title-group min-w-0 flex-1">
+              <span class="enscape-eyebrow">PRODUCTION LINE</span>
+              <h3 class="enscape-title">생산라인 B</h3>
+            </div>
+          </div>
         </div>
       </div>
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-c" style="left: 80.8%; top: 46%;">
@@ -2676,10 +2598,15 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <span class="pulse-ring bg-sky-500 text-sky-400"></span><span>생산C</span>
         </button>
         <div class="expand-card p-3.5">
-          <section class="mt-3 border-t border-white/15 pt-3">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-amber-200">PRODUCTION LINE · C</div>
-            <h4 class="mt-1 text-sm font-extrabold text-white">생산C 상세내용</h4>
-          </section>
+          <div class="enscape-header">
+            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+              <span style="color:#fff;font-weight:900;font-size:18px;">C</span>
+            </div>
+            <div class="enscape-title-group min-w-0 flex-1">
+              <span class="enscape-eyebrow">PRODUCTION LINE</span>
+              <h3 class="enscape-title">생산라인 C</h3>
+            </div>
+          </div>
         </div>
       </div>
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-d" style="left: 80.8%; top: 46%;">
@@ -2687,10 +2614,15 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <span class="pulse-ring bg-sky-500 text-sky-400"></span><span>생산D</span>
         </button>
         <div class="expand-card p-3.5">
-          <section class="mt-3 border-t border-white/15 pt-3">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-amber-200">PRODUCTION LINE · D</div>
-            <h4 class="mt-1 text-sm font-extrabold text-white">생산D 상세내용</h4>
-          </section>
+          <div class="enscape-header">
+            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+              <span style="color:#fff;font-weight:900;font-size:18px;">D</span>
+            </div>
+            <div class="enscape-title-group min-w-0 flex-1">
+              <span class="enscape-eyebrow">PRODUCTION LINE</span>
+              <h3 class="enscape-title">생산라인 D</h3>
+            </div>
+          </div>
         </div>
       </div>
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-e" style="left: 80.8%; top: 46%;">
@@ -2698,10 +2630,15 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <span class="pulse-ring bg-sky-500 text-sky-400"></span><span>생산E</span>
         </button>
         <div class="expand-card p-3.5">
-          <section class="mt-3 border-t border-white/15 pt-3">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-amber-200">PRODUCTION LINE · E</div>
-            <h4 class="mt-1 text-sm font-extrabold text-white">생산E 상세내용</h4>
-          </section>
+          <div class="enscape-header">
+            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+              <span style="color:#fff;font-weight:900;font-size:18px;">E</span>
+            </div>
+            <div class="enscape-title-group min-w-0 flex-1">
+              <span class="enscape-eyebrow">PRODUCTION LINE</span>
+              <h3 class="enscape-title">생산라인 E</h3>
+            </div>
+          </div>
         </div>
       </div>
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-f" style="left: 80.8%; top: 46%;">
@@ -2709,10 +2646,15 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <span class="pulse-ring bg-sky-500 text-sky-400"></span><span>생산F</span>
         </button>
         <div class="expand-card p-3.5">
-          <section class="mt-3 border-t border-white/15 pt-3">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-amber-200">PRODUCTION LINE · F</div>
-            <h4 class="mt-1 text-sm font-extrabold text-white">생산F 상세내용</h4>
-          </section>
+          <div class="enscape-header">
+            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+              <span style="color:#fff;font-weight:900;font-size:18px;">F</span>
+            </div>
+            <div class="enscape-title-group min-w-0 flex-1">
+              <span class="enscape-eyebrow">PRODUCTION LINE</span>
+              <h3 class="enscape-title">생산라인 F</h3>
+            </div>
+          </div>
         </div>
       </div>
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-g" style="left: 80.8%; top: 46%;">
@@ -2720,10 +2662,15 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <span class="pulse-ring bg-sky-500 text-sky-400"></span><span>생산G</span>
         </button>
         <div class="expand-card p-3.5">
-          <section class="mt-3 border-t border-white/15 pt-3">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-amber-200">PRODUCTION LINE · G</div>
-            <h4 class="mt-1 text-sm font-extrabold text-white">생산G 상세내용</h4>
-          </section>
+          <div class="enscape-header">
+            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+              <span style="color:#fff;font-weight:900;font-size:18px;">G</span>
+            </div>
+            <div class="enscape-title-group min-w-0 flex-1">
+              <span class="enscape-eyebrow">PRODUCTION LINE</span>
+              <h3 class="enscape-title">생산라인 G</h3>
+            </div>
+          </div>
         </div>
       </div>
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-h" style="left: 80.8%; top: 46%;">
@@ -2731,10 +2678,15 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <span class="pulse-ring bg-sky-500 text-sky-400"></span><span>생산H</span>
         </button>
         <div class="expand-card p-3.5">
-          <section class="mt-3 border-t border-white/15 pt-3">
-            <div class="text-[10px] font-bold uppercase tracking-wider text-amber-200">PRODUCTION LINE · H</div>
-            <h4 class="mt-1 text-sm font-extrabold text-white">생산H 상세내용</h4>
-          </section>
+          <div class="enscape-header">
+            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+              <span style="color:#fff;font-weight:900;font-size:18px;">H</span>
+            </div>
+            <div class="enscape-title-group min-w-0 flex-1">
+              <span class="enscape-eyebrow">PRODUCTION LINE</span>
+              <h3 class="enscape-title">생산라인 H</h3>
+            </div>
+          </div>
         </div>
       </div>
       <button type="button" class="bldg-badge" style="left: 70%; top: 71.5%;" data-bldg="D" title="D동 상태 보기">
@@ -2768,23 +2720,21 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           
         </button>
         <div class="expand-card p-3.5">
-          <div class="flex items-center gap-3">
-            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-sky-500/30 to-blue-900/50 border border-sky-400/30 flex items-center justify-center shrink-0" title="지게차">
-              <svg class="forklift-icon" viewBox="0 0 64 64" aria-hidden="true">
-                <rect x="40" y="6" width="5" height="44" rx="1.5" fill="#93c5fd"/>
-                <rect x="45" y="30" width="3.5" height="18" rx="1" fill="#bfdbfe"/>
-                <rect x="45" y="45" width="17" height="3.5" rx="1.2" fill="#e0f2fe"/>
-                <path d="M14 30V15a2 2 0 0 1 2-2h12a2 2 0 0 1 1.8 1.1L36 30" fill="none" stroke="#7dd3fc" stroke-width="3" stroke-linejoin="round"/>
-                <rect x="6" y="29" width="34" height="16" rx="3" fill="#38bdf8"/>
-                <rect x="3" y="31" width="6" height="12" rx="2" fill="#0284c7"/>
-                <rect x="20" y="20" width="9" height="9" rx="1.5" fill="#0c4a6e" opacity=".55"/>
-                <circle cx="15" cy="49" r="6.5" fill="#0f172a" stroke="#7dd3fc" stroke-width="2.5"/>
-                <circle cx="33" cy="49" r="6.5" fill="#0f172a" stroke="#7dd3fc" stroke-width="2.5"/>
-                <circle cx="15" cy="49" r="2" fill="#7dd3fc"/><circle cx="33" cy="49" r="2" fill="#7dd3fc"/>
+          <div class="enscape-header">
+            <div class="enscape-logo-badge" title="지게차">
+              <svg class="forklift-icon" viewBox="0 0 64 64" aria-hidden="true" style="width:28px;height:28px;">
+                <rect x="40" y="6" width="5" height="44" rx="1.5" fill="#fff"/>
+                <rect x="45" y="30" width="3.5" height="18" rx="1" fill="#fff"/>
+                <rect x="45" y="45" width="17" height="3.5" rx="1.2" fill="#fff"/>
+                <path d="M14 30V15a2 2 0 0 1 2-2h12a2 2 0 0 1 1.8 1.1L36 30" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>
+                <rect x="6" y="29" width="34" height="16" rx="3" fill="#fff"/>
+                <circle cx="15" cy="49" r="6.5" fill="#ea580c" stroke="#fff" stroke-width="2.5"/>
+                <circle cx="33" cy="49" r="6.5" fill="#ea580c" stroke="#fff" stroke-width="2.5"/>
               </svg>
             </div>
-            <div class="min-w-0 flex-1">
-              <h3 class="text-sm font-extrabold text-white">지게차 번호</h3>
+            <div class="enscape-title-group min-w-0 flex-1">
+              <span class="enscape-eyebrow">POSCO-M · OUTBOUND</span>
+              <h3 class="enscape-title">출고 상황실</h3>
             </div>
           </div>
           <div class="ob-card-items-bar">
@@ -3805,7 +3755,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
   (function jisuCheckUpdate(){
     const cur=(document.querySelector('meta[name="jisu-build"]')||{}).content||'';
     async function check(){
-      try{ const r=await fetch(location.pathname+'?cb='+Date.now(),{cache:'no-store'}); const t=await r.text(); const m=t.match(/<meta name="jisu-build" content="([^"]+)"/);
+      try{ const r=await fetch(location.pathname+'?cb='+Date.now(),{cache:'no-store'}); const t=await r.text(); const m=t.match(/<meta name="jisu-build" content="202611140800"]+)"/);
         if(m && cur && m[1] > cur){ pending=m[1]; apply(); } }catch(e){}
     }
     /* only move FORWARD to a newer build (prevents bouncing between cached copies),
@@ -4417,7 +4367,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         const keep=(b.querySelector('.memo-input')||{}).value||'';
         b.innerHTML='<div class="memo-h">특이사항'+(items.length?' <span>'+items.length+'</span>':'')+'</div>'
           +(items.length?'<div class="memo-list">'+items.slice(0,6).map(m=>'<div class="memo-item"><div class="memo-text">'+esc(m.text)+'</div><div class="memo-meta">'+(m.by?esc(m.by)+' · ':'')+esc(m.at)+'<button type="button" class="memo-ack" data-memo-ack="'+m.id+'" title="확인하면 이 칸에서 사라져요 (액셀에는 남음)">확인</button></div></div>').join('')+(items.length>6?'<div class="memo-more">외 '+(items.length-6)+'건</div>':'')+'</div>':'')
-          +'<div class="memo-row"><input class="memo-input" type="text" maxlength="300" placeholder="특이사항 적기"><span class="memo-plus-circle" aria-hidden="true">+</span><button type="button" class="memo-send">남기기</button></div>';
+          +'+'<div class="memo-row enscape-prompt-box">'+  '<div class="memo-enscape-top">'+    '<input class="memo-input" type="text" maxlength="300" placeholder="Start writing... (특이사항 적기)">'+    '<span class="memo-plus-circle" aria-hidden="true" title="추가">+</span>'+  '</div>'+  '<div class="memo-enscape-bottom">'+    '<button type="button" class="memo-send">Generate</button>'+  '</div>'+'</div>';';
         b.querySelector('.memo-input').value=keep;
         const btn=w.querySelector(':scope > button'); if(btn){ let bd=btn.querySelector('.memo-count'); if(items.length){ if(!bd){bd=document.createElement('span');bd.className='memo-count';btn.appendChild(bd);} bd.textContent='+'+items.length; bd.title='특이사항 '+items.length+'건'; } else if(bd) bd.remove(); }
       });
