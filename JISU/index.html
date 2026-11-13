@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611131935">
+  <meta name="jisu-build" content="202611131950">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1773,6 +1773,186 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       color: #fef08a;
       box-shadow: 0 0 6px rgba(245, 158, 11, 0.35);
     }
+
+    /* ==========================================================================
+       달력 메신저 공지 일괄 등록 (날짜별 자동분류)
+       ========================================================================== */
+    .cal-batch-btn {
+      background: rgba(14, 165, 233, 0.2) !important;
+      border: 1px solid rgba(56, 189, 248, 0.45) !important;
+      color: #7dd3fc !important;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .cal-batch-btn:hover {
+      background: rgba(14, 165, 233, 0.35) !important;
+      color: #fff !important;
+      border-color: #38bdf8 !important;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    }
+    .cal-batch-btn.is-active {
+      background: linear-gradient(135deg, #0284c7, #38bdf8) !important;
+      color: #fff !important;
+      border-color: #7dd3fc !important;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+    }
+    .cz-batch-view {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .cz-batch-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .cz-batch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #94a3b8;
+    }
+    .cz-batch-select {
+      background: #181b22;
+      border: 1px solid #3a404c;
+      color: #f1f5f9;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 8px;
+      padding: 5px 9px;
+      outline: none;
+    }
+    .cz-batch-textarea {
+      width: 100%;
+      box-sizing: border-box;
+      background: #181b22;
+      border: 1px solid #3a404c;
+      border-radius: 10px;
+      color: #f1f5f9;
+      font-size: 12.5px;
+      line-height: 1.5;
+      padding: 10px;
+      outline: none;
+      resize: vertical;
+      min-height: 110px;
+      transition: border-color 0.15s;
+    }
+    .cz-batch-textarea:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.4);
+    }
+    .cz-batch-preview-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .cz-batch-preview-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #38bdf8;
+    }
+    .cz-batch-count {
+      font-size: 11px;
+      font-weight: 900;
+      color: #bae6fd;
+      background: rgba(14, 165, 233, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      padding: 1px 7px;
+      border-radius: 6px;
+    }
+    .cz-batch-preview {
+      max-height: 200px;
+      overflow-y: auto;
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .cz-batch-group {
+      background: rgba(30, 41, 59, 0.55);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 8px;
+      padding: 8px;
+    }
+    .cz-batch-group-title {
+      font-size: 12px;
+      font-weight: 900;
+      color: #7dd3fc;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cz-batch-group-title span {
+      font-size: 10.5px;
+      color: #94a3b8;
+    }
+    .cz-batch-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #e2e8f0;
+      padding: 3px 0;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+    }
+    .cz-batch-item:last-child {
+      border-bottom: none;
+    }
+    .cz-batch-target-tag {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 5px;
+      background: rgba(14, 165, 233, 0.25);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #bae6fd;
+      white-space: nowrap;
+    }
+    .cz-batch-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .cz-quick-batch-prompt {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      background: rgba(14, 165, 233, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 11px;
+      color: #bae6fd;
+      margin-top: 4px;
+      margin-bottom: 4px;
+    }
+    .cz-quick-batch-prompt button {
+      background: #0284c7;
+      border: 1px solid #38bdf8;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
@@ -2257,16 +2437,74 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
   </div></div>
   <div id="loginModal" class="login-modal" hidden><div class="login-box" role="dialog" aria-label="작업자 로그인"><h3>작업자 로그인</h3><p class="login-note">이름을 넣으면 등록하는 금일작업·공지에 작성자로 남고, 액셀에도 들어갑니다.</p><input id="loginName" type="text" maxlength="20" placeholder="이름 (예: 지수)" autocomplete="name"><div class="login-actions"><button type="button" id="loginCancel" class="lg-ghost">닫기</button><button type="button" id="logoutBtn" class="lg-ghost" hidden>로그아웃</button><button type="button" id="loginOk" class="lg-primary">로그인</button></div></div></div>
   <div id="calModal" class="cal-modal" hidden><div class="cal-box" role="dialog" aria-label="작업 스케줄 달력">
-    <div class="cal-head"><button type="button" class="cal-nav" id="calPrev" aria-label="이전 달">‹</button><h3 id="calTitle"></h3><button type="button" class="cal-nav" id="calNext" aria-label="다음 달">›</button><button type="button" class="cal-today" id="calToday">오늘</button><button type="button" class="cal-close" id="calClose" aria-label="닫기">✕</button></div>
+    <div class="cal-head"><button type="button" class="cal-nav" id="calPrev" aria-label="이전 달">‹</button><h3 id="calTitle"></h3><button type="button" class="cal-nav" id="calNext" aria-label="다음 달">›</button><button type="button" class="cal-today" id="calToday">오늘</button><button type="button" class="cal-today cal-batch-btn" id="calBatchBtn" title="메신저 공지글 복사-붙여넣기로 날짜별 일괄 자동 등록">📋 공지 일괄등록</button><button type="button" class="cal-close" id="calClose" aria-label="닫기">✕</button></div>
     <div class="cal-body"><div class="cal-grid-wrap"><div class="cal-week"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div><div class="cal-grid" id="calGrid"></div></div>
-    <div class="cal-side"><div class="cz-head"><h4 id="czTitle"></h4><span class="cz-badge" id="czBadge"></span></div>
-      <div class="cz-add"><textarea id="czText" rows="3" placeholder="출고 33 TON 출하&#10;입고 20 TON&#10;공지 출고 바닥 공사"></textarea>
-        <div class="cal-hint">맨 앞에 버튼 이름, 띄우고 내용. 공지는 앞에 "공지". Enter로 줄을 바꿔 여러 개 쓰고 저장.</div>
-        <div class="cz-msg" id="czMsg"></div>
-        <button type="button" class="cz-save" id="czSave">저장</button></div>
-      <div class="cz-list" id="czList"></div>
-      <div class="cz-hist" id="czHist"></div>
-      <p class="cal-note">예약한 날짜가 되면 자동으로 금일작업·공지에 등록됩니다.</p></div></div>
+    <div class="cal-side">
+      <div id="czSingleView">
+        <div class="cz-head"><h4 id="czTitle"></h4><span class="cz-badge" id="czBadge"></span></div>
+        <div class="cz-add"><textarea id="czText" rows="3" placeholder="출고 33 TON 출하&#10;입고 20 TON&#10;공지 출고 바닥 공사"></textarea>
+          <div class="cz-quick-batch-prompt" id="czQuickBatchPrompt" style="display:none;">
+            <span>💡 여러 날짜가 감지되었습니다.</span>
+            <button type="button" id="czQuickBatchBtn">공지 일괄등록으로 전환</button>
+          </div>
+          <div class="cal-hint">맨 앞에 버튼 이름, 띄우고 내용. 공지는 앞에 "공지". Enter로 줄을 바꿔 여러 개 쓰고 저장.</div>
+          <div class="cz-msg" id="czMsg"></div>
+          <button type="button" class="cz-save" id="czSave">저장</button></div>
+        <div class="cz-list" id="czList"></div>
+        <div class="cz-hist" id="czHist"></div>
+        <p class="cal-note">예약한 날짜가 되면 자동으로 금일작업·공지에 등록됩니다.</p>
+      </div>
+      <div id="czBatchView" class="cz-batch-view" style="display:none;">
+        <div class="cz-batch-head">
+          <div class="flex items-center gap-2">
+            <span class="text-base font-extrabold text-white">📋 공지 일괄 등록</span>
+            <span class="cz-badge" style="background:#0284c7;color:#fff;">날짜별 자동분류</span>
+          </div>
+          <button type="button" class="cz-b" id="czBatchBackTopBtn" title="달력으로 돌아가기">✕ 닫기</button>
+        </div>
+        <div class="cz-batch-row">
+          <label for="czBatchTarget">기본 대상 버튼</label>
+          <select id="czBatchTarget" class="cz-batch-select">
+            <option value="inbound" selected>입고 (기본값)</option>
+            <option value="outbound">출고</option>
+            <option value="packaging">포장</option>
+            <option value="packaging-d">포장(D동)</option>
+            <option value="pitch">피치</option>
+            <option value="environment">환경</option>
+            <option value="production-a">생산A</option>
+            <option value="production-b">생산B</option>
+            <option value="production-c">생산C</option>
+            <option value="production-d">생산D</option>
+            <option value="production-e">생산E</option>
+            <option value="production-f">생산F</option>
+            <option value="production-g">생산G</option>
+            <option value="production-h">생산H</option>
+            <option value="A">A동</option>
+            <option value="B">B동</option>
+            <option value="C">C동</option>
+            <option value="D">D동</option>
+          </select>
+        </div>
+        <div class="cal-hint" style="margin-bottom:4px;">
+          카톡·메신저 공지글을 그대로 붙여넣으세요. 날짜 머리글(11월10일, 11/11 등)을 자동 인식해 날짜별로 분류합니다.
+        </div>
+        <textarea id="czBatchText" rows="6" class="cz-batch-textarea" placeholder="주임님 금주 소모품 입고 내역 공유드립니다.&#10;&#10;11월10일&#10;사각박스 640set&#10;&#10;11월11일&#10;알루미늄 파우치백 600ea&#10;16kg 파렛트 576ea&#10;&#10;입니다."></textarea>
+        <div class="cz-batch-preview-wrap">
+          <div class="cz-batch-preview-head">
+            <span>미리보기 결과</span>
+            <span id="czBatchCountBadge" class="cz-batch-count">0건</span>
+          </div>
+          <div id="czBatchPreview" class="cz-batch-preview">
+            <div class="cz-empty">위 입력창에 공지글을 붙여넣으면 날짜별 분류 결과가 여기에 표시됩니다.</div>
+          </div>
+        </div>
+        <div class="cz-msg" id="czBatchMsg"></div>
+        <div class="cz-batch-actions">
+          <button type="button" class="cz-save" id="czBatchSaveBtn" disabled>날짜별 일괄 저장</button>
+          <button type="button" class="cz-b" id="czBatchCancelBtn">취소 (달력으로)</button>
+        </div>
+      </div>
+    </div></div>
   </div></div>
   <div id="detailModal" class="fixed inset-0 modal-backdrop hidden items-center justify-center p-4 z-50">
     <div class="bg-slate-900/95 border border-amber-400/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl text-slate-100 relative">
@@ -3275,8 +3513,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       drawHist(picked,today);
       const inp=$('czList').querySelector('[data-cz-input]'); if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length,inp.value.length); }
     }
-    function openZoom(day){ picked=day; editing=null; $('czMsg').textContent=''; $('czMsg').className='cz-msg'; draw(); drawZoom(); setTimeout(()=>{ if(!$('czText').disabled) $('czText').focus(); },30); }
-    function open(){ const t=kstToday().split('-').map(Number); view=[t[0],t[1]-1]; picked=kstToday(); editing=null; draw(); drawZoom(); modal.hidden=false; setTimeout(()=>$('czText').focus(),30); }
+    function openZoom(day){ picked=day; editing=null; $('czMsg').textContent=''; $('czMsg').className='cz-msg'; if(window.jisuSetBatchView) window.jisuSetBatchView(false); draw(); drawZoom(); setTimeout(()=>{ if(!$('czText').disabled) $('czText').focus(); },30); }
+    function open(){ const t=kstToday().split('-').map(Number); view=[t[0],t[1]-1]; picked=kstToday(); editing=null; if(window.jisuSetBatchView) window.jisuSetBatchView(false); draw(); drawZoom(); modal.hidden=false; setTimeout(()=>$('czText').focus(),30); }
     function close(){ modal.hidden=true; editing=null; }
     clock.addEventListener('click',open); clock.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); } });
     $('calClose').addEventListener('click',close); modal.addEventListener('click',e=>{ if(e.target===modal) close(); });
@@ -3312,6 +3550,223 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(!p||p.err){ $('czMsg').textContent=p?p.err:'내용이 비었어요'; $('czMsg').className='cz-msg err'; return; }
         const it=sch.find(s=>s.id===id); if(it){ it.target=p.target; it.kind=p.kind; it.text=p.text; if(p.urgent) it.urgent=true; else delete it.urgent; it.edited=nowStr(); } save(SKEY,sch); editing=null; $('czMsg').textContent='수정했어요'; $('czMsg').className='cz-msg ok'; drawZoom(); draw(); } });
     $('czList').addEventListener('keydown',e=>{ if(!e.target.matches('[data-cz-input]')) return; e.stopPropagation(); if(e.key==='Enter'){ e.preventDefault(); $('czList').querySelector('[data-cz-ok]').click(); } });
+
+    /* ==========================================================================
+       메신저 공지 일괄 등록 (날짜별 자동 분류 및 저장)
+       ========================================================================== */
+    const batchBtn=$('calBatchBtn'), singleView=$('czSingleView'), batchView=$('czBatchView');
+    const batchText=$('czBatchText'), batchTarget=$('czBatchTarget'), batchPreview=$('czBatchPreview');
+    const batchCountBadge=$('czBatchCountBadge'), batchSaveBtn=$('czBatchSaveBtn'), batchMsg=$('czBatchMsg');
+    const batchCancelBtn=$('czBatchCancelBtn'), batchBackTopBtn=$('czBatchBackTopBtn');
+    const quickPrompt=$('czQuickBatchPrompt'), quickBtn=$('czQuickBatchBtn');
+
+    let parsedBatchData=[];
+
+    function setBatchView(show){
+      if(!singleView || !batchView) return;
+      singleView.style.display=show?'none':'block';
+      batchView.style.display=show?'flex':'none';
+      if(batchBtn) batchBtn.classList.toggle('is-active',show);
+      if(show){
+        if(batchText){ batchText.focus(); renderBatchPreview(); }
+      } else {
+        drawZoom();
+      }
+    }
+    window.jisuSetBatchView=setBatchView;
+
+    if(batchBtn) batchBtn.addEventListener('click',()=>{
+      const isBatch=batchView && batchView.style.display!=='none';
+      setBatchView(!isBatch);
+    });
+    if(batchCancelBtn) batchCancelBtn.addEventListener('click',()=>setBatchView(false));
+    if(batchBackTopBtn) batchBackTopBtn.addEventListener('click',()=>setBatchView(false));
+
+    function isDateHeader(line){
+      let m=line.match(/^(\d{4})[년.\-/]\s*(\d{1,2})[월.\-/]\s*(\d{1,2})일?(?:\s*\([월화수목금토일]\))?(?:\s*[:：])?\s*(.*)$/i);
+      if(m) return { y:parseInt(m[1],10), m:parseInt(m[2],10), d:parseInt(m[3],10), trailing:(m[4]||'').trim() };
+      m=line.match(/^(\d{1,2})월\s*(\d{1,2})일?(?:\s*\([월화수목금토일]\))?(?:\s*[:：])?\s*(.*)$/i);
+      if(m) return { y:new Date().getFullYear(), m:parseInt(m[1],10), d:parseInt(m[2],10), trailing:(m[3]||'').trim() };
+      m=line.match(/^(\d{1,2})\s*\/\s*(\d{1,2})일?(?:\s*\([월화수목금토일]\))?(?:\s*[:：])?\s*(.*)$/i);
+      if(m) return { y:new Date().getFullYear(), m:parseInt(m[1],10), d:parseInt(m[2],10), trailing:(m[3]||'').trim() };
+      m=line.match(/^(\d{1,2})\s*\.\s*(\d{1,2})(?:일|\.|\s*\([월화수목금토일]\)|\s*[:：])\s*(.*)$/i);
+      if(m) return { y:new Date().getFullYear(), m:parseInt(m[1],10), d:parseInt(m[2],10), trailing:(m[3]||'').trim() };
+      m=line.match(/^(\d{1,2})\s*\.\s*(\d{1,2})$/i);
+      if(m) return { y:new Date().getFullYear(), m:parseInt(m[1],10), d:parseInt(m[2],10), trailing:'' };
+      return null;
+    }
+
+    function parseBatch(text,defTarget){
+      if(!text||!text.trim()) return [];
+      const lines=text.split(/\r?\n/);
+      const ignoreRes=[
+        /주임님|반장님|기장님|팀장님|과장님|차장님|부장님|상무님|책임님|프로님|수석님/,
+        /공유\s*드립니다|공유\s*합니다|공지\s*드립니다|전달\s*드립니다|안내\s*드립니다/,
+        /안녕하세요|수고\s*많으십니다|수고하세요|감사합니다/,
+        /^입니다\.?$/,
+        /^이상입니다\.?$/
+      ];
+      let curDate=null;
+      const groups=new Map();
+
+      function addLineItem(d,raw){
+        let clean=raw.replace(/^[-*•·]\s*/,'').replace(/^\d+[.)]\s*/,'').trim();
+        if(!clean) return;
+        const p=parseLine(clean);
+        if(p&&!p.err){
+          groups.get(d).push({target:p.target,kind:p.kind,text:p.text,urgent:!!p.urgent});
+        } else {
+          let urgent=false, kind='instruction';
+          if(/^[!！]/.test(clean)){ urgent=true; clean=clean.replace(/^[!！]+\s*/,''); }
+          if(/^공지\s*[:：]?\s*/.test(clean)){ kind='notice'; clean=clean.replace(/^공지\s*[:：]?\s*/,''); }
+          groups.get(d).push({
+            target:defTarget||'inbound',
+            kind,
+            text:(window.jisuNormUnit?window.jisuNormUnit(clean):clean),
+            urgent
+          });
+        }
+      }
+
+      for(let raw of lines){
+        const line=raw.trim();
+        if(!line) continue;
+        if(ignoreRes.some(r=>r.test(line))) continue;
+        const dh=isDateHeader(line);
+        if(dh && dh.m>=1 && dh.m<=12 && dh.d>=1 && dh.d<=31){
+          curDate=dh.y+'-'+String(dh.m).padStart(2,'0')+'-'+String(dh.d).padStart(2,'0');
+          if(!groups.has(curDate)) groups.set(curDate,[]);
+          if(dh.trailing) addLineItem(curDate,dh.trailing);
+          continue;
+        }
+        if(curDate){
+          addLineItem(curDate,line);
+        }
+      }
+
+      return Array.from(groups.entries())
+        .map(([date,items])=>({date,items}))
+        .filter(g=>g.items.length>0)
+        .sort((a,b)=>a.date.localeCompare(b.date));
+    }
+
+    function renderBatchPreview(){
+      if(!batchPreview||!batchText) return;
+      const defTarget=(batchTarget&&batchTarget.value)||'inbound';
+      const text=batchText.value;
+      parsedBatchData=parseBatch(text,defTarget);
+
+      let totalCount=0;
+      parsedBatchData.forEach(g=>{ totalCount+=g.items.length; });
+
+      if(batchCountBadge) batchCountBadge.textContent=totalCount+'건';
+      if(batchSaveBtn){
+        batchSaveBtn.disabled=totalCount===0;
+        batchSaveBtn.textContent=totalCount>0?('날짜별 일괄 저장 ('+totalCount+'건)'):'날짜별 일괄 저장';
+      }
+
+      if(!text.trim()){
+        batchPreview.innerHTML='<div class="cz-empty">위 입력창에 공지글을 붙여넣으면 날짜별 분류 결과가 여기에 표시됩니다.</div>';
+        if(batchMsg){ batchMsg.textContent=''; batchMsg.className='cz-msg'; }
+        return;
+      }
+
+      if(!parsedBatchData.length){
+        batchPreview.innerHTML='<div class="cz-empty" style="color:#f87171;">날짜 머리글(예: 11월10일, 11/11)을 찾지 못했습니다. 날짜 형식을 확인해 주세요.</div>';
+        return;
+      }
+
+      batchPreview.innerHTML=parsedBatchData.map(g=>{
+        const [y,m,d]=g.date.split('-').map(Number);
+        const dow=DOW[new Date(y,m-1,d).getDay()];
+        return '<div class="cz-batch-group">'
+          +'<div class="cz-batch-group-title">'
+          +'<b>📅 '+m+'월 '+d+'일 ('+dow+')</b>'
+          +'<span>'+g.items.length+'건</span>'
+          +'</div>'
+          +g.items.map(it=>{
+            const tgtName=NAMES[it.target]||it.target;
+            return '<div class="cz-batch-item">'
+              +'<span class="cz-batch-target-tag">'+esc(tgtName)+'</span>'
+              +(it.kind==='notice'?'<span class="cal-tag n">공지</span>':'')
+              +(it.urgent?'<span class="urg-tag">긴급</span>':'')
+              +'<span>'+esc(it.text)+'</span>'
+              +'</div>';
+          }).join('')
+          +'</div>';
+      }).join('');
+    }
+
+    if(batchText){
+      batchText.addEventListener('input',renderBatchPreview);
+      batchText.addEventListener('paste',()=>setTimeout(renderBatchPreview,20));
+    }
+    if(batchTarget){
+      batchTarget.addEventListener('change',renderBatchPreview);
+    }
+
+    if(batchSaveBtn){
+      batchSaveBtn.addEventListener('click',()=>{
+        if(!parsedBatchData.length) return;
+        let u=''; try{u=localStorage.getItem('jisu-user')||'';}catch(e){}
+        const sch=load(SKEY);
+        let addedCount=0;
+        parsedBatchData.forEach(g=>{
+          g.items.forEach((it,idx)=>{
+            const rec={
+              id:Date.now().toString(36)+Math.random().toString(36).slice(2,6)+idx,
+              date:g.date,
+              target:it.target,
+              kind:it.kind,
+              text:it.text,
+              created:nowStr()
+            };
+            if(it.urgent) rec.urgent=true;
+            if(u) rec.by=u;
+            sch.push(rec);
+            addedCount++;
+          });
+        });
+        save(SKEY,sch);
+        apply();
+        draw();
+        drawZoom();
+        setBatchView(false);
+        const msg=$('czMsg');
+        if(msg){
+          msg.textContent='메신저 공지 '+addedCount+'건이 날짜별로 달력에 일괄 저장되었습니다!';
+          msg.className='cz-msg ok';
+        }
+      });
+    }
+
+    function checkCzTextDates(){
+      const czT=$('czText');
+      if(!czT||!quickPrompt) return;
+      const val=czT.value;
+      const dateHits=val.match(/(?:\d{4}[년.\-/]\s*)?\d{1,2}[월.\-/]\s*\d{1,2}/g);
+      if(dateHits && dateHits.length>=2){
+        quickPrompt.style.display='flex';
+      } else {
+        quickPrompt.style.display='none';
+      }
+    }
+    const czTextEl=$('czText');
+    if(czTextEl){
+      czTextEl.addEventListener('input',checkCzTextDates);
+      czTextEl.addEventListener('paste',()=>setTimeout(checkCzTextDates,20));
+    }
+    if(quickBtn){
+      quickBtn.addEventListener('click',()=>{
+        const czT=$('czText');
+        if(batchText&&czT){
+          batchText.value=czT.value;
+          czT.value='';
+          if(quickPrompt) quickPrompt.style.display='none';
+        }
+        setBatchView(true);
+      });
+    }
   })();
   </script>
   <script>
