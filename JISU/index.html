@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140805">
+  <meta name="jisu-build" content="202611140808">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -180,7 +180,7 @@
     }
 
     /* Inline expandable glass card */
-    body:not(#z1#z2#z3#z4#z5) .expand-card {
+    .expand-card {
       position: absolute;
       top: 100%;
       left: 50%;
@@ -203,7 +203,7 @@
       box-shadow: 0 24px 48px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.12);
       color: #f8fafc;
     }
-    .hotspot-wrapper.is-open body:not(#z1#z2#z3#z4#z5) .expand-card {
+    body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-open .expand-card {
       max-height: 70vh;
       overflow-y: auto;
       overflow-x: hidden;
@@ -554,7 +554,7 @@
       background: radial-gradient(120% 70% at 20% 0%, rgba(255, 255, 255, 0.38), transparent 60%), linear-gradient(180deg, rgba(255, 255, 255, 0.20), transparent 35%) !important;
       mix-blend-mode: screen !important;
     }
-    .hotspot-wrapper.is-open body:not(#z1#z2#z3#z4#z5) .expand-card {
+    body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-open .expand-card {
       transition: max-height .45s cubic-bezier(.2,.9,.2,1), opacity .28s ease, transform .45s cubic-bezier(.2,.9,.2,1.15), margin-top .3s ease !important;
     }
 
@@ -1893,7 +1893,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     /* ==========================================================================
        입고(INBOUND) 전용 모듈 스타일: 실물 중량일지 전산화, 달력 연동, PHOTO, 엑셀
        ========================================================================== */
-    #hotspot-inbound > body:not(#z1#z2#z3#z4#z5) .expand-card {
+    body:not(#z1#z2#z3#z4#z5) #hotspot-inbound > .expand-card {
       width: min(480px, 94vw) !important;
       max-height: 88vh !important;
       display: flex !important;
@@ -3755,7 +3755,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
   (function jisuCheckUpdate(){
     const cur=(document.querySelector('meta[name="jisu-build"]')||{}).content||'';
     async function check(){
-      try{ const r=await fetch(location.pathname+'?cb='+Date.now(),{cache:'no-store'}); const t=await r.text(); const m=t.match(/<meta name="jisu-build" content="202611140805"]+)"/);
+      try{ const r=await fetch(location.pathname+'?cb='+Date.now(),{cache:'no-store'}); const t=await r.text(); const m=t.match(/<meta name="jisu-build" content="202611140808"]+)"/);
         if(m && cur && m[1] > cur){ pending=m[1]; apply(); } }catch(e){}
     }
     /* only move FORWARD to a newer build (prevents bouncing between cached copies),
