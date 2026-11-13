@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611131950">
+  <meta name="jisu-build" content="202611132355">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -2836,7 +2836,11 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
     const save=v=>localStorage.setItem(KEY,JSON.stringify(v));
     const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    function goalOf(t){const m=String(t).match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||String(t).match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/);return m?{n:m[1].replace(',','.'),u:({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()}:null;}
+    function goalOf(t){
+      const clean=String(t||'').replace(/^\[[^\]]+\]\s*/,'');
+      const m=clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)/);
+      return m?{n:m[1].replace(',','.'),u:({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()}:null;
+    }
     function carryTags(x){ if(x.kind==='notice') return ''; let s=(x.urgent&&!x.completed)?'<span class="urg-tag">긴급</span>':''; const n=x.carryCount||0;
       if(n) s+='<span class="carry-tag'+(n>=3?' hot':'')+'">이월'+(n>1?' '+n+'회':'')+'</span>';
       if(x.short) s+='<span class="short-tag">부족 완료</span>';
@@ -2853,12 +2857,17 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const cls=isRes?'ob-tag-res':(isTrans?'ob-tag-trans':'ob-tag-prod');
       return '<span class="ob-item-tag '+cls+'">'+esc(tag)+'</span>';
     }
+    function isObItem(x){
+      if(!x) return false;
+      const t=String(x.target||''), txt=String(x.text||'');
+      return t==='outbound' || t.startsWith('outbound:') || /^(outbound|\[(RAS-2|L1|CP3K|C3B|연구요청|공장간 이송)/.test(txt);
+    }
     function itemHtml(x,withDel){
-      const isWork=x.kind!=='notice'; const g=isWork?goalOf(x.text):null;
+      const isWork=x.kind!=='notice'; const isOb=isObItem(x); const g=(isWork && !isOb)?goalOf(x.text):null;
       let right='';
       if(isWork){
         right='<div class="work-ctrl">'
-          +'<label class="work-done-num">완료 <input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" enterkeyhint="done" data-cmd-progress="'+x.id+'" value="'+(x.done!=null?esc(x.done):'')+'" placeholder="0"'+(x.completed?' disabled':'')+'>'+'<span class="work-unit">'+(g?'/ '+esc(g.n)+(g.u?' '+esc(g.u):''):'')+'</span>'+'</label>'
+          +(!isOb ? '<label class="work-done-num">완료 <input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" enterkeyhint="done" data-cmd-progress="'+x.id+'" value="'+(x.done!=null?esc(x.done):'')+'" placeholder="0"'+(x.completed?' disabled':'')+'>'+'<span class="work-unit">'+(g?'/ '+esc(g.n)+(g.u?' '+esc(g.u):''):'')+'</span>'+'</label>' : '')
           +'<button type="button" class="work-complete work-progress'+(x.working&&!x.completed?' is-working':'')+'" data-cmd-working="'+x.id+'">작업중</button>'
           +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?(x.short?'부족 완료':'완료됨'):'작업완료')+'</button>'
           +'</div>';
@@ -2910,13 +2919,13 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         document.querySelectorAll('[data-zone-btn="'+k+'"]').forEach(z=>z.classList.toggle('has-active-work',active));
         const notices=mine.length-work.length;
         let badge=b.querySelector('.cmd-count');
-        if(work.length){ if(!badge){ badge=document.createElement('span'); badge.className='cmd-count'; b.appendChild(badge); }
+        if(work.length && k!=='outbound'){ if(!badge){ badge=document.createElement('span'); badge.className='cmd-count'; b.appendChild(badge); }
           badge.textContent = done ? work.length+'/'+done : String(work.length);
           badge.classList.toggle('all-done', done===work.length); badge.classList.toggle('has-carry', work.some(x=>x.carryCount)); badge.classList.toggle('is-run', active && done!==work.length);
           badge.title='금일작업 '+work.length+'건 중 '+done+'건 완료'+(active?' · 작업중':''); }
         else if(badge) badge.remove();
         { /* 이월 표시: 아직 안 끝난 이월 작업 수를 -N 으로 */ const cn=work.filter(x=>x.carryCount&&!x.completed).length; let cb=b.querySelector('.carry-minus');
-          if(cn){ if(!cb){ cb=document.createElement('span'); cb.className='carry-minus'; } const ref=b.querySelector('.cmd-count'); if(ref) ref.after(cb); else b.appendChild(cb); cb.textContent='-'+cn; cb.title='이월 작업 '+cn+'건 (지난 날에서 넘어온 남은 작업)'; }
+          if(cn && k!=='outbound'){ if(!cb){ cb=document.createElement('span'); cb.className='carry-minus'; } const ref=b.querySelector('.cmd-count'); if(ref) ref.after(cb); else b.appendChild(cb); cb.textContent='-'+cn; cb.title='이월 작업 '+cn+'건 (지난 날에서 넘어온 남은 작업)'; }
           else if(cb) cb.remove(); }
         { const nb=b.querySelector('.cmd-notice-count'); if(nb) nb.remove(); }
 
@@ -2936,7 +2945,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const wid=t.getAttribute('data-cmd-working');
       if(wid){update(wid,it=>{if(it.completed){it.completed=false;it.completedAt=null;if(it.short){delete it.short;if(it.review==='pending'&&!it.carryFrom)delete it.review;}if('doneBefore' in it){it.done=it.doneBefore;delete it.doneBefore;}it.working=true;it.startedAt=it.startedAt||nowStr();}else{it.working=!it.working;if(it.working)it.startedAt=it.startedAt||nowStr();}});return;}
       const id=t.getAttribute('data-cmd-complete');if(!id)return;
-      update(id,it=>{if(it.completed){it.completed=false;it.completedAt=null;if(it.short){delete it.short;if(it.review==='pending'&&!it.carryFrom)delete it.review;}if('doneBefore' in it){it.done=it.doneBefore;delete it.doneBefore;}}else{const g=goalOf(it.text);it.completed=true;it.working=false;it.completedAt=nowStr();it.doneBefore=(it.done==null?null:it.done);if(g){const goal=Number(g.n);const cur=Number(it.done);if(it.done!=null&&it.done!==''&&!isNaN(cur)&&cur<goal){it.short=true;it.review='pending';}else{it.done=(it.done==null||it.done===''||isNaN(cur))?goal:cur;}}}});}
+      update(id,it=>{if(it.completed){it.completed=false;it.completedAt=null;if(it.short){delete it.short;if(it.review==='pending'&&!it.carryFrom)delete it.review;}if('doneBefore' in it){it.done=it.doneBefore;delete it.doneBefore;}}else{const g=isObItem(it)?null:goalOf(it.text);it.completed=true;it.working=false;it.completedAt=nowStr();it.doneBefore=(it.done==null?null:it.done);if(g){const goal=Number(g.n);const cur=Number(it.done);if(it.done!=null&&it.done!==''&&!isNaN(cur)&&cur<goal){it.short=true;it.review='pending';}else{it.done=(it.done==null||it.done===''||isNaN(cur))?goal:cur;}}}});}
     [document.getElementById('mapStage'),document.getElementById('modalCmds'),list].forEach(el=>{if(!el)return;el.addEventListener('change',onChange,true);el.addEventListener('click',onClick,true);el.addEventListener('keydown',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){e.stopPropagation();if(e.key==='Enter')e.target.blur();}},true);el.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){const c=e.target.value.replace(/[^0-9.,]/g,'');if(c!==e.target.value)e.target.value=c;}},true);});
     const PLACE_LABEL={A:'A동',B:'B동',C:'C동',D:'D동',outbound:'출고',inbound:'입고',packaging:'포장','packaging-d':'포장(D동)',pitch:'피치',environment:'환경','production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H'};
     function detectMove(t){
@@ -4071,7 +4080,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const KEY='jisu-commands-v1', load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
     const ST=['st-none','st-wait','st-work','st-done','st-carry'];
     function refresh(){ const all=load().filter(x=>!x.closed&&x.kind!=='notice');
-      document.querySelectorAll('[data-toggle-zone]').forEach(b=>{ const k=b.getAttribute('data-toggle-zone'), w=all.filter(x=>x.target===k);
+      document.querySelectorAll('[data-toggle-zone]').forEach(b=>{ const k=b.getAttribute('data-toggle-zone'), w=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:')));
         let st=!w.length?'st-none':(w.some(x=>x.working&&!x.completed)?'st-work':(w.every(x=>x.completed)?'st-done':'st-wait') /* 이월은 점 색이 아니라 분홍 -N 배지로만 표시 */);
         if(k==='pitch'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done')st='st-done';}catch(e){}}ST.forEach(c=>b.classList.toggle(c,c===st));
         const urg=w.some(x=>x.urgent&&!x.completed); let um=b.querySelector('.urgent-mark'); if(urg&&!um){ um=document.createElement('span'); um.className='urgent-mark'; um.textContent='!'; um.title='긴급 작업'; b.appendChild(um); } else if(!urg&&um) um.remove(); }); }
