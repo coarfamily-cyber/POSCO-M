@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140840">
+  <meta name="jisu-build" content="202611140845">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1911,7 +1911,6 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
        ========================================================================== */
     body:not(#z1#z2#z3#z4#z5) #hotspot-inbound > .expand-card {
       width: min(480px, 94vw) !important;
-      max-height: 88vh !important;
       display: flex !important;
       flex-direction: column !important;
       padding: 14px !important;
@@ -1932,7 +1931,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     #hotspot-inbound .inbound-scroll-body::-webkit-scrollbar { width: 6px; }
     #hotspot-inbound .inbound-scroll-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.28); border-radius: 3px; }
 
-    .inbound-log { display: flex; flex-direction: column; gap: 10px; }
+    .inbound-log { margin-top: 8px; padding: 12px; border-radius: 16px; background: rgba(15,23,42,.58); box-shadow: inset 0 0 0 1px rgba(255,255,255,.10); color: #e2e8f0; display: flex; flex-direction: column; gap: 10px; }
     .inbound-head { display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid rgba(255,255,255,.12); padding-bottom: 8px; }
     .inbound-head-top { display: flex; align-items: center; justify-content: space-between; }
     .inbound-eyebrow { font-size: 10px; font-weight: 800; letter-spacing: .08em; color: #34d399; text-transform: uppercase; }
@@ -3795,7 +3794,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       if(sr.height<360){ /* phone: map too small, let the card open below normally (page scroll), only keep it inside horizontally */
         card.style.top='100%'; card.style.bottom='auto'; card.style.maxHeight='none'; card.classList.remove('opens-up');
         const w0=card.offsetWidth, cx0=br.left+br.width/2; let l0=cx0-w0/2, d0=0; const vw=document.documentElement.clientWidth; if(l0<M) d0=M-l0; else if(l0+w0>vw-M) d0=(vw-M)-(l0+w0); card.style.transform='translate(calc(-50% + '+Math.round(d0)+'px), 0)'; return; }
-      const pitchScroll=wrap.id==='hotspot-pitch'?card.querySelector('.pitch-scroll-body'):null,cardCss=getComputedStyle(card),natural=(pitchScroll?pitchScroll.scrollHeight+parseFloat(cardCss.paddingTop)+parseFloat(cardCss.paddingBottom):card.scrollHeight)*z, cap=Math.max(260,sr.height*(wrap.id==='hotspot-environment'?0.98:0.46)); /* 환경 카드는 호기 버튼·특이사항이 다 보이게 높이 제한 완화 */
+      const scrollBody=wrap.id==='hotspot-pitch'?card.querySelector('.pitch-scroll-body'):(wrap.id==='hotspot-inbound'?card.querySelector('.inbound-scroll-body'):null),cardCss=getComputedStyle(card),natural=(scrollBody?scrollBody.scrollHeight+80+parseFloat(cardCss.paddingTop)+parseFloat(cardCss.paddingBottom):card.scrollHeight)*z, cap=Math.max(260,sr.height*(wrap.id==='hotspot-environment'?0.98:0.46)); /* 환경 카드는 호기 버튼·특이사항이 다 보이게 높이 제한 완화 */
       const below=sr.bottom-br.bottom-M-8, above=br.top-sr.top-M-8;
       let up=false, maxH;
       if(natural<=below){ maxH=below; } else if(natural<=above){ up=true; maxH=above; } else { up=above>below; maxH=Math.max(above,below); }
