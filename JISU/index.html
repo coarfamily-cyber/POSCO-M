@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140808">
+  <meta name="jisu-build" content="202611140815">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -959,23 +959,6 @@
     }
     .expand-card .memo-input::placeholder {
       color: rgba(255, 255, 255, 0.52) !important;
-    }
-    body:not(#z1#z2#z3#z4#z5) .expand-card .memo-plus-circle {
-      width: 32px !important;
-      height: 32px !important;
-      border-radius: 50% !important;
-      border: 1.5px dashed rgba(255, 255, 255, 0.55) !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      color: rgba(255, 255, 255, 0.85) !important;
-      font-size: 18px !important;
-      font-weight: 300 !important;
-      line-height: 1 !important;
-      flex-shrink: 0 !important;
-      cursor: default !important;
-      user-select: none !important;
-      transition: all 0.18s ease !important;
     }
     .expand-card .memo-enscape-bottom {
       display: flex !important;
@@ -3755,7 +3738,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
   (function jisuCheckUpdate(){
     const cur=(document.querySelector('meta[name="jisu-build"]')||{}).content||'';
     async function check(){
-      try{ const r=await fetch(location.pathname+'?cb='+Date.now(),{cache:'no-store'}); const t=await r.text(); const m=t.match(/<meta name="jisu-build" content="202611140808"]+)"/);
+      try{ const r=await fetch(location.pathname+'?cb='+Date.now(),{cache:'no-store'}); const t=await r.text(); const m=t.match(/<meta name="jisu-build" content="([^"]+)"/);
         if(m && cur && m[1] > cur){ pending=m[1]; apply(); } }catch(e){}
     }
     /* only move FORWARD to a newer build (prevents bouncing between cached copies),
@@ -4367,7 +4350,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         const keep=(b.querySelector('.memo-input')||{}).value||'';
         b.innerHTML='<div class="memo-h">특이사항'+(items.length?' <span>'+items.length+'</span>':'')+'</div>'
           +(items.length?'<div class="memo-list">'+items.slice(0,6).map(m=>'<div class="memo-item"><div class="memo-text">'+esc(m.text)+'</div><div class="memo-meta">'+(m.by?esc(m.by)+' · ':'')+esc(m.at)+'<button type="button" class="memo-ack" data-memo-ack="'+m.id+'" title="확인하면 이 칸에서 사라져요 (액셀에는 남음)">확인</button></div></div>').join('')+(items.length>6?'<div class="memo-more">외 '+(items.length-6)+'건</div>':'')+'</div>':'')
-          +'<div class="memo-row enscape-prompt-box"><div class="memo-enscape-top"><input class="memo-input" type="text" maxlength="300" placeholder="Start writing... (특이사항 적기)"><span class="memo-plus-circle" aria-hidden="true" title="추가">+</span></div><div class="memo-enscape-bottom"><button type="button" class="memo-send">Generate</button></div></div>';
+          +'<div class="memo-row enscape-prompt-box"><div class="memo-enscape-top"><input class="memo-input" type="text" maxlength="300" placeholder="Start writing... (특이사항 적기)"></div><div class="memo-enscape-bottom"><button type="button" class="memo-send">Generate</button></div></div>';
         b.querySelector('.memo-input').value=keep;
         const btn=w.querySelector(':scope > button'); if(btn){ let bd=btn.querySelector('.memo-count'); if(items.length){ if(!bd){bd=document.createElement('span');bd.className='memo-count';btn.appendChild(bd);} bd.textContent='+'+items.length; bd.title='특이사항 '+items.length+'건'; } else if(bd) bd.remove(); }
       });
