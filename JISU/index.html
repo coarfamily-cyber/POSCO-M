@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140045">
+  <meta name="jisu-build" content="202611140055">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1165,8 +1165,10 @@
     body:not(#zz) .cmd-side:has([data-cmd-kind="notice"][aria-pressed="true"]) .cmd-submit .cmd-submit-target{background:rgba(120,85,50,.14) !important;color:#3b2a1a !important;box-shadow:inset 0 0 0 1px rgba(59,42,26,.12) !important;}
   </style>
   <style>
-    /* 이월 작업을 완료하면 분홍 "이월" 태그에 줄을 긋고 흐리게 (작성한 날 지나면 날짜 태그로 적용) */
-    .carry-tag, .cal-carry{display:none !important;}
+    /* 이월 작업을 완료하면 분홍 "이월" 태그에 줄을 긋고 흐리게 */
+    .cal-carry{display:none !important;}
+    .carry-tag{display:inline-flex;align-items:center;height:18px !important;line-height:18px !important;padding:0 8px !important;border-radius:9999px;font-size:10.5px !important;font-weight:800;color:#fff !important;background:#ec4899 !important;box-shadow:0 0 6px rgba(236,72,153,.55) !important;white-space:nowrap;}
+    .carry-tag.hot{background:#dc2626 !important;box-shadow:0 0 8px rgba(220,38,38,.7) !important;}
     body:not(#zz) .cmd-item.is-completed .carry-tag{position:relative !important;opacity:.8 !important;box-shadow:none !important;background:#9d3c6b !important;color:#fbe4ef !important;}
     body:not(#zz) .cmd-item.is-completed .carry-tag::after{content:'';position:absolute;left:2px;right:2px;top:50%;height:2px;margin-top:-1px;background:#fff;border-radius:2px;}
   </style>
@@ -2843,24 +2845,40 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const m=clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)/);
       return m?{n:m[1].replace(',','.'),u:({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()}:null;
     }
+    function isCarryover(x){
+      if(!x || x.kind==='notice' || x.completed) return false;
+      const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+      const d=dayOf(x);
+      if(x.origDay && x.origDay < today) return true;
+      if(x.carryCount && x.carryCount > 0) return true;
+      if(d && d < today) return true;
+      return false;
+    }
+    window.jisuIsCarryover=isCarryover;
     function carryTags(x){
       if(x.kind==='notice') return '';
       let s=(x.urgent&&!x.completed)?'<span class="urg-tag">긴급</span>':'';
       const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-      const orig=x.origDay || (x.day && x.day !== today ? x.day : null) || (x.sched && x.sched !== today ? x.sched : null);
-      if(orig && orig !== today){
-        const p=String(orig).split('-');
+      if(isCarryover(x)){
+        const n=x.carryCount||1;
+        s+='<span class="carry-tag'+(n>=3?' hot':'')+'">이월'+(n>1?' '+n+'회':'')+'</span>';
+      } else if(x.origDay && x.origDay < today){
+        const p=String(x.origDay).split('-');
         if(p.length >= 3){ s+='<span class="date-tag">'+(+p[1])+'/'+(+p[2])+'</span>'; }
       }
       if(x.short) s+='<span class="short-tag">부족 완료</span>';
       return s;
     }
     function carrySub(x){ if(!x.carryCount || !isMoveWork(x)) return ''; const p=[]; if(x.origDay){const q=String(x.origDay).split('-'); p.push((+q[1])+'/'+(+q[2])+'부터');} if(x.origGoal!=null){const g=goalOf(x.text); p.push('원래 '+x.origGoal+(g&&g.u?' '+g.u:''));} return p.length?'<span class="carry-sub">'+esc(p.join(' · '))+'</span>':''; }
-    function obItemTag(x){
+    function getObItem(x){
       let tag='';
       if(x.target&&x.target.startsWith('outbound:')){ tag=x.target.slice('outbound:'.length); }
       else { const m=String(x.text||'').match(/^\[(RAS-2|L1|CP3K|C3B|연구요청|공장간 이송 \(2공장→1공장\)|공장간 이송 \(1공장→2공장\)|공장간 이송 2공장→1공장|공장간 이송 1공장→2공장|2공장→1공장|1공장→2공장)\]/);
         if(m) tag=m[1].replace(/^공장간 이송 \((.*)\)$/,'$1').replace(/^공장간 이송 /,''); }
+      return tag;
+    }
+    function obItemTag(x){
+      const tag=getObItem(x);
       if(!tag) return '';
       const isRes=tag==='연구요청', isTrans=tag.includes('공장');
       const cls=isRes?'ob-tag-res':(isTrans?'ob-tag-trans':'ob-tag-prod');
@@ -2885,8 +2903,22 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?(x.short?'부족 완료':'완료됨'):'작업완료')+'</button>'
           +'</div>';
       }
-      return '<div class="cmd-item'+(x.completed?' is-completed':'')+(x.review==='pending'?' is-pending':'')+(x.urgent&&!x.completed?' is-urgent':'')+'"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'금일작업')+'</span>'+obItemTag(x)+(x.target==='*'?'<span class="all-tag">전체</span>':'')+carryTags(x)+'<span>'+(x.by?esc(x.by)+' · ':'')+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):(x.working&&x.startedAt?' · 작업중 '+esc(x.startedAt):''))+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
-        +'<div class="cmd-row"><div class="cmd-text">'+esc(x.text)+carrySub(x)+(function(){const mv=moveOf(x);return mv?'<span class="move-tag">이동 '+esc(PLACE_LABEL[mv.from]||mv.from)+' → '+esc(PLACE_LABEL[mv.to]||mv.to)+'</span>':'';})()+'</div>'+right+'</div></div>';
+      const obItem = getObItem(x);
+      let kindTag = '';
+      if(obItem){
+        const isRes=obItem==='연구요청', isTrans=obItem.includes('공장');
+        const cls=isRes?'ob-tag-res':(isTrans?'ob-tag-trans':'ob-tag-prod');
+        kindTag = '<span class="tag ob-item-tag '+cls+'">'+esc(obItem)+'</span>';
+      } else {
+        kindTag = '<span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'금일작업')+'</span>';
+      }
+      let dispText = esc(x.text);
+      if(obItem){
+        const clean = String(x.text||'').replace(/^\[(RAS-2|L1|CP3K|C3B|연구요청|공장간 이송 \(2공장→1공장\)|공장간 이송 \(1공장→2공장\)|공장간 이송 2공장→1공장|공장간 이송 1공장→2공장|2공장→1공장|1공장→2공장)\]\s*/, '').trim();
+        if(clean) dispText = esc(clean);
+      }
+      return '<div class="cmd-item'+(x.completed?' is-completed':'')+(x.review==='pending'?' is-pending':'')+(isCarryover(x)?' is-carry':'')+(x.urgent&&!x.completed?' is-urgent':'')+'"><div class="meta">'+kindTag+(x.target==='*'?'<span class="all-tag">전체</span>':'')+carryTags(x)+'<span>'+(x.by?esc(x.by)+' · ':'')+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):(x.working&&x.startedAt?' · 작업중 '+esc(x.startedAt):''))+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
+        +'<div class="cmd-row"><div class="cmd-text">'+dispText+carrySub(x)+(function(){const mv=moveOf(x);return mv?'<span class="move-tag">이동 '+esc(PLACE_LABEL[mv.from]||mv.from)+' → '+esc(PLACE_LABEL[mv.to]||mv.to)+'</span>':'';})()+'</div>'+right+'</div></div>';
     }
     /* HOME 상태 사이드바: 오늘 전체 현황 (등록된 금일작업 기준, 임의 숫자 없음) */
     function homeSummary(){ return homeWork()+homeEnv()+homeMemos(); }
@@ -2906,11 +2938,11 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     }
     function homeWork(){
       const work=load().filter(x=>!x.closed&&x.kind!=='notice'); if(!work.length) return '<div class="home-sum"><div class="hs-h">오늘 전체 현황</div><div class="hs-empty">오늘 등록된 금일작업이 없어요.</div></div>';
-      const done=work.filter(x=>x.completed).length, run=work.filter(x=>x.working&&!x.completed).length;
+      const done=work.filter(x=>x.completed).length, run=work.filter(x=>x.working&&!x.completed).length, carry=work.filter(isCarryover).length;
       let goal=0, got=0; work.forEach(x=>{ if(!isMoveWork(x)) return; const g=goalOf(x.text); if(!g||!/^(TON|톤)$/i.test(g.u)) return; const n=Number(g.n); if(!(n>0)) return; goal+=n; const d=x.completed&&!x.short&&(x.done==null||x.done==='')?n:Number(x.done)||0; got+=Math.min(Math.max(d,0),n); });
       const r=v=>String(Math.round(v*10)/10), pct=goal?Math.round(got/goal*100):0;
       return '<div class="home-sum"><div class="hs-h">오늘 전체 현황</div>'
-        +'<div class="hs-line">오늘 작업 <b>'+work.length+'</b>건 · 완료 <b class="ok">'+done+'</b> · 작업중 <b class="run">'+run+'</b></div>'
+        +'<div class="hs-line">오늘 작업 <b>'+work.length+'</b>건 · 완료 <b class="ok">'+done+'</b> · 작업중 <b class="run">'+run+'</b>'+(carry?' · 이월 <b class="carry">'+carry+'</b>':'')+'</div>'
         +(goal?'<div class="hs-goal">오늘 목표 <b>'+r(goal)+' TON</b> 중 <b>'+r(got)+' TON</b> ('+pct+'%)</div><div class="hs-bar"><span style="width:'+Math.min(100,pct)+'%"></span></div>':'')+'</div>';
     }
     function renderCards(){
@@ -3477,6 +3509,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         f='<div class="rv-form">'+inp+'<button type="button" class="rv-b pri" data-ch-go>'+(t==='move'?'옮기기':(t==='qty'?'바꾸기':'종료하기'))+'</button><button type="button" class="rv-b" data-ch-cancel>취소</button></div>'; }
       return '<div class="ch-acts" data-ch-id="'+esc(x.id)+'"><div class="rv-btns">'+btns+'</div>'+f+(chMsg&&chMsg.id===x.id?'<div class="rv-msg">'+esc(chMsg.t)+'</div>':'')+'</div>';
     }
+    const isCarryover=x=>(window.jisuIsCarryover?window.jisuIsCarryover(x):false);
     function drawHist(day,today){
       const box=$('czHist'); if(!box) return; if(day>today){ box.innerHTML=''; return; }
       const {cmds,memos}=histOf(day), work=cmds.filter(x=>x.kind!=='notice'), notes=cmds.filter(x=>x.kind==='notice');
@@ -3487,9 +3520,10 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       html+='<div class="ch-sum"><span>작업 <b>'+work.length+'</b>건</span><span>완료 <b>'+doneN+'</b>건</span>'+(tgt?'<span>완료량 <b>'+(Math.round(got*10)/10)+'</b> / '+(Math.round(tgt*10)/10)+' TON</span>':'')+(memos.length?'<span class="m">특이사항 <b>'+memos.length+'</b></span>':'')+'</div>';
       if(work.length){ html+='<div class="ch-sec">금일작업</div>'+work.map(x=>{ const m=String(x.text).match(/(\d+(?:\.\d+)?)\s*TON/i);
           const q2=v=>String(Math.round(v*100)/100), mdk=k=>{const p=String(k).split('-');return (+p[1])+'/'+(+p[2]);};
-          const dTag=(x.origDay&&x.origDay!==day)?'<span class="date-tag">'+esc(mdk(x.origDay))+'</span>':'';
-          const st=x.ended?'<span class="ch-st end">종료</span>':(x.review==='moved'&&x.movedTo?'<span class="ch-st carry">'+mdk(x.movedTo)+'로 변경</span>':((x.carried&&!x.short)?'<span class="ch-st no">'+(x.origDay?mdk(x.origDay):'미완료')+'</span>':(x.completed?'<span class="ch-st '+(x.short?'short':'ok')+'">'+(x.short?'부족 완료 ':'완료 ')+esc((dayOf({at:x.completedAt})!==day?md(x.completedAt):'')+hm(x.completedAt))+'</span>':(x.working?'<span class="ch-st run">작업중</span>':'<span class="ch-st no">미완료</span>'))));
-          return '<div class="ch-item'+(x.completed&&!x.short?' done':'')+(x.ended?' ended':'')+'"><div class="ch-top"><b>'+esc(NAMES[x.target]||x.target)+'</b>'+(x.urgent?'<span class="urg-tag">긴급</span>':'')+dTag+st+'</div><div class="ch-txt">'+esc(x.text)+'</div><div class="ch-meta">'+(m?'완료 '+esc(x.done||0)+' / '+m[1]+' TON · ':'')+'등록 '+esc(hm(x.at))+(x.startedAt?' · 시작 '+esc(hm(x.startedAt)):'')+(x.by?' · '+esc(x.by):'')+(x.reviewNote?' · 판단: '+esc(x.reviewNote)+(x.reviewBy?' ('+esc(x.reviewBy)+')':''):(x.review==='pending'?' · 확인 대기':''))+'</div>'+chActs(x)+'</div>'; }).join(''); }
+          const dCarry=isCarryover(x);
+          const st=x.ended?'<span class="ch-st end">종료</span>':(x.review==='moved'&&x.movedTo?'<span class="ch-st carry">'+mdk(x.movedTo)+'로 변경</span>':((x.carried&&!x.short)?'<span class="ch-st carry">'+(x.origDay?mdk(x.origDay)+' 이월':'이월')+'</span>':(x.completed?'<span class="ch-st '+(x.short?'short':'ok')+'">'+(x.short?'부족 완료 ':'완료 ')+esc((dayOf({at:x.completedAt})!==day?md(x.completedAt):'')+hm(x.completedAt))+'</span>':(x.working?'<span class="ch-st run">작업중</span>':'<span class="ch-st no">'+(dCarry?'이월':'미완료')+'</span>'))));
+          const cTag=dCarry?'<span class="carry-tag'+((x.carryCount||1)>=3?' hot':'')+'">이월'+((x.carryCount||1)>1?' '+(x.carryCount||1)+'회':'')+'</span>':(x.origDay&&x.origDay!==day?'<span class="date-tag">'+esc(mdk(x.origDay))+'</span>':'');
+          return '<div class="ch-item'+(x.completed&&!x.short?' done':'')+(dCarry?' carry':'')+(x.ended?' ended':'')+'"><div class="ch-top"><b>'+esc(NAMES[x.target]||x.target)+'</b>'+(x.urgent?'<span class="urg-tag">긴급</span>':'')+cTag+st+'</div><div class="ch-txt">'+esc(x.text)+'</div><div class="ch-meta">'+(m?'완료 '+esc(x.done||0)+' / '+m[1]+' TON · ':'')+'등록 '+esc(hm(x.at))+(x.startedAt?' · 시작 '+esc(hm(x.startedAt)):'')+(x.by?' · '+esc(x.by):'')+(x.reviewNote?' · 판단: '+esc(x.reviewNote)+(x.reviewBy?' ('+esc(x.reviewBy)+')':''):(x.review==='pending'?' · 확인 대기':''))+'</div>'+chActs(x)+'</div>'; }).join(''); }
       if(notes.length){ html+='<div class="ch-sec">공지</div>'+notes.map(x=>'<div class="ch-item n"><div class="ch-top"><b>'+esc(NAMES[x.target]||x.target)+'</b><span class="ch-time">'+esc(hm(x.at))+'</span></div><div class="ch-txt">'+esc(x.text)+'</div></div>').join(''); }
       if(memos.length){ html+='<div class="ch-sec m">특이사항</div>'+memos.map(x=>'<div class="ch-item m"><div class="ch-top"><b>'+esc(NAMES[x.target]||x.target)+'</b><span class="ch-time">'+esc(hm(x.at))+(x.by?' · '+esc(x.by):'')+'</span></div><div class="ch-txt">'+esc(x.text)+'</div></div>').join(''); }
       box.innerHTML=html;
@@ -3970,7 +4004,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       listEl.scrollTop=keep;
       if(form){ const fi=listEl.querySelector('.rv-in'); if(fi){ fi.focus(); if(fi.select&&fi.type==='text') fi.select(); } }
     }
-    function refresh(){ const q=queue().length, b=hb.querySelector('b'); b.hidden=true; b.textContent='0'; hb.classList.remove('has-pending'); hb.title='이월 작업 보기'; if(!modal.hidden) drawModal(); }
+    const isCarryover=x=>(window.jisuIsCarryover?window.jisuIsCarryover(x):false);
+    function refresh(){ const q=load(CKEY).filter(isCarryover).length, b=hb.querySelector('b'); b.hidden=!q; b.textContent=q; hb.classList.toggle('has-pending',q>0); hb.title=q?'이월 작업 · '+q+'건':'이월 작업 보기'; if(!modal.hidden) drawModal(); }
     window.jisuCarryRefresh=refresh;
     const openModal=()=>{ form=null; msg=null; modal.hidden=false; drawModal(); }, closeModal=()=>{ modal.hidden=true; form=null; msg=null; };
     window.jisuOpenReview=openModal;
@@ -4112,7 +4147,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(k==='pitch'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done')st='st-done';}catch(e){}}ST.forEach(c=>b.classList.toggle(c,c===st));
         const urg=w.some(x=>x.urgent&&!x.completed); let um=b.querySelector('.urgent-mark'); if(urg&&!um){ um=document.createElement('span'); um.className='urgent-mark'; um.textContent='!'; um.title='긴급 작업'; b.appendChild(um); } else if(!urg&&um) um.remove(); }); }
     window.jisuStateRefresh=refresh; refresh(); window.addEventListener('storage',e=>{ if(e.key===KEY) refresh(); });
-    const stage=document.getElementById('mapStage'); if(stage){ const lg=document.createElement('div'); lg.className='state-legend'; lg.innerHTML='<span><i class="n"></i>작업 없음</span><span><i class="r"></i>작업중</span><span><i class="d"></i>완료</span>'; stage.appendChild(lg); }
+    const stage=document.getElementById('mapStage'); if(stage){ const lg=document.createElement('div'); lg.className='state-legend'; lg.innerHTML='<span><i class="n"></i>작업 없음</span><span><i class="r"></i>작업중</span><span><i class="d"></i>완료</span><span><i class="c"></i>이월</span>'; stage.appendChild(lg); }
   })();
   </script>
   <script>
