@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140110">
+  <meta name="jisu-build" content="202611140145">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -4720,7 +4720,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     const pill = document.querySelector("#hotspot-inbound .pulse-ring");
     if (pill) {
       if (st === "work") { pill.className = "pulse-ring bg-emerald-500 text-emerald-400"; }
-      else if (st === "done") { pill.className = "pulse-ring bg-blue-500 text-blue-400"; }
+      else if (st === "done") { pill.className = "pulse-ring bg-blue-500 text-blue-400"; } else { pill.className = "pulse-ring bg-slate-600 text-slate-400"; }
     }
   }
 
