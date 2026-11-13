@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611112025">
+  <meta name="jisu-build" content="202611131935">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -1572,6 +1572,208 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       cursor: pointer; text-align: center; margin-top: -2px;
     }
   </style>
+  <style>
+    /* ==========================================================================
+       출고(OUTBOUND) 출하 목록 & 공장간 이송 전용 스타일
+       ========================================================================== */
+    .ob-sub-selector {
+      margin-top: 8px;
+      margin-bottom: 8px;
+      padding: 10px 11px;
+      border-radius: 12px;
+      background: rgba(14, 165, 233, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      box-shadow: inset 0 0 16px rgba(14, 165, 233, 0.06);
+    }
+    .ob-sub-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 7px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #7dd3fc;
+    }
+    .ob-sub-hint {
+      font-size: 9.5px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+    .ob-sub-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .ob-sub-trans {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.12);
+    }
+    .ob-trans-lbl {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #fde047;
+      white-space: nowrap;
+    }
+    .ob-chip {
+      box-sizing: border-box;
+      height: 28px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 7px;
+      background: rgba(15, 23, 42, 0.65);
+      color: #bae6fd;
+      font-size: 11.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .ob-chip:hover {
+      background: rgba(56, 189, 248, 0.25);
+      color: #fff;
+      border-color: #38bdf8;
+      transform: translateY(-1px);
+    }
+    .ob-chip.is-active {
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      color: #fff;
+      border-color: #7dd3fc;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
+    .ob-chip-res {
+      border-color: rgba(192, 132, 252, 0.4);
+      color: #e9d5ff;
+    }
+    .ob-chip-res:hover, .ob-chip-res.is-active {
+      background: linear-gradient(135deg, #7e22ce, #a855f7);
+      color: #fff;
+      border-color: #d8b4fe;
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+    }
+    .ob-chip-trans {
+      border-color: rgba(251, 191, 36, 0.4);
+      color: #fde68a;
+    }
+    .ob-chip-trans:hover, .ob-chip-trans.is-active {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      color: #fff;
+      border-color: #fcd34d;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+    }
+    .ob-chip-all {
+      border-color: rgba(148, 163, 184, 0.3);
+      color: #94a3b8;
+    }
+
+    /* 카드 내부 출하 퀵 바 */
+    .ob-card-items-bar {
+      margin-top: 10px;
+      margin-bottom: 8px;
+      padding: 9px 10px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+    .ob-card-items-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #7dd3fc;
+    }
+    .ob-card-hint {
+      font-size: 9.5px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+    .ob-card-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .ob-card-chip {
+      height: 26px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      background: rgba(30, 41, 59, 0.7);
+      color: #bae6fd;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .ob-card-chip:hover {
+      background: #0284c7;
+      color: #fff;
+      border-color: #7dd3fc;
+      transform: translateY(-1px);
+    }
+    .ob-card-chip.ob-res {
+      border-color: rgba(192, 132, 252, 0.4);
+      color: #e9d5ff;
+    }
+    .ob-card-chip.ob-res:hover {
+      background: #9333ea;
+      color: #fff;
+    }
+    .ob-card-chip.ob-trans {
+      border-color: rgba(251, 191, 36, 0.4);
+      color: #fde68a;
+    }
+    .ob-card-chip.ob-trans:hover {
+      background: #d97706;
+      color: #fff;
+    }
+
+    /* 작업 태그 배지 */
+    .ob-item-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 18px;
+      line-height: 18px;
+      padding: 0 7px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      margin-left: 4px;
+      white-space: nowrap;
+    }
+    .ob-item-tag.ob-tag-prod {
+      background: rgba(14, 165, 233, 0.22);
+      border: 1px solid #38bdf8;
+      color: #bae6fd;
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.35);
+    }
+    .ob-item-tag.ob-tag-res {
+      background: rgba(168, 85, 247, 0.22);
+      border: 1px solid #c084fc;
+      color: #f3e8ff;
+      box-shadow: 0 0 6px rgba(168, 85, 247, 0.35);
+    }
+    .ob-item-tag.ob-tag-trans {
+      background: rgba(245, 158, 11, 0.22);
+      border: 1px solid #fbbf24;
+      color: #fef08a;
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.35);
+    }
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -1635,7 +1837,14 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         <option value="production-f">생산F</option>
         <option value="production-g">생산G</option>
         <option value="production-h">생산H</option>
-        <option value="outbound">출고</option>
+        <option value="outbound">출고 (전체)</option>
+        <option value="outbound:RAS-2">출고 · RAS-2</option>
+        <option value="outbound:L1">출고 · L1</option>
+        <option value="outbound:CP3K">출고 · CP3K</option>
+        <option value="outbound:C3B">출고 · C3B</option>
+        <option value="outbound:연구요청">출고 · 연구요청</option>
+        <option value="outbound:2공장→1공장">출고 · 공장간이송(2공장→1공장)</option>
+        <option value="outbound:1공장→2공장">출고 · 공장간이송(1공장→2공장)</option>
         <option value="inbound">입고</option>
         <option value="packaging">포장</option>
         <option value="packaging-d">포장(D동)</option>
@@ -1646,6 +1855,26 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         <option value="C">C동</option>
         <option value="D">D동</option>
       </select>
+      <!-- 출고 선택 시 표시되는 출하 목록 선택 바 -->
+      <div class="ob-sub-selector" id="obSubSelector" style="display:none;">
+        <div class="ob-sub-head">
+          <span>📦 출하 품목 / 이송 선택</span>
+          <span class="ob-sub-hint">터치 시 내용에 자동 반영</span>
+        </div>
+        <div class="ob-sub-chips">
+          <button type="button" class="ob-chip" data-ob-item="RAS-2">RAS-2</button>
+          <button type="button" class="ob-chip" data-ob-item="L1">L1</button>
+          <button type="button" class="ob-chip" data-ob-item="CP3K">CP3K</button>
+          <button type="button" class="ob-chip" data-ob-item="C3B">C3B</button>
+          <button type="button" class="ob-chip ob-chip-res" data-ob-item="연구요청">연구요청</button>
+        </div>
+        <div class="ob-sub-trans">
+          <span class="ob-trans-lbl">공장간 이송:</span>
+          <button type="button" class="ob-chip ob-chip-trans" data-ob-item="공장간 이송 (2공장→1공장)" data-ob-val="2공장→1공장">2공장→1공장</button>
+          <button type="button" class="ob-chip ob-chip-trans" data-ob-item="공장간 이송 (1공장→2공장)" data-ob-val="1공장→2공장">1공장→2공장</button>
+          <button type="button" class="ob-chip ob-chip-all" data-ob-item="" title="품목 구분 없이 출고 전체">전체</button>
+        </div>
+      </div>
       <div class="cmd-kind" role="group" aria-label="등록 유형">
         <button type="button" data-cmd-kind="instruction" aria-pressed="true">금일작업 내용</button>
         <button type="button" data-cmd-kind="notice" aria-pressed="false">공지사항</button>
@@ -1823,6 +2052,21 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
             </div>
             <div class="min-w-0 flex-1">
               <h3 class="text-sm font-extrabold text-white">지게차 번호</h3>
+            </div>
+          </div>
+          <div class="ob-card-items-bar">
+            <div class="ob-card-items-head">
+              <span>출하 품목 / 이송 지시</span>
+              <span class="ob-card-hint">터치 시 바로 지시 입력</span>
+            </div>
+            <div class="ob-card-chips">
+              <button type="button" class="ob-card-chip" data-ob-quick="RAS-2">RAS-2</button>
+              <button type="button" class="ob-card-chip" data-ob-quick="L1">L1</button>
+              <button type="button" class="ob-card-chip" data-ob-quick="CP3K">CP3K</button>
+              <button type="button" class="ob-card-chip" data-ob-quick="C3B">C3B</button>
+              <button type="button" class="ob-card-chip ob-res" data-ob-quick="연구요청">연구요청</button>
+              <button type="button" class="ob-card-chip ob-trans" data-ob-quick="2공장→1공장">2공장→1공장</button>
+              <button type="button" class="ob-card-chip ob-trans" data-ob-quick="1공장→2공장">1공장→2공장</button>
             </div>
           </div>
             <div class="cmd-slot" data-cmd-slot="outbound"></div>
@@ -2347,7 +2591,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
   <script>
   (function(){
     const KEY='jisu-commands-v1';
-    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","environment":"환경","environment":"환경","A":"A동","B":"B동","C":"C동","D":"D동"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
+    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","environment":"환경","A":"A동","B":"B동","C":"C동","D":"D동",
+      "outbound:RAS-2":"출고 · RAS-2","outbound:L1":"출고 · L1","outbound:CP3K":"출고 · CP3K","outbound:C3B":"출고 · C3B","outbound:연구요청":"출고 · 연구요청","outbound:2공장→1공장":"출고 · 공장간이송(2공장→1공장)","outbound:1공장→2공장":"출고 · 공장간이송(1공장→2공장)"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     let kind='instruction';
     const sel=document.getElementById('cmdTarget'), text=document.getElementById('cmdText'), submit=document.getElementById('cmdSubmit'), list=document.getElementById('cmdList'), label=document.getElementById('cmdTargetLabel');
     const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
@@ -2360,6 +2605,16 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       if(x.carried&&!x.closed) s+='<span class="carry-tag">잔량 이월</span>';
       if(x.review==='pending') s+='<span class="pend-tag">확인 대기</span>'; return s; }
     function carrySub(x){ if(!x.carryCount) return ''; const p=[]; if(x.origDay){const q=String(x.origDay).split('-'); p.push((+q[1])+'/'+(+q[2])+'부터');} if(x.origGoal!=null){const g=goalOf(x.text); p.push('원래 '+x.origGoal+(g&&g.u?' '+g.u:''));} return p.length?'<span class="carry-sub">'+esc(p.join(' · '))+'</span>':''; }
+    function obItemTag(x){
+      let tag='';
+      if(x.target&&x.target.startsWith('outbound:')){ tag=x.target.slice('outbound:'.length); }
+      else { const m=String(x.text||'').match(/^\[(RAS-2|L1|CP3K|C3B|연구요청|공장간 이송 \(2공장→1공장\)|공장간 이송 \(1공장→2공장\)|공장간 이송 2공장→1공장|공장간 이송 1공장→2공장|2공장→1공장|1공장→2공장)\]/);
+        if(m) tag=m[1].replace(/^공장간 이송 \((.*)\)$/,'$1').replace(/^공장간 이송 /,''); }
+      if(!tag) return '';
+      const isRes=tag==='연구요청', isTrans=tag.includes('공장');
+      const cls=isRes?'ob-tag-res':(isTrans?'ob-tag-trans':'ob-tag-prod');
+      return '<span class="ob-item-tag '+cls+'">'+esc(tag)+'</span>';
+    }
     function itemHtml(x,withDel){
       const isWork=x.kind!=='notice'; const g=isWork?goalOf(x.text):null;
       let right='';
@@ -2370,7 +2625,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?(x.short?'부족 완료':'완료됨'):'작업완료')+'</button>'
           +'</div>';
       }
-      return '<div class="cmd-item'+(x.completed?' is-completed':'')+(x.review==='pending'?' is-pending':'')+(x.carryCount?' is-carry':'')+(x.urgent&&!x.completed?' is-urgent':'')+'"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'금일작업')+'</span>'+(x.target==='*'?'<span class="all-tag">전체</span>':'')+carryTags(x)+'<span>'+(x.by?esc(x.by)+' · ':'')+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):(x.working&&x.startedAt?' · 작업중 '+esc(x.startedAt):''))+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
+      return '<div class="cmd-item'+(x.completed?' is-completed':'')+(x.review==='pending'?' is-pending':'')+(x.carryCount?' is-carry':'')+(x.urgent&&!x.completed?' is-urgent':'')+'"><div class="meta"><span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'금일작업')+'</span>'+obItemTag(x)+(x.target==='*'?'<span class="all-tag">전체</span>':'')+carryTags(x)+'<span>'+(x.by?esc(x.by)+' · ':'')+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):(x.working&&x.startedAt?' · 작업중 '+esc(x.startedAt):''))+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
         +'<div class="cmd-row"><div class="cmd-text">'+esc(x.text)+carrySub(x)+(function(){const mv=moveOf(x);return mv?'<span class="move-tag">이동 '+esc(PLACE_LABEL[mv.from]||mv.from)+' → '+esc(PLACE_LABEL[mv.to]||mv.to)+'</span>':'';})()+'</div>'+right+'</div></div>';
     }
     /* HOME 상태 사이드바: 오늘 전체 현황 (등록된 금일작업 기준, 임의 숫자 없음) */
@@ -2404,7 +2659,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         const wrap=document.getElementById('hotspot-'+k); const card=wrap&&wrap.querySelector('.expand-card'); if(!card) return;
         const content=k==='pitch'?(card.querySelector('.pitch-scroll-body')||card):card,slot=content.querySelector('[data-cmd-slot]');
         let box=(slot||content).querySelector(':scope > .cmd-in-card');
-        const items=all.filter(x=>x.target===k||(x.target==='*'&&x.kind==='notice')).reverse().sort((a,b)=>((b.urgent&&!b.completed)?1:0)-((a.urgent&&!a.completed)?1:0));
+        const items=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(x.target==='*'&&x.kind==='notice')).reverse().sort((a,b)=>((b.urgent&&!b.completed)?1:0)-((a.urgent&&!a.completed)?1:0));
         if(!items.length && !slot){ if(box) box.remove(); return; }
         if(!box){ box=document.createElement('div'); box.className='cmd-in-card'; if(slot) slot.appendChild(box); else content.insertBefore(box,content.firstChild); }
         const ns=items.filter(x=>x.kind==='notice'), ws=items.filter(x=>x.kind!=='notice');
@@ -2412,7 +2667,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       });
       document.querySelectorAll('[data-toggle-zone],[data-bldg]').forEach(b=>{
         const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg');
-        const mine=all.filter(x=>x.target===k); const work=mine.filter(x=>x.kind!=='notice'); const done=work.filter(x=>x.completed).length;
+        const mine=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:'))); const work=mine.filter(x=>x.kind!=='notice'); const done=work.filter(x=>x.completed).length;
         const active=work.some(x=>x.working&&!x.completed); b.classList.toggle('has-active-work',active);
         document.querySelectorAll('[data-zone-btn="'+k+'"]').forEach(z=>z.classList.toggle('has-active-work',active));
         const notices=mine.length-work.length;
@@ -2530,9 +2785,19 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       (function(){const box=document.getElementById('cmdSummary'); if(!box) return; const all=load().filter(x=>!x.closed); const by={}; all.forEach(x=>{const o=by[x.target]||(by[x.target]={w:0,d:0,n:0}); if(x.kind==='notice') o.n++; else {o.w++; if(x.completed) o.d++;}});
         const keys=Object.keys(by); box.innerHTML=keys.length?'<div class="cmd-summary-h">전체 등록 현황 (누르면 이동)</div>'+keys.map(k=>{const o=by[k];return '<button type="button" class="cmd-sum-chip'+(k===sel.value?' is-on':'')+'" data-cmd-goto="'+esc(k)+'">'+esc(NAMES[k]||k)+(o.w?' <b>'+(o.d?o.w+'/'+o.d:o.w)+'</b>':'')+(o.n?' <i>공지 '+o.n+'</i>':'')+'</button>';}).join(''):'';})();
       const t=sel.value; updateSubmitLabel();
+      const obSub=document.getElementById('obSubSelector');
+      if(obSub){
+        const isOb = t && (t==='outbound' || t.startsWith('outbound:'));
+        obSub.style.display = isOb ? 'block' : 'none';
+        const curItem = t && t.startsWith('outbound:') ? t.slice('outbound:'.length) : '';
+        obSub.querySelectorAll('[data-ob-item]').forEach(btn=>{
+          const v = btn.getAttribute('data-ob-val') || btn.getAttribute('data-ob-item');
+          btn.classList.toggle('is-active', v === curItem);
+        });
+      }
       if(!t){ label.textContent='· HOME'; const allN=load().filter(x=>!x.closed&&x.target==='*'&&x.kind==='notice').reverse(); list.innerHTML=(allN.length?'<div class="all-notice-h">전체 공지 <span>'+allN.length+'</span></div>'+allN.map(x=>itemHtml(x,true)).join(''):'')+homeSummary()+'<div class="cmd-empty">대상 버튼을 고르거나 지도에서 버튼을 누르면 등록 내역이 보입니다.</div>'; return; }
       label.textContent='· '+(NAMES[t]||t);
-      const items=load().filter(x=>!x.closed&&(x.target===t||(x.target==='*'&&x.kind==='notice'))).reverse().sort((a,b)=>((b.urgent&&!b.completed)?1:0)-((a.urgent&&!a.completed)?1:0));
+      const items=load().filter(x=>!x.closed&&(x.target===t||(t==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(x.target==='*'&&x.kind==='notice'))).reverse().sort((a,b)=>((b.urgent&&!b.completed)?1:0)-((a.urgent&&!a.completed)?1:0));
       list.innerHTML=items.length?items.map(x=>itemHtml(x,true)).join(''):'<div class="cmd-empty">등록된 내용이 없습니다.</div>';
     }
     function updateSubmitLabel(){if(!sel.value){ if(kind==='notice'){ submit.disabled=false; submit.innerHTML='<span class="cmd-submit-target">전체 버튼</span>에 공지사항 등록'; return; } submit.disabled=true;submit.textContent='대상 버튼을 먼저 선택하세요';return;} submit.disabled=false; const nm=NAMES[sel.value]||sel.value; submit.innerHTML='<span class="cmd-submit-target">'+esc(nm)+'</span>에 '+(kind==='notice'?'공지사항 등록':'금일작업 내용 등록');}
@@ -2558,6 +2823,49 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     window.addEventListener('storage',e=>{ if(e.key==='jisu-memos-v1') render(); });
     list.addEventListener('change',e=>{const id=e.target.getAttribute&&e.target.getAttribute('data-cmd-retarget');if(!id)return;const nt=e.target.value;const all=load();const it=all.find(x=>x.id===id);if(!it)return;it.target=nt;save(all);sel.value=nt;try{localStorage.setItem('jisu-cmd-target',nt)}catch(_){}render();});
     document.getElementById('cmdSummary').addEventListener('click',e=>{const b=e.target.closest('[data-cmd-goto]');if(!b)return;sel.value=b.getAttribute('data-cmd-goto');try{localStorage.setItem('jisu-cmd-target',sel.value)}catch(_){}render();});
+    const obSubEl=document.getElementById('obSubSelector');
+    if(obSubEl){
+      obSubEl.addEventListener('click',e=>{
+        const btn=e.target.closest&&e.target.closest('[data-ob-item]');
+        if(!btn) return;
+        const rawVal=btn.getAttribute('data-ob-val')||btn.getAttribute('data-ob-item');
+        const chipLabel=btn.getAttribute('data-ob-item');
+        if(!rawVal){ sel.value='outbound'; }
+        else if(sel.value==='outbound:'+rawVal){ sel.value='outbound'; }
+        else { sel.value='outbound:'+rawVal; }
+        try{localStorage.setItem('jisu-cmd-target',sel.value);}catch(_){}
+        render();
+        if(rawVal && text){
+          let cur=text.value.trim();
+          const prefix='['+chipLabel+'] ';
+          if(!cur.includes('['+chipLabel+']')){
+            cur=cur.replace(/^\[(RAS-2|L1|CP3K|C3B|연구요청|공장간 이송 \(2공장→1공장\)|공장간 이송 \(1공장→2공장\)|공장간 이송 2공장→1공장|공장간 이송 1공장→2공장|2공장→1공장|1공장→2공장)\]\s*/, '');
+            text.value=prefix+cur;
+          }
+          text.focus();
+        }
+      });
+    }
+    document.querySelectorAll('[data-ob-quick]').forEach(btn=>{
+      btn.addEventListener('click',e=>{
+        e.stopPropagation();
+        const rawVal=btn.getAttribute('data-ob-quick');
+        const targetKey='outbound:'+rawVal;
+        sel.value=targetKey;
+        try{localStorage.setItem('jisu-cmd-target',targetKey);}catch(_){}
+        render();
+        if(text){
+          let cur=text.value.trim();
+          const chipLabel=rawVal.includes('공장')?'공장간 이송 ('+rawVal+')':rawVal;
+          const prefix='['+chipLabel+'] ';
+          if(!cur.includes('['+chipLabel+']')){
+            cur=cur.replace(/^\[(RAS-2|L1|CP3K|C3B|연구요청|공장간 이송 \(2공장→1공장\)|공장간 이송 \(1공장→2공장\)|공장간 이송 2공장→1공장|공장간 이송 1공장→2공장|2공장→1공장|1공장→2공장)\]\s*/, '');
+            text.value=prefix+cur;
+          }
+          text.focus();
+        }
+      });
+    });
     window.addEventListener('resize',()=>{drawMoves();setTimeout(drawMoves,500);}); if(window.ResizeObserver){new ResizeObserver(()=>drawMoves()).observe(document.getElementById('mapStage'));} setTimeout(drawMoves,800);
     render();
   })();
@@ -2726,7 +3034,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
   /* 금일 작업완료 → Excel (.xlsx) */
   (function(){
     const btn=document.getElementById('xlsxDoneBtn'); if(!btn) return;
-    const NAMES={"production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","A":"A동","B":"B동","C":"C동","D":"D동","environment":"환경"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
+    const NAMES={"production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","A":"A동","B":"B동","C":"C동","D":"D동","environment":"환경",
+      "outbound:RAS-2":"출고 · RAS-2","outbound:L1":"출고 · L1","outbound:CP3K":"출고 · CP3K","outbound:C3B":"출고 · C3B","outbound:연구요청":"출고 · 연구요청","outbound:2공장→1공장":"출고 · 공장간이송(2공장→1공장)","outbound:1공장→2공장":"출고 · 공장간이송(1공장→2공장)"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     const kstParts=()=>{const p=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const g=t=>p.find(x=>x.type===t).value;return {y:g('year'),m:g('month'),d:g('day')};};
     function loadLib(){ if(window.XLSX) return Promise.resolve(window.XLSX); return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';s.onload=()=>res(window.XLSX);s.onerror=()=>rej(new Error('lib'));document.head.appendChild(s);}); }
     function goal(t){const m=String(t).match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||String(t).match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/);return m?{n:Number(m[1].replace(',','.')),u:({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()}:{n:'',u:''};}
