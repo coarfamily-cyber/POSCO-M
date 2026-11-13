@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611132355">
+  <meta name="jisu-build" content="202611140005">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -2860,7 +2860,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     function isObItem(x){
       if(!x) return false;
       const t=String(x.target||''), txt=String(x.text||'');
-      return t==='outbound' || t.startsWith('outbound:') || /^(outbound|\[(RAS-2|L1|CP3K|C3B|연구요청|공장간 이송)/.test(txt);
+      return t==='outbound' || t.startsWith('outbound:') || /^(outbound|\[(RAS-2|L1|CP3K|C3B|연구요청|공장간 이송)])/.test(txt);
     }
     function itemHtml(x,withDel){
       const isWork=x.kind!=='notice'; const isOb=isObItem(x); const g=(isWork && !isOb)?goalOf(x.text):null;
