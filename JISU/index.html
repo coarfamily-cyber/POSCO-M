@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140730">
+  <meta name="jisu-build" content="202611140745">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -529,19 +529,17 @@
     .hdr-tools .xlsx-btn:hover,.hdr-tools .xlsx-btn:focus-visible{background:linear-gradient(135deg,#15803d,#166534) !important;border-color:rgba(74,222,128,.55) !important;color:#fff !important;box-shadow:0 2px 8px rgba(0,0,0,.25) !important;}
     .hdr-tools .xlsx-btn:hover svg,.hdr-tools .xlsx-btn:focus-visible svg{opacity:1;}
     /* ==========================================================================
-       Glassmorphism Floating Detail Card (Enscape AI Style)
+       Glassmorphism Floating Detail Card (Enscape AI Style - High Contrast Black Text)
        ========================================================================== */
     .expand-card {
-      background: linear-gradient(145deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.16) 35%, rgba(200, 215, 235, 0.12) 70%, rgba(15, 23, 42, 0.45) 100%), rgba(255, 255, 255, 0.05) !important;
-      backdrop-filter: blur(32px) saturate(200%) brightness(1.10) !important;
-      -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(1.10) !important;
-      border: 1px solid rgba(255, 255, 255, 0.45) !important;
-      border-top: 1.5px solid rgba(255, 255, 255, 0.75) !important;
-      border-left: 1.5px solid rgba(255, 255, 255, 0.58) !important;
+      background: linear-gradient(155deg, rgba(255, 255, 255, 0.92) 0%, rgba(246, 249, 253, 0.86) 40%, rgba(232, 240, 250, 0.90) 100%) !important;
+      backdrop-filter: blur(32px) saturate(190%) !important;
+      -webkit-backdrop-filter: blur(32px) saturate(190%) !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
       border-radius: 30px !important;
-      box-shadow: 0 32px 80px -10px rgba(0, 0, 0, 0.52), 0 12px 32px -4px rgba(0, 0, 0, 0.32), inset 0 2px 2px 0 rgba(255, 255, 255, 0.75), inset 0 -1px 1.5px 0 rgba(255, 255, 255, 0.18) !important;
-      color: #ffffff !important;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.40) !important;
+      box-shadow: 0 32px 80px -10px rgba(0, 0, 0, 0.35), 0 12px 32px -4px rgba(0, 0, 0, 0.18), inset 0 2px 3px 0 #ffffff !important;
+      color: #0f172a !important;
+      text-shadow: none !important;
       padding: 18px 18px 16px !important;
     }
     .expand-card::before {
@@ -550,48 +548,181 @@
       inset: 0 !important;
       border-radius: inherit !important;
       pointer-events: none !important;
-      background: radial-gradient(120% 70% at 20% 0%, rgba(255, 255, 255, 0.32), transparent 60%), linear-gradient(180deg, rgba(255, 255, 255, 0.20), transparent 35%) !important;
-      mix-blend-mode: screen !important;
+      background: radial-gradient(120% 70% at 20% 0%, rgba(255, 255, 255, 0.40), transparent 60%), linear-gradient(180deg, rgba(255, 255, 255, 0.25), transparent 35%) !important;
+      mix-blend-mode: normal !important;
     }
     .hotspot-wrapper.is-open .expand-card {
       transition: max-height .45s cubic-bezier(.2,.9,.2,1), opacity .28s ease, transform .45s cubic-bezier(.2,.9,.2,1.15), margin-top .3s ease !important;
     }
 
+    /* All text inside expand-card: deep bold black / dark charcoal, crisp high contrast */
+    .expand-card h2, .expand-card h3, .expand-card h4, .expand-card h5,
+    .expand-card .text-white, .expand-card .font-extrabold, .expand-card .font-bold {
+      color: #0f172a !important;
+      text-shadow: none !important;
+    }
+    .expand-card .text-slate-400, .expand-card .text-slate-300, .expand-card .text-slate-500,
+    .expand-card .text-white/60, .expand-card .text-white/70, .expand-card .text-white/80 {
+      color: #334155 !important;
+      font-weight: 600 !important;
+    }
+    .expand-card .text-amber-200 {
+      color: #b45309 !important;
+      font-weight: 800 !important;
+    }
+
     /* Inner card blocks (prompts, instruction containers) */
     .expand-card .cmd-in-card {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.10) 100%) !important;
+      background: rgba(255, 255, 255, 0.70) !important;
       backdrop-filter: blur(16px) !important;
       -webkit-backdrop-filter: blur(16px) !important;
-      border: 1px solid rgba(255, 255, 255, 0.35) !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
       border-radius: 20px !important;
-      box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.40), 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+      box-shadow: inset 0 1px 1.5px #ffffff, 0 4px 16px rgba(0, 0, 0, 0.05) !important;
       padding: 11px 13px !important;
     }
-    .expand-card .cmd-item {
-      background: rgba(255, 255, 255, 0.14) !important;
-      border: 1px solid rgba(255, 255, 255, 0.28) !important;
-      border-radius: 16px !important;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 2px 8px rgba(0, 0, 0, 0.12) !important;
-      padding: 10px 12px !important;
+    .expand-card .cmd-in-card-h {
+      color: #0f172a !important;
+      font-weight: 800 !important;
     }
+    .expand-card .cmd-in-card-h span {
+      background: #0284c7 !important;
+      color: #ffffff !important;
+      border-radius: 9999px !important;
+      padding: 1px 8px !important;
+      font-size: 11px !important;
+      font-weight: 800 !important;
+    }
+    .expand-card .cmd-item {
+      background: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
+      border-radius: 16px !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+      padding: 10px 12px !important;
+      margin-top: 8px !important;
+    }
+    .expand-card .cmd-text {
+      color: #0f172a !important;
+      font-weight: 800 !important;
+      font-size: 13px !important;
+      text-shadow: none !important;
+    }
+    .expand-card .cmd-item .meta {
+      color: #475569 !important;
+      font-weight: 600 !important;
+      display: flex !important;
+      align-items: center !important;
+      column-gap: 6px !important;
+    }
+    .expand-card .cmd-item .meta span {
+      color: #475569 !important;
+    }
+    .expand-card .cmd-item [data-cmd-del] {
+      color: #ef4444 !important;
+      font-weight: 700 !important;
+    }
+    .expand-card .cmd-item .tag.instruction {
+      background: #dcfce7 !important;
+      color: #15803d !important;
+      border: 1px solid #86efac !important;
+      font-weight: 800 !important;
+      border-radius: 9999px !important;
+      padding: 2px 7px !important;
+    }
+    .expand-card .cmd-item .tag.notice {
+      background: #fef3c7 !important;
+      color: #b45309 !important;
+      border: 1px solid #fcd34d !important;
+      font-weight: 800 !important;
+      border-radius: 9999px !important;
+      padding: 2px 7px !important;
+    }
+    .expand-card .cmd-item .tag.ob-item-tag.ob-tag-prod {
+      background: #e0f2fe !important;
+      color: #0284c7 !important;
+      border: 1.5px solid #7dd3fc !important;
+      font-weight: 900 !important;
+      border-radius: 9999px !important;
+      padding: 2px 8px !important;
+    }
+    .expand-card .cmd-item .tag.ob-item-tag.ob-tag-res {
+      background: #f3e8ff !important;
+      color: #7c3aed !important;
+      border: 1.5px solid #d8b4fe !important;
+      font-weight: 900 !important;
+      border-radius: 9999px !important;
+      padding: 2px 8px !important;
+    }
+    .expand-card .cmd-item .tag.ob-item-tag.ob-tag-trans {
+      background: #ecfdf5 !important;
+      color: #059669 !important;
+      border: 1.5px solid #6ee7b7 !important;
+      font-weight: 900 !important;
+      border-radius: 9999px !important;
+      padding: 2px 8px !important;
+    }
+    .expand-card .cmd-item .carry-tag {
+      background: #ffe4e6 !important;
+      color: #e11d48 !important;
+      border: 1.5px solid #fda4af !important;
+      font-weight: 900 !important;
+      border-radius: 9999px !important;
+      padding: 2px 8px !important;
+    }
+    .expand-card .cmd-item .date-tag {
+      background: #e0f2fe !important;
+      color: #0284c7 !important;
+      border: 1.5px solid #bae6fd !important;
+      font-weight: 800 !important;
+      border-radius: 9999px !important;
+      padding: 2px 8px !important;
+    }
+    .expand-card .cmd-item .all-tag {
+      background: #f1f5f9 !important;
+      color: #334155 !important;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 9999px !important;
+      padding: 2px 7px !important;
+    }
+    .expand-card .move-tag {
+      background: #fef3c7 !important;
+      color: #b45309 !important;
+      border: 1px solid #fcd34d !important;
+      border-radius: 9999px !important;
+      padding: 2px 8px !important;
+      font-weight: 700 !important;
+    }
+
     .expand-card .bg-white\/5 {
-      background: rgba(255, 255, 255, 0.14) !important;
+      background: rgba(255, 255, 255, 0.70) !important;
     }
     .expand-card .border-white\/10, .expand-card .border-white\/15 {
-      border-color: rgba(255, 255, 255, 0.25) !important;
+      border-color: rgba(0, 0, 0, 0.12) !important;
     }
     .expand-card .rounded-xl {
       border-radius: 18px !important;
     }
+    .expand-card .work-done-num {
+      color: #0f172a !important;
+      font-weight: 800 !important;
+    }
     .expand-card .work-done-num input {
-      background: rgba(0, 0, 0, 0.40) !important;
-      border: 1px solid rgba(255, 255, 255, 0.32) !important;
+      background: #ffffff !important;
+      border: 1.5px solid #94a3b8 !important;
       border-radius: 10px !important;
+      color: #0f172a !important;
+      font-weight: 800 !important;
+    }
+    .expand-card .work-unit {
+      color: #334155 !important;
+      font-weight: 700 !important;
     }
     .expand-card .cmd-notice-banner {
-      background: rgba(251, 191, 36, 0.22) !important;
-      border: 1px solid rgba(251, 191, 36, 0.55) !important;
+      background: #fffbeb !important;
+      border: 1.5px solid #f59e0b !important;
       border-radius: 14px !important;
+      color: #92400e !important;
+      font-weight: 700 !important;
     }
 
     /* Work action buttons inside card */
@@ -600,30 +731,32 @@
       font-weight: 800 !important;
       font-size: 11.5px !important;
       padding: 6px 14px !important;
-      border: 1px solid rgba(255, 255, 255, 0.30) !important;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
       transition: all 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.25) !important;
     }
     .expand-card .work-complete:not(.is-working):not(.is-done) {
-      background: rgba(255, 255, 255, 0.20) !important;
-      color: #ffffff !important;
+      background: #f1f5f9 !important;
+      border: 1.5px solid #cbd5e1 !important;
+      color: #0f172a !important;
     }
     .expand-card .work-complete:not(.is-working):not(.is-done):hover {
-      background: rgba(255, 255, 255, 0.35) !important;
+      background: #e2e8f0 !important;
+      border-color: #94a3b8 !important;
+      color: #0f172a !important;
       transform: scale(1.04) translateY(-1px) !important;
     }
     .expand-card .work-complete.is-done {
       background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
       color: #ffffff !important;
-      border-color: rgba(255, 255, 255, 0.40) !important;
-      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+      border: 1.5px solid #059669 !important;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
     }
     .expand-card .work-progress.is-working {
       border-radius: 9999px !important;
       background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%) !important;
       color: #ffffff !important;
-      border: 1px solid rgba(255, 255, 255, 0.40) !important;
-      box-shadow: 0 4px 14px rgba(249, 115, 22, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+      border: 1.5px solid #ea580c !important;
+      box-shadow: 0 4px 14px rgba(249, 115, 22, 0.40) !important;
     }
 
     /* Outbound quick chips */
@@ -632,35 +765,89 @@
       margin-bottom: 10px !important;
       padding: 10px 12px !important;
       border-radius: 20px !important;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.08) 100%) !important;
+      background: rgba(255, 255, 255, 0.70) !important;
       backdrop-filter: blur(14px) !important;
-      border: 1px solid rgba(255, 255, 255, 0.30) !important;
-      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.30), 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+      box-shadow: inset 0 1px 1px #ffffff, 0 4px 14px rgba(0, 0, 0, 0.05) !important;
+    }
+    .expand-card .ob-card-items-head {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      margin-bottom: 8px !important;
+    }
+    .expand-card .ob-card-items-head span:first-child {
+      color: #0369a1 !important;
+      font-weight: 800 !important;
+      font-size: 11.5px !important;
+    }
+    .expand-card .ob-card-hint {
+      color: #64748b !important;
+      font-weight: 700 !important;
+      font-size: 10px !important;
     }
     .expand-card .ob-card-chip {
       height: 28px !important;
       padding: 0 12px !important;
       border-radius: 9999px !important;
-      background: rgba(255, 255, 255, 0.18) !important;
-      border: 1px solid rgba(255, 255, 255, 0.32) !important;
-      color: #ffffff !important;
+      background: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
+      color: #0f172a !important;
       font-size: 11px !important;
       font-weight: 800 !important;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
       transition: all 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.25) !important;
     }
     .expand-card .ob-card-chip:hover {
-      background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%) !important;
-      border-color: rgba(255, 255, 255, 0.50) !important;
+      background: #0284c7 !important;
+      border-color: #0284c7 !important;
       color: #ffffff !important;
       transform: scale(1.06) translateY(-1px) !important;
-      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.45) !important;
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35) !important;
+    }
+
+    /* Photo & fork lift UI inside card */
+    .expand-card .ob-photo {
+      border-top: 1.5px solid rgba(0, 0, 0, 0.08) !important;
+      margin-top: 12px !important;
+      padding-top: 10px !important;
+    }
+    .expand-card .ob-photo-head {
+      display: flex !important;
+      justify-content: space-between !important;
+      font-size: 12px !important;
+      font-weight: 800 !important;
+      color: #0f172a !important;
+      margin-bottom: 8px !important;
+    }
+    .expand-card .ob-photo-head .ob-count {
+      color: #64748b !important;
+      font-weight: 700 !important;
+    }
+    .expand-card .ob-btn:not(.ob-primary):not(.ob-jisu) {
+      background: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
+      color: #0f172a !important;
+      font-weight: 800 !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+    }
+    .expand-card .ob-btn.ob-primary {
+      background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%) !important;
+      color: #ffffff !important;
+      font-weight: 800 !important;
+      border: 1px solid rgba(255, 255, 255, 0.40) !important;
+    }
+    .expand-card .ob-btn.ob-jisu {
+      background: #f1f5f9 !important;
+      border: 1.5px solid #cbd5e1 !important;
+      color: #475569 !important;
+      font-weight: 800 !important;
     }
 
     /* Bottom input action container (Matches image: "Start writing... (+) [Generate >]") */
     .expand-card .memo-box {
       margin-top: 14px !important;
-      border-top: 1px solid rgba(255, 255, 255, 0.22) !important;
+      border-top: 1.5px solid rgba(0, 0, 0, 0.08) !important;
       padding-top: 12px !important;
       display: flex !important;
       flex-direction: column !important;
@@ -669,43 +856,50 @@
     .expand-card .memo-h {
       font-size: 12px !important;
       font-weight: 800 !important;
-      color: #f1f5f9 !important;
+      color: #0f172a !important;
       display: flex !important;
       justify-content: space-between !important;
       align-items: center !important;
     }
     .expand-card .memo-h span {
-      background: rgba(14, 165, 233, 0.85) !important;
+      background: #0284c7 !important;
       color: #ffffff !important;
       border-radius: 9999px !important;
       padding: 1px 8px !important;
       font-size: 11px !important;
       font-weight: 800 !important;
-      box-shadow: 0 0 10px rgba(14, 165, 233, 0.6) !important;
     }
     .expand-card .memo-item {
-      background: rgba(255, 255, 255, 0.12) !important;
-      border: 1px solid rgba(255, 255, 255, 0.25) !important;
+      background: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
       border-radius: 16px !important;
       padding: 8px 12px !important;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+    }
+    .expand-card .memo-text {
+      color: #0f172a !important;
+      font-weight: 700 !important;
+    }
+    .expand-card .memo-meta {
+      color: #64748b !important;
+      font-weight: 600 !important;
     }
     .expand-card .memo-row {
-      background: rgba(10, 16, 28, 0.60) !important;
+      background: rgba(10, 16, 28, 0.90) !important;
       backdrop-filter: blur(18px) !important;
       -webkit-backdrop-filter: blur(18px) !important;
-      border: 1px solid rgba(255, 255, 255, 0.28) !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
       border-radius: 28px !important;
       padding: 5px 6px 5px 16px !important;
       display: flex !important;
       align-items: center !important;
       gap: 8px !important;
-      box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.40), 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.20) !important;
       transition: border-color 0.2s, box-shadow 0.2s !important;
     }
     .expand-card .memo-row:focus-within {
-      border-color: rgba(56, 189, 248, 0.65) !important;
-      box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.40), 0 0 18px rgba(14, 165, 233, 0.40) !important;
+      border-color: rgba(56, 189, 248, 0.8) !important;
+      box-shadow: 0 0 18px rgba(14, 165, 233, 0.40) !important;
     }
     .expand-card .memo-input {
       flex: 1 !important;
@@ -719,17 +913,17 @@
       padding: 6px 0 !important;
     }
     .expand-card .memo-input::placeholder {
-      color: rgba(255, 255, 255, 0.48) !important;
+      color: rgba(255, 255, 255, 0.55) !important;
     }
     .expand-card .memo-plus-circle {
       width: 26px !important;
       height: 26px !important;
       border-radius: 50% !important;
-      border: 1.5px dashed rgba(255, 255, 255, 0.40) !important;
+      border: 1.5px dashed rgba(255, 255, 255, 0.45) !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      color: rgba(255, 255, 255, 0.75) !important;
+      color: #ffffff !important;
       font-size: 15px !important;
       font-weight: 300 !important;
       line-height: 1 !important;
@@ -754,7 +948,7 @@
       font-weight: 800 !important;
       font-size: 12.5px !important;
       border: 1px solid rgba(255, 255, 255, 0.38) !important;
-      box-shadow: 0 4px 14px rgba(14, 165, 233, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
+      box-shadow: 0 4px 14px rgba(14, 165, 233, 0.50) !important;
       cursor: pointer !important;
       transition: all 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.25) !important;
     }
@@ -770,51 +964,131 @@
     }
     body:not(#zz) .expand-card .memo-row .memo-send:hover {
       transform: scale(1.04) translateY(-1px) !important;
-      box-shadow: 0 6px 20px rgba(14, 165, 233, 0.75), inset 0 1px 1px rgba(255, 255, 255, 0.6) !important;
+      box-shadow: 0 6px 20px rgba(14, 165, 233, 0.70) !important;
     }
     body:not(#zz) .expand-card .memo-list .memo-item .memo-meta .memo-ack {
       border-radius: 9999px !important;
-      background: rgba(255, 255, 255, 0.16) !important;
-      border: 1px solid rgba(255, 255, 255, 0.28) !important;
-      color: #ffffff !important;
+      background: #f1f5f9 !important;
+      border: 1.5px solid #cbd5e1 !important;
+      color: #0f172a !important;
       font-weight: 800 !important;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
       transition: all 0.18s ease !important;
     }
     body:not(#zz) .expand-card .memo-list .memo-item .memo-meta .memo-ack:hover {
-      background: rgba(255, 255, 255, 0.30) !important;
-      color: #ffffff !important;
+      background: #e2e8f0 !important;
+      color: #0f172a !important;
     }
 
     /* Workflow buttons in Inbound and Pitch cards */
     .expand-card .inbound-work-btn, .expand-card .pitch-work-btn {
       border-radius: 9999px !important;
-      background: rgba(255, 255, 255, 0.16) !important;
-      border: 1px solid rgba(255, 255, 255, 0.30) !important;
-      color: #ffffff !important;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+      background: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
+      color: #0f172a !important;
+      font-weight: 800 !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
       transition: all 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.25) !important;
     }
     .expand-card .inbound-work-btn:hover, .expand-card .pitch-work-btn:hover {
-      background: rgba(255, 255, 255, 0.30) !important;
+      background: #e2e8f0 !important;
+      color: #0f172a !important;
       transform: scale(1.03) translateY(-1px) !important;
     }
 
+    /* Inbound & Pitch module elements */
+    .expand-card .inbound-eyebrow { color: #059669 !important; font-weight: 800 !important; }
+    .expand-card #inboundDate { color: #475569 !important; font-weight: 700 !important; }
+    .expand-card .inbound-title-row h4 { color: #0f172a !important; font-weight: 900 !important; }
+    .expand-card .inbound-sched-box {
+      background: rgba(240, 253, 244, 0.90) !important;
+      border: 1.5px solid #86efac !important;
+      border-radius: 14px !important;
+    }
+    .expand-card .isb-badge { color: #15803d !important; font-weight: 800 !important; }
+    .expand-card .isb-dot { background: #16a34a !important; }
+    .expand-card .isb-pct { color: #0f172a !important; font-weight: 800 !important; }
+    .expand-card .inbound-cal-link {
+      background: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
+      color: #0f172a !important;
+      font-weight: 700 !important;
+      border-radius: 6px !important;
+    }
+    .expand-card .inbound-stock-h, .expand-card .pitch-route-head, .expand-card .pitch-title {
+      color: #0f172a !important;
+      font-weight: 800 !important;
+    }
+    .expand-card .inbound-stock-row, .expand-card .pitch-route-item, .expand-card .pitch-stat {
+      background: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
+      color: #0f172a !important;
+      border-radius: 12px !important;
+    }
+    .expand-card .inbound-stock-name, .expand-card .pitch-route-name {
+      color: #0f172a !important;
+      font-weight: 800 !important;
+    }
+    .expand-card .inbound-stock-meta, .expand-card .pitch-route-desc, .expand-card .pitch-sub {
+      color: #475569 !important;
+    }
+    .expand-card .inbound-stock-num, .expand-card .pitch-route-tons, .expand-card .pitch-stat-val {
+      color: #0f172a !important;
+      font-weight: 900 !important;
+    }
+    .expand-card .pitch-work-status {
+      color: #475569 !important;
+      font-weight: 700 !important;
+    }
+    .expand-card .pitch-work-status[data-state="work"] { color: #15803d !important; }
+    .expand-card .pitch-work-status[data-state="done"] { color: #0369a1 !important; }
+    .expand-card .pitch-input {
+      background: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
+      color: #0f172a !important;
+      border-radius: 8px !important;
+    }
+    body:not(#zz) #hotspot-pitch .pitch-eyebrow, body:not(#zz) #hotspot-pitch .pitch-section-title {
+      color: #0284c7 !important;
+      font-weight: 800 !important;
+    }
+
+    /* Environment module inside expand-card */
+    .expand-card .env-units .eu-h { color: #0f172a !important; font-weight: 800 !important; }
+    .expand-card .env-units .eu-h span { color: #475569 !important; font-weight: 700 !important; }
+    .expand-card .env-unit:not(.work):not(.done) {
+      background: #ffffff !important;
+      border: 1.5px solid #cbd5e1 !important;
+      color: #0f172a !important;
+      font-weight: 800 !important;
+    }
+    .expand-card .env-units .eu-tip { color: #64748b !important; font-weight: 600 !important; }
+
     /* Scrollbars inside expand-card */
     .expand-card::-webkit-scrollbar { width: 6px; }
-    .expand-card::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.35); border-radius: 9px; }
+    .expand-card::-webkit-scrollbar-thumb { background: #94a3b8 !important; border-radius: 9px; }
 
-    /* Building detail window (#detailModal): same glass */
+    /* Building detail window (#detailModal): same Enscape glass with crisp dark text */
     #detailModal > div {
-      background: linear-gradient(145deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.16) 35%, rgba(200, 215, 235, 0.12) 70%, rgba(15, 23, 42, 0.45) 100%), rgba(255, 255, 255, 0.05) !important;
-      backdrop-filter: blur(32px) saturate(200%) brightness(1.10) !important;
-      -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(1.10) !important;
-      border: 1px solid rgba(255, 255, 255, 0.45) !important;
-      border-top: 1.5px solid rgba(255, 255, 255, 0.75) !important;
-      border-left: 1.5px solid rgba(255, 255, 255, 0.58) !important;
+      background: linear-gradient(155deg, rgba(255, 255, 255, 0.92) 0%, rgba(246, 249, 253, 0.86) 40%, rgba(232, 240, 250, 0.90) 100%) !important;
+      backdrop-filter: blur(32px) saturate(190%) !important;
+      -webkit-backdrop-filter: blur(32px) saturate(190%) !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
       border-radius: 30px !important;
-      box-shadow: 0 32px 80px -10px rgba(0, 0, 0, 0.52), 0 12px 32px -4px rgba(0, 0, 0, 0.32), inset 0 2px 2px 0 rgba(255, 255, 255, 0.75), inset 0 -1px 1.5px 0 rgba(255, 255, 255, 0.18) !important;
-      color: #ffffff !important;
+      box-shadow: 0 32px 80px -10px rgba(0, 0, 0, 0.35), 0 12px 32px -4px rgba(0, 0, 0, 0.18), inset 0 2px 3px 0 #ffffff !important;
+      color: #0f172a !important;
+    }
+    #detailModal h2, #detailModal h3, #detailModal h4, #detailModal h5, #detailModal p, #detailModal span, #detailModal div {
+      color: #0f172a !important;
+    }
+    #detailModal .text-slate-400, #detailModal .text-slate-300 {
+      color: #475569 !important;
+    }
+    #detailModal .border-white/10, #detailModal .border-white/15 {
+      border-color: rgba(0, 0, 0, 0.12) !important;
+    }
+    #detailModal .bg-white/5 {
+      background: rgba(255, 255, 255, 0.70) !important;
     }
     /* Sidebar: calm dark charcoal #282D37 */
     .cmd-side{background:#282D37 !important;border:1px solid rgba(255,255,255,.08) !important;border-right:none !important;border-top-right-radius:0 !important;border-bottom-right-radius:0 !important;color:#e5e7eb;box-shadow:14px 0 28px -4px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.05) !important;z-index:20;position:relative;}
