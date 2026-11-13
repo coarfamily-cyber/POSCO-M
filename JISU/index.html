@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140802">
+  <meta name="jisu-build" content="202611140805">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -180,7 +180,7 @@
     }
 
     /* Inline expandable glass card */
-    .expand-card {
+    body:not(#z1#z2#z3#z4#z5) .expand-card {
       position: absolute;
       top: 100%;
       left: 50%;
@@ -203,7 +203,7 @@
       box-shadow: 0 24px 48px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.12);
       color: #f8fafc;
     }
-    .hotspot-wrapper.is-open .expand-card {
+    .hotspot-wrapper.is-open body:not(#z1#z2#z3#z4#z5) .expand-card {
       max-height: 70vh;
       overflow-y: auto;
       overflow-x: hidden;
@@ -531,7 +531,7 @@
     /* ==========================================================================
        Glassmorphism Floating Detail Card (Exact 1:1 Enscape AI Style)
        ========================================================================== */
-    .expand-card {
+    body:not(#z1#z2#z3#z4#z5) .expand-card {
       /* Translucent Liquid Frosted Glass: pure glassmorphism over the 3D map */
       background: linear-gradient(165deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0.18) 35%, rgba(235, 245, 255, 0.10) 70%, rgba(15, 23, 42, 0.28) 100%), rgba(255, 255, 255, 0.12) !important;
       backdrop-filter: blur(36px) saturate(190%) brightness(1.06) !important;
@@ -554,7 +554,7 @@
       background: radial-gradient(120% 70% at 20% 0%, rgba(255, 255, 255, 0.38), transparent 60%), linear-gradient(180deg, rgba(255, 255, 255, 0.20), transparent 35%) !important;
       mix-blend-mode: screen !important;
     }
-    .hotspot-wrapper.is-open .expand-card {
+    .hotspot-wrapper.is-open body:not(#z1#z2#z3#z4#z5) .expand-card {
       transition: max-height .45s cubic-bezier(.2,.9,.2,1), opacity .28s ease, transform .45s cubic-bezier(.2,.9,.2,1.15), margin-top .3s ease !important;
     }
 
@@ -565,7 +565,7 @@
       gap: 12px !important;
       margin-bottom: 12px !important;
     }
-    .expand-card .enscape-logo-badge {
+    body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-logo-badge {
       width: 44px !important;
       height: 44px !important;
       border-radius: 12px !important;
@@ -611,7 +611,7 @@
     }
 
     /* Enscape Style First Inner Card Block (Prompt card / Chips container) */
-    .expand-card .ob-card-items-bar, .expand-card .enscape-inner-card {
+    body:not(#z1#z2#z3#z4#z5) .expand-card .ob-card-items-bar, body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card {
       margin-top: 8px !important;
       margin-bottom: 12px !important;
       padding: 12px 14px !important;
@@ -680,7 +680,7 @@
       font-size: 11px !important;
       font-weight: 800 !important;
     }
-    .expand-card .cmd-item {
+    body:not(#z1#z2#z3#z4#z5) .expand-card .cmd-item {
       background: rgba(255, 255, 255, 0.26) !important;
       backdrop-filter: blur(12px) !important;
       -webkit-backdrop-filter: blur(12px) !important;
@@ -921,7 +921,7 @@
     }
 
     /* Enscape Prompt Box: Dark frosted glass container with top input/plus and bottom-right button */
-    .expand-card .memo-row, .expand-card .enscape-prompt-box {
+    body:not(#z1#z2#z3#z4#z5) .expand-card .memo-row, body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-prompt-box {
       background: rgba(15, 30, 48, 0.58) !important;
       backdrop-filter: blur(24px) !important;
       -webkit-backdrop-filter: blur(24px) !important;
@@ -960,11 +960,11 @@
     .expand-card .memo-input::placeholder {
       color: rgba(255, 255, 255, 0.52) !important;
     }
-    .expand-card .memo-plus-circle {
+    body:not(#z1#z2#z3#z4#z5) .expand-card .memo-plus-circle {
       width: 32px !important;
       height: 32px !important;
       border-radius: 50% !important;
-      border: 1.5px dashed rgba(255, 255, 255, 0.45) !important;
+      border: 1.5px dashed rgba(255, 255, 255, 0.55) !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
@@ -983,7 +983,7 @@
       align-items: center !important;
       width: 100% !important;
     }
-    body:not(#zz) .expand-card .memo-row .memo-send {
+    body:not(#z1#z2#z3#z4#z5) .expand-card .memo-row .memo-send {
       width: auto !important;
       min-width: max-content !important;
       flex: 0 0 auto !important;
@@ -1004,7 +1004,7 @@
       cursor: pointer !important;
       transition: all 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.25) !important;
     }
-    body:not(#zz) .expand-card .memo-row .memo-send::after {
+    body:not(#z1#z2#z3#z4#z5) .expand-card .memo-row .memo-send::after {
       content: '' !important;
       display: inline-block !important;
       width: 14px !important;
@@ -1014,7 +1014,7 @@
       background-repeat: no-repeat !important;
       margin-left: 2px !important;
     }
-    body:not(#zz) .expand-card .memo-row .memo-send:hover {
+    body:not(#z1#z2#z3#z4#z5) .expand-card .memo-row .memo-send:hover {
       transform: scale(1.04) translateY(-1px) !important;
       box-shadow: 0 6px 22px rgba(14, 165, 233, 0.75), inset 0 1px 1px rgba(255, 255, 255, 0.60) !important;
     }
@@ -1893,7 +1893,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     /* ==========================================================================
        입고(INBOUND) 전용 모듈 스타일: 실물 중량일지 전산화, 달력 연동, PHOTO, 엑셀
        ========================================================================== */
-    #hotspot-inbound > .expand-card {
+    #hotspot-inbound > body:not(#z1#z2#z3#z4#z5) .expand-card {
       width: min(480px, 94vw) !important;
       max-height: 88vh !important;
       display: flex !important;
@@ -3755,7 +3755,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
   (function jisuCheckUpdate(){
     const cur=(document.querySelector('meta[name="jisu-build"]')||{}).content||'';
     async function check(){
-      try{ const r=await fetch(location.pathname+'?cb='+Date.now(),{cache:'no-store'}); const t=await r.text(); const m=t.match(/<meta name="jisu-build" content="202611140802"]+)"/);
+      try{ const r=await fetch(location.pathname+'?cb='+Date.now(),{cache:'no-store'}); const t=await r.text(); const m=t.match(/<meta name="jisu-build" content="202611140805"]+)"/);
         if(m && cur && m[1] > cur){ pending=m[1]; apply(); } }catch(e){}
     }
     /* only move FORWARD to a newer build (prevents bouncing between cached copies),
