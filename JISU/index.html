@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140830">
+  <meta name="jisu-build" content="202611140840">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -852,10 +852,31 @@
     }
 
     /* Photo & fork lift UI inside card */
-    .expand-card .ob-photo {
-      border-top: 1.5px solid rgba(255, 255, 255, 0.25) !important;
-      margin-top: 12px !important;
-      padding-top: 10px !important;
+    body:not(#z1#z2#z3#z4#z5) .expand-card .ob-photo {
+      margin-top: 10px !important;
+      padding: 12px 14px !important;
+      border-radius: 20px !important;
+      background: rgba(255, 255, 255, 0.28) !important;
+      backdrop-filter: blur(14px) !important;
+      -webkit-backdrop-filter: blur(14px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.45) !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.70) !important;
+      box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.50), 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+    }
+    body:not(#z1#z2#z3#z4#z5) #hotspot-environment .env-units {
+      margin-top: 10px !important;
+      padding: 12px !important;
+      border-radius: 18px !important;
+      background: rgba(15, 23, 42, 0.58) !important;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14) !important;
+      color: #e2e8f0 !important;
+    }
+    body:not(#z1#z2#z3#z4#z5) #hotspot-environment .env-units .eu-h {
+      color: #f8fafc !important;
+      font-weight: 800 !important;
+    }
+    body:not(#z1#z2#z3#z4#z5) #hotspot-environment .env-units .eu-tip {
+      color: #cbd5e1 !important;
     }
     .expand-card .ob-photo-head {
       display: flex !important;
@@ -1729,7 +1750,8 @@
     /* 환경 카드: 호기 버튼·특이사항은 항상 고정(스크롤 없음), 등록된 금일작업 목록만 길면 그 안에서 스크롤 */
     body:not(#zz) #hotspot-environment.is-open > .expand-card{overflow:hidden !important;display:flex !important;flex-direction:column;}
     #hotspot-environment > .expand-card > *{flex:0 0 auto;}
-    #hotspot-environment > .expand-card > .cmd-in-card{flex:0 1 auto;min-height:0;overflow-y:auto;}
+    #hotspot-environment > .expand-card > .cmd-in-card,
+    #hotspot-environment > .expand-card > .cmd-slot{flex:0 1 auto;min-height:0;overflow-y:auto;}
     /* 호기 버튼 세로로 크게 (손가락으로 누르기 쉽게) */
     body:not(#zz) .env-grid{gap:8px;}
     body:not(#zz) .env-grid .env-unit{min-height:46px;padding:12px 6px;font-size:13.5px;border-radius:11px;touch-action:manipulation;}
@@ -2568,6 +2590,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
               <h3 class="enscape-title">PRODUCTION A</h3>
             </div>
           </div>
+          <div class="cmd-slot" data-cmd-slot="production-a"></div>
         </div>
       </div>
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-b" style="left: 73.7%; top: 46%;">
@@ -2583,6 +2606,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
               <h3 class="enscape-title">PRODUCTION B</h3>
             </div>
           </div>
+          <div class="cmd-slot" data-cmd-slot="production-b"></div>
         </div>
       </div>
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-c" style="left: 80.8%; top: 46%;">
@@ -2598,6 +2622,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
               <h3 class="enscape-title">PRODUCTION C</h3>
             </div>
           </div>
+          <div class="cmd-slot" data-cmd-slot="production-c"></div>
         </div>
       </div>
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-d" style="left: 80.8%; top: 46%;">
@@ -2613,6 +2638,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
               <h3 class="enscape-title">PRODUCTION D</h3>
             </div>
           </div>
+          <div class="cmd-slot" data-cmd-slot="production-d"></div>
         </div>
       </div>
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-e" style="left: 80.8%; top: 46%;">
@@ -2628,6 +2654,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
               <h3 class="enscape-title">PRODUCTION E</h3>
             </div>
           </div>
+          <div class="cmd-slot" data-cmd-slot="production-e"></div>
         </div>
       </div>
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-f" style="left: 80.8%; top: 46%;">
@@ -2643,6 +2670,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
               <h3 class="enscape-title">PRODUCTION F</h3>
             </div>
           </div>
+          <div class="cmd-slot" data-cmd-slot="production-f"></div>
         </div>
       </div>
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-g" style="left: 80.8%; top: 46%;">
@@ -2658,6 +2686,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
               <h3 class="enscape-title">PRODUCTION G</h3>
             </div>
           </div>
+          <div class="cmd-slot" data-cmd-slot="production-g"></div>
         </div>
       </div>
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-h" style="left: 80.8%; top: 46%;">
@@ -2673,6 +2702,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
               <h3 class="enscape-title">PRODUCTION H</h3>
             </div>
           </div>
+          <div class="cmd-slot" data-cmd-slot="production-h"></div>
         </div>
       </div>
       <button type="button" class="bldg-badge" style="left: 70%; top: 71.5%;" data-bldg="D" title="D동 상태 보기">
@@ -2686,9 +2716,15 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <span>환경</span>
         </button>
         <div class="expand-card p-3.5">
-          <section class="mt-1 pb-1">
-            <h3 class="enscape-title">ENVIRONMENT</h3>
-          </section>
+          <div class="enscape-header">
+            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);box-shadow:0 4px 14px rgba(13,148,136,0.40) !important;" title="환경">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+            </div>
+            <div class="enscape-title-group min-w-0 flex-1">
+              <h3 class="enscape-title">ENVIRONMENT</h3>
+            </div>
+          </div>
+          <div class="cmd-slot" data-cmd-slot="environment"></div>
           <section class="env-units" data-env-units>
             <div class="eu-h">호기 현황</div>
             <div class="env-grid"><button type="button" class="env-unit" data-env-unit="1,2"><i></i>1,2호기</button><button type="button" class="env-unit" data-env-unit="3,4"><i></i>3,4호기</button><button type="button" class="env-unit" data-env-unit="5,6"><i></i>5,6호기</button><button type="button" class="env-unit" data-env-unit="7,8"><i></i>7,8호기</button><button type="button" class="env-unit" data-env-unit="9,10"><i></i>9,10호기</button><button type="button" class="env-unit" data-env-unit="11,12"><i></i>11,12호기</button><button type="button" class="env-unit" data-env-unit="13,14"><i></i>13,14호기</button></div>
@@ -2751,14 +2787,20 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <span>입고</span>
         </button>
         <div class="expand-card p-3.5">
+          <div class="enscape-header">
+            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%);box-shadow:0 4px 14px rgba(5,150,105,0.40) !important;" title="입고">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M8 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-4"/></svg>
+            </div>
+            <div class="enscape-title-group min-w-0 flex-1">
+              <h3 class="enscape-title">INBOUND</h3>
+            </div>
+          </div>
           <div class="inbound-scroll-body">
+            <div class="cmd-slot" data-cmd-slot="inbound"></div>
             <section class="inbound-log" id="inboundLog">
               <div class="inbound-head">
-                <div class="inbound-head-top">
+                <div class="inbound-title-row" style="margin-top:0;">
                   <time id="inboundDate"></time>
-                </div>
-                <div class="inbound-title-row">
-                  <h4>INBOUND</h4>
                   <button type="button" id="inboundPhotoBtn" class="inbound-photo-btn">
                     <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     <span>PHOTO</span>
@@ -2848,9 +2890,15 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           
         </button>
         <div class="expand-card p-3.5">
-          <section class="mt-1 pb-1">
-            <h3 class="enscape-title">PACKAGING · C</h3>
-          </section>
+          <div class="enscape-header">
+            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);box-shadow:0 4px 14px rgba(217,119,6,0.40) !important;" title="포장 C동">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+            </div>
+            <div class="enscape-title-group min-w-0 flex-1">
+              <h3 class="enscape-title">PACKAGING · C</h3>
+            </div>
+          </div>
+          <div class="cmd-slot" data-cmd-slot="packaging"></div>
         </div>
       </div>
 
@@ -2862,9 +2910,15 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           
         </button>
         <div class="expand-card p-3.5">
-          <section class="mt-1 pb-1">
-            <h3 class="enscape-title">PACKAGING · D</h3>
-          </section>
+          <div class="enscape-header">
+            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);box-shadow:0 4px 14px rgba(217,119,6,0.40) !important;" title="포장 D동">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+            </div>
+            <div class="enscape-title-group min-w-0 flex-1">
+              <h3 class="enscape-title">PACKAGING · D</h3>
+            </div>
+          </div>
+          <div class="cmd-slot" data-cmd-slot="packaging-d"></div>
         </div>
       </div>
 
@@ -2875,7 +2929,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <span>피치</span>
           
         </button>
-        <div class="expand-card p-3.5"><div class="pitch-scroll-body"><section class="pitch-log" id="pitchLog"><div class="pitch-head"><div class="pitch-head-top"><time id="pitchDate"></time></div><div class="pitch-title-row"><h4>PITCH</h4><button type="button" id="pitchPhotoBtn" class="pitch-photo-btn">PHOTO</button></div></div><div class="pitch-section"><div class="pitch-section-title">부원료 투입 현황</div><div class="pitch-repeat" data-pitch-repeat="add1"><div class="pitch-repeat-head"><b>1호기</b></div><div class="pitch-list" data-pitch-list="add1"></div></div><div class="pitch-repeat" data-pitch-repeat="add2"><div class="pitch-repeat-head"><b>2호기</b></div><div class="pitch-list" data-pitch-list="add2"></div></div></div><div class="pitch-section"><div class="pitch-section-title">분쇄 현황</div><label class="pitch-row"><span>1호기</span><span class="pitch-num-wrap"><input class="pitch-input pitch-num" data-pitch-field="grind1" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="4" autocomplete="off"><b>BAG</b></span></label><label class="pitch-row"><span>2호기</span><span class="pitch-num-wrap"><input class="pitch-input pitch-num" data-pitch-field="grind2" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="3" autocomplete="off"><b>BAG</b></span></label></div><div class="pitch-section"><div class="pitch-section-title">원료 이동</div><div class="pitch-repeat" data-pitch-repeat="move"><div class="pitch-repeat-head"><b>이동 목록</b></div><div class="pitch-list" data-pitch-list="move"></div></div></div><div class="pitch-workflow"><div class="pitch-work-actions"><button type="button" id="pitchStartBtn" class="pitch-work-btn">작업시작</button><button type="button" id="pitchSaveBtn" class="pitch-work-btn">임시저장</button><button type="button" id="pitchCompleteBtn" class="pitch-work-btn">작업완료</button></div><div id="pitchWorkStatus" class="pitch-work-status" aria-live="polite"></div><span id="pitchSaveStatus" class="pitch-save-status" aria-live="polite"></span><button type="button" id="pitchDownloadAgain" class="pitch-download-again" hidden>완료 파일 다시 받기</button></div><div class="pitch-photo"><input id="pitchPhotoInput" type="file" accept="image/*" capture="environment" multiple hidden><div id="pitchPhotoThumbs" class="pitch-photo-thumbs"></div></div></section></div></div>
+        <div class="expand-card p-3.5"><div class="enscape-header"><div class="enscape-logo-badge" style="background:linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);box-shadow:0 4px 14px rgba(109,40,217,0.40) !important;" title="피치"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div><div class="enscape-title-group min-w-0 flex-1"><h3 class="enscape-title">PITCH</h3></div></div><div class="pitch-scroll-body"><div class="cmd-slot" data-cmd-slot="pitch"></div><section class="pitch-log" id="pitchLog"><div class="pitch-head"><div class="pitch-title-row" style="margin-top:0;"><time id="pitchDate"></time><button type="button" id="pitchPhotoBtn" class="pitch-photo-btn">PHOTO</button></div></div><div class="pitch-section"><div class="pitch-section-title">부원료 투입 현황</div><div class="pitch-repeat" data-pitch-repeat="add1"><div class="pitch-repeat-head"><b>1호기</b></div><div class="pitch-list" data-pitch-list="add1"></div></div><div class="pitch-repeat" data-pitch-repeat="add2"><div class="pitch-repeat-head"><b>2호기</b></div><div class="pitch-list" data-pitch-list="add2"></div></div></div><div class="pitch-section"><div class="pitch-section-title">분쇄 현황</div><label class="pitch-row"><span>1호기</span><span class="pitch-num-wrap"><input class="pitch-input pitch-num" data-pitch-field="grind1" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="4" autocomplete="off"><b>BAG</b></span></label><label class="pitch-row"><span>2호기</span><span class="pitch-num-wrap"><input class="pitch-input pitch-num" data-pitch-field="grind2" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="3" autocomplete="off"><b>BAG</b></span></label></div><div class="pitch-section"><div class="pitch-section-title">원료 이동</div><div class="pitch-repeat" data-pitch-repeat="move"><div class="pitch-repeat-head"><b>이동 목록</b></div><div class="pitch-list" data-pitch-list="move"></div></div></div><div class="pitch-workflow"><div class="pitch-work-actions"><button type="button" id="pitchStartBtn" class="pitch-work-btn">작업시작</button><button type="button" id="pitchSaveBtn" class="pitch-work-btn">임시저장</button><button type="button" id="pitchCompleteBtn" class="pitch-work-btn">작업완료</button></div><div id="pitchWorkStatus" class="pitch-work-status" aria-live="polite"></div><span id="pitchSaveStatus" class="pitch-save-status" aria-live="polite"></span><button type="button" id="pitchDownloadAgain" class="pitch-download-again" hidden>완료 파일 다시 받기</button></div><div class="pitch-photo"><input id="pitchPhotoInput" type="file" accept="image/*" capture="environment" multiple hidden><div id="pitchPhotoThumbs" class="pitch-photo-thumbs"></div></div></section></div></div>
       </div>
 
     </div>
@@ -3425,7 +3479,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const all=load().filter(x=>!x.closed);
       Object.keys(NAMES).forEach(k=>{
         const wrap=document.getElementById('hotspot-'+k); const card=wrap&&wrap.querySelector('.expand-card'); if(!card) return;
-        const content=k==='pitch'?(card.querySelector('.pitch-scroll-body')||card):card,slot=content.querySelector('[data-cmd-slot]');
+        const content=(k==='pitch'?(card.querySelector('.pitch-scroll-body')||card):(k==='inbound'?(card.querySelector('.inbound-scroll-body')||card):card)),slot=content.querySelector('[data-cmd-slot]');
         let box=(slot||content).querySelector(':scope > .cmd-in-card');
         const items=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(x.target==='*'&&x.kind==='notice')).reverse().sort((a,b)=>((b.urgent&&!b.completed)?1:0)-((a.urgent&&!a.completed)?1:0));
         if(!items.length && !slot){ if(box) box.remove(); return; }
@@ -4305,7 +4359,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const me=()=>{try{return localStorage.getItem('jisu-user')||''}catch(e){return ''}};
     const wraps=[...document.querySelectorAll('.hotspot-wrapper')].filter(w=>w.id&&w.id.startsWith('hotspot-')&&w.querySelector(':scope > .expand-card'));
     const keyOf=w=>w.id.slice(8);
-    function box(w){ const card=w.querySelector(':scope > .expand-card'),content=keyOf(w)==='pitch'?(card.querySelector('.pitch-scroll-body')||card):card; let b=content.querySelector(':scope > .memo-box');
+    function box(w){ const card=w.querySelector(':scope > .expand-card'),k=keyOf(w),content=(k==='pitch'?(card.querySelector('.pitch-scroll-body')||card):(k==='inbound'?(card.querySelector('.inbound-scroll-body')||card):card)); let b=content.querySelector(':scope > .memo-box');
       if(!b){ b=document.createElement('section'); b.className='memo-box'; b.dataset.memoFor=keyOf(w); content.appendChild(b); } return b; }
     function render(){
       const all=load();
