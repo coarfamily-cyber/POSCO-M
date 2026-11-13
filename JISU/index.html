@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140005">
+  <meta name="jisu-build" content="202611140025">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -2846,7 +2846,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       if(x.short) s+='<span class="short-tag">부족 완료</span>';
       if(x.carried&&!x.closed) s+='<span class="carry-tag">잔량 이월</span>';
       if(x.review==='pending') s+='<span class="pend-tag">확인 대기</span>'; return s; }
-    function carrySub(x){ if(!x.carryCount) return ''; const p=[]; if(x.origDay){const q=String(x.origDay).split('-'); p.push((+q[1])+'/'+(+q[2])+'부터');} if(x.origGoal!=null){const g=goalOf(x.text); p.push('원래 '+x.origGoal+(g&&g.u?' '+g.u:''));} return p.length?'<span class="carry-sub">'+esc(p.join(' · '))+'</span>':''; }
+    function carrySub(x){ if(!x.carryCount || !isMoveWork(x)) return ''; const p=[]; if(x.origDay){const q=String(x.origDay).split('-'); p.push((+q[1])+'/'+(+q[2])+'부터');} if(x.origGoal!=null){const g=goalOf(x.text); p.push('원래 '+x.origGoal+(g&&g.u?' '+g.u:''));} return p.length?'<span class="carry-sub">'+esc(p.join(' · '))+'</span>':''; }
     function obItemTag(x){
       let tag='';
       if(x.target&&x.target.startsWith('outbound:')){ tag=x.target.slice('outbound:'.length); }
@@ -2857,17 +2857,21 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const cls=isRes?'ob-tag-res':(isTrans?'ob-tag-trans':'ob-tag-prod');
       return '<span class="ob-item-tag '+cls+'">'+esc(tag)+'</span>';
     }
-    function isObItem(x){
-      if(!x) return false;
-      const t=String(x.target||''), txt=String(x.text||'');
-      return t==='outbound' || t.startsWith('outbound:') || /^(outbound|\[(RAS-2|L1|CP3K|C3B|연구요청|공장간 이송)])/.test(txt);
+    function isMoveWork(x){
+      if(!x || x.kind==='notice') return false;
+      if(x.from && x.to) return true;
+      if(moveOf(x)) return true;
+      const t=String(x.text||'');
+      if(/이동|이송|운반/.test(t)) return true;
+      if(/→|->|⇒|>/.test(t)) return true;
+      return false;
     }
     function itemHtml(x,withDel){
-      const isWork=x.kind!=='notice'; const isOb=isObItem(x); const g=(isWork && !isOb)?goalOf(x.text):null;
+      const isWork=x.kind!=='notice'; const isMove=isMoveWork(x); const g=isMove?goalOf(x.text):null;
       let right='';
       if(isWork){
         right='<div class="work-ctrl">'
-          +(!isOb ? '<label class="work-done-num">완료 <input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" enterkeyhint="done" data-cmd-progress="'+x.id+'" value="'+(x.done!=null?esc(x.done):'')+'" placeholder="0"'+(x.completed?' disabled':'')+'>'+'<span class="work-unit">'+(g?'/ '+esc(g.n)+(g.u?' '+esc(g.u):''):'')+'</span>'+'</label>' : '')
+          +(isMove ? '<label class="work-done-num">완료 <input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" enterkeyhint="done" data-cmd-progress="'+x.id+'" value="'+(x.done!=null?esc(x.done):'')+'" placeholder="0"'+(x.completed?' disabled':'')+'>'+'<span class="work-unit">'+(g?'/ '+esc(g.n)+(g.u?' '+esc(g.u):''):'')+'</span>'+'</label>' : '')
           +'<button type="button" class="work-complete work-progress'+(x.working&&!x.completed?' is-working':'')+'" data-cmd-working="'+x.id+'">작업중</button>'
           +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?(x.short?'부족 완료':'완료됨'):'작업완료')+'</button>'
           +'</div>';
@@ -2894,7 +2898,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     function homeWork(){
       const work=load().filter(x=>!x.closed&&x.kind!=='notice'); if(!work.length) return '<div class="home-sum"><div class="hs-h">오늘 전체 현황</div><div class="hs-empty">오늘 등록된 금일작업이 없어요.</div></div>';
       const done=work.filter(x=>x.completed).length, run=work.filter(x=>x.working&&!x.completed).length, carry=work.filter(x=>x.carryCount).length;
-      let goal=0, got=0; work.forEach(x=>{ const g=goalOf(x.text); if(!g||!/^(TON|톤)$/i.test(g.u)) return; const n=Number(g.n); if(!(n>0)) return; goal+=n; const d=x.completed&&!x.short&&(x.done==null||x.done==='')?n:Number(x.done)||0; got+=Math.min(Math.max(d,0),n); });
+      let goal=0, got=0; work.forEach(x=>{ if(!isMoveWork(x)) return; const g=goalOf(x.text); if(!g||!/^(TON|톤)$/i.test(g.u)) return; const n=Number(g.n); if(!(n>0)) return; goal+=n; const d=x.completed&&!x.short&&(x.done==null||x.done==='')?n:Number(x.done)||0; got+=Math.min(Math.max(d,0),n); });
       const r=v=>String(Math.round(v*10)/10), pct=goal?Math.round(got/goal*100):0;
       return '<div class="home-sum"><div class="hs-h">오늘 전체 현황</div>'
         +'<div class="hs-line">오늘 작업 <b>'+work.length+'</b>건 · 완료 <b class="ok">'+done+'</b> · 작업중 <b class="run">'+run+'</b> · 이월 <b class="carry">'+carry+'</b></div>'
@@ -2918,16 +2922,9 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         const active=work.some(x=>x.working&&!x.completed); b.classList.toggle('has-active-work',active);
         document.querySelectorAll('[data-zone-btn="'+k+'"]').forEach(z=>z.classList.toggle('has-active-work',active));
         const notices=mine.length-work.length;
-        let badge=b.querySelector('.cmd-count');
-        if(work.length && k!=='outbound'){ if(!badge){ badge=document.createElement('span'); badge.className='cmd-count'; b.appendChild(badge); }
-          badge.textContent = done ? work.length+'/'+done : String(work.length);
-          badge.classList.toggle('all-done', done===work.length); badge.classList.toggle('has-carry', work.some(x=>x.carryCount)); badge.classList.toggle('is-run', active && done!==work.length);
-          badge.title='금일작업 '+work.length+'건 중 '+done+'건 완료'+(active?' · 작업중':''); }
-        else if(badge) badge.remove();
-        { /* 이월 표시: 아직 안 끝난 이월 작업 수를 -N 으로 */ const cn=work.filter(x=>x.carryCount&&!x.completed).length; let cb=b.querySelector('.carry-minus');
-          if(cn && k!=='outbound'){ if(!cb){ cb=document.createElement('span'); cb.className='carry-minus'; } const ref=b.querySelector('.cmd-count'); if(ref) ref.after(cb); else b.appendChild(cb); cb.textContent='-'+cn; cb.title='이월 작업 '+cn+'건 (지난 날에서 넘어온 남은 작업)'; }
-          else if(cb) cb.remove(); }
-        { const nb=b.querySelector('.cmd-notice-count'); if(nb) nb.remove(); }
+        let badge=b.querySelector('.cmd-count'); if(badge) badge.remove();
+        let cb=b.querySelector('.carry-minus'); if(cb) cb.remove();
+        let nb=b.querySelector('.cmd-notice-count'); if(nb) nb.remove();
 
         document.querySelectorAll('[data-zone-btn="'+k+'"] .cmd-notice-count').forEach(z=>z.remove());
       });
@@ -2945,7 +2942,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const wid=t.getAttribute('data-cmd-working');
       if(wid){update(wid,it=>{if(it.completed){it.completed=false;it.completedAt=null;if(it.short){delete it.short;if(it.review==='pending'&&!it.carryFrom)delete it.review;}if('doneBefore' in it){it.done=it.doneBefore;delete it.doneBefore;}it.working=true;it.startedAt=it.startedAt||nowStr();}else{it.working=!it.working;if(it.working)it.startedAt=it.startedAt||nowStr();}});return;}
       const id=t.getAttribute('data-cmd-complete');if(!id)return;
-      update(id,it=>{if(it.completed){it.completed=false;it.completedAt=null;if(it.short){delete it.short;if(it.review==='pending'&&!it.carryFrom)delete it.review;}if('doneBefore' in it){it.done=it.doneBefore;delete it.doneBefore;}}else{const g=isObItem(it)?null:goalOf(it.text);it.completed=true;it.working=false;it.completedAt=nowStr();it.doneBefore=(it.done==null?null:it.done);if(g){const goal=Number(g.n);const cur=Number(it.done);if(it.done!=null&&it.done!==''&&!isNaN(cur)&&cur<goal){it.short=true;it.review='pending';}else{it.done=(it.done==null||it.done===''||isNaN(cur))?goal:cur;}}}});}
+      update(id,it=>{if(it.completed){it.completed=false;it.completedAt=null;if(it.short){delete it.short;if(it.review==='pending'&&!it.carryFrom)delete it.review;}if('doneBefore' in it){it.done=it.doneBefore;delete it.doneBefore;}}else{const g=isMoveWork(it)?goalOf(it.text):null;it.completed=true;it.working=false;it.completedAt=nowStr();it.doneBefore=(it.done==null?null:it.done);if(g){const goal=Number(g.n);const cur=Number(it.done);if(it.done!=null&&it.done!==''&&!isNaN(cur)&&cur<goal){it.short=true;it.review='pending';}else{it.done=(it.done==null||it.done===''||isNaN(cur))?goal:cur;}}}});}
     [document.getElementById('mapStage'),document.getElementById('modalCmds'),list].forEach(el=>{if(!el)return;el.addEventListener('change',onChange,true);el.addEventListener('click',onClick,true);el.addEventListener('keydown',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){e.stopPropagation();if(e.key==='Enter')e.target.blur();}},true);el.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){const c=e.target.value.replace(/[^0-9.,]/g,'');if(c!==e.target.value)e.target.value=c;}},true);});
     const PLACE_LABEL={A:'A동',B:'B동',C:'C동',D:'D동',outbound:'출고',inbound:'입고',packaging:'포장','packaging-d':'포장(D동)',pitch:'피치',environment:'환경','production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H'};
     function detectMove(t){
