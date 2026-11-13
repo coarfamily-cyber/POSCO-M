@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140815">
+  <meta name="jisu-build" content="202611140820">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -2720,21 +2720,6 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
               <h3 class="enscape-title">출고 상황실</h3>
             </div>
           </div>
-          <div class="ob-card-items-bar">
-            <div class="ob-card-items-head">
-              <span>출하 품목 / 이송 지시</span>
-              <span class="ob-card-hint">터치 시 바로 지시 입력</span>
-            </div>
-            <div class="ob-card-chips">
-              <button type="button" class="ob-card-chip" data-ob-quick="RAS-2">RAS-2</button>
-              <button type="button" class="ob-card-chip" data-ob-quick="L1">L1</button>
-              <button type="button" class="ob-card-chip" data-ob-quick="CP3K">CP3K</button>
-              <button type="button" class="ob-card-chip" data-ob-quick="C3B">C3B</button>
-              <button type="button" class="ob-card-chip ob-res" data-ob-quick="연구요청">연구요청</button>
-              <button type="button" class="ob-card-chip ob-trans" data-ob-quick="2공장→1공장">2공장→1공장</button>
-              <button type="button" class="ob-card-chip ob-trans" data-ob-quick="1공장→2공장">1공장→2공장</button>
-            </div>
-          </div>
             <div class="cmd-slot" data-cmd-slot="outbound"></div>
             <section class="ob-photo" id="obPhoto">
               <div class="ob-photo-head"><span>출고 사진</span><span class="ob-count" id="obCount">0장</span></div>
@@ -3624,26 +3609,6 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         }
       });
     }
-    document.querySelectorAll('[data-ob-quick]').forEach(btn=>{
-      btn.addEventListener('click',e=>{
-        e.stopPropagation();
-        const rawVal=btn.getAttribute('data-ob-quick');
-        const targetKey='outbound:'+rawVal;
-        sel.value=targetKey;
-        try{localStorage.setItem('jisu-cmd-target',targetKey);}catch(_){}
-        render();
-        if(text){
-          let cur=text.value.trim();
-          const chipLabel=rawVal.includes('공장')?'공장간 이송 ('+rawVal+')':rawVal;
-          const prefix='['+chipLabel+'] ';
-          if(!cur.includes('['+chipLabel+']')){
-            cur=cur.replace(/^\[(RAS-2|L1|CP3K|C3B|연구요청|공장간 이송 \(2공장→1공장\)|공장간 이송 \(1공장→2공장\)|공장간 이송 2공장→1공장|공장간 이송 1공장→2공장|2공장→1공장|1공장→2공장)\]\s*/, '');
-            text.value=prefix+cur;
-          }
-          text.focus();
-        }
-      });
-    });
     window.addEventListener('resize',()=>{drawMoves();setTimeout(drawMoves,500);}); if(window.ResizeObserver){new ResizeObserver(()=>drawMoves()).observe(document.getElementById('mapStage'));} setTimeout(drawMoves,800);
     render();
   })();
