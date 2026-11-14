@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611142000">
+  <meta name="jisu-build" content="202611142010">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -808,6 +808,57 @@
     .ob-stack-btn:hover .ob-stack-card.c3{transform:rotate(-16deg) translateY(-2px);}
     .ob-stack-empty-ico{width:20px;height:20px;color:rgba(15,23,42,0.45);}
     .ob-grid.is-collapsed{display:none !important;}
+    .ob-lb-backdrop{
+      position:fixed;inset:0;z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:space-between;
+      padding:18px 20px 20px;background:rgba(2,6,23,0.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    }
+    .ob-lb-backdrop.is-open{display:flex;}
+    .ob-lb-top{
+      width:100%;max-width:1080px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#f8fafc;
+    }
+    .ob-lb-meta{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:#e2e8f0;}
+    .ob-lb-count{padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.12);font-size:12px;font-weight:800;}
+    .ob-lb-actions{display:flex;align-items:center;gap:8px;}
+    .ob-lb-btn{
+      height:36px;padding:0 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.22);
+      background:rgba(255,255,255,0.12);color:#fff;font-size:12.5px;font-weight:800;
+      display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;text-decoration:none;
+    }
+    .ob-lb-btn:hover{background:rgba(255,255,255,0.22);}
+    .ob-lb-btn.is-danger{color:#fca5a5;border-color:rgba(248,113,113,0.35);}
+    .ob-lb-stage{
+      position:relative;flex:1;width:100%;max-width:1080px;min-height:0;
+      display:flex;align-items:center;justify-content:center;margin:12px 0;
+    }
+    .ob-lb-img{
+      max-width:82vw;max-height:70vh;border-radius:18px;object-fit:contain;
+      box-shadow:0 20px 50px rgba(0,0,0,0.55);background:rgba(15,23,42,0.55);
+    }
+    .ob-lb-nav{
+      position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;
+      border:1px solid rgba(255,255,255,0.25);background:rgba(15,23,42,0.58);color:#fff;
+      font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;
+    }
+    .ob-lb-nav:hover{background:rgba(30,41,59,0.85);}
+    .ob-lb-nav.prev{left:8px;}
+    .ob-lb-nav.next{right:8px;}
+    .ob-lb-strip{
+      display:flex;align-items:center;gap:8px;max-width:100%;overflow-x:auto;padding:6px 10px;
+      border-radius:16px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);
+    }
+    .ob-lb-thumb{
+      width:52px;height:52px;border-radius:10px;overflow:hidden;border:2px solid transparent;
+      opacity:0.62;cursor:pointer;flex:0 0 auto;padding:0;background:none;
+    }
+    .ob-lb-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+    .ob-lb-thumb.is-active{border-color:#38bdf8;opacity:1;}
+    @media (max-width: 768px){
+      .ob-lb-backdrop{padding:14px 12px 16px;}
+      .ob-lb-img{max-width:94vw;max-height:66dvh;border-radius:14px;}
+      .ob-lb-nav{width:38px;height:38px;font-size:19px;}
+      .ob-lb-btn{height:38px;padding:0 12px;font-size:12px;}
+      .ob-lb-thumb{width:46px;height:46px;}
+    }
     .ob-msg:empty,.ob-grid:empty{display:none !important;}
     .mobile-card-close{display:none;}
     @media (max-width: 768px){
@@ -3916,14 +3967,55 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     // camera
     let stream=null;
     function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}$('obCam').hidden=true;}
-    if($('obStackBtn')) $('obStackBtn').addEventListener('click',e=>{
-      e.stopPropagation();
-      const g=$('obGrid'); if(!g) return;
+    let lbIdx=0;
+    function renderLb(){
+      const items=root._items||[];
+      const lb=$('obLightbox'); if(!lb) return;
+      if(!items.length){ lb.classList.remove('is-open'); return; }
+      if(lbIdx<0) lbIdx=items.length-1;
+      if(lbIdx>=items.length) lbIdx=0;
+      const cur=items[lbIdx];
+      $('obLbImg').src=cur.data;
+      $('obLbCount').textContent=(lbIdx+1)+' / '+items.length;
+      $('obLbTime').textContent=cur.at||'';
+      const dl=$('obLbDl'); dl.href=cur.data; dl.download=cur.name||'outbound.jpg';
+      $('obLbPrev').style.display=items.length>1?'':'none';
+      $('obLbNext').style.display=items.length>1?'':'none';
+      $('obLbStrip').innerHTML=items.map((p,i)=>'<button type="button" class="ob-lb-thumb'+(i===lbIdx?' is-active':'')+'" data-lb-i="'+i+'"><img src="'+p.data+'" alt=""></button>').join('');
+    }
+    function openLb(idx){
       if(!(root._items&&root._items.length)){ msg('저장된 출고 사진이 아직 없습니다. PHOTO로 촬영해 주세요.'); return; }
-      msg('');
-      g.classList.toggle('is-collapsed');
-      if(g.classList.contains('is-collapsed')) $('obPreview').hidden=true;
+      msg(''); lbIdx=idx||0; renderLb();
+      $('obLightbox').classList.add('is-open');
+    }
+    function closeLb(){ const lb=$('obLightbox'); if(lb) lb.classList.remove('is-open'); }
+    if($('obStackBtn')) $('obStackBtn').addEventListener('click',e=>{ e.stopPropagation(); openLb(0); });
+    if($('obLbClose')) $('obLbClose').addEventListener('click',closeLb);
+    if($('obLbPrev')) $('obLbPrev').addEventListener('click',e=>{ e.stopPropagation(); lbIdx--; renderLb(); });
+    if($('obLbNext')) $('obLbNext').addEventListener('click',e=>{ e.stopPropagation(); lbIdx++; renderLb(); });
+    if($('obLbStrip')) $('obLbStrip').addEventListener('click',e=>{ const b=e.target.closest('[data-lb-i]'); if(!b) return; lbIdx=+b.dataset.lbI; renderLb(); });
+    if($('obLbDel')) $('obLbDel').addEventListener('click',async ()=>{
+      const items=root._items||[]; const cur=items[lbIdx]; if(!cur) return;
+      if(!confirm('이 사진을 삭제할까요?')) return;
+      await del(cur.id); await render();
+      if(!(root._items&&root._items.length)) closeLb(); else renderLb();
+      msg('삭제했습니다.');
     });
+    if($('obLightbox')){
+      $('obLightbox').addEventListener('click',e=>{ if(e.target===$('obLightbox')||e.target===$('obLbStage')) closeLb(); });
+      let tx=0;
+      $('obLightbox').addEventListener('touchstart',e=>{ tx=e.touches[0].clientX; },{passive:true});
+      $('obLightbox').addEventListener('touchend',e=>{
+        const dx=e.changedTouches[0].clientX-tx;
+        if(Math.abs(dx)>45 && (root._items||[]).length>1){ lbIdx += dx<0?1:-1; renderLb(); }
+      },{passive:true});
+      document.addEventListener('keydown',e=>{
+        if(!$('obLightbox').classList.contains('is-open')) return;
+        if(e.key==='Escape') closeLb();
+        else if(e.key==='ArrowLeft'){ lbIdx--; renderLb(); }
+        else if(e.key==='ArrowRight'){ lbIdx++; renderLb(); }
+      });
+    }
     $('obCamBtn').addEventListener('click',async e=>{e.stopPropagation();
       if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('obFile').click();return;}
       try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});$('obVideo').srcObject=stream;$('obCam').hidden=false;msg('카메라가 켜졌습니다. "촬영 후 저장"을 누르세요.');}
@@ -5821,5 +5913,24 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   });
 })();
 </script>
+  <div class="ob-lb-backdrop" id="obLightbox" role="dialog" aria-modal="true" aria-label="출고 사진 크게 보기">
+    <div class="ob-lb-top">
+      <div class="ob-lb-meta">
+        <span class="ob-lb-count" id="obLbCount">1 / 1</span>
+        <span id="obLbTime"></span>
+      </div>
+      <div class="ob-lb-actions">
+        <a class="ob-lb-btn" id="obLbDl" download>다운로드</a>
+        <button type="button" class="ob-lb-btn is-danger" id="obLbDel">삭제</button>
+        <button type="button" class="ob-lb-btn" id="obLbClose">✕ 닫기</button>
+      </div>
+    </div>
+    <div class="ob-lb-stage" id="obLbStage">
+      <button type="button" class="ob-lb-nav prev" id="obLbPrev" aria-label="이전 사진">‹</button>
+      <img class="ob-lb-img" id="obLbImg" alt="출고 사진 확대">
+      <button type="button" class="ob-lb-nav next" id="obLbNext" aria-label="다음 사진">›</button>
+    </div>
+    <div class="ob-lb-strip" id="obLbStrip"></div>
+  </div>
 </body>
 </html>
