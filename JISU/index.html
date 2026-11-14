@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611141955">
+  <meta name="jisu-build" content="202611142000">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -3907,8 +3907,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         const c1=st.querySelector('.c1'), c2=st.querySelector('.c2'), c3=st.querySelector('.c3');
         const emptyIco='<svg class="ob-stack-empty-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
         if(c1) c1.innerHTML=items[0]?'<img src="'+items[0].data+'" alt="최근 출고 사진">':emptyIco;
-        if(c2){ c2.innerHTML=items[1]?'<img src="'+items[1].data+'" alt="">':''; c2.style.display=items.length>=2||items.length===0?'':'none'; }
-        if(c3){ c3.innerHTML=items[2]?'<img src="'+items[2].data+'" alt="">':''; c3.style.display=items.length>=3||items.length===0?'':'none'; }
+        if(c2){ c2.innerHTML=items[1]?'<img src="'+items[1].data+'" alt="">':''; c2.style.display=''; }
+        if(c3){ c3.innerHTML=items[2]?'<img src="'+items[2].data+'" alt="">':''; c3.style.display=''; }
         st.title=items.length?'출고 사진 '+items.length+'장 바로 보기':'저장된 출고 사진 없음';
       }
       root._items=items;
