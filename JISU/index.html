@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611142055">
+  <meta name="jisu-build" content="202611142100">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -2773,6 +2773,24 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <button type="button" class="ob-chip ob-chip-trans" data-ob-item="공장간 이송 (1공장→2공장)" data-ob-val="1공장→2공장">1공장→2공장</button>
         </div>
       </div>
+      <!-- 입고 선택 시 표시되는 입고 품목 / 이송 선택 바 -->
+      <div class="ob-sub-selector" id="ibSubSelector" style="display:none;">
+        <div class="ob-sub-head">
+          <span>📦 입고 품목 / 이송 선택</span>
+          <span class="ob-sub-hint">터치 시 내용에 자동 반영</span>
+        </div>
+        <div class="ob-sub-chips">
+          <button type="button" class="ob-chip" data-ib-item="SH">SH</button>
+          <button type="button" class="ob-chip" data-ib-item="HH">HH</button>
+          <button type="button" class="ob-chip" data-ib-item="16kg 파렛트">16kg 파렛트</button>
+          <button type="button" class="ob-chip" data-ib-item="알루미늄 파우치백">알루미늄 파우치백</button>
+          <button type="button" class="ob-chip" data-ib-item="사각박스">사각박스</button>
+        </div>
+        <div class="ob-sub-trans">
+          <button type="button" class="ob-chip ob-chip-trans" data-ib-item="공장간 이송 (2공장→1공장)" data-ib-val="2공장→1공장">2공장→1공장</button>
+          <button type="button" class="ob-chip ob-chip-trans" data-ib-item="공장간 이송 (1공장→2공장)" data-ib-val="1공장→2공장">1공장→2공장</button>
+        </div>
+      </div>
       <div class="cmd-kind" role="group" aria-label="등록 유형">
         <button type="button" data-cmd-kind="instruction" aria-pressed="true">금일작업 내용</button>
         <button type="button" data-cmd-kind="notice" aria-pressed="false">공지사항</button>
@@ -3598,7 +3616,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
   (function(){
     const KEY='jisu-commands-v1';
     const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","environment":"환경","A":"A동","B":"B동","C":"C동","D":"D동",
-      "outbound:RAS-2":"출고 · RAS-2","outbound:L1":"출고 · L1","outbound:CP3K":"출고 · CP3K","outbound:C3B":"출고 · C3B","outbound:연구요청":"출고 · 연구요청","outbound:2공장→1공장":"출고 · 공장간이송(2공장→1공장)","outbound:1공장→2공장":"출고 · 공장간이송(1공장→2공장)"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
+      "outbound:RAS-2":"출고 · RAS-2","outbound:L1":"출고 · L1","outbound:CP3K":"출고 · CP3K","outbound:C3B":"출고 · C3B","outbound:연구요청":"출고 · 연구요청","outbound:2공장→1공장":"출고 · 공장간이송(2공장→1공장)","outbound:1공장→2공장":"출고 · 공장간이송(1공장→2공장)","inbound:SH":"입고 · SH","inbound:HH":"입고 · HH","inbound:16kg 파렛트":"입고 · 16kg 파렛트","inbound:알루미늄 파우치백":"입고 · 알루미늄 파우치백","inbound:사각박스":"입고 · 사각박스","inbound:2공장→1공장":"입고 · 공장간이송(2공장→1공장)","inbound:1공장→2공장":"입고 · 공장간이송(1공장→2공장)"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     let kind='instruction';
     const sel=document.getElementById('cmdTarget'), text=document.getElementById('cmdText'), submit=document.getElementById('cmdSubmit'), list=document.getElementById('cmdList'), label=document.getElementById('cmdTargetLabel');
     const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
@@ -3648,7 +3666,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     function getObItem(x){
       let tag='';
       if(x.target&&x.target.startsWith('outbound:')){ tag=x.target.slice('outbound:'.length); }
-      else { const m=String(x.text||'').match(/^\[(RAS-2|L1|CP3K|C3B|연구요청|공장간 이송 \(2공장→1공장\)|공장간 이송 \(1공장→2공장\)|공장간 이송 2공장→1공장|공장간 이송 1공장→2공장|2공장→1공장|1공장→2공장)\]/);
+      else if(x.target&&x.target.startsWith('inbound:')){ tag=x.target.slice('inbound:'.length); }
+      else { const m=String(x.text||'').match(/^\[(RAS-2|L1|CP3K|C3B|연구요청|SH|HH|16kg 파렛트|알루미늄 파우치백|사각박스|공장간 이송 \(2공장→1공장\)|공장간 이송 \(1공장→2공장\)|공장간 이송 2공장→1공장|공장간 이송 1공장→2공장|2공장→1공장|1공장→2공장)\]/);
         if(m) tag=m[1].replace(/^공장간 이송 \((.*)\)$/,'$1').replace(/^공장간 이송 /,''); }
       return tag;
     }
@@ -3726,7 +3745,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         const wrap=document.getElementById('hotspot-'+k); const card=wrap&&wrap.querySelector('.expand-card'); if(!card) return;
         const content=(k==='pitch'?(card.querySelector('.pitch-scroll-body')||card):(k==='inbound'?(card.querySelector('.inbound-scroll-body')||card):card)),slot=content.querySelector('[data-cmd-slot]');
         let box=(slot||content).querySelector(':scope > .cmd-in-card');
-        const items=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(x.target==='*'&&x.kind==='notice')).reverse().sort((a,b)=>((b.urgent&&!b.completed)?1:0)-((a.urgent&&!a.completed)?1:0));
+        const items=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(k==='inbound'&&x.target&&x.target.startsWith('inbound:'))||(x.target==='*'&&x.kind==='notice')).reverse().sort((a,b)=>((b.urgent&&!b.completed)?1:0)-((a.urgent&&!a.completed)?1:0));
         if(!items.length && !slot){ if(box) box.remove(); return; }
         if(!box){ box=document.createElement('div'); box.className='cmd-in-card'; if(slot) slot.appendChild(box); else content.insertBefore(box,content.firstChild); }
         const ns=items.filter(x=>x.kind==='notice'), ws=items.filter(x=>x.kind!=='notice');
@@ -3734,7 +3753,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       });
       document.querySelectorAll('[data-toggle-zone],[data-bldg]').forEach(b=>{
         const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg');
-        const mine=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:'))); const work=mine.filter(x=>x.kind!=='notice'); const done=work.filter(x=>x.completed).length;
+        const mine=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(k==='inbound'&&x.target&&x.target.startsWith('inbound:'))); const work=mine.filter(x=>x.kind!=='notice'); const done=work.filter(x=>x.completed).length;
         const active=work.some(x=>x.working&&!x.completed); b.classList.toggle('has-active-work',active);
         document.querySelectorAll('[data-zone-btn="'+k+'"]').forEach(z=>z.classList.toggle('has-active-work',active));
         const notices=mine.length-work.length;
@@ -3844,6 +3863,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     const getTarget=()=>(sel.value==='outbound'&&obSubTarget)?obSubTarget:sel.value;
     const setTarget=(val)=>{
       if(val&&val.startsWith('outbound:')){ obSubTarget=val; sel.value='outbound'; }
+      else if(val&&val.startsWith('inbound:')){ obSubTarget=val; sel.value='inbound'; }
       else { obSubTarget=''; sel.value=val||''; }
       try{localStorage.setItem('jisu-cmd-target',getTarget());}catch(_){}
     };
@@ -3863,9 +3883,19 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           btn.classList.toggle('is-active', v === curItem);
         });
       }
+      const ibSub=document.getElementById('ibSubSelector');
+      if(ibSub){
+        const isIb = t && (t==='inbound' || t.startsWith('inbound:'));
+        ibSub.style.display = isIb ? 'block' : 'none';
+        const curIbItem = t && t.startsWith('inbound:') ? t.slice('inbound:'.length) : '';
+        ibSub.querySelectorAll('[data-ib-item]').forEach(btn=>{
+          const v = btn.getAttribute('data-ib-val') || btn.getAttribute('data-ib-item');
+          btn.classList.toggle('is-active', v === curIbItem);
+        });
+      }
       if(!t){ label.textContent='· HOME'; const allN=load().filter(x=>!x.closed&&x.target==='*'&&x.kind==='notice').reverse(); list.innerHTML=(allN.length?'<div class="all-notice-h">전체 공지 <span>'+allN.length+'</span></div>'+allN.map(x=>itemHtml(x,true)).join(''):'')+homeSummary()+'<div class="cmd-empty">대상 버튼을 고르거나 지도에서 버튼을 누르면 등록 내역이 보입니다.</div>'; return; }
       label.textContent='· '+(NAMES[t]||t);
-      const items=load().filter(x=>!x.closed&&(x.target===t||(t==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(x.target==='*'&&x.kind==='notice'))).reverse().sort((a,b)=>((b.urgent&&!b.completed)?1:0)-((a.urgent&&!a.completed)?1:0));
+      const items=load().filter(x=>!x.closed&&(x.target===t||(t==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(t==='inbound'&&x.target&&x.target.startsWith('inbound:'))||(x.target==='*'&&x.kind==='notice'))).reverse().sort((a,b)=>((b.urgent&&!b.completed)?1:0)-((a.urgent&&!a.completed)?1:0));
       list.innerHTML=items.length?items.map(x=>itemHtml(x,true)).join(''):'<div class="cmd-empty">등록된 내용이 없습니다.</div>';
     }
     function updateSubmitLabel(){const t=getTarget();if(!t){ if(kind==='notice'){ submit.disabled=false; submit.innerHTML='<span class="cmd-submit-target">전체 버튼</span>에 공지사항 등록'; return; } submit.disabled=true;submit.textContent='대상 버튼을 먼저 선택하세요';return;} submit.disabled=false; const nm=NAMES[t]||t; submit.innerHTML='<span class="cmd-submit-target">'+esc(nm)+'</span>에 '+(kind==='notice'?'공지사항 등록':'금일작업 내용 등록');}
@@ -3883,12 +3913,12 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     }
     sel.addEventListener('change',()=>{obSubTarget='';try{localStorage.setItem('jisu-cmd-target',sel.value)}catch(e){} if(!sel.value) goHome(); render();});
     setTarget('');
-    try{const last=localStorage.getItem('jisu-cmd-target');if(last&&(last.startsWith('outbound:')||[...sel.options].some(o=>o.value===last)))setTarget(last);}catch(e){}
+    try{const last=localStorage.getItem('jisu-cmd-target');if(last&&(last.startsWith('outbound:')||last.startsWith('inbound:')||[...sel.options].some(o=>o.value===last)))setTarget(last);}catch(e){}
     document.querySelectorAll('[data-toggle-zone],[data-bldg],[data-zone-btn]').forEach(b=>b.addEventListener('click',()=>{const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg')||b.getAttribute('data-zone-btn');if(NAMES[k]){setTarget(k);render();}if(b.hasAttribute('data-bldg'))fillModal(k);}));
     window.addEventListener('storage',e=>{if(e.key===KEY)render();});
     window.jisuCmdRender=()=>render();
     window.jisuSetTarget=(val)=>{ setTarget(val); render(); };
-    list.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-memo-goto]'); if(!b) return; const k=b.getAttribute('data-memo-goto'); if(!k.startsWith('outbound:')&&![...sel.options].some(o=>o.value===k)) return; setTarget(k); render(); });
+    list.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-memo-goto]'); if(!b) return; const k=b.getAttribute('data-memo-goto'); if(!k.startsWith('outbound:')&&!k.startsWith('inbound:')&&![...sel.options].some(o=>o.value===k)) return; setTarget(k); render(); });
     window.addEventListener('storage',e=>{ if(e.key==='jisu-memos-v1') render(); });
     list.addEventListener('change',e=>{const id=e.target.getAttribute&&e.target.getAttribute('data-cmd-retarget');if(!id)return;const nt=e.target.value;const all=load();const it=all.find(x=>x.id===id);if(!it)return;it.target=nt;save(all);setTarget(nt);render();});
     document.getElementById('cmdSummary').addEventListener('click',e=>{const b=e.target.closest('[data-cmd-goto]');if(!b)return;setTarget(b.getAttribute('data-cmd-goto'));render();});
@@ -3909,6 +3939,29 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           const prefix='['+chipLabel+'] ';
           if(!cur.includes('['+chipLabel+']')){
             cur=cur.replace(/^\[(RAS-2|L1|CP3K|C3B|연구요청|공장간 이송 \(2공장→1공장\)|공장간 이송 \(1공장→2공장\)|공장간 이송 2공장→1공장|공장간 이송 1공장→2공장|2공장→1공장|1공장→2공장)\]\s*/, '');
+            text.value=prefix+cur;
+          }
+          text.focus();
+        }
+      });
+    }
+    const ibSubEl=document.getElementById('ibSubSelector');
+    if(ibSubEl){
+      ibSubEl.addEventListener('click',e=>{
+        const btn=e.target.closest&&e.target.closest('[data-ib-item]');
+        if(!btn) return;
+        const rawVal=btn.getAttribute('data-ib-val')||btn.getAttribute('data-ib-item');
+        const chipLabel=btn.getAttribute('data-ib-item');
+        const curT=getTarget();
+        if(!rawVal){ setTarget('inbound'); }
+        else if(curT==='inbound:'+rawVal){ setTarget('inbound'); }
+        else { setTarget('inbound:'+rawVal); }
+        render();
+        if(rawVal && text){
+          let cur=text.value.trim();
+          const prefix='['+chipLabel+'] ';
+          if(!cur.includes('['+chipLabel+']')){
+            cur=cur.replace(/^\[(SH|HH|16kg 파렛트|알루미늄 파우치백|사각박스|공장간 이송 \(2공장→1공장\)|공장간 이송 \(1공장→2공장\)|공장간 이송 2공장→1공장|공장간 이송 1공장→2공장|2공장→1공장|1공장→2공장)\]\s*/, '');
             text.value=prefix+cur;
           }
           text.focus();
@@ -4185,7 +4238,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
   (function(){
     const btn=document.getElementById('xlsxDoneBtn'); if(!btn) return;
     const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","A":"A동","B":"B동","C":"C동","D":"D동","environment":"환경",
-      "outbound:RAS-2":"출고 · RAS-2","outbound:L1":"출고 · L1","outbound:CP3K":"출고 · CP3K","outbound:C3B":"출고 · C3B","outbound:연구요청":"출고 · 연구요청","outbound:2공장→1공장":"출고 · 공장간이송(2공장→1공장)","outbound:1공장→2공장":"출고 · 공장간이송(1공장→2공장)"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
+      "outbound:RAS-2":"출고 · RAS-2","outbound:L1":"출고 · L1","outbound:CP3K":"출고 · CP3K","outbound:C3B":"출고 · C3B","outbound:연구요청":"출고 · 연구요청","outbound:2공장→1공장":"출고 · 공장간이송(2공장→1공장)","outbound:1공장→2공장":"출고 · 공장간이송(1공장→2공장)","inbound:SH":"입고 · SH","inbound:HH":"입고 · HH","inbound:16kg 파렛트":"입고 · 16kg 파렛트","inbound:알루미늄 파우치백":"입고 · 알루미늄 파우치백","inbound:사각박스":"입고 · 사각박스","inbound:2공장→1공장":"입고 · 공장간이송(2공장→1공장)","inbound:1공장→2공장":"입고 · 공장간이송(1공장→2공장)"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     const kstParts=()=>{const p=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const g=t=>p.find(x=>x.type===t).value;return {y:g('year'),m:g('month'),d:g('day')};};
     function loadLib(){ if(window.XLSX) return Promise.resolve(window.XLSX); return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';s.onload=()=>res(window.XLSX);s.onerror=()=>rej(new Error('lib'));document.head.appendChild(s);}); }
     function goal(t){const clean=String(t||'').replace(/^\[[^\]]+\]\s*/,'');const m=clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/);return m?{n:Number(m[1].replace(',','.')),u:({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()}:{n:'',u:''};}
@@ -4983,7 +5036,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const KEY='jisu-commands-v1', load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
     const ST=['st-none','st-wait','st-work','st-done','st-carry'];
     function refresh(){ const all=load().filter(x=>!x.closed&&x.kind!=='notice');
-      document.querySelectorAll('[data-toggle-zone]').forEach(b=>{ const k=b.getAttribute('data-toggle-zone'), w=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:')));
+      document.querySelectorAll('[data-toggle-zone]').forEach(b=>{ const k=b.getAttribute('data-toggle-zone'), w=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(k==='inbound'&&x.target&&x.target.startsWith('inbound:')));
         let st=!w.length?'st-none':(w.some(x=>x.working&&!x.completed)?'st-work':(w.every(x=>x.completed)?'st-done':'st-wait') /* 이월은 점 색이 아니라 분홍 -N 배지로만 표시 */);
         if(k==='pitch'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done')st='st-done';}catch(e){}}ST.forEach(c=>b.classList.toggle(c,c===st));
         const urg=w.some(x=>x.urgent&&!x.completed); let um=b.querySelector('.urgent-mark'); if(urg&&!um){ um=document.createElement('span'); um.className='urgent-mark'; um.textContent='!'; um.title='긴급 작업'; b.appendChild(um); } else if(!urg&&um) um.remove(); }); }
@@ -5666,7 +5719,11 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     'outbound:RAS-2':'출고 · RAS-2', 'outbound:L1':'출고 · L1', 'outbound:CP3K':'출고 · CP3K',
     'outbound:C3B':'출고 · C3B', 'outbound:연구요청':'출고 · 연구요청',
     'outbound:2공장→1공장':'출고 · 공장간이송(2공장→1공장)',
-    'outbound:1공장→2공장':'출고 · 공장간이송(1공장→2공장)'
+    'outbound:1공장→2공장':'출고 · 공장간이송(1공장→2공장)',
+    'inbound:SH':'입고 · SH', 'inbound:HH':'입고 · HH', 'inbound:16kg 파렛트':'입고 · 16kg 파렛트',
+    'inbound:알루미늄 파우치백':'입고 · 알루미늄 파우치백', 'inbound:사각박스':'입고 · 사각박스',
+    'inbound:2공장→1공장':'입고 · 공장간이송(2공장→1공장)',
+    'inbound:1공장→2공장':'입고 · 공장간이송(1공장→2공장)'
   });
 
   const ZONES = [
@@ -5923,7 +5980,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
         flashEl(document.getElementById('cmdList'));
         return;
       }
-      const base = t.startsWith('outbound:') ? 'outbound' : t;
+      const base = t.startsWith('outbound:') ? 'outbound' : (t.startsWith('inbound:') ? 'inbound' : t);
       const wrap = document.getElementById('hotspot-' + base);
       const btn = document.querySelector('[data-toggle-zone="' + base + '"], [data-production-btn="' + base.replace('production-','').toUpperCase() + '"]');
       if(wrap && !wrap.classList.contains('is-open') && btn) btn.click();
