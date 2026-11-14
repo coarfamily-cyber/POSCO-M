@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611141915">
+  <meta name="jisu-build" content="202611141920">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -756,7 +756,24 @@
       font-weight: 800 !important;
       font-size: 13px !important;
       margin-bottom: 6px !important;
+      justify-content: flex-start !important;
+      align-items: center !important;
+      gap: 6px !important;
     }
+    .ob-cmd-wrap{position:relative;}
+    .ob-cmd-wrap .cmd-in-card-h{padding-right:48px !important;min-height:38px !important;}
+    body:not(#z1#z2#z3#z4#z5) .ob-photo-sq-btn{
+      position:absolute !important;top:0 !important;right:0 !important;z-index:4 !important;
+      width:38px !important;height:38px !important;padding:0 !important;
+      display:inline-flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important;gap:2px !important;
+      border-radius:11px !important;border:0 !important;
+      background:linear-gradient(135deg,#2563eb,#0ea5e9) !important;color:#fff !important;
+      box-shadow:0 4px 12px rgba(37,99,235,0.38) !important;
+      font-size:8.5px !important;font-weight:900 !important;letter-spacing:-.02em !important;line-height:1 !important;
+      cursor:pointer !important;
+    }
+    body:not(#z1#z2#z3#z4#z5) .ob-photo-sq-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+    .ob-msg:empty,.ob-grid:empty{display:none !important;}
     .expand-card .cmd-in-card-h span {
       background: #0284c7 !important;
       color: #ffffff !important;
@@ -927,15 +944,15 @@
 
     /* Photo & fork lift UI inside card */
     body:not(#z1#z2#z3#z4#z5) .expand-card .ob-photo {
-      margin-top: 10px !important;
-      padding: 12px 14px !important;
-      border-radius: 20px !important;
-      background: rgba(255, 255, 255, 0.24) !important;
-      backdrop-filter: blur(14px) !important;
-      -webkit-backdrop-filter: blur(14px) !important;
+      margin-top: 8px !important;
+      padding: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
       border: 0 !important;
       border-top: 0 !important;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+      box-shadow: none !important;
     }
     body:not(#z1#z2#z3#z4#z5) #hotspot-environment .env-units {
       margin-top: 10px !important;
@@ -2829,12 +2846,15 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
               <h3 class="enscape-title">OUTBOUND</h3>
             </div>
           </div>
-            <div class="cmd-slot" data-cmd-slot="outbound"></div>
+            <div class="ob-cmd-wrap">
+              <div class="cmd-slot" data-cmd-slot="outbound"></div>
+              <button type="button" class="ob-photo-sq-btn" id="obCamBtn" title="출고 사진 촬영·첨부">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <span>PHOTO</span>
+              </button>
+            </div>
             <section class="ob-photo" id="obPhoto">
-              <div class="ob-photo-head"><span>출고 사진</span><span class="ob-count" id="obCount">0장</span></div>
               <div class="ob-actions">
-                <button type="button" class="ob-btn ob-primary" id="obCamBtn">PHOTO</button>
-                <label class="ob-btn" for="obFile">🖼 사진 불러오기</label>
                 <input type="file" id="obFile" accept="image/*" capture="environment" multiple hidden>
                 <button type="button" class="ob-btn ob-jisu" id="obJisuBtn">🔒 지수가 확인</button>
               </div>
@@ -3791,7 +3811,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     async function render(){
       let items=[];try{items=(await all())||[];}catch(e){msg('이 브라우저에서는 사진 저장소를 열 수 없습니다.');}
       items.sort((a,b)=>a.id<b.id?1:-1);
-      $('obCount').textContent=items.length+'장';
+      if($('obCount'))$('obCount').textContent=items.length+'장';
       $('obGrid').innerHTML=items.map(p=>'<div class="ob-item" data-ob-id="'+p.id+'" title="'+p.name+'"><img src="'+p.data+'" alt="출고 사진"><time>'+p.at+'</time><span class="ob-del" data-ob-del="'+p.id+'" title="삭제">✕</span></div>').join('');
       root._items=items;
     }
