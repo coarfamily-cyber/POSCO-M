@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140910">
+  <meta name="jisu-build" content="202611140920">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -495,7 +495,87 @@
     .cmd-side .jisu-ver{margin-top:auto;color:#64748b !important;opacity:.8 !important;font-size:10px;text-align:right;}
     body > header{padding-top:6px !important;padding-bottom:6px !important;flex-wrap:nowrap !important;white-space:nowrap !important;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
     body > header::-webkit-scrollbar{display:none;}
-    .hdr-tools{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;}
+    .hdr-tools{display:flex;align-items:center;gap:8px;margin-left:0;flex-shrink:0;}
+    .hdr-search-wrap{flex:1 1 200px;display:flex;align-items:center;justify-content:center;min-width:160px;padding:0 6px;}
+    body:not(#z1#z2#z3#z4#z5) .hdr-search-box{
+      position:relative;width:min(380px,100%);height:34px;padding:0 8px 0 12px;
+      display:flex;align-items:center;gap:7px;border-radius:9999px;
+      background:linear-gradient(155deg,rgba(255,255,255,0.22) 0%,rgba(255,255,255,0.09) 48%,rgba(15,23,42,0.34) 100%),rgba(255,255,255,0.08) !important;
+      backdrop-filter:blur(22px) saturate(180%) brightness(1.08) !important;
+      -webkit-backdrop-filter:blur(22px) saturate(180%) brightness(1.08) !important;
+      border:1px solid rgba(255,255,255,0.26) !important;
+      border-top-color:rgba(255,255,255,0.48) !important;
+      border-left-color:rgba(255,255,255,0.34) !important;
+      box-shadow:0 4px 16px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.30) !important;
+      transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+    }
+    body:not(#z1#z2#z3#z4#z5) .hdr-search-box:focus-within{
+      border-color:rgba(125,211,252,0.72) !important;
+      border-top-color:rgba(186,230,253,0.85) !important;
+      box-shadow:0 6px 22px rgba(14,165,233,0.28),inset 0 1px 0 rgba(255,255,255,0.44) !important;
+      background:linear-gradient(155deg,rgba(255,255,255,0.28) 0%,rgba(255,255,255,0.13) 48%,rgba(15,23,42,0.30) 100%),rgba(255,255,255,0.12) !important;
+    }
+    .hdr-search-ico{width:14px;height:14px;color:rgba(226,232,240,0.82);flex-shrink:0;pointer-events:none;}
+    body:not(#z1#z2#z3#z4#z5) #hdrSearchInput{
+      flex:1;min-width:0;border:0 !important;background:transparent !important;
+      color:#f8fafc !important;font-size:12.5px;font-weight:600;outline:none !important;padding:0;
+      box-shadow:none !important;
+    }
+    #hdrSearchInput::placeholder{color:rgba(226,232,240,0.68);font-weight:500;}
+    .hdr-search-kbd{
+      font-size:10px;font-weight:700;color:rgba(226,232,240,0.75);
+      background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.20) !important;
+      border-radius:6px;padding:1px 6px;flex-shrink:0;pointer-events:none;letter-spacing:.02em;
+    }
+    @media(max-width:980px){.hdr-search-kbd{display:none;}}
+    body:not(#z1#z2#z3#z4#z5) #hdrSearchClear{
+      width:20px;height:20px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;
+      background:rgba(255,255,255,0.18);color:#f8fafc;font-size:11px;font-weight:800;
+      cursor:pointer;flex-shrink:0;scale:1 !important;translate:none !important;box-shadow:none !important;
+    }
+    body:not(#z1#z2#z3#z4#z5) #hdrSearchClear[hidden]{display:none !important;}
+    body:not(#z1#z2#z3#z4#z5) #hdrSearchClear:hover{background:rgba(255,255,255,0.32);}
+    body:not(#z1#z2#z3#z4#z5) .hdr-search-panel{
+      position:fixed;z-index:120;border-radius:20px;padding:8px;max-height:min(62vh,460px);overflow-y:auto;
+      background:linear-gradient(165deg,rgba(30,41,59,0.76) 0%,rgba(15,23,42,0.84) 100%),rgba(15,23,42,0.70) !important;
+      backdrop-filter:blur(28px) saturate(185%) !important;
+      -webkit-backdrop-filter:blur(28px) saturate(185%) !important;
+      border:1px solid rgba(255,255,255,0.24) !important;
+      border-top-color:rgba(255,255,255,0.44) !important;
+      border-left-color:rgba(255,255,255,0.32) !important;
+      box-shadow:0 20px 52px rgba(0,0,0,0.58),inset 0 1px 0 rgba(255,255,255,0.24) !important;
+      color:#f1f5f9;
+    }
+    .hdr-search-panel[hidden]{display:none !important;}
+    .hdr-sr-head{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 6px;font-size:11px;font-weight:700;color:#94a3b8;}
+    body:not(#z1#z2#z3#z4#z5) .hdr-sr-item{
+      width:100%;text-align:left;display:flex;align-items:flex-start;gap:9px;padding:8px 10px;
+      border-radius:12px;background:transparent;color:#f1f5f9;cursor:pointer;
+      scale:1 !important;translate:none !important;box-shadow:none !important;
+      transition:background-color .12s ease !important;
+    }
+    body:not(#z1#z2#z3#z4#z5) .hdr-sr-item:hover,
+    body:not(#z1#z2#z3#z4#z5) .hdr-sr-item.is-active{
+      background:rgba(255,255,255,0.13) !important;
+      box-shadow:inset 0 0 0 1px rgba(125,211,252,0.35) !important;
+    }
+    .hdr-sr-badge{
+      flex-shrink:0;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:9999px;margin-top:1px;
+      background:rgba(56,189,248,0.18);color:#7dd3fc;border:1px solid rgba(56,189,248,0.32) !important;
+    }
+    .hdr-sr-badge.t-cmd{background:rgba(52,211,153,0.18);color:#6ee7b7;border-color:rgba(52,211,153,0.34) !important;}
+    .hdr-sr-badge.t-notice{background:rgba(251,191,36,0.18);color:#fde68a;border-color:rgba(251,191,36,0.36) !important;}
+    .hdr-sr-badge.t-carry{background:rgba(244,114,182,0.20);color:#fbcfe8;border-color:rgba(244,114,182,0.40) !important;}
+    .hdr-sr-badge.t-memo{background:rgba(167,139,250,0.20);color:#ddd6fe;border-color:rgba(167,139,250,0.38) !important;}
+    .hdr-sr-badge.t-sched{background:rgba(96,165,250,0.20);color:#bfdbfe;border-color:rgba(96,165,250,0.38) !important;}
+    .hdr-sr-badge.t-lot{background:rgba(45,212,191,0.18);color:#99f6e4;border-color:rgba(45,212,191,0.36) !important;}
+    .hdr-sr-main{flex:1;min-width:0;}
+    .hdr-sr-title{font-size:12.5px;font-weight:700;color:#f8fafc;white-space:normal;word-break:break-word;line-height:1.35;}
+    .hdr-sr-title mark{background:rgba(56,189,248,0.34);color:#fff;border-radius:3px;padding:0 2px;}
+    .hdr-sr-sub{font-size:11px;color:#94a3b8;margin-top:2px;white-space:normal;word-break:break-word;}
+    .hdr-sr-empty{padding:18px 12px;text-align:center;font-size:12.5px;color:#94a3b8;}
+    @keyframes jisuSearchFlash{0%,100%{box-shadow:0 0 0 0 rgba(56,189,248,0)}40%{box-shadow:0 0 0 4px rgba(56,189,248,0.75),0 0 28px rgba(56,189,248,0.55)}}
+    .jisu-search-flash{animation:jisuSearchFlash 1.2s ease-out 2 !important;}
     .hdr-clock{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;font-weight:700;color:#e2e8f0;background:rgba(30,41,59,.80);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:4px 10px;white-space:nowrap;cursor:pointer;}
     .hdr-tools .xlsx-btn{padding:5px 12px 5px 10px;font-size:12px;}
     @media(max-width:520px){.hdr-clock{font-size:11px;padding:3px 7px;}}
@@ -2467,8 +2547,20 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       </button>
 
     </div>
+    <div class="hdr-search-wrap" id="hdrSearchWrap">
+      <div class="hdr-search-box" id="hdrSearchBox">
+        <svg class="hdr-search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" stroke-width="2.2"/>
+          <path d="M20 20l-3.6-3.6" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        <input id="hdrSearchInput" type="search" placeholder="작업 · 공지 · LOT · 구역 검색..." autocomplete="off" spellcheck="false" aria-label="대시보드 전체 검색">
+        <span class="hdr-search-kbd" id="hdrSearchKbd">Ctrl+K</span>
+        <button type="button" id="hdrSearchClear" aria-label="검색어 지우기" hidden>✕</button>
+      </div>
+    </div>
     <div class="hdr-tools flex items-center gap-1.5 sm:gap-2 flex-shrink-0"><div id="liveClock" class="hdr-clock" role="button" tabindex="0" title="눌러서 작업 스케줄 달력 열기"></div><button type="button" id="loginBtn" class="login-btn" title="작업자 로그인"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span id="loginLabel">로그인</span></button><button type="button" id="xlsxDoneBtn" class="xlsx-btn" title="오늘 작업완료한 금일작업을 엑셀 파일로 받기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>액셀</button><button type="button" id="perfBtn" class="xlsx-btn perf-btn" title="주간·월간 실적 보기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>실적</button></div>
   </header>
+  <div id="hdrSearchPanel" class="hdr-search-panel" hidden role="listbox" aria-label="대시보드 검색 결과"></div>
   <script>(function(){var e=document.getElementById('liveClock');if(!e)return;var d=new Date(),p=function(n){return String(n).padStart(2,'0');};e.textContent=d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());})();</script>
 
   <!-- Main Full-Screen Map Area -->
@@ -3612,6 +3704,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     document.querySelectorAll('[data-toggle-zone],[data-bldg],[data-zone-btn]').forEach(b=>b.addEventListener('click',()=>{const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg')||b.getAttribute('data-zone-btn');if(NAMES[k]){setTarget(k);render();}if(b.hasAttribute('data-bldg'))fillModal(k);}));
     window.addEventListener('storage',e=>{if(e.key===KEY)render();});
     window.jisuCmdRender=()=>render();
+    window.jisuSetTarget=(val)=>{ setTarget(val); render(); };
     list.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-memo-goto]'); if(!b) return; const k=b.getAttribute('data-memo-goto'); if(!k.startsWith('outbound:')&&![...sel.options].some(o=>o.value===k)) return; setTarget(k); render(); });
     window.addEventListener('storage',e=>{ if(e.key==='jisu-memos-v1') render(); });
     list.addEventListener('change',e=>{const id=e.target.getAttribute&&e.target.getAttribute('data-cmd-retarget');if(!id)return;const nt=e.target.value;const all=load();const it=all.find(x=>x.id===id);if(!it)return;it.target=nt;save(all);setTarget(nt);render();});
@@ -3742,6 +3835,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     /* 상황실 상시 화면: 보고 있는 게 있으면 새로고침하지 않음 (전체화면, 입력 중, 카드·달력·이월 창 열림, 최근 1분 안에 조작) */
     let lastAct=Date.now(); ['pointerdown','keydown','input','wheel','touchstart'].forEach(ev=>document.addEventListener(ev,()=>{ lastAct=Date.now(); },true));
     function anyOpen(){ if(document.querySelector('.hotspot-wrapper.is-open')) return true;
+      const sp=document.getElementById('hdrSearchPanel'); if(sp && !sp.hidden) return true;
       return ['#calModal','.rv-modal','#jisuNote','#loginModal','#detailModal','#perfModal'].some(s=>{ const el=document.querySelector(s); return el && !el.hidden && !el.classList.contains('hidden') && getComputedStyle(el).display!=='none'; }); }
     function busy(){ const a=document.activeElement; return !!(document.fullscreenElement||document.webkitFullscreenElement) || (a && (a.tagName==='TEXTAREA'||a.tagName==='INPUT'||a.tagName==='SELECT')) || anyOpen() || (Date.now()-lastAct<60000); }
     /* 하루 한 번 새벽 5시(KST) 이후, 조용할 때 정리용 새로고침 (오래 켜둔 화면 느려짐 방지) */
@@ -4073,6 +4167,12 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     }
     function openZoom(day){ picked=day; editing=null; $('czMsg').textContent=''; $('czMsg').className='cz-msg'; if(window.jisuSetBatchView) window.jisuSetBatchView(false); draw(); drawZoom(); setTimeout(()=>{ if(!$('czText').disabled) $('czText').focus(); },30); }
     function open(){ const t=kstToday().split('-').map(Number); view=[t[0],t[1]-1]; picked=kstToday(); editing=null; if(window.jisuSetBatchView) window.jisuSetBatchView(false); draw(); drawZoom(); modal.hidden=false; setTimeout(()=>$('czText').focus(),30); }
+    window.jisuCalOpenDay=function(day){
+      const p=String(day||'').split('-').map(Number);
+      if(p.length===3 && !isNaN(p[0]) && !isNaN(p[1]) && !isNaN(p[2])){ view=[p[0],p[1]-1]; picked=day; }
+      else { const t=kstToday().split('-').map(Number); view=[t[0],t[1]-1]; picked=kstToday(); }
+      editing=null; if(window.jisuSetBatchView) window.jisuSetBatchView(false); draw(); drawZoom(); modal.hidden=false;
+    };
     function close(){ modal.hidden=true; editing=null; }
     clock.addEventListener('click',open); clock.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); } });
     $('calClose').addEventListener('click',close); modal.addEventListener('click',e=>{ if(e.target===modal) close(); });
@@ -5214,6 +5314,350 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     photos: () => getPhotos(activeDay),
     exportExcel: exportInboundExcel
   };
+})();
+</script>
+<script>
+/* 상단 중앙 투명유리 통합 검색 */
+(function(){
+  const box = document.getElementById('hdrSearchBox');
+  const input = document.getElementById('hdrSearchInput');
+  const clearBtn = document.getElementById('hdrSearchClear');
+  const kbdHint = document.getElementById('hdrSearchKbd');
+  const panel = document.getElementById('hdrSearchPanel');
+  if(!box || !input || !panel) return;
+
+  const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const loadJson = (k, fb) => { try{ return JSON.parse(localStorage.getItem(k)||'null') ?? fb; }catch(e){ return fb; } };
+  const NAMES = {'*':'전체'};
+  document.querySelectorAll('#cmdTarget option').forEach(o => { if(o.value) NAMES[o.value] = o.textContent.trim(); });
+  Object.assign(NAMES, {
+    'outbound:RAS-2':'출고 · RAS-2', 'outbound:L1':'출고 · L1', 'outbound:CP3K':'출고 · CP3K',
+    'outbound:C3B':'출고 · C3B', 'outbound:연구요청':'출고 · 연구요청',
+    'outbound:2공장→1공장':'출고 · 공장간이송(2공장→1공장)',
+    'outbound:1공장→2공장':'출고 · 공장간이송(1공장→2공장)'
+  });
+
+  const ZONES = [
+    { key:'production-a', title:'생산A (PRODUCTION A)', sub:'생산라인 A · 금일작업 및 특이사항', kw:'생산a production a' },
+    { key:'production-b', title:'생산B (PRODUCTION B)', sub:'생산라인 B · 금일작업 및 특이사항', kw:'생산b production b' },
+    { key:'production-c', title:'생산C (PRODUCTION C)', sub:'생산라인 C · 금일작업 및 특이사항', kw:'생산c production c' },
+    { key:'production-d', title:'생산D (PRODUCTION D)', sub:'생산라인 D · 금일작업 및 특이사항', kw:'생산d production d' },
+    { key:'production-e', title:'생산E (PRODUCTION E)', sub:'생산라인 E · 금일작업 및 특이사항', kw:'생산e production e' },
+    { key:'production-f', title:'생산F (PRODUCTION F)', sub:'생산라인 F · 금일작업 및 특이사항', kw:'생산f production f' },
+    { key:'production-g', title:'생산G (PRODUCTION G)', sub:'생산라인 G · 금일작업 및 특이사항', kw:'생산g production g' },
+    { key:'production-h', title:'생산H (PRODUCTION H)', sub:'생산라인 H · 금일작업 및 특이사항', kw:'생산h production h' },
+    { key:'outbound', title:'출고 (OUTBOUND)', sub:'출고 상황실 · 출고 사진 · 지수가 확인', kw:'출고 outbound 지게차 사진' },
+    { key:'inbound', title:'입고 (INBOUND)', sub:'입고원료 중량 기록일지 · LOT · Bag', kw:'입고 inbound 중량 일지 lot bag' },
+    { key:'packaging', title:'포장 C동 (PACKAGING · C)', sub:'포장 C동 · 금일작업 및 특이사항', kw:'포장 c동 packaging' },
+    { key:'packaging-d', title:'포장 D동 (PACKAGING · D)', sub:'포장 D동 · 금일작업 및 특이사항', kw:'포장 d동 packaging' },
+    { key:'pitch', title:'피치 (PITCH)', sub:'부원료 투입 · 분쇄 현황 · 원료 이동', kw:'피치 pitch 부원료 분쇄 원료이동' },
+    { key:'environment', title:'환경 (ENVIRONMENT)', sub:'1~14호기 환경 호기 현황', kw:'환경 environment 호기 집진기' },
+    { key:'outbound:RAS-2', title:'출고 · RAS-2', sub:'출하 품목 · 출고 상황실로 이동', kw:'출고 ras-2 ras2' },
+    { key:'outbound:L1', title:'출고 · L1', sub:'출하 품목 · 출고 상황실로 이동', kw:'출고 l1' },
+    { key:'outbound:CP3K', title:'출고 · CP3K', sub:'출하 품목 · 출고 상황실로 이동', kw:'출고 cp3k' },
+    { key:'outbound:C3B', title:'출고 · C3B', sub:'출하 품목 · 출고 상황실로 이동', kw:'출고 c3b' },
+    { key:'outbound:연구요청', title:'출고 · 연구요청', sub:'출하 품목 · 출고 상황실로 이동', kw:'출고 연구요청' },
+    { key:'outbound:2공장→1공장', title:'출고 · 2공장→1공장 이송', sub:'공장간 이송 · 출고 상황실로 이동', kw:'출고 이송 2공장 1공장' },
+    { key:'outbound:1공장→2공장', title:'출고 · 1공장→2공장 이송', sub:'공장간 이송 · 출고 상황실로 이동', kw:'출고 이송 1공장 2공장' },
+    { key:'A', bldg:true, title:'A동 건물 상세', sub:'A동 창고/설비 상세 관제 창 열기', kw:'a동 창고 건물' },
+    { key:'B', bldg:true, title:'B동 건물 상세', sub:'B동 설비 상세 관제 창 열기', kw:'b동 건물' },
+    { key:'C', bldg:true, title:'C동 건물 상세', sub:'C동 포장/설비 상세 관제 창 열기', kw:'c동 건물' },
+    { key:'D', bldg:true, title:'D동 건물 상세', sub:'D동 설비 상세 관제 창 열기', kw:'d동 건물' }
+  ];
+
+  function buildIndex(){
+    const items = [];
+    ZONES.forEach(z => items.push({
+      badge: z.bldg ? '건물' : '구역', cls: '', title: z.title, sub: z.sub,
+      search: (z.title + ' ' + z.sub + ' ' + z.kw).toLowerCase(),
+      action: { type: z.bldg ? 'bldg' : 'zone', target: z.key }
+    }));
+
+    const cmds = loadJson('jisu-commands-v1', []);
+    if(Array.isArray(cmds)){
+      for(let i = cmds.length - 1; i >= 0; i--){
+        const x = cmds[i]; if(!x || x.closed) continue;
+        const nm = NAMES[x.target] || x.target || '전체';
+        const isNotice = x.kind === 'notice';
+        const isCarry = !isNotice && !!x.carryCount;
+        const badge = isNotice ? '공지' : (isCarry ? ('이월 ' + x.carryCount + '회') : '금일작업');
+        const cls = isNotice ? 't-notice' : (isCarry ? 't-carry' : 't-cmd');
+        const status = x.completed ? '완료' : (x.working ? '작업중' : '대기');
+        const meta = [nm, status, x.by, x.at].filter(Boolean).join(' · ');
+        items.push({
+          badge, cls, title: x.text || '', sub: meta,
+          search: [nm, badge, x.text, x.by, x.at, x.from, x.to, status].filter(Boolean).join(' ').toLowerCase(),
+          action: { type: 'zone', target: x.target || '*' }
+        });
+      }
+    }
+
+    const memos = loadJson('jisu-memos-v1', []);
+    if(Array.isArray(memos)){
+      const TAG = { handover:'인수인계', extra:'추가작업', issue:'특이사항' };
+      for(let i = memos.length - 1; i >= 0; i--){
+        const m = memos[i]; if(!m) continue;
+        const nm = NAMES[m.target] || m.target || '전체';
+        const tag = TAG[m.kind] || '특이사항';
+        const ack = m.ack ? ('확인' + (m.ackBy ? ' · ' + m.ackBy : '')) : '미확인';
+        const meta = [nm, m.by, m.at, ack].filter(Boolean).join(' · ');
+        items.push({
+          badge: tag, cls: 't-memo', title: m.text || '', sub: meta,
+          search: [nm, tag, m.text, m.by, m.at, ack].filter(Boolean).join(' ').toLowerCase(),
+          action: { type: 'zone', target: m.target || '*' }
+        });
+      }
+    }
+
+    const sch = loadJson('jisu-schedule-v1', []);
+    if(Array.isArray(sch)){
+      sch.slice().sort((a,b) => String(a.date||'').localeCompare(String(b.date||''))).forEach(s => {
+        if(!s) return;
+        const nm = NAMES[s.target] || s.target || '전체';
+        const kLabel = s.kind === 'notice' ? '공지' : '금일작업';
+        items.push({
+          badge: '달력 ' + (s.date||'').slice(5), cls: 't-sched',
+          title: s.text || '', sub: [s.date, nm, kLabel, s.applied ? '등록됨' : '예약'].filter(Boolean).join(' · '),
+          search: [s.date, nm, kLabel, s.text, s.by, '달력 스케줄 예약'].filter(Boolean).join(' ').toLowerCase(),
+          action: { type: 'sched', date: s.date }
+        });
+      });
+    }
+
+    const inb = loadJson('jisu-inbound-records-v1', {});
+    if(inb && typeof inb === 'object'){
+      Object.keys(inb).sort().reverse().forEach(day => {
+        const rec = inb[day]; if(!rec || !Array.isArray(rec.rows)) return;
+        rec.rows.forEach((r, idx) => {
+          if(!r) return;
+          const lot = r.lot || '';
+          const loc = r.loc || '';
+          const worker = r.worker || '';
+          const bag = r.bag || '';
+          if(!lot && !loc && !worker && !bag) return;
+          const title = [lot || 'LOT 미입력', bag ? ('Bag ' + bag) : '', r.kg ? (r.kg + 'kg') : ''].filter(Boolean).join(' · ');
+          const sub = ['입고 중량일지', day, loc ? ('위치 ' + loc) : '', worker].filter(Boolean).join(' · ');
+          items.push({
+            badge: '입고 LOT', cls: 't-lot', title, sub,
+            search: [day, lot, bag, r.kg, loc, worker, '입고 lot 적재위치 중량일지'].filter(Boolean).join(' ').toLowerCase(),
+            action: { type: 'inbound', lot, rowIndex: idx }
+          });
+        });
+      });
+    }
+
+    const pit = loadJson('jisu-pitch-records-v1', {});
+    if(pit && typeof pit === 'object'){
+      Object.keys(pit).sort().reverse().forEach(day => {
+        const row = pit[day]; if(!row) return;
+        const vals = []
+          .concat(Array.isArray(row.add1s) ? row.add1s.map(v=>({l:'부원료 1호기',v})) : [])
+          .concat(Array.isArray(row.add2s) ? row.add2s.map(v=>({l:'부원료 2호기',v})) : [])
+          .concat(Array.isArray(row.moves) ? row.moves.map(v=>({l:'원료 이동',v})) : []);
+        vals.forEach(o => {
+          if(!o.v || !String(o.v).trim()) return;
+          items.push({
+            badge: '피치 기록', cls: 't-memo', title: String(o.v),
+            sub: ['피치', day, o.l].join(' · '),
+            search: ['피치', day, o.l, o.v].join(' ').toLowerCase(),
+            action: { type: 'zone', target: 'pitch' }
+          });
+        });
+      });
+    }
+
+    const env = loadJson('jisu-env-v1', null);
+    if(env && env.u){
+      Object.keys(env.u).forEach(u => {
+        const st = env.u[u]; if(!st) return;
+        const stLabel = st.s === 'done' ? '완료' : (st.s === 'work' ? '작업중' : '대기');
+        items.push({
+          badge: '환경 호기', cls: 't-cmd', title: u + '호기 · ' + stLabel,
+          sub: ['환경', st.day, st.ts ? ('시작 ' + st.ts) : '', st.td ? ('완료 ' + st.td) : ''].filter(Boolean).join(' · '),
+          search: ['환경', u + '호기', stLabel, st.day].filter(Boolean).join(' ').toLowerCase(),
+          action: { type: 'zone', target: 'environment' }
+        });
+      });
+    }
+
+    return items;
+  }
+
+  let curList = [];
+  let activeIdx = -1;
+
+  function placePanel(){
+    const r = box.getBoundingClientRect();
+    const w = Math.max(Math.min(480, window.innerWidth - 20), Math.min(440, r.width + 60));
+    const left = Math.max(10, Math.min(window.innerWidth - w - 10, r.left + r.width / 2 - w / 2));
+    panel.style.width = Math.round(w) + 'px';
+    panel.style.left = Math.round(left) + 'px';
+    panel.style.top = Math.round(r.bottom + 8) + 'px';
+  }
+
+  function highlightText(txt, terms){
+    let out = esc(txt);
+    terms.forEach(t => {
+      if(!t) return;
+      const re = new RegExp('(' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+      out = out.replace(re, '<mark>$1</mark>');
+    });
+    return out;
+  }
+
+  function openSearch(){
+    placePanel();
+    const q = input.value.trim();
+    const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+    const all = buildIndex();
+    let matched;
+    if(!terms.length){
+      // 비어 있을 때는 금일작업/공지/이월/특이사항 우선 + 주요 구역 바로가기 표시
+      const live = all.filter(x => x.cls === 't-carry' || x.cls === 't-notice' || x.cls === 't-cmd' || x.cls === 't-memo');
+      const zones = all.filter(x => x.badge === '구역').slice(0, 6);
+      matched = (live.length ? live.slice(0, 8).concat(zones.slice(0, 4)) : zones);
+    } else {
+      matched = all.filter(it => terms.every(t => it.search.includes(t)));
+    }
+    curList = matched.slice(0, 30);
+    activeIdx = curList.length ? 0 : -1;
+
+    if(!curList.length){
+      panel.innerHTML = '<div class="hdr-sr-empty">“' + esc(q) + '”에 맞는 결과가 없어요.</div>';
+    } else {
+      const headText = terms.length
+        ? ('검색 결과 ' + matched.length + '건' + (matched.length > 30 ? ' (상위 30건)' : ''))
+        : '현재 등록 현황 · 빠른 이동 (검색어를 입력하면 LOT·달력까지 다 찾아요)';
+      panel.innerHTML = '<div class="hdr-sr-head"><span>' + esc(headText) + '</span><span>↑↓ 이동 · Enter 열기</span></div>'
+        + curList.map((it, i) => '<button type="button" class="hdr-sr-item' + (i === activeIdx ? ' is-active' : '') + '" data-sr-idx="' + i + '" role="option">'
+          + '<span class="hdr-sr-badge ' + esc(it.cls) + '">' + esc(it.badge) + '</span>'
+          + '<div class="hdr-sr-main">'
+            + '<div class="hdr-sr-title">' + highlightText(it.title, terms) + '</div>'
+            + (it.sub ? '<div class="hdr-sr-sub">' + highlightText(it.sub, terms) + '</div>' : '')
+          + '</div></button>').join('');
+    }
+    panel.hidden = false;
+  }
+
+  function closeSearch(){
+    panel.hidden = true;
+    activeIdx = -1;
+  }
+
+  function flashEl(el){
+    if(!el) return;
+    el.classList.remove('jisu-search-flash');
+    void el.offsetWidth;
+    el.classList.add('jisu-search-flash');
+    setTimeout(() => el.classList.remove('jisu-search-flash'), 2500);
+  }
+
+  function runAction(act){
+    if(!act) return;
+    closeSearch();
+    input.blur();
+    if(act.type === 'sched'){
+      if(window.jisuCalOpenDay) window.jisuCalOpenDay(act.date);
+      return;
+    }
+    if(act.type === 'bldg'){
+      const b = document.querySelector('[data-bldg="' + act.target + '"]');
+      if(b) b.click();
+      return;
+    }
+    if(act.type === 'inbound'){
+      const wrap = document.getElementById('hotspot-inbound');
+      const btn = document.querySelector('[data-toggle-zone="inbound"]');
+      if(wrap && !wrap.classList.contains('is-open') && btn) btn.click();
+      else if(window.jisuSetTarget) window.jisuSetTarget('inbound');
+      setTimeout(() => {
+        const card = wrap && wrap.querySelector('.expand-card');
+        flashEl(card);
+        if(act.lot){
+          const inp = [...document.querySelectorAll('#inboundTbody input')].find(el => el.value === act.lot);
+          if(inp){ inp.scrollIntoView({ block:'center', behavior:'smooth' }); flashEl(inp.closest('tr')); }
+        }
+      }, 120);
+      return;
+    }
+    if(act.type === 'zone'){
+      const t = act.target;
+      if(!t || t === '*'){
+        if(window.jisuSetTarget) window.jisuSetTarget('');
+        flashEl(document.getElementById('cmdList'));
+        return;
+      }
+      const base = t.startsWith('outbound:') ? 'outbound' : t;
+      const wrap = document.getElementById('hotspot-' + base);
+      const btn = document.querySelector('[data-toggle-zone="' + base + '"], [data-production-btn="' + base.replace('production-','').toUpperCase() + '"]');
+      if(wrap && !wrap.classList.contains('is-open') && btn) btn.click();
+      if(window.jisuSetTarget) window.jisuSetTarget(t);
+      setTimeout(() => {
+        const card = wrap && wrap.querySelector('.expand-card');
+        if(card) flashEl(card);
+        else flashEl(btn);
+      }, 120);
+    }
+  }
+
+  function syncClear(){
+    const has = input.value.length > 0;
+    if(clearBtn) clearBtn.hidden = !has;
+    if(kbdHint) kbdHint.style.display = has ? 'none' : '';
+  }
+
+  input.addEventListener('focus', () => { syncClear(); openSearch(); });
+  input.addEventListener('input', () => { syncClear(); openSearch(); });
+  input.addEventListener('keydown', e => {
+    e.stopPropagation();
+    if(e.key === 'Escape'){ closeSearch(); input.blur(); return; }
+    if(!curList.length) return;
+    if(e.key === 'ArrowDown'){
+      e.preventDefault();
+      activeIdx = (activeIdx + 1) % curList.length;
+    } else if(e.key === 'ArrowUp'){
+      e.preventDefault();
+      activeIdx = (activeIdx - 1 + curList.length) % curList.length;
+    } else if(e.key === 'Enter' && !e.isComposing){
+      e.preventDefault();
+      const pick = curList[activeIdx >= 0 ? activeIdx : 0];
+      if(pick) runAction(pick.action);
+      return;
+    } else return;
+    panel.querySelectorAll('.hdr-sr-item').forEach((el, i) => {
+      el.classList.toggle('is-active', i === activeIdx);
+      if(i === activeIdx) el.scrollIntoView({ block:'nearest' });
+    });
+  });
+
+  if(clearBtn){
+    clearBtn.addEventListener('click', () => {
+      input.value = ''; syncClear(); input.focus(); openSearch();
+    });
+  }
+
+  panel.addEventListener('click', e => {
+    const row = e.target.closest('[data-sr-idx]');
+    if(!row) return;
+    const it = curList[Number(row.getAttribute('data-sr-idx'))];
+    if(it) runAction(it.action);
+  });
+
+  document.addEventListener('click', e => {
+    if(!panel.hidden && !box.contains(e.target) && !panel.contains(e.target)) closeSearch();
+  });
+  window.addEventListener('resize', () => { if(!panel.hidden) placePanel(); });
+  document.addEventListener('keydown', e => {
+    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){
+      e.preventDefault(); input.focus(); input.select(); openSearch(); return;
+    }
+    if(e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey){
+      const a = document.activeElement;
+      if(!a || (a.tagName !== 'INPUT' && a.tagName !== 'TEXTAREA' && a.tagName !== 'SELECT')){
+        e.preventDefault(); input.focus(); openSearch();
+      }
+    }
+  });
 })();
 </script>
 </body>
