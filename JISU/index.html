@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611142045">
+  <meta name="jisu-build" content="202611142055">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -808,6 +808,14 @@
     .ob-stack-btn:hover .ob-stack-card.c2{transform:rotate(-8deg) translateY(-2px);}
     .ob-stack-btn:hover .ob-stack-card.c3{transform:rotate(-16deg) translateY(-2px);}
     .ob-stack-empty-ico{width:20px;height:20px;color:rgba(15,23,42,0.45);}
+    #hotspot-inbound .enscape-header{position:relative;padding-right:158px !important;min-height:56px;}
+    body:not(#z1#z2#z3#z4#z5) #hotspot-inbound .ib-photo-sq-btn{top:0 !important;height:56px !important;width:64px !important;border-radius:16px !important;}
+    body:not(#z1#z2#z3#z4#z5) #hotspot-inbound .ib-stack-btn{top:4px !important;right:74px !important;}
+    @media (max-width:768px){
+      #hotspot-inbound .enscape-header{padding-right:192px !important;}
+      body:not(#z1#z2#z3#z4#z5) #hotspot-inbound .ib-photo-sq-btn{right:42px !important;width:54px !important;height:52px !important;top:2px !important;}
+      body:not(#z1#z2#z3#z4#z5) #hotspot-inbound .ib-stack-btn{right:104px !important;top:6px !important;}
+    }
     .ob-grid.is-collapsed{display:none !important;}
     .ob-lb-backdrop{
       position:fixed;inset:0;z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:space-between;
@@ -3024,6 +3032,12 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
             <div class="enscape-title-group min-w-0 flex-1">
               <h3 class="enscape-title">INBOUND</h3>
             </div>
+            <button type="button" class="ob-stack-btn ib-stack-btn" id="ibStackBtn" title="저장된 입고 사진 바로 보기" aria-label="저장된 입고 사진 바로 보기">
+              <span class="ob-stack-card c3"></span>
+              <span class="ob-stack-card c2"></span>
+              <span class="ob-stack-card c1"><svg class="ob-stack-empty-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></span>
+            </button>
+            <button type="button" class="ob-photo-sq-btn ib-photo-sq-btn" id="ibCamBtn" title="입고 사진 촬영·첨부">PHOTO</button>
           </div>
           <div class="inbound-scroll-body">
             <div class="cmd-slot" data-cmd-slot="inbound"></div>
@@ -3031,10 +3045,6 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
               <div class="inbound-head">
                 <div class="inbound-title-row" style="margin-top:0;">
                   <time id="inboundDate"></time>
-                  <button type="button" id="inboundPhotoBtn" class="inbound-photo-btn">
-                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    <span>PHOTO</span>
-                  </button>
                   <input id="inboundPhotoInput" type="file" accept="image/*" capture="environment" multiple hidden />
                 </div>
               </div>
@@ -3091,8 +3101,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
                 </div>
               </div>
 
-              <!-- 2번: PHOTO 증적 썸네일 그리드 -->
-              <div class="inbound-photo-section">
+              <!-- 2번: PHOTO 증적 썸네일 그리드 (상단 스택 갤러리로 통합) -->
+              <div class="inbound-photo-section" hidden>
                 <div id="inboundPhotoThumbs" class="inbound-photo-thumbs"></div>
               </div>
 
@@ -3984,9 +3994,9 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     // camera
     let stream=null;
     function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}$('obCam').hidden=true;}
-    let lbIdx=0;
+    let lbIdx=0, lbItems=null, lbOnDel=null;
     function renderLb(){
-      const items=root._items||[];
+      const items=lbItems||(root._items||[]);
       const lb=$('obLightbox'); if(!lb) return;
       if(!items.length){ lb.classList.remove('is-open'); return; }
       if(lbIdx<0) lbIdx=items.length-1;
@@ -4001,19 +4011,33 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       $('obLbStrip').innerHTML=items.map((p,i)=>'<button type="button" class="ob-lb-thumb'+(i===lbIdx?' is-active':'')+'" data-lb-i="'+i+'"><img src="'+p.data+'" alt=""></button>').join('');
     }
     function openLb(idx){
+      lbItems=null; lbOnDel=null;
       if(!(root._items&&root._items.length)){ msg('저장된 출고 사진이 아직 없습니다. PHOTO로 촬영해 주세요.'); return; }
       msg(''); lbIdx=idx||0; renderLb();
       $('obLightbox').classList.add('is-open');
     }
-    function closeLb(){ const lb=$('obLightbox'); if(lb) lb.classList.remove('is-open'); }
+    window.jisuOpenGallery=function(items, idx, onDelete){
+      lbItems=items||[]; lbOnDel=onDelete||null;
+      if(!lbItems.length) return false;
+      lbIdx=idx||0; renderLb();
+      $('obLightbox').classList.add('is-open');
+      return true;
+    };
+    function closeLb(){ const lb=$('obLightbox'); if(lb) lb.classList.remove('is-open'); lbItems=null; lbOnDel=null; }
     if($('obStackBtn')) $('obStackBtn').addEventListener('click',e=>{ e.stopPropagation(); openLb(0); });
     if($('obLbClose')) $('obLbClose').addEventListener('click',closeLb);
     if($('obLbPrev')) $('obLbPrev').addEventListener('click',e=>{ e.stopPropagation(); lbIdx--; renderLb(); });
     if($('obLbNext')) $('obLbNext').addEventListener('click',e=>{ e.stopPropagation(); lbIdx++; renderLb(); });
     if($('obLbStrip')) $('obLbStrip').addEventListener('click',e=>{ const b=e.target.closest('[data-lb-i]'); if(!b) return; lbIdx=+b.dataset.lbI; renderLb(); });
     if($('obLbDel')) $('obLbDel').addEventListener('click',async ()=>{
-      const items=root._items||[]; const cur=items[lbIdx]; if(!cur) return;
+      const items=lbItems||(root._items||[]); const cur=items[lbIdx]; if(!cur) return;
       if(!confirm('이 사진을 삭제할까요?')) return;
+      if(lbOnDel){
+        const next=await lbOnDel(cur);
+        lbItems=next||[];
+        if(!lbItems.length) closeLb(); else renderLb();
+        return;
+      }
       await del(cur.id); await render();
       if(!(root._items&&root._items.length)) closeLb(); else renderLb();
       msg('삭제했습니다.');
@@ -5236,7 +5260,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   const remainTonEl = $("inboundRemainTon");
   const calLinkBtn = $("inboundCalLink");
 
-  const photoBtn = $("inboundPhotoBtn");
+  const photoBtn = $("ibCamBtn") || $("inboundPhotoBtn");
+  const ibStackBtn = $("ibStackBtn");
   const photoInput = $("inboundPhotoInput");
   const photoThumbs = $("inboundPhotoThumbs");
 
@@ -5422,8 +5447,17 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   }
 
   async function renderPhotos() {
-    if (!photoThumbs) return;
     const list = await getPhotos(activeDay);
+    list.sort((a,b)=>String(b.id).localeCompare(String(a.id)));
+    if (ibStackBtn) {
+      const c1 = ibStackBtn.querySelector('.c1'), c2 = ibStackBtn.querySelector('.c2'), c3 = ibStackBtn.querySelector('.c3');
+      const emptyIco = '<svg class="ob-stack-empty-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
+      if (c1) c1.innerHTML = list[0] ? '<img src="'+list[0].data+'" alt="최근 입고 사진">' : emptyIco;
+      if (c2) { c2.innerHTML = list[1] ? '<img src="'+list[1].data+'" alt="">' : ''; c2.style.display = ''; }
+      if (c3) { c3.innerHTML = list[2] ? '<img src="'+list[2].data+'" alt="">' : ''; c3.style.display = ''; }
+      ibStackBtn.title = list.length ? '입고 사진 ' + list.length + '장 바로 보기' : '저장된 입고 사진 없음';
+    }
+    if (!photoThumbs) return;
     if (!list.length) { photoThumbs.innerHTML = ""; return; }
     photoThumbs.innerHTML = list.map(p => `
       <div class="inbound-photo-thumb-wrap">
@@ -5431,6 +5465,30 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
         <button type="button" class="inbound-photo-del" data-pdel="${p.id}" title="사진 삭제">×</button>
       </div>
     `).join("");
+  }
+
+  if (ibStackBtn) {
+    ibStackBtn.addEventListener("click", async e => {
+      e.stopPropagation();
+      const list = await getPhotos(activeDay);
+      list.sort((a,b)=>String(b.id).localeCompare(String(a.id)));
+      const items = list.map(p => ({
+        id: p.id,
+        data: p.data,
+        at: activeDay,
+        name: '입고_' + activeDay + '_' + String(p.id).slice(-4) + '.jpg'
+      }));
+      if (!items.length) { alert('저장된 입고 사진이 아직 없습니다. PHOTO로 촬영해 주세요.'); return; }
+      if (window.jisuOpenGallery) {
+        window.jisuOpenGallery(items, 0, async cur => {
+          await deletePhoto(cur.id);
+          await renderPhotos();
+          const next = await getPhotos(activeDay);
+          next.sort((a,b)=>String(b.id).localeCompare(String(a.id)));
+          return next.map(p => ({ id: p.id, data: p.data, at: activeDay, name: '입고_' + activeDay + '.jpg' }));
+        });
+      }
+    });
   }
 
   if (photoThumbs) {
