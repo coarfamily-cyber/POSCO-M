@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611142100">
+  <meta name="jisu-build" content="202611142105">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -3860,7 +3860,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       svg.innerHTML=defs+paths+runners; labels.innerHTML=lab;
     }
     let obSubTarget='';
-    const getTarget=()=>(sel.value==='outbound'&&obSubTarget)?obSubTarget:sel.value;
+    const getTarget=()=>((sel.value==='outbound'||sel.value==='inbound')&&obSubTarget)?obSubTarget:sel.value;
     const setTarget=(val)=>{
       if(val&&val.startsWith('outbound:')){ obSubTarget=val; sel.value='outbound'; }
       else if(val&&val.startsWith('inbound:')){ obSubTarget=val; sel.value='inbound'; }
