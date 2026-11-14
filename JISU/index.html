@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611142105">
+  <meta name="jisu-build" content="202611150825">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -2112,10 +2112,10 @@
     body:not(#zz) #moveLayer .move-start{opacity:.75;}
   </style>
   <style>
-    /* 특이사항: 확인 버튼을 항목 오른쪽 세로 가운데, 남기기 버튼과 같은 열(같은 폭·같은 오른쪽 끝) */
-    body:not(#zz) .memo-list .memo-item{position:relative;padding-right:80px;min-height:52px;}
-    body:not(#zz) .memo-list .memo-item .memo-meta .memo-ack{position:absolute;right:-1px;top:50%;transform:translateY(-50%);margin:0;width:66px;min-width:66px;}
-    body:not(#zz) .memo-list .memo-item .memo-meta .memo-ack:hover{transform:translateY(-50%) scale(1.06);}
+    /* 특이사항: 확인 버튼을 항목 안쪽 오른쪽 세로 가운데에 여백 맞춰 배치 (텍스트와 겹침/외곽 돌출 방지) */
+    body:not(#z1#z2#z3#z4#z5) .expand-card .memo-list .memo-item{position:relative !important;padding:10px 84px 10px 14px !important;min-height:54px !important;display:flex !important;flex-direction:column !important;justify-content:center !important;}
+    body:not(#z1#z2#z3#z4#z5) .expand-card .memo-list .memo-item .memo-meta .memo-ack{position:absolute !important;right:8px !important;top:50% !important;transform:translateY(-50%) !important;margin:0 !important;width:66px !important;min-width:66px !important;height:36px !important;border-radius:10px !important;}
+    body:not(#z1#z2#z3#z4#z5) .expand-card .memo-list .memo-item .memo-meta .memo-ack:hover{transform:translateY(-50%) scale(1.04) !important;}
     body:not(#zz) .memo-row .memo-send{width:66px;min-width:66px;flex:0 0 66px;}
   </style>
 <style>.pitch-log{margin-top:8px;padding:11px;border-radius:14px;background:rgba(15,23,42,.58);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:#e2e8f0;font-size:12px}.pitch-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.1)}.pitch-eyebrow{font-size:9px;font-weight:900;letter-spacing:.12em;color:#c4b5fd}.pitch-head h4{margin-top:3px;font-size:14px;font-weight:900;color:#f8fafc}.pitch-head time{font-size:11px;color:#cbd5e1;font-weight:800}.pitch-section{padding-top:9px}.pitch-section-title{font-size:11px;font-weight:900;color:#c4b5fd;margin-bottom:5px}.pitch-row{min-height:32px;display:flex;align-items:center;gap:8px;padding:3px 0;color:#cbd5e1}.pitch-row>span:first-child{width:48px;flex:0 0 48px;color:#e2e8f0;font-weight:800}.pitch-input{box-sizing:border-box;width:100%;min-width:0;height:30px;padding:4px 8px;border:0;border-radius:8px;background:rgba(255,255,255,.1);color:#f8fafc;font-size:12px;font-weight:700;outline:none}.pitch-input:focus{box-shadow:0 0 0 1px rgba(196,181,253,.6)}.pitch-input::placeholder{color:#94a3b8}.pitch-num-wrap{display:flex;align-items:center;gap:7px;flex:1}.pitch-num-wrap .pitch-num{max-width:110px;text-align:right}.pitch-num-wrap b{font-size:11px;color:#cbd5e1}.pitch-photo{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:11px;padding-top:9px;border-top:1px solid rgba(255,255,255,.1)}.pitch-photo-btn{border:0;border-radius:10px;padding:8px 12px;background:#2563eb;color:#fff;font-size:12px;font-weight:900}.pitch-photo-btn:hover{background:#1d4ed8;color:#fff}.pitch-photo>span{font-size:11px;color:#94a3b8}.pitch-photo-thumbs{display:flex;gap:5px;flex-wrap:wrap;width:100%}.pitch-photo-thumbs img{width:48px;height:40px;object-fit:cover;border-radius:6px}</style><style>
