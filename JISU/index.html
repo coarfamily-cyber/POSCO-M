@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611141925">
+  <meta name="jisu-build" content="202611141930">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -774,6 +774,46 @@
     }
     body:not(#z1#z2#z3#z4#z5) .ob-photo-sq-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
     .ob-msg:empty,.ob-grid:empty{display:none !important;}
+    .mobile-card-close{display:none;}
+    @media (max-width: 768px){
+      body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-open::before{
+        content:"";position:fixed;inset:0;background:rgba(2,6,23,0.62);
+        backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:210;
+      }
+      body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-open .expand-card{
+        position:fixed !important;
+        left:10px !important;right:10px !important;top:50% !important;bottom:auto !important;
+        transform:translateY(-50%) scale(1) !important;
+        width:calc(100vw - 20px) !important;max-width:460px !important;
+        max-height:84dvh !important;margin:0 auto !important;
+        padding:14px !important;border-radius:24px !important;
+        z-index:220 !important;overflow-y:auto !important;-webkit-overflow-scrolling:touch;
+      }
+      body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-open .expand-card .mobile-card-close{
+        display:inline-flex !important;align-items:center;justify-content:center;
+        width:34px;height:34px;border-radius:9999px;flex-shrink:0;
+        background:rgba(15,23,42,0.14);color:#0f172a;font-size:16px;font-weight:900;
+        border:0;cursor:pointer;margin-left:auto;
+      }
+      body:not(#z1#z2#z3#z4#z5) .expand-card input,
+      body:not(#z1#z2#z3#z4#z5) .expand-card textarea{
+        font-size:16px !important;
+      }
+      body:not(#z1#z2#z3#z4#z5) .expand-card .work-complete,
+      body:not(#z1#z2#z3#z4#z5) .expand-card .work-working{
+        min-height:34px !important;padding:6px 12px !important;font-size:12px !important;
+      }
+      body:not(#z1#z2#z3#z4#z5) #pitchLog .pitch-photo-actions{
+        width:100% !important;margin-left:0 !important;justify-content:center !important;flex-wrap:wrap !important;gap:6px !important;
+      }
+      body:not(#z1#z2#z3#z4#z5) #pitchLog .pitch-photo-btn,
+      body:not(#z1#z2#z3#z4#z5) #pitchLog .pitch-save-btn{
+        flex:1 1 90px;min-width:82px;height:38px;
+      }
+      body:not(#z1#z2#z3#z4#z5) .inbound-table-wrap{
+        overflow-x:auto !important;-webkit-overflow-scrolling:touch;
+      }
+    }
     .expand-card .cmd-in-card-h span {
       background: #0284c7 !important;
       color: #ffffff !important;
@@ -3864,7 +3904,25 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
   })();
   </script>
   <script>
-  /* Keep expanded cards inside the factory map: open below or above (whichever fits), shift sideways, and scroll inside the card if needed */
+
+  (function(){
+    document.querySelectorAll('.expand-card .enscape-header').forEach(h => {
+      if(h.querySelector('.mobile-card-close')) return;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'mobile-card-close';
+      b.setAttribute('aria-label', '자세히보기 닫기');
+      b.textContent = '✕';
+      b.addEventListener('click', e => {
+        e.stopPropagation();
+        const w = h.closest('.hotspot-wrapper');
+        if(w) w.classList.remove('is-open');
+        document.querySelectorAll('[data-production-btn],[data-warehouse-btn]').forEach(btn=>{btn.classList.remove('is-selected');btn.setAttribute('aria-pressed','false');});
+      });
+      h.appendChild(b);
+    });
+  })();
+    /* Keep expanded cards inside the factory map: open below or above (whichever fits), shift sideways, and scroll inside the card if needed */
   (function(){
     const stage=document.getElementById('mapStage'); if(!stage) return;
     const M=10;
@@ -3877,6 +3935,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       // width: never wider than the map
       const z=parseFloat(getComputedStyle(card).zoom)||1;
       const maxW=sr.width-2*M; card.style.width = card.offsetWidth*z>maxW ? (maxW/z)+'px' : '';
+      if(window.innerWidth<=768){ reset(card); return; }
       if(sr.height<360){ /* phone: map too small, let the card open below normally (page scroll), only keep it inside horizontally */
         card.style.top='100%'; card.style.bottom='auto'; card.style.maxHeight='none'; card.classList.remove('opens-up');
         const w0=card.offsetWidth, cx0=br.left+br.width/2; let l0=cx0-w0/2, d0=0; const vw=document.documentElement.clientWidth; if(l0<M) d0=M-l0; else if(l0+w0>vw-M) d0=(vw-M)-(l0+w0); card.style.transform='translate(calc(-50% + '+Math.round(d0)+'px), 0)'; return; }
