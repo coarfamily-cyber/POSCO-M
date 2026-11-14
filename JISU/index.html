@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140920">
+  <meta name="jisu-build" content="202611140925">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -522,6 +522,7 @@
       box-shadow:none !important;
     }
     #hdrSearchInput::placeholder{color:rgba(226,232,240,0.68);font-weight:500;}
+    #hdrSearchInput::-webkit-search-cancel-button,#hdrSearchInput::-webkit-search-decoration{-webkit-appearance:none;appearance:none;display:none;}
     .hdr-search-kbd{
       font-size:10px;font-weight:700;color:rgba(226,232,240,0.75);
       background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.20) !important;
@@ -4035,7 +4036,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
   (function(){
     document.addEventListener('click',e=>{
       const t=e.target; if(!(t instanceof Element)) return;
-      if(t.closest('.hotspot-wrapper, .cmd-side, #detailModal, #loginModal, .hdr-tools, .bldg-badge')) return;
+      if(t.closest('.hotspot-wrapper, .cmd-side, #detailModal, #loginModal, .hdr-tools, .bldg-badge, #hdrSearchBox, #hdrSearchPanel')) return;
       const open=document.querySelectorAll('.hotspot-wrapper.is-open'); if(!open.length) return;
       open.forEach(w=>w.classList.remove('is-open'));
       document.querySelectorAll('[data-production-btn],[data-warehouse-btn]').forEach(b=>{b.classList.remove('is-selected');b.setAttribute('aria-pressed','false');});
@@ -5637,6 +5638,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   }
 
   panel.addEventListener('click', e => {
+    e.stopPropagation();
     const row = e.target.closest('[data-sr-idx]');
     if(!row) return;
     const it = curList[Number(row.getAttribute('data-sr-idx'))];
