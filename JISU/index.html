@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611141945">
+  <meta name="jisu-build" content="202611141950">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -779,8 +779,15 @@
     body:not(#z1#z2#z3#z4#z5) .ob-stack-btn{
       position:absolute !important;top:-24px !important;right:82px !important;z-index:4 !important;
       width:64px !important;height:48px !important;padding:0 !important;border:0 !important;
-      background:transparent !important;cursor:pointer !important;
-      display:inline-block !important;
+      background:transparent !important;box-shadow:none !important;outline:none !important;
+      -webkit-tap-highlight-color:transparent !important;user-select:none !important;
+      cursor:pointer !important;display:inline-block !important;
+    }
+    body:not(#z1#z2#z3#z4#z5) .ob-stack-btn:hover,
+    body:not(#z1#z2#z3#z4#z5) .ob-stack-btn:focus,
+    body:not(#z1#z2#z3#z4#z5) .ob-stack-btn:focus-visible,
+    body:not(#z1#z2#z3#z4#z5) .ob-stack-btn:active{
+      background:transparent !important;box-shadow:none !important;outline:none !important;border:0 !important;
     }
     .ob-stack-card{
       position:absolute;bottom:0;width:44px;height:44px;border-radius:11px;
