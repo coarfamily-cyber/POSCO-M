@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611140940">
+  <meta name="jisu-build" content="202611140950">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -3897,24 +3897,27 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
   /* 금일 작업완료 → Excel (.xlsx) */
   (function(){
     const btn=document.getElementById('xlsxDoneBtn'); if(!btn) return;
-    const NAMES={"production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","A":"A동","B":"B동","C":"C동","D":"D동","environment":"환경",
+    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","A":"A동","B":"B동","C":"C동","D":"D동","environment":"환경",
       "outbound:RAS-2":"출고 · RAS-2","outbound:L1":"출고 · L1","outbound:CP3K":"출고 · CP3K","outbound:C3B":"출고 · C3B","outbound:연구요청":"출고 · 연구요청","outbound:2공장→1공장":"출고 · 공장간이송(2공장→1공장)","outbound:1공장→2공장":"출고 · 공장간이송(1공장→2공장)"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     const kstParts=()=>{const p=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const g=t=>p.find(x=>x.type===t).value;return {y:g('year'),m:g('month'),d:g('day')};};
     function loadLib(){ if(window.XLSX) return Promise.resolve(window.XLSX); return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';s.onload=()=>res(window.XLSX);s.onerror=()=>rej(new Error('lib'));document.head.appendChild(s);}); }
-    function goal(t){const m=String(t).match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||String(t).match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/);return m?{n:Number(m[1].replace(',','.')),u:({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()}:{n:'',u:''};}
+    function goal(t){const clean=String(t||'').replace(/^\[[^\]]+\]\s*/,'');const m=clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/);return m?{n:Number(m[1].replace(',','.')),u:({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()}:{n:'',u:''};}
     async function exportWork(options={}){
       let all=[]; try{all=JSON.parse(localStorage.getItem('jisu-commands-v1')||'[]')}catch(e){}
       const {y,m,d}=kstParts(); const today=m+'. '+d+'.';
       const work=all.filter(x=>x.kind!=='notice');
+      const notices=all.filter(x=>x.kind==='notice');
       const doneToday=work.filter(x=>x.completed && String(x.completedAt||'').startsWith(today));
       if(!options.skipPrompt && !doneToday.length && !confirm('오늘 작업완료된 금일작업이 없습니다.\n그래도 오늘 전체 금일작업 현황을 엑셀로 받을까요?')) return;
+      const HEAD=['번호','대상','작업 내용','이동','목표량','완료량','단위','상태','구분','긴급','원래 목표','관리자 판단','작성자','등록 시각','작업 시작','완료 시각'];
+      const COLS=[{wch:5},{wch:16},{wch:32},{wch:16},{wch:8},{wch:8},{wch:6},{wch:9},{wch:9},{wch:7},{wch:9},{wch:28},{wch:10},{wch:13},{wch:13},{wch:13}];
       const row=(x,i)=>{const g=goal(x.text);return {'번호':i+1,'대상':NAMES[x.target]||x.target,'작업 내용':x.text,'이동':(function(){const mv=(x.from&&x.to)?{from:x.from,to:x.to}:(window.jisuMoveOf?window.jisuMoveOf(x):null);return mv?(NAMES[mv.from]||mv.from)+' → '+(NAMES[mv.to]||mv.to):'';})(),'목표량':g.n,'완료량':x.done==null?'':Number(x.done),'단위':g.u,'상태':x.ended?'종료':(x.review==='moved'?'날짜 변경':((x.carried&&!x.short)?'이월':(x.completed?(x.short?'부족 완료':'작업완료'):(x.working?'작업중':'대기')))),'구분':x.carryCount?'이월 '+x.carryCount+'회':'신규','긴급':x.urgent?'긴급':'','원래 목표':x.origGoal!=null?x.origGoal:'','관리자 판단':x.reviewNote?(x.reviewNote+(x.reviewBy?' ('+x.reviewBy+' '+(x.reviewAt||'')+')':'')):(x.review==='pending'?'확인 대기':''),'작성자':x.by||'','등록 시각':x.at||'','작업 시작':x.startedAt||'','완료 시각':x.completedAt||''};};
       btn.disabled=true; const label=btn.innerHTML; btn.lastChild.textContent='만드는 중…';
       const fname=options.filename||('금일작업완료_'+y+m+d);
       try{
         const XLSX=await loadLib(); const wb=XLSX.utils.book_new();
-        const s1=XLSX.utils.json_to_sheet(doneToday.map(row),{header:['번호','대상','작업 내용','이동','목표량','완료량','단위','상태','구분','원래 목표','관리자 판단','작성자','등록 시각','작업 시작','완료 시각']});
-        s1['!cols']=[{wch:5},{wch:10},{wch:30},{wch:16},{wch:8},{wch:8},{wch:6},{wch:9},{wch:9},{wch:9},{wch:28},{wch:10},{wch:13},{wch:13},{wch:13}];
+        const s1=XLSX.utils.json_to_sheet(doneToday.map(row),{header:HEAD});
+        s1['!cols']=COLS;
         XLSX.utils.book_append_sheet(wb,s1,'금일 작업완료');
         // [입고원료 중량 기록일지 시트 연동]
         try {
@@ -3943,13 +3946,25 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           }
         } catch(e) { console.error("Inbound sheet error:", e); }
 
-        const s2=XLSX.utils.json_to_sheet(work.map(row)); s2['!cols']=s1['!cols']; XLSX.utils.book_append_sheet(wb,s2,'전체 금일작업');
+        const s2=XLSX.utils.json_to_sheet(work.map(row),{header:HEAD}); s2['!cols']=COLS; XLSX.utils.book_append_sheet(wb,s2,'전체 금일작업');
+        { const nHead=['번호','대상','공지 내용','긴급','작성자','등록 시각','상태'];
+          const sN=XLSX.utils.json_to_sheet(notices.map((x,i)=>({'번호':i+1,'대상':NAMES[x.target]||x.target,'공지 내용':x.text,'긴급':x.urgent?'긴급':'','작성자':x.by||'','등록 시각':x.at||'','상태':x.closed?'종료':'게시중'})),{header:nHead});
+          sN['!cols']=[{wch:5},{wch:14},{wch:44},{wch:7},{wch:10},{wch:14},{wch:9}]; XLSX.utils.book_append_sheet(wb,sN,'공지사항'); }
+        { let sch=[]; try{sch=JSON.parse(localStorage.getItem('jisu-schedule-v1')||'[]')}catch(e){}
+          const upcoming=sch.filter(s=>!s.applied).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+          const sCalHead=['번호','예정일','대상','구분','내용','긴급','작성자'];
+          const sCal=XLSX.utils.json_to_sheet(upcoming.map((x,i)=>({'번호':i+1,'예정일':x.date||'','대상':NAMES[x.target]||x.target,'구분':x.kind==='notice'?'공지':'금일작업','내용':x.text||'','긴급':x.urgent?'긴급':'','작성자':x.by||''})),{header:sCalHead});
+          sCal['!cols']=[{wch:5},{wch:12},{wch:14},{wch:9},{wch:40},{wch:7},{wch:10}]; XLSX.utils.book_append_sheet(wb,sCal,'달력 예정'); }
         { let ms=[]; try{ms=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]')}catch(e){} const TAG={handover:'인수인계',extra:'추가작업',issue:'특이사항'}; const s3=XLSX.utils.json_to_sheet(ms.map((x,i)=>({'번호':i+1,'작성 시각':x.at||'','대상':NAMES[x.target]||x.target,'내용':x.text,'작성자':x.by||'','확인':x.ack?('확인 '+(x.ackAt||'')+(x.ackBy?' · '+x.ackBy:'')):'미확인'})),{header:['번호','작성 시각','대상','내용','작성자','확인']}); s3['!cols']=[{wch:5},{wch:14},{wch:10},{wch:44},{wch:10},{wch:22}]; XLSX.utils.book_append_sheet(wb,s3,'특이사항'); }
         { let ev=null, lg=[]; try{ev=JSON.parse(localStorage.getItem('jisu-env-v1')||'null'); lg=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]');}catch(e){} const U=['1,2','3,4','5,6','7,8','9,10','11,12','13,14'], u=(ev&&ev.u)||{}; const ST={work:'작업중',done:'작업완료'};
           const s4=XLSX.utils.json_to_sheet(U.map((k,i)=>({'번호':i+1,'호기':k+'호기','회차':(ev&&ev.round)||1,'상태':ST[(u[k]||{}).s]||'대기','작업 시작':(u[k]||{}).ts||'','작업완료 시각':(u[k]||{}).td||''})),{header:['번호','호기','회차','상태','작업 시작','작업완료 시각']}); s4['!cols']=[{wch:5},{wch:11},{wch:6},{wch:9},{wch:10},{wch:12}]; XLSX.utils.book_append_sheet(wb,s4,'환경 호기 현재');
           const s5=XLSX.utils.json_to_sheet(lg.map((x,i)=>({'번호':i+1,'날짜':x.day||'','호기':x.unit+'호기','회차':x.round||'','작업 시작':x.ts||'','작업완료':x.td||'','작업자':x.by||''})),{header:['번호','날짜','호기','회차','작업 시작','작업완료','작업자']}); s5['!cols']=[{wch:5},{wch:11},{wch:11},{wch:6},{wch:10},{wch:10},{wch:10}]; XLSX.utils.book_append_sheet(wb,s5,'환경 청소 기록'); }
         if(window.jisuPitchMigration)await window.jisuPitchMigration;const pitchCompleted=options.pitchRecords||await window.jisuPitchArchive.all();
-        {const rows=[['날짜','완료 기록번호','항목','호기','순번','원료번호','수량 (BAG)','작업 상태','작업 시작','작업 완료','작업자']];pitchCompleted.sort((a,b)=>String(a.completedAt).localeCompare(String(b.completedAt))).forEach(pv=>{const add=(item,unit,n,barcode,quantity)=>rows.push([pv.day,pv.id,item,unit,n,barcode,quantity,'작업완료',pv.startedAt||'',pv.completedAt||'',pv.by||'']);const arr=(k,legacy)=>Array.isArray(pv[k])?pv[k]:[pv[legacy]||''];arr('add1s','add1').filter(v=>String(v).trim()).forEach((v,i)=>add('부원료 투입','1호기',i+1,v,''));arr('add2s','add2').filter(v=>String(v).trim()).forEach((v,i)=>add('부원료 투입','2호기',i+1,v,''));if(String(pv.grind1||'').trim())add('분쇄','1호기',1,'',Number(pv.grind1));if(String(pv.grind2||'').trim())add('분쇄','2호기',1,'',Number(pv.grind2));arr('moves','move').filter(v=>String(v).trim()).forEach((v,i)=>add('원료 이동','',i+1,v,''));});if(rows.length===1)rows.push(['','완료된 피치 기록이 없습니다.']);const ps=XLSX.utils.aoa_to_sheet(rows);ps['!cols']=[{wch:14},{wch:25},{wch:18},{wch:10},{wch:8},{wch:28},{wch:14},{wch:12},{wch:25},{wch:25},{wch:12}];XLSX.utils.book_append_sheet(wb,ps,'피치 현황');
+        {const rows=[['날짜','완료 기록번호','항목','호기','순번','원료번호','수량 (BAG)','작업 상태','작업 시작','작업 완료','작업자']];
+          const pushPitchRows=(pv,stLabel)=>{const add=(item,unit,n,barcode,quantity)=>rows.push([pv.day||'',pv.id||'',item,unit,n,barcode,quantity,stLabel,pv.startedAt||'',pv.completedAt||'',pv.by||'']);const arr=(k,legacy)=>Array.isArray(pv[k])?pv[k]:[pv[legacy]||''];arr('add1s','add1').filter(v=>String(v).trim()).forEach((v,i)=>add('부원료 투입','1호기',i+1,v,''));arr('add2s','add2').filter(v=>String(v).trim()).forEach((v,i)=>add('부원료 투입','2호기',i+1,v,''));if(String(pv.grind1||'').trim())add('분쇄','1호기',1,'',Number(pv.grind1));if(String(pv.grind2||'').trim())add('분쇄','2호기',1,'',Number(pv.grind2));arr('moves','move').filter(v=>String(v).trim()).forEach((v,i)=>add('원료 이동','',i+1,v,''));};
+          pitchCompleted.sort((a,b)=>String(a.completedAt).localeCompare(String(b.completedAt))).forEach(pv=>pushPitchRows(pv,'작업완료'));
+          if(!options.pitchCompletion){ try{ const curP=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}'); const doneIds=new Set(pitchCompleted.map(r=>r.id)); Object.keys(curP).sort().forEach(day=>{ const pv=curP[day]; if(!pv) return; if(pv.workState==='done'&&pv.completionId&&doneIds.has(pv.completionId)) return; const st=pv.workState==='work'?'작업중':(pv.workState==='done'?'작업완료':'임시저장'); pushPitchRows({...pv,day,id:pv.completionId||('진행_'+day)},st); }); }catch(e){} }
+          if(rows.length===1)rows.push(['','등록된 피치 작업 기록이 없습니다.']);const ps=XLSX.utils.aoa_to_sheet(rows);ps['!cols']=[{wch:14},{wch:25},{wch:18},{wch:10},{wch:8},{wch:28},{wch:14},{wch:12},{wch:25},{wch:25},{wch:12}];XLSX.utils.book_append_sheet(wb,ps,'피치 현황');
           const memoRows=[['완료 기록번호','날짜','작성 시각','내용','작성자']];pitchCompleted.forEach(p=>(p.memos||[]).forEach(m=>memoRows.push([p.id,p.day,m.at||'',m.text||'',m.by||''])));const ms=XLSX.utils.aoa_to_sheet(memoRows);ms['!cols']=[{wch:25},{wch:14},{wch:20},{wch:50},{wch:12}];XLSX.utils.book_append_sheet(wb,ms,'피치 완료 특이사항'); }
         /* 출고 사진(오늘 찍은 것)을 액셀 '출고 사진' 시트에 사진째 넣기 */
         let photos=[]; try{ const db=await new Promise((res,rej)=>{const r=indexedDB.open('jisu-photos',1); r.onupgradeneeded=()=>r.result.createObjectStore('outbound',{keyPath:'id'}); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);}); photos=await new Promise(res=>{const q=db.transaction('outbound','readonly').objectStore('outbound').getAll(); q.onsuccess=()=>res(q.result||[]); q.onerror=()=>res([]);}); db.close(); }catch(e){ photos=[]; }
@@ -3986,7 +4001,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       }catch(e){
         if(options.pitchCompletion)throw e;
         // fallback: CSV that Excel opens directly
-        const rows=doneToday.map(row); const head=['번호','대상','작업 내용','이동','목표량','완료량','단위','상태','구분','원래 목표','관리자 판단','작성자','등록 시각','작업 시작','완료 시각'];
+        const rows=doneToday.map(row); const head=HEAD;
         const csv='\ufeff'+[head.join(',')].concat(rows.map(r=>head.map(k=>'"'+String(r[k]).replace(/"/g,'""')+'"').join(','))).join('\r\n');
         const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download=fname+'.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
       }finally{ btn.disabled=false; btn.innerHTML=label; }
