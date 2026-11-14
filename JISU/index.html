@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611141910">
+  <meta name="jisu-build" content="202611141915">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -496,7 +496,7 @@
     body > header{padding-top:6px !important;padding-bottom:6px !important;flex-wrap:nowrap !important;white-space:nowrap !important;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
     body > header::-webkit-scrollbar{display:none;}
     .hdr-tools{display:flex;align-items:center;gap:8px;margin-left:0;flex-shrink:0;}
-    .hdr-search-wrap{flex:1 1 200px;display:flex;align-items:center;justify-content:center;min-width:160px;padding:0 6px;}
+    .hdr-search-wrap{flex:1 1 200px;display:flex;align-items:center;justify-content:flex-start;min-width:160px;padding:0 6px 0 18px;}
     body:not(#z1#z2#z3#z4#z5) .hdr-search-box{
       position:relative;width:min(380px,100%);height:34px;padding:0 8px 0 12px;
       display:flex;align-items:center;gap:7px;border-radius:9999px;
@@ -5499,8 +5499,12 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
 
   function placePanel(){
     const r = box.getBoundingClientRect();
-    const w = Math.max(Math.min(480, window.innerWidth - 20), Math.min(440, r.width + 60));
-    const left = Math.max(10, Math.min(window.innerWidth - w - 10, r.left + r.width / 2 - w / 2));
+    const side = document.getElementById('cmdSide');
+    const sideRight = (side && window.innerWidth > 900) ? Math.round(side.getBoundingClientRect().right + 12) : 10;
+    const maxW = Math.max(240, window.innerWidth - sideRight - 12);
+    const w = Math.min(maxW, Math.max(360, Math.min(460, r.width + 80)));
+    const preferredLeft = Math.max(r.left, sideRight);
+    const left = Math.max(10, Math.min(window.innerWidth - w - 10, preferredLeft));
     panel.style.width = Math.round(w) + 'px';
     panel.style.left = Math.round(left) + 'px';
     panel.style.top = Math.round(r.bottom + 8) + 'px';
