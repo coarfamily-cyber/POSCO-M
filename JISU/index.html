@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611150825">
+  <meta name="jisu-build" content="202611150840">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -2214,12 +2214,12 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     .inbound-table-section { display: flex; flex-direction: column; gap: 6px; }
     .inbound-sec-head { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
     .inbound-sec-title { font-size: 12px; font-weight: 900; color: #e2e8f0; }
-    .inbound-add-btn {
-      background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(52, 211, 153, 0.4);
-      color: #a7f3d0; font-size: 11px; font-weight: 800; border-radius: 7px; padding: 3px 9px;
-      cursor: pointer; transition: all .15s;
+    .inbound-add-btn, .inb-save-row-btn {
+      background: rgba(16, 185, 129, 0.25); border: 1px solid rgba(52, 211, 153, 0.45);
+      color: #a7f3d0; font-size: 11px; font-weight: 800; border-radius: 7px; padding: 4px 8px;
+      cursor: pointer; transition: all .15s; white-space: nowrap;
     }
-    .inbound-add-btn:hover { background: rgba(16, 185, 129, 0.35); color: #fff; transform: translateY(-1px); }
+    .inbound-add-btn:hover, .inb-save-row-btn:hover { background: rgba(16, 185, 129, 0.42); color: #fff; }
 
     .inbound-table-wrap {
       max-height: 240px; overflow-y: auto; overflow-x: auto;
@@ -2230,9 +2230,11 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       position: sticky; top: 0; background: #1e293b; color: #94a3b8; font-weight: 800;
       padding: 6px 4px; text-align: center; border-bottom: 1px solid rgba(255,255,255,.12); z-index: 2;
     }
-    .inbound-tbl td { padding: 4px 3px; border-bottom: 1px solid rgba(255,255,255,.06); vertical-align: middle; }
+    .inbound-tbl td { padding: 5px 3px; border-bottom: 1px solid rgba(255,255,255,.06); vertical-align: middle; text-align: center; color: #e2e8f0; font-weight: 700; }
+    .inbound-tbl tr.inb-entry-row td { background: rgba(15, 23, 42, 0.55); border-bottom: 1px solid rgba(52, 211, 153, 0.25); padding: 6px 3px; }
+    .inbound-tbl tr.inb-saved-row:hover td { background: rgba(255, 255, 255, 0.04); }
     .inbound-tbl input {
-      width: 100%; box-sizing: border-box; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+      width: 100%; box-sizing: border-box; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.16);
       border-radius: 5px; color: #fff; font-size: 11px; font-weight: 700; padding: 4px 5px; text-align: center;
     }
     .inbound-tbl input:focus { border-color: #34d399; outline: none; background: rgba(255,255,255,.14); box-shadow: 0 0 0 1px rgba(52,211,153,.5); }
@@ -3090,22 +3092,31 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
               <div class="inbound-table-section">
                 <div class="inbound-sec-head">
                   <span class="inbound-sec-title">중량 기록 목록</span>
-                  <button type="button" id="inboundAddRowBtn" class="inbound-add-btn">+ Bag 추가</button>
                 </div>
                 <div class="inbound-table-wrap">
                   <table class="inbound-tbl">
                     <thead>
                       <tr>
-                        <th style="width: 28%;">LOT 번호</th>
-                        <th style="width: 14%;">Bag</th>
-                        <th style="width: 22%;">중량(kg)</th>
-                        <th style="width: 18%;">적재위치</th>
-                        <th style="width: 18%;">작업자</th>
+                        <th style="width: 26%;">LOT 번호</th>
+                        <th style="width: 13%;">Bag</th>
+                        <th style="width: 20%;">중량(kg)</th>
+                        <th style="width: 18%;">차량번호</th>
+                        <th style="width: 15%;">작업자</th>
                         <th style="width: 8%;"></th>
                       </tr>
                     </thead>
+                    <tbody>
+                      <tr class="inb-entry-row" id="inboundEntryRow">
+                        <td><input type="text" id="inbNewLot" placeholder="LOT 번호"></td>
+                        <td><input type="text" id="inbNewBag" placeholder="Bag"></td>
+                        <td><input type="number" step="0.1" id="inbNewKg" placeholder="중량"></td>
+                        <td><input type="text" id="inbNewLoc" placeholder="차량번호"></td>
+                        <td><input type="text" id="inbNewWorker" value="김지수" placeholder="작업자"></td>
+                        <td><button type="button" id="inboundAddRowBtn" class="inb-save-row-btn">저장</button></td>
+                      </tr>
+                    </tbody>
                     <tbody id="inboundTbody">
-                      <!-- 동적 행들 -->
+                      <!-- 저장된 기록 나열 -->
                     </tbody>
                   </table>
                 </div>
@@ -4270,7 +4281,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
                 ["입고원료 중량 기록일지"],
                 ["입고일자: " + (inb.day || ""), "", "확인자: 출하/파트장"],
                 [],
-                ["번호", "입고일자", "LOT 번호", "Bag No.", "실측 중량(kg)", "작업자", "적재위치"]
+                ["번호", "입고일자", "LOT 번호", "Bag No.", "실측 중량(kg)", "작업자", "차량번호"]
               ];
               irows.forEach((r, i) => {
                 const kg = parseFloat(r.kg) || 0;
@@ -5366,6 +5377,16 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     if (remainTonEl) remainTonEl.textContent = `잔여: ${remain} TON`;
   }
 
+  const newLotInp = $("inbNewLot");
+  const newBagInp = $("inbNewBag");
+  const newKgInp = $("inbNewKg");
+  const newLocInp = $("inbNewLoc");
+  const newWorkerInp = $("inbNewWorker");
+
+  function escHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
+  }
+
   function renderRows() {
     const rec = getTodayRecord();
     const rows = rec.rows || [];
@@ -5378,12 +5399,14 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       if (kgVal > 0) { totalKg += kgVal; count++; }
 
       const tr = document.createElement("tr");
+      tr.className = "inb-saved-row";
+      if (r.lot) tr.dataset.lot = r.lot;
       tr.innerHTML = `
-        <td><input type="text" class="inb-inp-lot" data-idx="${idx}" value="${r.lot || ""}" placeholder="LOT 번호"></td>
-        <td><input type="text" class="inb-inp-bag" data-idx="${idx}" value="${r.bag || ""}" placeholder="Bag"></td>
-        <td><input type="number" step="0.1" class="inb-inp-kg" data-idx="${idx}" value="${r.kg || ""}" placeholder="중량"></td>
-        <td><input type="text" class="inb-inp-loc" data-idx="${idx}" value="${r.loc || ""}" placeholder="위치"></td>
-        <td><input type="text" class="inb-inp-worker" data-idx="${idx}" value="${r.worker || "김지수"}" placeholder="작업자"></td>
+        <td>${escHtml(r.lot || "-")}</td>
+        <td>${escHtml(r.bag || "-")}</td>
+        <td>${r.kg ? escHtml(r.kg) : "-"}</td>
+        <td>${escHtml(r.loc || "-")}</td>
+        <td>${escHtml(r.worker || "김지수")}</td>
         <td><button type="button" class="inb-del-btn" data-del="${idx}" title="삭제">×</button></td>
       `;
       tbody.appendChild(tr);
@@ -5396,54 +5419,56 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     updateKpi(totalKg, count);
   }
 
-  tbody.addEventListener("input", e => {
-    const t = e.target;
-    const idx = parseInt(t.dataset.idx, 10);
-    if (isNaN(idx)) return;
-    const rec = getTodayRecord();
-    if (!rec.rows[idx]) return;
-
-    if (t.classList.contains("inb-inp-lot")) rec.rows[idx].lot = t.value.trim();
-    if (t.classList.contains("inb-inp-bag")) rec.rows[idx].bag = t.value.trim();
-    if (t.classList.contains("inb-inp-kg")) rec.rows[idx].kg = t.value.trim();
-    if (t.classList.contains("inb-inp-loc")) rec.rows[idx].loc = t.value.trim();
-    if (t.classList.contains("inb-inp-worker")) rec.rows[idx].worker = t.value.trim();
-
-    let totalKg = 0, count = 0;
-    rec.rows.forEach(r => {
-      const v = parseFloat(r.kg) || 0;
-      if (v > 0) { totalKg += v; count++; }
-    });
-    if (sumBagsEl) sumBagsEl.textContent = count;
-    if (sumKgEl) sumKgEl.textContent = totalKg.toLocaleString("ko-KR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-    if (sumTonEl) sumTonEl.textContent = (totalKg / 1000).toFixed(2);
-    updateKpi(totalKg, count);
-  });
-
   tbody.addEventListener("click", e => {
     const btn = e.target.closest(".inb-del-btn");
     if (!btn) return;
+    e.stopPropagation();
     const idx = parseInt(btn.dataset.del, 10);
-    const rec = getTodayRecord();
+    if (isNaN(idx)) return;
+    const all = loadAllRecords();
+    const rec = all[activeDay] || getTodayRecord();
+    all[activeDay] = rec;
     rec.rows.splice(idx, 1);
-    saveAllRecords(loadAllRecords());
+    saveAllRecords(all);
     renderRows();
   });
 
-  addBtn.addEventListener("click", () => {
-    const rec = getTodayRecord();
-    const rows = rec.rows || [];
-    const lastRow = rows[rows.length - 1] || {};
-    const nextBag = lastRow.bag ? String(parseInt(lastRow.bag, 10) + 1 || "") : "";
-    const nextLot = lastRow.lot || "SH2609020";
-    const nextWorker = localStorage.getItem("jisu-user") || "김지수";
+  function addEntryRow() {
+    const lot = (newLotInp && newLotInp.value.trim()) || "";
+    const bag = (newBagInp && newBagInp.value.trim()) || "";
+    const kg = (newKgInp && newKgInp.value.trim()) || "";
+    const loc = (newLocInp && newLocInp.value.trim()) || "";
+    const worker = (newWorkerInp && newWorkerInp.value.trim()) || localStorage.getItem("jisu-user") || "김지수";
+    if (!lot && !bag && !kg && !loc) {
+      if (newLotInp) newLotInp.focus();
+      return;
+    }
 
-    rows.push({ lot: nextLot, bag: nextBag, kg: "", loc: lastRow.loc || "", worker: nextWorker });
-    rec.rows = rows;
-    saveAllRecords(loadAllRecords());
+    const all = loadAllRecords();
+    const rec = all[activeDay] || getTodayRecord();
+    all[activeDay] = rec;
+    rec.rows = rec.rows || [];
+    rec.rows.unshift({ lot, bag, kg, loc, worker });
+    saveAllRecords(all);
     renderRows();
-    const wrap = tbody.closest(".inbound-table-wrap");
-    if (wrap) wrap.scrollTop = wrap.scrollHeight;
+
+    if (newKgInp) { newKgInp.value = ""; newKgInp.focus(); }
+    if (newBagInp && bag && /^\d+$/.test(bag)) {
+      newBagInp.value = String(parseInt(bag, 10) + 1);
+    }
+  }
+
+  if (addBtn) {
+    addBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      addEntryRow();
+    });
+  }
+  [newLotInp, newBagInp, newKgInp, newLocInp, newWorkerInp].forEach(inp => {
+    if (!inp) return;
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); addEntryRow(); }
+    });
   });
 
   if (calLinkBtn) {
@@ -5578,7 +5603,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
         ["입고원료 중량 기록일지"],
         [`입고일자: ${activeDay}`, "", `확인자: 출하 / 파트장`, "", `작업자: ${localStorage.getItem("jisu-user") || "김지수"}`],
         [],
-        ["번호", "입고일자", "LOT 번호", "Bag No.", "실측 중량(kg)", "작업자", "적재위치"]
+        ["번호", "입고일자", "LOT 번호", "Bag No.", "실측 중량(kg)", "작업자", "차량번호"]
       ];
 
       rows.forEach((r, i) => {
@@ -5828,7 +5853,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
           const sub = ['입고 중량일지', day, loc ? ('위치 ' + loc) : '', worker].filter(Boolean).join(' · ');
           items.push({
             badge: '입고 LOT', cls: 't-lot', title, sub,
-            search: [day, lot, bag, r.kg, loc, worker, '입고 lot 적재위치 중량일지'].filter(Boolean).join(' ').toLowerCase(),
+            search: [day, lot, bag, r.kg, loc, worker, '입고 lot 차량번호 중량일지'].filter(Boolean).join(' ').toLowerCase(),
             action: { type: 'inbound', lot, rowIndex: idx }
           });
         });
@@ -5967,8 +5992,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
         const card = wrap && wrap.querySelector('.expand-card');
         flashEl(card);
         if(act.lot){
-          const inp = [...document.querySelectorAll('#inboundTbody input')].find(el => el.value === act.lot);
-          if(inp){ inp.scrollIntoView({ block:'center', behavior:'smooth' }); flashEl(inp.closest('tr')); }
+          const row = document.querySelector(`#inboundTbody tr[data-lot="${CSS.escape(act.lot)}"]`) || [...document.querySelectorAll('#inboundTbody input')].find(el => el.value === act.lot)?.closest('tr');
+          if(row){ row.scrollIntoView({ block:'center', behavior:'smooth' }); flashEl(row); }
         }
       }, 120);
       return;
