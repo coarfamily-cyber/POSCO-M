@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611150910">
+  <meta name="jisu-build" content="202611150920">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -970,6 +970,63 @@
         display:inline-flex !important;
         align-items:center;
         justify-content:center;
+      }
+    }
+    /* 작업자 모바일 전용 링크(?zone=outbound 등) : 자세히보기 카드만 단독 표시 */
+    body.worker-zone-only{
+      background:#0b1120 !important;
+      overflow-y:auto !important;
+    }
+    body.worker-zone-only header.topbar,
+    body.worker-zone-only .cmd-side,
+    body.worker-zone-only .bldg-badge,
+    body.worker-zone-only .map-legend,
+    body.worker-zone-only #mapMoveLayer,
+    body.worker-zone-only .hotspot-wrapper:not(.is-worker-zone){
+      display:none !important;
+    }
+    body.worker-zone-only .map-stage{
+      position:static !important;width:100% !important;height:auto !important;min-height:100dvh !important;
+      background:#0b1120 !important;display:flex !important;align-items:flex-start !important;justify-content:center !important;
+      padding:12px 10px 28px !important;overflow:visible !important;
+    }
+    body.worker-zone-only .map-stage > img{
+      display:none !important;
+    }
+    body.worker-zone-only .hotspot-wrapper.is-worker-zone{
+      position:static !important;left:auto !important;top:auto !important;transform:none !important;
+      width:100% !important;max-width:480px !important;margin:0 auto !important;z-index:auto !important;
+    }
+    body.worker-zone-only .hotspot-wrapper.is-worker-zone::before,
+    body.worker-zone-only .hotspot-wrapper.is-worker-zone .hotspot-pill,
+    body.worker-zone-only .hotspot-wrapper.is-worker-zone .mobile-card-close{
+      display:none !important;
+    }
+    body.worker-zone-only .hotspot-wrapper.is-worker-zone .expand-card{
+      position:static !important;left:auto !important;right:auto !important;top:auto !important;bottom:auto !important;
+      transform:none !important;opacity:1 !important;pointer-events:auto !important;
+      width:100% !important;max-width:480px !important;max-height:none !important;
+      margin:0 auto !important;display:block !important;border-radius:24px !important;
+      background:rgba(255,255,255,0.90) !important;
+    }
+    body.worker-zone-only .hotspot-wrapper.is-worker-zone .ob-photo-sq-btn{
+      right:0 !important;
+    }
+    body.worker-zone-only .hotspot-wrapper.is-worker-zone .ob-stack-btn{
+      right:82px !important;
+    }
+    body.worker-zone-only .hotspot-wrapper.is-worker-zone .ob-cmd-wrap .cmd-in-card-h{
+      padding-right:156px !important;
+    }
+    @media (max-width:768px){
+      body.worker-zone-only .hotspot-wrapper.is-worker-zone .ob-photo-sq-btn{
+        right:0 !important;top:-34px !important;width:58px !important;height:58px !important;
+      }
+      body.worker-zone-only .hotspot-wrapper.is-worker-zone .ob-stack-btn{
+        right:66px !important;top:-20px !important;
+      }
+      body.worker-zone-only .hotspot-wrapper.is-worker-zone .ob-cmd-wrap .cmd-in-card-h{
+        padding-right:128px !important;
       }
     }
     .expand-card .cmd-in-card-h span {
@@ -4451,6 +4508,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
   (function(){
     document.addEventListener('click',e=>{
       const t=e.target; if(!(t instanceof Element)) return;
+      if(document.body.classList.contains('worker-zone-only')) return;
       if(t.closest('.hotspot-wrapper, .cmd-side, #detailModal, #loginModal, .hdr-tools, .bldg-badge, #hdrSearchBox, #hdrSearchPanel')) return;
       const open=document.querySelectorAll('.hotspot-wrapper.is-open'); if(!open.length) return;
       open.forEach(w=>w.classList.remove('is-open'));
@@ -6247,6 +6305,20 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       }
     });
   });
+})();
+</script>
+<script>
+/* ?zone=outbound 등 작업자 모바일 전용 자세히보기 단독 모드 */
+(function(){
+  try{
+    const z=new URLSearchParams(location.search).get('zone');
+    if(!z) return;
+    const wrap=document.getElementById('hotspot-'+z);
+    if(!wrap) return;
+    document.body.classList.add('worker-zone-only');
+    wrap.classList.add('is-worker-zone','is-open');
+    document.title=(wrap.querySelector('.enscape-title')?.textContent||z.toUpperCase())+' · 모바일 작업자';
+  }catch(e){}
 })();
 </script>
 </body>
