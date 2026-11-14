@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611142010">
+  <meta name="jisu-build" content="202611142015">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>지수 통합 관제 상황실</title>
@@ -3168,6 +3168,25 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     </div>
     </div>
   </main>
+  <div class="ob-lb-backdrop" id="obLightbox" role="dialog" aria-modal="true" aria-label="출고 사진 크게 보기">
+    <div class="ob-lb-top">
+      <div class="ob-lb-meta">
+        <span class="ob-lb-count" id="obLbCount">1 / 1</span>
+        <span id="obLbTime"></span>
+      </div>
+      <div class="ob-lb-actions">
+        <a class="ob-lb-btn" id="obLbDl" download>다운로드</a>
+        <button type="button" class="ob-lb-btn is-danger" id="obLbDel">삭제</button>
+        <button type="button" class="ob-lb-btn" id="obLbClose">✕ 닫기</button>
+      </div>
+    </div>
+    <div class="ob-lb-stage" id="obLbStage">
+      <button type="button" class="ob-lb-nav prev" id="obLbPrev" aria-label="이전 사진">‹</button>
+      <img class="ob-lb-img" id="obLbImg" alt="출고 사진 확대">
+      <button type="button" class="ob-lb-nav next" id="obLbNext" aria-label="다음 사진">›</button>
+    </div>
+    <div class="ob-lb-strip" id="obLbStrip"></div>
+  </div>
 
   <!-- Bottom Real-Time Status Ticker Bar -->
 
@@ -5913,24 +5932,5 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   });
 })();
 </script>
-  <div class="ob-lb-backdrop" id="obLightbox" role="dialog" aria-modal="true" aria-label="출고 사진 크게 보기">
-    <div class="ob-lb-top">
-      <div class="ob-lb-meta">
-        <span class="ob-lb-count" id="obLbCount">1 / 1</span>
-        <span id="obLbTime"></span>
-      </div>
-      <div class="ob-lb-actions">
-        <a class="ob-lb-btn" id="obLbDl" download>다운로드</a>
-        <button type="button" class="ob-lb-btn is-danger" id="obLbDel">삭제</button>
-        <button type="button" class="ob-lb-btn" id="obLbClose">✕ 닫기</button>
-      </div>
-    </div>
-    <div class="ob-lb-stage" id="obLbStage">
-      <button type="button" class="ob-lb-nav prev" id="obLbPrev" aria-label="이전 사진">‹</button>
-      <img class="ob-lb-img" id="obLbImg" alt="출고 사진 확대">
-      <button type="button" class="ob-lb-nav next" id="obLbNext" aria-label="다음 사진">›</button>
-    </div>
-    <div class="ob-lb-strip" id="obLbStrip"></div>
-  </div>
 </body>
 </html>
