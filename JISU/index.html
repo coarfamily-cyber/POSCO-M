@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151715">
+  <meta name="jisu-build" content="202611151725">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -1084,7 +1084,7 @@
       position:static !important;left:auto !important;right:auto !important;top:auto !important;bottom:auto !important;
       transform:none !important;opacity:1 !important;pointer-events:auto !important;
       width:100% !important;max-width:none !important;height:auto !important;min-height:100dvh !important;max-height:none !important;
-      overflow:visible !important;
+      overflow-x:hidden !important;overflow-y:visible !important;box-sizing:border-box !important;
       margin:0 !important;display:block !important;border-radius:0 !important;border:none !important;box-shadow:none !important;
       padding:16px 14px 48px !important;
       background:linear-gradient(160deg,rgba(148,163,184,0.45) 0%,rgba(71,85,105,0.55) 50%,rgba(30,41,59,0.75) 100%) !important;
@@ -2247,16 +2247,17 @@
     .home-env .he-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;font-size:12.5px;border-top:1px solid rgba(255,255,255,.06);}
     .home-env .he-row:first-of-type{border-top:0;}
     /* 카드 첨부 이미지 & 등록 첨부 UI */
+    .cmd-item.has-img{max-width:100%;box-sizing:border-box;overflow:hidden;}
     .cmd-item.has-img .meta{justify-content:flex-end !important;margin-bottom:2px !important;}
-    .cmd-item.has-img .cmd-row{align-items:flex-end !important;flex-wrap:nowrap !important;}
+    .cmd-item.has-img .cmd-row{align-items:flex-end !important;flex-wrap:nowrap !important;gap:6px !important;max-width:100%;}
     .expand-card .cmd-item.has-img{padding:8px 12px !important;}
     .work-right-col{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;flex-wrap:nowrap;gap:4px;flex:0 0 auto;margin-left:auto;}
-    .work-ton-badge{padding:3px 3px;border-radius:8px;background:transparent;border:none;color:#0f172a;font-size:11px;font-weight:900;letter-spacing:-.03em;white-space:nowrap;box-shadow:none;}
-    .cmd-side .work-ton-badge{font-size:11px;padding:3px 8px;}
-    .cmd-card-img-wrap{display:flex;flex-direction:row;align-items:center;gap:6px;flex-wrap:wrap;flex:0 1 auto;min-width:0;}
+    .work-ton-badge{padding:3px 2px;border-radius:8px;background:transparent;border:none;color:#0f172a;font-size:11px;font-weight:900;letter-spacing:-.03em;white-space:nowrap;box-shadow:none;flex:0 0 auto;}
+    .cmd-side .work-ton-badge{font-size:11px;padding:3px 8px;color:#e2e8f0;}
+    .cmd-card-img-wrap{display:flex;flex-direction:row;align-items:flex-end;gap:8px;flex-wrap:nowrap;flex:1 1 auto;min-width:0;}
     .cmd-card-img-btn{display:block;width:74px;height:50px;flex:0 0 auto;padding:0;border-radius:8px;overflow:hidden;border:none !important;outline:none !important;background:transparent !important;box-shadow:none !important;cursor:pointer;position:relative;transition:transform .14s ease;}
     .cmd-card-img-btn:hover{transform:scale(1.03);}
-    .cmd-card-img-btn img{width:100%;height:100%;object-fit:cover;display:block;}
+    .cmd-card-img-btn img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;}
     .cmd-card-img-cap{font-size:12.5px;font-weight:700;color:#0f172a;line-height:1.35;flex:1 1 110px;min-width:0;}
     .cmd-side .cmd-card-img-cap{color:#e2e8f0;}
     .gem-guide-btn{padding:4px 9px;border-radius:7px;border:1px solid rgba(196,181,253,.45);background:rgba(139,92,246,.28);color:#f3e8ff;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;}
@@ -2267,7 +2268,8 @@
     .cmd-notice-banner.has-img{grid-template-columns:auto 1fr auto;align-items:center;}
     .cmd-notice-banner .cmd-card-img-btn{width:124px;height:82px;margin-top:0;}
     @media (max-width:768px){
-      .cmd-card-img-btn{width:124px;height:82px;}
+      .cmd-card-img-btn{width:102px;height:68px;}
+      .cmd-card-img-wrap{gap:6px;}
     }
     .cmd-attach-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:6px 0 4px;}
     .cmd-attach-btn{padding:4px 9px;border-radius:8px;border:1px solid rgba(56,189,248,.45);background:rgba(14,165,233,.18);color:#e0f2fe;font-size:11.5px;font-weight:800;cursor:pointer;}
@@ -4051,18 +4053,18 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     function itemHtml(x,withDel){
       const isWork=x.kind!=='notice'; const isMove=isMoveWork(x); const g=isMove?goalOf(x.text):null;
       let right='';
+      const hasImg = Boolean(x.img);
       if(isWork){
         right='<div class="work-ctrl">'
           +(isMove ? '<label class="work-done-num">완료 <input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" enterkeyhint="done" data-cmd-progress="'+x.id+'" value="'+(x.done!=null?esc(x.done):'')+'" placeholder="0"'+(x.completed?' disabled':'')+'>'+'<span class="work-unit">'+(g?'/ '+esc(g.n)+(g.u?' '+esc(g.u):''):'')+'</span>'+'</label>' : '')
           +'<button type="button" class="work-complete work-progress'+(x.working&&!x.completed?' is-working':'')+'" data-cmd-working="'+x.id+'">작업중</button>'
           +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?(x.short?'부족 완료':'완료됨'):'작업완료')+'</button>'
           +'</div>';
-        if(x.tonText){
+        if(x.tonText && !hasImg){
           right='<div class="work-right-col"><div class="work-ton-badge">'+esc(x.tonText)+'</div>'+right+'</div>';
         }
       }
       const obItem = getObItem(x);
-      const hasImg = Boolean(x.img);
       let kindTag = '';
       if(!hasImg){
         if(obItem){
@@ -4079,7 +4081,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         if(clean) dispText = esc(clean);
       }
       const bodyHtml = hasImg
-        ? '<div class="cmd-card-img-wrap"><button type="button" class="cmd-card-img-btn" data-cmd-img-open="'+esc(x.id)+'"><img src="'+x.img+'" alt="첨부 이미지"></button>'+(x.text&&x.text!=='첨부 이미지'?'<div class="cmd-card-img-cap">'+dispText+'</div>':'')+carrySub(x)+(function(){const mv=moveOf(x);return mv?'<span class="move-tag">이동 '+esc(PLACE_LABEL[mv.from]||mv.from)+' → '+esc(PLACE_LABEL[mv.to]||mv.to)+'</span>':'';})()+'</div>'
+        ? '<div class="cmd-card-img-wrap"><button type="button" class="cmd-card-img-btn" data-cmd-img-open="'+esc(x.id)+'"><img src="'+x.img+'" alt="첨부 이미지"></button>'+(x.tonText?'<div class="work-ton-badge">'+esc(x.tonText)+'</div>':'')+(x.text&&x.text!=='첨부 이미지'?'<div class="cmd-card-img-cap">'+dispText+'</div>':'')+carrySub(x)+(function(){const mv=moveOf(x);return mv?'<span class="move-tag">이동 '+esc(PLACE_LABEL[mv.from]||mv.from)+' → '+esc(PLACE_LABEL[mv.to]||mv.to)+'</span>':'';})()+'</div>'
         : '<div class="cmd-text">'+dispText+carrySub(x)+(function(){const mv=moveOf(x);return mv?'<span class="move-tag">이동 '+esc(PLACE_LABEL[mv.from]||mv.from)+' → '+esc(PLACE_LABEL[mv.to]||mv.to)+'</span>':'';})()+'</div>';
       return '<div class="cmd-item'+(hasImg?' has-img':'')+(x.completed?' is-completed':'')+(x.review==='pending'?' is-pending':'')+(isCarryover(x)?' is-carry':'')+(x.urgent&&!x.completed?' is-urgent':'')+'"><div class="meta">'+kindTag+(x.target==='*'&&!hasImg?'<span class="all-tag">전체</span>':'')+carryTags(x)+'<span>'+(x.by?esc(x.by)+' · ':'')+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):(x.working&&x.startedAt?' · 작업중 '+esc(x.startedAt):''))+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
         +'<div class="cmd-row">'+bodyHtml+right+'</div></div>';
@@ -4535,6 +4537,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       if(lb){ lb.classList.remove('is-open'); lb.classList.remove('is-rotated'); }
       const img=$('obLbImg'); if(img) img.classList.remove('is-rotated');
       lbItems=null; lbOnDel=null;
+      try{ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); }catch(_){}
+      try{ window.scrollTo(0, window.scrollY); document.querySelectorAll('.expand-card').forEach(el=>{ el.scrollLeft=0; }); }catch(_){}
       if(!fromPop && wasOpen){
         try{ if(history.state&&history.state.jisuLb) history.back(); }catch(_){}
       }
