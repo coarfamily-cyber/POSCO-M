@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151235">
+  <meta name="jisu-build" content="202611151245">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -1779,16 +1779,18 @@
     .cmd-side{overflow-x:hidden;}
     /* 달력 배치: 위에 달력, 아래에 [등록 카드 | 스케줄·기록 내용] */
     .cal-box .cal-body{grid-template-columns:1fr !important;}
-    .cal-box .cal-side{display:grid !important;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);grid-template-areas:"head head" "add list" "add hist" "note note";column-gap:16px;row-gap:8px;align-items:start;align-content:start;}
-    .cal-box .cal-side > .cz-head{grid-area:head;}
-    .cal-box .cal-side > .cz-add{grid-area:add;}
-    .cal-box .cal-side > .cz-list{grid-area:list;}
-    .cal-box .cal-side > .cz-hist{grid-area:hist;margin-top:0;}
-    .cal-box .cal-side > .cal-note{grid-area:note;}
-    .cal-box .cal-side:has(> .cz-add[hidden]){grid-template-areas:"head head" "list list" "hist hist" "note note";}
-    .cal-box .cal-side .cz-hist .ch-head{padding-top:0;}
+    .cal-box .cal-side{display:grid !important;grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;grid-template-areas:none !important;column-gap:16px;row-gap:10px;align-items:start;align-content:start;}
+    .cal-box .cal-side > #czSingleView{min-width:0;display:flex;flex-direction:column;gap:8px;}
+    .cal-box .cal-side > #czBatchView{min-width:0;display:flex !important;flex-direction:column;gap:8px;padding-left:14px;border-left:1px solid rgba(255,255,255,.12);}
+    @media(min-width:721px){
+      #czBatchBackTopBtn,#czBatchCancelBtn,#czQuickBatchPrompt{display:none !important;}
+    }
     .cal-box .cal-grid .cal-cell{min-height:64px;}
-    @media(max-width:720px){.cal-box .cal-side{grid-template-columns:1fr;grid-template-areas:"head" "add" "list" "hist" "note";}}
+    @media(max-width:720px){
+      .cal-box .cal-side{grid-template-columns:1fr !important;}
+      .cal-box .cal-side > #czBatchView{display:none !important;padding-left:0;border-left:0;}
+      .cal-box .cal-side > #czBatchView.is-open-mobile{display:flex !important;}
+    }
     /* ===== 이월 색: 핑크 (#EC4899) — 작업중(주황)과 구분, 3회 이상은 빨강 유지 ===== */
     .carry-tag:not(.hot){background:#ec4899 !important;box-shadow:0 0 6px rgba(236,72,153,.55) !important;}
     .carry-sub{color:#f9a8d4 !important;}
@@ -4858,8 +4860,16 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
 
     function setBatchView(show){
       if(!singleView || !batchView) return;
+      if(window.innerWidth>720){
+        singleView.style.display='flex';
+        batchView.style.display='flex';
+        batchView.classList.remove('is-open-mobile');
+        if(show && batchText){ batchText.focus(); renderBatchPreview(); }
+        return;
+      }
       singleView.style.display=show?'none':'block';
       batchView.style.display=show?'flex':'none';
+      batchView.classList.toggle('is-open-mobile',Boolean(show));
       if(batchBtn) batchBtn.classList.toggle('is-active',show);
       if(show){
         if(batchText){ batchText.focus(); renderBatchPreview(); }
@@ -4948,7 +4958,14 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       if(!batchPreview||!batchText) return;
       const defTarget=(batchTarget&&batchTarget.value)||'inbound';
       const text=batchText.value;
-      parsedBatchData=parseBatch(text,defTarget);
+      const disp=typeof parseDispatchRows==='function'?parseDispatchRows(text,kstToday()):null;
+      if(disp&&disp.items.length){
+        const gMap=new Map();
+        disp.items.forEach(x=>{ if(!gMap.has(x.date)) gMap.set(x.date,[]); gMap.get(x.date).push({target:'outbound',kind:'work',text:x.text}); });
+        parsedBatchData=Array.from(gMap.entries()).map(([date,items])=>({date,items})).sort((a,b)=>a.date.localeCompare(b.date));
+      }else{
+        parsedBatchData=parseBatch(text,defTarget);
+      }
 
       let totalCount=0;
       parsedBatchData.forEach(g=>{ totalCount+=g.items.length; });
