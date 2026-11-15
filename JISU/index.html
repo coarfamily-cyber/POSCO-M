@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151255">
+  <meta name="jisu-build" content="202611151305">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -3449,7 +3449,16 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           </select>
         </div>
         <div class="cal-hint" style="margin-bottom:4px;">
-          카톡·메신저 공지글을 그대로 붙여넣으세요. 날짜 머리글(11월10일, 11/11 등)을 자동 인식해 날짜별로 분류합니다.
+          카톡·메신저 공지글 또는 지시서 표/이미지를 붙여넣으세요. (표는 2공장만 자동 추출)
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+          <button type="button" id="czBatchImgBtn" class="cz-b" style="background:rgba(14,165,233,.22) !important;border-color:rgba(56,189,248,.45) !important;color:#e0f2fe !important;font-weight:800;">🖼️ 이미지 첨부</button>
+          <input type="file" id="czBatchImgInput" accept="image/*" hidden>
+          <span id="czBatchOcrStatus" style="font-size:11.5px;color:#94a3b8;">입력창에서 Ctrl+V로 이미지 바로 붙여넣기 가능</span>
+        </div>
+        <div id="czBatchImgWrap" style="display:none;margin-bottom:6px;position:relative;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.28);">
+          <img id="czBatchImgThumb" alt="첨부 지시서 이미지" style="display:block;width:100%;max-height:110px;object-fit:contain;">
+          <button type="button" id="czBatchImgClear" aria-label="이미지 지우기" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:9999px;border:0;background:rgba(15,23,42,.82);color:#fff;font-size:11px;cursor:pointer;">✕</button>
         </div>
         <textarea id="czBatchText" rows="6" class="cz-batch-textarea" placeholder="주임님 금주 소모품 입고 내역 공유드립니다.&#10;&#10;11월10일&#10;사각박스 640set&#10;&#10;11월11일&#10;알루미늄 파우치백 600ea&#10;16kg 파렛트 576ea&#10;&#10;입니다."></textarea>
         <div class="cz-batch-preview-wrap">
@@ -4787,14 +4796,22 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       for(const l of lines){
         if(/상차일|입차시간|차량번호/.test(l)&&/공장|하차지/.test(l)) continue;
         const cols=(l.includes('\t')?l.split('\t'):l.split(/\s{2,}/)).map(c=>c.trim());
-        if(cols.length<5) continue;
         const rowTxt=cols.join(' ');
         if(/1공장/.test(rowTxt)&&!/2공장/.test(rowTxt)){ skipped1++; continue; }
         if(!/2공장/.test(rowTxt)) continue;
-        const dt=parseDt(cols[0]);
-        const car=cols[7]||'', qty=cols[9]||'';
+        if(cols.length>=8){
+          const dt=parseDt(cols[0]);
+          const car=cols[7]||'', qty=cols[9]||'';
+          const parts=[car,qty].filter(Boolean);
+          if(parts.length){ items.push({date:dt,target:'outbound',kind:'work',text:parts.join(' · ')}); continue; }
+        }
+        const dt=parseDt(l);
+        const carM=l.match(/[가-힣]{2}\s*\d{2,3}\s*[가-힣]\s*\d{4}/);
+        const qtyM=l.match(/\d+\s*(?:KG|kg|T|TON)\s*\/?\s*\d*\s*P(?:LT)?/i);
+        const car=carM?carM[0].replace(/\s+/g,''):'';
+        const qty=qtyM?qtyM[0].replace(/\s+/g,' ').trim():'';
         const parts=[car,qty].filter(Boolean);
-        items.push({date:dt,target:'outbound',kind:'work',text:parts.join(' · ')});
+        if(parts.length) items.push({date:dt,target:'outbound',kind:'work',text:parts.join(' · ')});
       }
       return {items,skipped1};
     }
@@ -4878,6 +4895,68 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       }
     }
     window.jisuSetBatchView=setBatchView;
+
+    /* 공지 일괄 등록: 이미지 첨부 + Ctrl+V 붙여넣기 + 무료 OCR(Tesseract.js) */
+    (function(){
+      const imgBtn=$('czBatchImgBtn'), imgInput=$('czBatchImgInput'), ocrStatus=$('czBatchOcrStatus');
+      const imgWrap=$('czBatchImgWrap'), imgThumb=$('czBatchImgThumb'), imgClear=$('czBatchImgClear');
+      if(!imgBtn||!imgInput||!batchText) return;
+      function loadTesseract(){
+        if(window.Tesseract) return Promise.resolve(window.Tesseract);
+        return new Promise((res,rej)=>{
+          const s=document.createElement('script');
+          s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+          s.onload=()=>res(window.Tesseract);
+          s.onerror=()=>rej(new Error('OCR 엔진 로드 실패'));
+          document.head.appendChild(s);
+        });
+      }
+      async function runBatchOcr(file){
+        if(!file||!file.type.startsWith('image/')) return;
+        const url=URL.createObjectURL(file);
+        if(imgThumb) imgThumb.src=url;
+        if(imgWrap) imgWrap.style.display='block';
+        if(ocrStatus){ ocrStatus.textContent='⏳ 무료 OCR로 이미지 읽는 중...'; ocrStatus.style.color='#38bdf8'; }
+        try{
+          const T=await loadTesseract();
+          const out=await T.recognize(url,'kor+eng',{
+            logger:m=>{
+              if(m.status==='recognizing text'&&ocrStatus){
+                ocrStatus.textContent='⏳ 표 읽는 중... '+Math.round((m.progress||0)*100)+'%';
+              }
+            }
+          });
+          const raw=(out&&out.data&&out.data.text||'').trim();
+          if(!raw){
+            if(ocrStatus){ ocrStatus.textContent='글자를 읽지 못했어요. 직접 입력해 주세요.'; ocrStatus.style.color='#f87171'; }
+            return;
+          }
+          batchText.value=raw;
+          renderBatchPreview();
+          if(ocrStatus){ ocrStatus.textContent='✅ 이미지 읽기 완료! 오타가 있으면 위 칸에서 수정 후 저장하세요.'; ocrStatus.style.color='#4ade80'; }
+        }catch(err){
+          if(ocrStatus){ ocrStatus.textContent='OCR 실패: 인터넷 연결을 확인하거나 직접 붙여넣기 해주세요.'; ocrStatus.style.color='#f87171'; }
+        }
+      }
+      imgBtn.addEventListener('click',()=>imgInput.click());
+      imgInput.addEventListener('change',()=>{ const f=imgInput.files&&imgInput.files[0]; if(f) runBatchOcr(f); imgInput.value=''; });
+      if(imgClear) imgClear.addEventListener('click',()=>{
+        if(imgWrap) imgWrap.style.display='none';
+        if(imgThumb) imgThumb.src='';
+        if(ocrStatus){ ocrStatus.textContent='입력창에서 Ctrl+V로 이미지 바로 붙여넣기 가능'; ocrStatus.style.color='#94a3b8'; }
+      });
+      batchText.addEventListener('paste',e=>{
+        const items=(e.clipboardData&&e.clipboardData.items)||[];
+        for(const it of items){
+          if(it.type&&it.type.startsWith('image/')){
+            e.preventDefault();
+            const f=it.getAsFile();
+            if(f) runBatchOcr(f);
+            break;
+          }
+        }
+      });
+    })();
 
     if(batchBtn) batchBtn.addEventListener('click',()=>{
       const isBatch=batchView && batchView.style.display!=='none';
