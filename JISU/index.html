@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151425">
+  <meta name="jisu-build" content="202611151435">
+  <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -1013,12 +1014,15 @@
         justify-content:center;
       }
     }
-    /* 작업자 모바일 전용 링크(?zone=outbound 등) : 바깥 배경 없이 자세히보기 카드만 화면 100% 꽉 차게 + 자연 스크롤 */
+    /* 작업자 모바일 전용 링크(?zone=outbound 등) : 바깥 배경 없이 자세히보기 카드만 화면 100% 꽉 차게 + 자연 스크롤 + 첫 프레임 깜빡임 차단 */
+    html.worker-zone-only,
     html:has(body.worker-zone-only){
+      background:linear-gradient(160deg,#4b5563 0%,#334155 52%,#1e293b 100%) !important;
       height:auto !important;min-height:100dvh !important;
       overflow-x:hidden !important;overflow-y:auto !important;
       -webkit-overflow-scrolling:touch !important;
     }
+    html.worker-zone-only body:not(#z1#z2#z3#z4#z5),
     body.worker-zone-only:not(#z1#z2#z3#z4#z5){
       background:linear-gradient(160deg,#4b5563 0%,#334155 52%,#1e293b 100%) !important;
       height:auto !important;min-height:100dvh !important;
@@ -1026,10 +1030,21 @@
       -webkit-overflow-scrolling:touch !important;
       margin:0 !important;padding:0 !important;
     }
+    html.worker-zone-only main,
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) main{
       margin:0 !important;padding:0 !important;width:100% !important;max-width:none !important;
       height:auto !important;min-height:100dvh !important;overflow:visible !important;
     }
+    html.worker-zone-only header,
+    html.worker-zone-only .cmd-side,
+    html.worker-zone-only .bldg-badge,
+    html.worker-zone-only .state-legend,
+    html.worker-zone-only #moveLayer,
+    html.worker-zone-only .move-layer,
+    html.worker-zone-only #moveLabels,
+    html.worker-zone-only .move-labels,
+    html.worker-zone-only .map-stage > img,
+    html.worker-zone-only .hotspot-wrapper:not(.is-worker-zone),
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) header,
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .cmd-side,
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .bldg-badge,
@@ -3884,19 +3899,31 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
     const save=v=>localStorage.setItem(KEY,JSON.stringify(v));
     try{
-      if(!localStorage.getItem('jisu-demo-dispatch-v2')){
-        const cur=load();
-        const td=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-        const idx=cur.findIndex(x=>x&&x.id==='demo_dispatch_1');
-        if(idx>=0){
+      const cur=load();
+      const td=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+      let changed=false;
+      const idx=cur.findIndex(x=>x&&x.id==='demo_dispatch_1');
+      if(idx>=0){
+        if(cur[idx].tonText!=='2공장 7대 · 73.92 TON'||cur[idx].img!=='./sample-dispatch.jpg'){
           cur[idx].tonText='2공장 7대 · 73.92 TON';
-        }else{
-          cur.unshift({id:'demo_dispatch_1',target:'outbound',kind:'instruction',text:'첨부 이미지',img:'./sample-dispatch.jpg',tonText:'2공장 7대 · 73.92 TON',at:'11. 15. 예시',day:td});
+          cur[idx].img='./sample-dispatch.jpg';
+          changed=true;
         }
-        save(cur);
-        localStorage.setItem('jisu-demo-dispatch-v2','1');
+      }else{
+        cur.unshift({id:'demo_dispatch_1',target:'outbound',kind:'instruction',text:'첨부 이미지',img:'./sample-dispatch.jpg',tonText:'2공장 7대 · 73.92 TON',at:'11. 15. 예시',day:td});
+        changed=true;
       }
+      if(changed) save(cur);
     }catch(_){}
+    window.JisuCore=window.JisuCore||(()=>{
+      const esc2=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const safeImgSrc=u=>/^(?:data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+|\.\/[^\s"'<>]+)$/.test(String(u||''))?String(u):'';
+      const uid=()=>Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6);
+      const kstDate=(d=new Date())=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
+      const csvCell=v=>{const s=String(v??'');const safe=/^[=+\-@\t\r]/.test(s)?"'"+s:s;return '"'+safe.replace(/"/g,'""')+'"';};
+      const safeSaveJson=(k,d,onErr)=>{try{localStorage.setItem(k,JSON.stringify(d));return true;}catch(e){if(typeof onErr==='function')onErr(e);return false;}};
+      return {esc:esc2,safeImgSrc,uid,kstDate,csvCell,safeSaveJson};
+    })();
     window.jisuCalcFactory2Tons=function(raw){
       if(!raw) return '';
       const lines=String(raw).split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
@@ -4899,6 +4926,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(ch){ save(CKEY,all); }
       }catch(_){}
     })();
+    const atOf=day=>{const p=String(day).split('-');return p[1]+'. '+p[2]+'. 00:00';};
     function apply(today){
       today=today||kstToday(); const sch=load(SKEY); let changed=false; const cmds=load(CKEY);
       sch.forEach(s=>{ if(!s.applied && s.date<=today){ const isPast=s.date<today; const rec={id:'s'+s.id,target:s.target,kind:s.kind,text:s.text,at:isPast?atOf(s.date):nowStr(),day:s.date,sched:s.date,origDay:s.date}; if(s.img) rec.img=s.img; if(s.tonText) rec.tonText=s.tonText; if(s.urgent) rec.urgent=true; if(s.by) rec.by=s.by; if(isPast) rec.closed=true; cmds.push(rec); s.applied=true; s.appliedAt=nowStr(); changed=true; } });
@@ -5690,7 +5718,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     function refresh(){ const all=load().filter(x=>!x.closed&&x.kind!=='notice');
       document.querySelectorAll('[data-toggle-zone]').forEach(b=>{ const k=b.getAttribute('data-toggle-zone'), w=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(k==='inbound'&&x.target&&x.target.startsWith('inbound:')));
         let st=!w.length?'st-none':(w.some(x=>x.working&&!x.completed)?'st-work':(w.every(x=>x.completed)?'st-done':'st-wait') /* 이월은 점 색이 아니라 분홍 -N 배지로만 표시 */);
-        if(k==='pitch'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done')st='st-done';}catch(e){}}ST.forEach(c=>b.classList.toggle(c,c===st));
+        if(k==='pitch'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done')st='st-done';}catch(e){}}
+        if(k==='inbound'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done')st='st-done';}catch(e){}}ST.forEach(c=>b.classList.toggle(c,c===st));
         const urg=w.some(x=>x.urgent&&!x.completed); let um=b.querySelector('.urgent-mark'); if(urg&&!um){ um=document.createElement('span'); um.className='urgent-mark'; um.textContent='!'; um.title='긴급 작업'; b.appendChild(um); } else if(!urg&&um) um.remove(); }); }
     window.jisuStateRefresh=refresh; refresh(); window.addEventListener('storage',e=>{ if(e.key===KEY) refresh(); });
     const stage=document.getElementById('mapStage'); if(stage){ const lg=document.createElement('div'); lg.className='state-legend'; lg.innerHTML='<span><i class="n"></i>작업 없음</span><span><i class="r"></i>작업중</span><span><i class="d"></i>완료</span><span><i class="c"></i>이월</span>'; stage.appendChild(lg); }
@@ -6328,6 +6357,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       if (st === "work") { pill.className = "pulse-ring bg-emerald-500 text-emerald-400"; }
       else if (st === "done") { pill.className = "pulse-ring bg-blue-500 text-blue-400"; } else { pill.className = "pulse-ring bg-slate-600 text-slate-400"; }
     }
+    if (window.jisuStateRefresh) window.jisuStateRefresh();
   }
 
   startBtn.addEventListener("click", () => {
