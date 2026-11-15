@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151030">
+  <meta name="jisu-build" content="202611151035">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -4289,7 +4289,31 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:3840},height:{ideal:2160}},audio:false});$('obVideo').srcObject=stream;$('obCam').hidden=false;msg('카메라가 켜졌습니다. 셔터를 누르세요.');}
       catch(err){msg('카메라를 쓸 수 없어 사진 선택 창을 엽니다.');$('obFile').click();}
     });
-    $('obShot').addEventListener('click',async e=>{e.stopPropagation();const v=$('obVideo');if(!v.videoWidth){msg('카메라 준비 중입니다. 잠시 후 다시 눌러 주세요.');return;}await savePhoto(toJpeg(v,v.videoWidth,v.videoHeight));});
+    function playShutterFx(){
+      try{ if(navigator.vibrate) navigator.vibrate([35,25,20]); }catch(_){}
+      try{
+        const AC=window.AudioContext||window.webkitAudioContext;
+        if(AC){
+          const ctx=new AC(), t=ctx.currentTime;
+          [0,0.045].forEach((off,i)=>{
+            const buf=ctx.createBuffer(1,ctx.sampleRate*0.035,ctx.sampleRate);
+            const d=buf.getChannelData(0);
+            for(let j=0;j<d.length;j++) d[j]=(Math.random()*2-1)*Math.exp(-j/(d.length*(i?0.28:0.22)));
+            const src=ctx.createBufferSource(); src.buffer=buf;
+            const flt=ctx.createBiquadFilter(); flt.type='bandpass'; flt.frequency.value=i?1800:3200; flt.Q.value=1.2;
+            const g=ctx.createGain(); g.gain.setValueAtTime(i?0.55:0.75,t+off); g.gain.exponentialRampToValueAtTime(0.01,t+off+0.035);
+            src.connect(flt); flt.connect(g); g.connect(ctx.destination);
+            src.start(t+off);
+          });
+          setTimeout(()=>{try{ctx.close();}catch(_){}} ,250);
+        }
+      }catch(_){}
+      try{
+        const cam=$('obCam');
+        if(cam){const fl=document.createElement('div');fl.style.cssText='position:fixed;inset:0;background:#fff;opacity:0.7;z-index:2147483647;pointer-events:none;transition:opacity 0.14s ease;';cam.appendChild(fl);requestAnimationFrame(()=>{fl.style.opacity='0';});setTimeout(()=>fl.remove(),160);}
+      }catch(_){}
+    }
+    $('obShot').addEventListener('click',async e=>{e.stopPropagation();const v=$('obVideo');if(!v.videoWidth){msg('카메라 준비 중입니다. 잠시 후 다시 눌러 주세요.');return;}playShutterFx();await savePhoto(toJpeg(v,v.videoWidth,v.videoHeight));});
     $('obCamClose').addEventListener('click',e=>{e.stopPropagation();stopCam();msg('');});
     // file / mobile camera
     $('obFile').addEventListener('change',async e=>{const files=[...e.target.files];for(const f of files){await new Promise(res=>{const img=new Image();img.onload=async()=>{await savePhoto(toJpeg(img,img.naturalWidth,img.naturalHeight));URL.revokeObjectURL(img.src);res();};img.onerror=()=>{msg('이미지를 읽지 못했습니다: '+f.name);res();};img.src=URL.createObjectURL(f);});}e.target.value='';});
