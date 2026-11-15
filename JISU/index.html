@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151350">
+  <meta name="jisu-build" content="202611151400">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -890,11 +890,14 @@
     .ob-lb-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
     .ob-lb-thumb.is-active{border-color:#38bdf8;opacity:1;}
     @media (max-width: 768px){
-      .ob-lb-backdrop{padding:14px 12px 16px;}
-      .ob-lb-img{max-width:94vw;max-height:66dvh;border-radius:14px;}
-      .ob-lb-nav{width:38px;height:38px;font-size:19px;}
-      .ob-lb-btn{height:38px;padding:0 12px;font-size:12px;}
-      .ob-lb-thumb{width:46px;height:46px;}
+      .ob-lb-backdrop{padding:0 !important;background:#020617 !important;}
+      .ob-lb-bar{position:fixed;top:10px;left:10px;right:10px;z-index:10;background:rgba(2,6,23,0.58);backdrop-filter:blur(8px);padding:6px 10px;border-radius:14px;}
+      .ob-lb-stage{margin:0 !important;width:100vw !important;max-width:100vw !important;height:100dvh !important;}
+      .ob-lb-img{width:100vw !important;height:100dvh !important;max-width:100vw !important;max-height:100dvh !important;border-radius:0 !important;background:#020617 !important;}
+      .ob-lb-nav{width:38px;height:38px;font-size:19px;z-index:10;}
+      .ob-lb-btn{height:36px;padding:0 11px;font-size:12px;}
+      .ob-lb-strip{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:10;}
+      .ob-lb-thumb{width:44px;height:44px;}
     }
     .ob-msg:empty,.ob-grid:empty{display:none !important;}
     .mobile-card-close{display:none;}
@@ -2224,21 +2227,21 @@
     .home-env .he-row:first-of-type{border-top:0;}
     /* 카드 첨부 이미지 & 등록 첨부 UI */
     .cmd-item.has-img .meta{justify-content:flex-end !important;margin-bottom:4px !important;}
-    .cmd-card-img-wrap{display:flex;flex-direction:column;gap:5px;width:100%;}
-    .cmd-card-img-btn{display:block;width:100%;max-width:290px;height:106px;padding:0;border-radius:12px;overflow:hidden;border:1.5px solid rgba(255,255,255,.32);background:rgba(15,23,42,.45);cursor:pointer;position:relative;transition:transform .14s ease,border-color .14s ease;}
-    .cmd-card-img-btn:hover{transform:scale(1.015);border-color:rgba(255,255,255,.65);}
+    .cmd-card-img-wrap{display:flex;flex-direction:row;align-items:center;gap:8px;flex-wrap:wrap;flex:1 1 auto;min-width:0;}
+    .cmd-card-img-btn{display:block;width:78px;height:56px;flex:0 0 auto;padding:0;border-radius:10px;overflow:hidden;border:1.5px solid rgba(255,255,255,.32);background:rgba(15,23,42,.45);cursor:pointer;position:relative;transition:transform .14s ease,border-color .14s ease;}
+    .cmd-card-img-btn:hover{transform:scale(1.03);border-color:rgba(255,255,255,.65);}
     .cmd-card-img-btn img{width:100%;height:100%;object-fit:cover;display:block;}
-    .cmd-card-img-cap{font-size:12.5px;font-weight:700;color:#0f172a;line-height:1.35;}
+    .cmd-card-img-cap{font-size:12.5px;font-weight:700;color:#0f172a;line-height:1.35;flex:1 1 110px;min-width:0;}
     .cmd-side .cmd-card-img-cap{color:#e2e8f0;}
     .gem-guide-btn{padding:4px 9px;border-radius:7px;border:1px solid rgba(196,181,253,.45);background:rgba(139,92,246,.28);color:#f3e8ff;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;}
     .gem-guide-btn:hover{background:rgba(139,92,246,.45);}
     .gem-guide-box{width:100%;margin-top:4px;padding:9px 11px;border-radius:9px;background:rgba(15,23,42,.78);border:1px solid rgba(167,139,250,.35);color:#e2e8f0;font-size:11.5px;line-height:1.55;}
     .gem-guide-box b{color:#f3e8ff;}
     .gem-guide-box[hidden]{display:none !important;}
-    .cmd-notice-banner.has-img{grid-template-columns:auto 1fr auto;align-items:start;}
-    .cmd-notice-banner .cmd-card-img-btn{max-width:220px;height:82px;margin-top:4px;}
+    .cmd-notice-banner.has-img{grid-template-columns:auto 1fr auto;align-items:center;}
+    .cmd-notice-banner .cmd-card-img-btn{width:78px;height:56px;margin-top:0;}
     @media (max-width:768px){
-      .cmd-card-img-btn{max-width:100%;height:118px;}
+      .cmd-card-img-btn{width:78px;height:56px;}
     }
     .cmd-attach-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:6px 0 4px;}
     .cmd-attach-btn{padding:4px 9px;border-radius:8px;border:1px solid rgba(56,189,248,.45);background:rgba(14,165,233,.18);color:#e0f2fe;font-size:11.5px;font-weight:800;cursor:pointer;}
