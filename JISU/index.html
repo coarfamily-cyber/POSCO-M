@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151250">
+  <meta name="jisu-build" content="202611151255">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -4792,8 +4792,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(/1공장/.test(rowTxt)&&!/2공장/.test(rowTxt)){ skipped1++; continue; }
         if(!/2공장/.test(rowTxt)) continue;
         const dt=parseDt(cols[0]);
-        const ton=cols[5]||'', car=cols[7]||'', qty=cols[9]||'';
-        const parts=[car,ton,qty].filter(Boolean);
+        const car=cols[7]||'', qty=cols[9]||'';
+        const parts=[car,qty].filter(Boolean);
         items.push({date:dt,target:'outbound',kind:'work',text:parts.join(' · ')});
       }
       return {items,skipped1};
