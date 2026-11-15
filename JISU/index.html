@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151245">
+  <meta name="jisu-build" content="202611151250">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -4792,9 +4792,9 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(/1공장/.test(rowTxt)&&!/2공장/.test(rowTxt)){ skipped1++; continue; }
         if(!/2공장/.test(rowTxt)) continue;
         const dt=parseDt(cols[0]);
-        const time=cols[1]||'', to=cols[4]||'', ton=cols[5]||'', name=cols[6]||'', car=cols[7]||'', phone=cols[8]||'', qty=cols[9]||'', note=cols[10]||'';
-        const parts=[time?('['+time+']'):'',car,name?(phone?('('+name+' '+phone+')'):('('+name+')')):'',ton,qty,to?(note?(to+' · '+note):to):note].filter(Boolean);
-        items.push({date:dt,target:'outbound',kind:'work',text:parts.join(' · ').replace(/\]\s*·\s*/,'] ')});
+        const ton=cols[5]||'', car=cols[7]||'', qty=cols[9]||'';
+        const parts=[car,ton,qty].filter(Boolean);
+        items.push({date:dt,target:'outbound',kind:'work',text:parts.join(' · ')});
       }
       return {items,skipped1};
     }
