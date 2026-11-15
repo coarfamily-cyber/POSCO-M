@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151415">
+  <meta name="jisu-build" content="202611151425">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -2228,6 +2228,9 @@
     /* 카드 첨부 이미지 & 등록 첨부 UI */
     .cmd-item.has-img .meta{justify-content:flex-end !important;margin-bottom:4px !important;}
     .cmd-item.has-img .cmd-row{align-items:flex-end !important;}
+    .work-right-col{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:0 0 auto;margin-left:auto;}
+    .work-ton-badge{padding:4px 10px;border-radius:8px;background:rgba(56,189,248,.18);border:1px solid rgba(56,189,248,.48);color:#e0f2fe;font-size:12px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;}
+    .cmd-side .work-ton-badge{font-size:11px;padding:3px 8px;}
     .cmd-card-img-wrap{display:flex;flex-direction:row;align-items:center;gap:8px;flex-wrap:wrap;flex:1 1 auto;min-width:0;}
     .cmd-card-img-btn{display:block;width:124px;height:82px;flex:0 0 auto;padding:0;border-radius:10px;overflow:hidden;border:1.5px solid rgba(255,255,255,.32);background:rgba(15,23,42,.45);cursor:pointer;position:relative;transition:transform .14s ease,border-color .14s ease;}
     .cmd-card-img-btn:hover{transform:scale(1.03);border-color:rgba(255,255,255,.65);}
@@ -3881,16 +3884,48 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
     const save=v=>localStorage.setItem(KEY,JSON.stringify(v));
     try{
-      if(!localStorage.getItem('jisu-demo-dispatch-v1')){
+      if(!localStorage.getItem('jisu-demo-dispatch-v2')){
         const cur=load();
-        if(!cur.some(x=>x&&x.id==='demo_dispatch_1')){
-          const td=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-          cur.unshift({id:'demo_dispatch_1',target:'outbound',kind:'instruction',text:'첨부 이미지',img:'./sample-dispatch.jpg',at:'11. 15. 예시',day:td});
-          save(cur);
+        const td=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+        const idx=cur.findIndex(x=>x&&x.id==='demo_dispatch_1');
+        if(idx>=0){
+          cur[idx].tonText='2공장 7대 · 73.92 TON';
+        }else{
+          cur.unshift({id:'demo_dispatch_1',target:'outbound',kind:'instruction',text:'첨부 이미지',img:'./sample-dispatch.jpg',tonText:'2공장 7대 · 73.92 TON',at:'11. 15. 예시',day:td});
         }
-        localStorage.setItem('jisu-demo-dispatch-v1','1');
+        save(cur);
+        localStorage.setItem('jisu-demo-dispatch-v2','1');
       }
     }catch(_){}
+    window.jisuCalcFactory2Tons=function(raw){
+      if(!raw) return '';
+      const lines=String(raw).split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      const hasF2=lines.some(l=>/(?:세종\s*)?2\s*공장/.test(l));
+      let tons=0, cnt=0;
+      for(const l of lines){
+        if(/(?:세종\s*)?1\s*공장/.test(l)) continue;
+        if(hasF2 && !/(?:세종\s*)?2\s*공장/.test(l) && !/^\d{4}-\d{2}-\d{2}\s*\|/.test(l)) continue;
+        const kp=l.match(/(\d+(?:[.,]\d+)?)\s*KG\s*\/\s*(\d+)\s*P/i);
+        if(kp){
+          const kg=parseFloat(kp[1].replace(/,/g,''));
+          const p=parseInt(kp[2],10);
+          if(kg>0&&p>0){ tons+=(kg*p)/1000; cnt++; continue; }
+        }
+        const tn=l.match(/(\d+(?:[.,]\d+)?)\s*(?:TON|톤)(?!\s*윙)/i);
+        if(tn){
+          const v=parseFloat(tn[1].replace(/,/g,''));
+          if(v>0){ tons+=v; cnt++; continue; }
+        }
+        const kgOnly=l.match(/(\d+(?:[.,]\d+)?)\s*KG/i);
+        if(kgOnly){
+          const v=parseFloat(kgOnly[1].replace(/,/g,''));
+          if(v>0){ tons+=v/1000; cnt++; }
+        }
+      }
+      if(!(tons>0)) return '';
+      const tStr=(Math.round(tons*100)/100).toFixed(2).replace(/\.?0+$/,'');
+      return '2공장 '+(cnt>0?cnt+'대 · ':'')+tStr+' TON';
+    };
     const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     function goalOf(t){
       const clean=String(t||'').replace(/^\[[^\]]+\]\s*/,'');
@@ -3966,6 +4001,9 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           +'<button type="button" class="work-complete work-progress'+(x.working&&!x.completed?' is-working':'')+'" data-cmd-working="'+x.id+'">작업중</button>'
           +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?(x.short?'부족 완료':'완료됨'):'작업완료')+'</button>'
           +'</div>';
+        if(x.tonText){
+          right='<div class="work-right-col"><div class="work-ton-badge">'+esc(x.tonText)+'</div>'+right+'</div>';
+        }
       }
       const obItem = getObItem(x);
       const hasImg = Boolean(x.img);
@@ -4249,7 +4287,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         window.jisuOpenGallery([{id:it.id,at:it.at,name:it.text||'첨부 이미지',data:it.img}],0,null);
       }
     },true);
-    submit.addEventListener('click',()=>{const t=getTarget();if(!t&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v&&!pendingCmdImg){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v&&!pendingCmdImg){text.focus();return;}v=v.replace(/[a-z]/g,c=>c.toUpperCase());const all=load();const norm=v?(window.jisuNormUnit?window.jisuNormUnit(v):v).replace(/[a-z]/g,c=>c.toUpperCase()):'첨부 이미지';const rec={id:Date.now().toString(36),target:t||'*',kind,text:norm,at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(pendingCmdImg) rec.img=pendingCmdImg;if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);text.value='';if(fr)fr.value='';if(to)to.value='';pendingCmdImg=null;const cw=document.getElementById('cmdImgWrap'),ct=document.getElementById('cmdImgThumb');if(cw)cw.style.display='none';if(ct)ct.src='';render();});
+    submit.addEventListener('click',()=>{const t=getTarget();if(!t&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v&&!pendingCmdImg){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v&&!pendingCmdImg){text.focus();return;}v=v.replace(/[a-z]/g,c=>c.toUpperCase());const all=load();const norm=v?(window.jisuNormUnit?window.jisuNormUnit(v):v).replace(/[a-z]/g,c=>c.toUpperCase()):'첨부 이미지';const rec={id:Date.now().toString(36),target:t||'*',kind,text:norm,at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(pendingCmdImg) rec.img=pendingCmdImg;const autoTon=v&&window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(v):'';if(autoTon) rec.tonText=autoTon;if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);if(pendingCmdImg&&!rec.tonText&&window.jisuGeminiReadImage){let gk='';try{gk=(localStorage.getItem('jisu-gemini-key')||'').trim();}catch(_){}if(gk){const imgCopy=pendingCmdImg,rid=rec.id;window.jisuGeminiReadImage(gk,imgCopy).then(txt=>{const tt=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(txt):'';if(tt){const a=load();const it=a.find(x=>x.id===rid);if(it){it.tonText=tt;save(a);render();}}}).catch(()=>{});}}text.value='';if(fr)fr.value='';if(to)to.value='';pendingCmdImg=null;const cw=document.getElementById('cmdImgWrap'),ct=document.getElementById('cmdImgThumb');if(cw)cw.style.display='none';if(ct)ct.src='';render();});
     list.addEventListener('click',e=>{const id=e.target.getAttribute('data-cmd-del');if(!id)return;save(load().filter(x=>x.id!==id));render();});
     function goHome(){
       document.querySelectorAll('.hotspot-wrapper.is-open').forEach(w=>w.classList.remove('is-open'));
@@ -4863,7 +4901,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     })();
     function apply(today){
       today=today||kstToday(); const sch=load(SKEY); let changed=false; const cmds=load(CKEY);
-      sch.forEach(s=>{ if(!s.applied && s.date<=today){ const isPast=s.date<today; const rec={id:'s'+s.id,target:s.target,kind:s.kind,text:s.text,at:isPast?atOf(s.date):nowStr(),day:s.date,sched:s.date,origDay:s.date}; if(s.img) rec.img=s.img; if(s.urgent) rec.urgent=true; if(s.by) rec.by=s.by; if(isPast) rec.closed=true; cmds.push(rec); s.applied=true; s.appliedAt=nowStr(); changed=true; } });
+      sch.forEach(s=>{ if(!s.applied && s.date<=today){ const isPast=s.date<today; const rec={id:'s'+s.id,target:s.target,kind:s.kind,text:s.text,at:isPast?atOf(s.date):nowStr(),day:s.date,sched:s.date,origDay:s.date}; if(s.img) rec.img=s.img; if(s.tonText) rec.tonText=s.tonText; if(s.urgent) rec.urgent=true; if(s.by) rec.by=s.by; if(isPast) rec.closed=true; cmds.push(rec); s.applied=true; s.appliedAt=nowStr(); changed=true; } });
       if(changed){ save(CKEY,cmds); save(SKEY,sch); if(window.jisuCmdRender) window.jisuCmdRender(); }
       return changed;
     }
@@ -5331,6 +5369,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         let addedCount=0;
         const incImg=$('czBatchIncludeImg')&&$('czBatchIncludeImg').checked&&batchImgData;
         parsedBatchData.forEach(g=>{
+          const groupTon=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(g.items.map(x=>x.text).join('\n')):'';
           g.items.forEach((it,idx)=>{
             const rec={
               id:Date.now().toString(36)+Math.random().toString(36).slice(2,6)+idx,
@@ -5341,6 +5380,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
               created:nowStr()
             };
             if(incImg) rec.img=batchImgData;
+            const itemTon=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(it.text):'';
+            if(itemTon||groupTon) rec.tonText=itemTon||groupTon;
             if(it.urgent) rec.urgent=true;
             if(u) rec.by=u;
             sch.push(rec);
