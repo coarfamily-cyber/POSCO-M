@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151455">
+  <meta name="jisu-build" content="202611151500">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -903,6 +903,7 @@
     @media (max-width: 768px) and (orientation: portrait){
       .ob-lb-stage{display:flex !important;align-items:center !important;justify-content:center !important;overflow:hidden !important;}
       .ob-lb-img.is-rotated{width:100dvh !important;height:100vw !important;max-width:none !important;max-height:none !important;transform:rotate(90deg) !important;transform-origin:center center !important;object-fit:contain !important;flex:0 0 auto !important;}
+      .ob-lb-backdrop.is-rotated .ob-lb-top{top:12px !important;left:calc(100vw - 12px) !important;right:auto !important;width:calc(100dvh - 24px) !important;transform-origin:top left !important;transform:rotate(90deg) !important;}
     }
     .ob-msg:empty,.ob-grid:empty{display:none !important;}
     .mobile-card-close{display:none;}
@@ -4473,10 +4474,11 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       if(lbIdx>=items.length) lbIdx=0;
       const cur=items[lbIdx];
       const imgEl=$('obLbImg');
-      imgEl.classList.remove('is-rotated');
-      imgEl.onload=()=>{ if(imgEl.naturalWidth>imgEl.naturalHeight) imgEl.classList.add('is-rotated'); else imgEl.classList.remove('is-rotated'); };
+      const setRot=on=>{ imgEl.classList.toggle('is-rotated',on); lb.classList.toggle('is-rotated',on); };
+      setRot(false);
+      imgEl.onload=()=>{ setRot(imgEl.naturalWidth>imgEl.naturalHeight); };
       imgEl.src=cur.data;
-      if(imgEl.complete && imgEl.naturalWidth>imgEl.naturalHeight) imgEl.classList.add('is-rotated');
+      if(imgEl.complete && imgEl.naturalWidth>imgEl.naturalHeight) setRot(true);
       $('obLbCount').textContent=(lbIdx+1)+' / '+items.length;
       $('obLbTime').textContent=cur.at||'';
       const dl=$('obLbDl'); dl.href=cur.data; dl.download=cur.name||'outbound.jpg';
