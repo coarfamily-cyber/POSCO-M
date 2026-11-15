@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151645">
+  <meta name="jisu-build" content="202611151655">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -5616,11 +5616,34 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const tomorrow=()=>fmtDay(new Date(new Date(kstToday()+'T12:00:00+09:00').getTime()+864e5));
     function redraw(){ if(window.jisuCmdRender) window.jisuCmdRender(); else refresh(); }
 
-    /* 자정이 지나면: 지난 날짜의 공지·완료 작업은 정리, 끝나지 않은 작업은 남은 양으로 오늘에 다시 등록 (이월 표시 없이 날짜로 적용) */
+    /* 자정 이월 + 매일 08시/18시 완료 작업 자동 숨김 정리(달력 기록·통계에는 유지) */
     function rollover(){
       const today=kstToday(), all=load(CKEY), add=[]; let changed=false;
+      const nowKst=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
+      const hKst=nowKst.getHours();
+      const cutoff=new Date(nowKst.getTime());
+      if(hKst>=18){ cutoff.setHours(18,0,0,0); }
+      else if(hKst>=8){ cutoff.setHours(8,0,0,0); }
+      else{ cutoff.setDate(cutoff.getDate()-1); cutoff.setHours(18,0,0,0); }
+      const parseDoneAt=(rec)=>{
+        const s=String(rec.completedAt||'');
+        const m=s.match(/(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{1,2}):(\d{2})/);
+        const ty=+today.slice(0,4);
+        if(m){
+          const dt=new Date(ty,parseInt(m[1],10)-1,parseInt(m[2],10),parseInt(m[3],10),parseInt(m[4],10),0,0);
+          if(dt.getTime()>nowKst.getTime()+864e5) dt.setFullYear(ty-1);
+          return dt.getTime();
+        }
+        const d=dayOf(rec);
+        if(d){ const p=d.split('-').map(Number); return new Date(p[0],p[1]-1,p[2],0,0,0,0).getTime(); }
+        return 0;
+      };
       all.forEach(x=>{
-        if(x.closed) return; const d=dayOf(x); if(!d||d>=today) return; changed=true;
+        if(x.closed) return;
+        if(x.completed && x.id!=='demo_dispatch_1' && parseDoneAt(x)<cutoff.getTime()){
+          x.closed=true; changed=true; return;
+        }
+        const d=dayOf(x); if(!d||d>=today) return; changed=true;
         if(x.kind==='notice' || x.completed){ x.closed=true; return; }
         const g=goalN(x.text), done=Number(x.done)||0;
         if(g!=null && done>=g){ x.completed=true; x.completedAt=x.completedAt||nowStr(); x.closed=true; return; }
