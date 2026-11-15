@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151335">
+  <meta name="jisu-build" content="202611151350">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -2230,6 +2230,11 @@
     .cmd-card-img-btn img{width:100%;height:100%;object-fit:cover;display:block;}
     .cmd-card-img-cap{font-size:12.5px;font-weight:700;color:#0f172a;line-height:1.35;}
     .cmd-side .cmd-card-img-cap{color:#e2e8f0;}
+    .gem-guide-btn{padding:4px 9px;border-radius:7px;border:1px solid rgba(196,181,253,.45);background:rgba(139,92,246,.28);color:#f3e8ff;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;}
+    .gem-guide-btn:hover{background:rgba(139,92,246,.45);}
+    .gem-guide-box{width:100%;margin-top:4px;padding:9px 11px;border-radius:9px;background:rgba(15,23,42,.78);border:1px solid rgba(167,139,250,.35);color:#e2e8f0;font-size:11.5px;line-height:1.55;}
+    .gem-guide-box b{color:#f3e8ff;}
+    .gem-guide-box[hidden]{display:none !important;}
     .cmd-notice-banner.has-img{grid-template-columns:auto 1fr auto;align-items:start;}
     .cmd-notice-banner .cmd-card-img-btn{max-width:220px;height:82px;margin-top:4px;}
     @media (max-width:768px){
@@ -3498,7 +3503,14 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <input type="password" id="czGemKeyInput" placeholder="✨ Gemini 무료 API 키 입력 (선택)" autocomplete="off">
           <button type="button" id="czGemSaveBtn" class="gem-key-save">키 저장</button>
           <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="gem-key-link">무료 키 발급 ↗</a>
+          <button type="button" id="czGemGuideBtn" class="gem-guide-btn" aria-expanded="false">🔒 지수가 확인</button>
           <div id="czGemStatus" class="gem-key-st"></div>
+          <div id="czGemGuideBox" class="gem-guide-box" hidden>
+            <b>📌 달력 공지 일괄등록 Gemini 무료 AI 연동 안내</b><br>
+            • ✨ Gemini 무료 API 키 입력 + <b>키 저장</b> + <b>무료 키 발급 ↗</b>으로 1번만 저장해 두세요.<br>
+            • <b>Gemini Flash-Lite(하루 500회 무료)</b>가 지시서 표에서 <b>2공장</b> 차량번호·수량·날짜를 먼저 읽고, 키가 없거나 한도가 차면 기존 무료 OCR로 자동 전환됩니다.<br>
+            • <b>첨부한 이미지를 작업 카드에도 함께 올리기</b> 체크가 켜져 있어 텍스트와 함께 지시서 원본 사진도 작업 카드에 같이 띄울 수 있습니다.
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
           <button type="button" id="czBatchImgBtn" class="cz-b" style="background:rgba(14,165,233,.22) !important;border-color:rgba(56,189,248,.45) !important;color:#e0f2fe !important;font-weight:800;">🖼️ 이미지 첨부</button>
@@ -5028,6 +5040,14 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const imgBtn=$('czBatchImgBtn'), imgInput=$('czBatchImgInput'), ocrStatus=$('czBatchOcrStatus');
       const imgWrap=$('czBatchImgWrap'), imgThumb=$('czBatchImgThumb'), imgClear=$('czBatchImgClear');
       const gemIn=$('czGemKeyInput'), gemBtn=$('czGemSaveBtn'), gemSt=$('czGemStatus');
+      const gemGuideBtn=$('czGemGuideBtn'), gemGuideBox=$('czGemGuideBox');
+      if(gemGuideBtn&&gemGuideBox){
+        gemGuideBtn.addEventListener('click',()=>{
+          const open=gemGuideBox.hasAttribute('hidden');
+          if(open){ gemGuideBox.removeAttribute('hidden'); gemGuideBtn.setAttribute('aria-expanded','true'); gemGuideBtn.textContent='🔓 안내 닫기'; }
+          else{ gemGuideBox.setAttribute('hidden',''); gemGuideBtn.setAttribute('aria-expanded','false'); gemGuideBtn.textContent='🔒 지수가 확인'; }
+        });
+      }
       const GKEY='jisu-gemini-key';
       function getGemKey(){ try{return (localStorage.getItem(GKEY)||'').trim();}catch(_){return '';} }
       function syncGemUi(){
@@ -5081,6 +5101,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         }
         throw new Error(lastErr||'Gemini 응답 없음');
       }
+      window.jisuGeminiReadImage=runGeminiExtract;
       async function runBatchOcr(file){
         if(!file||!file.type.startsWith('image/')) return;
         const url=URL.createObjectURL(file);
