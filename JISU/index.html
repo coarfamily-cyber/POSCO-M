@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151605">
+  <meta name="jisu-build" content="202611151620">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -1921,7 +1921,8 @@
     .pf-sub{margin:4px 0 22px;font-size:14px;color:#94a3b8;}
     .perf-arrow{width:44px;border-radius:16px;font-size:30px;font-weight:300;color:#e5e7eb;background:rgba(255,255,255,.06);}
     .perf-dots{display:flex;justify-content:center;gap:8px;} .perf-dots button{width:9px;height:9px;border-radius:9999px;background:rgba(255,255,255,.25);padding:0;} .perf-dots button.on{width:26px;background:#818cf8;}
-    .pf-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+    .pf-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:24px;}
+    @media(max-width:760px){.pf-kpis{grid-template-columns:repeat(2,minmax(0,1fr));}}
     .pf-kpis > div{padding:18px 16px;border-radius:18px;background:rgba(255,255,255,.07);}
     .pf-kpis b{display:block;font-size:46px;font-weight:900;line-height:1.05;color:#fff;} .pf-kpis span{font-size:14px;font-weight:700;color:#cbd5e1;}
     .pf-kpis .ok b{color:#60a5fa;} .pf-kpis .carry b{color:#f472b6;} .pf-kpis .memo b{color:#c4b5fd;}
@@ -4933,9 +4934,11 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const t=kstToday(), ty=+t.slice(0,4); let k=ty+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); if(k>t) k=(ty-1)+k.slice(4); return k; }
     const hm=s=>{ const m=String(s||'').match(/(\d{1,2}:\d{2})/); return m?m[1]:''; };
     const md=s=>{ const m=String(s||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); return m?(+m[1])+'/'+(+m[2])+' ':''; };
-    function histOf(day){ return { cmds:load(CKEY).filter(x=>dayOf(x)===day), memos:[] }; } /* 특이사항은 달력에 표시하지 않음 (사이드바 HOME에서 보기) */
+    function inbOf(day){ try{ const r=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}')[day]; if(!r) return null; const rows=r.rows||[]; if(!rows.length&&(!r.workState||r.workState==='idle')) return null; const kg=rows.reduce((s,x)=>s+(parseFloat(x.kg)||0),0); return {day,bags:rows.length,kg,ton:Math.round(kg/10)/100,state:r.workState||'idle'}; }catch(_){return null;} }
+    function pitchOf(day){ try{ const r=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}')[day]; if(!r) return null; const g=(parseFloat(r.grind1)||0)+(parseFloat(r.grind2)||0); const hasAdd=[...(r.add1s||[]),...(r.add2s||[]),...(r.moves||[])].some(v=>String(v||'').trim()); if(!g&&!hasAdd&&(!r.workState||r.workState==='idle')) return null; return {day,grind:g,state:r.workState||'idle'}; }catch(_){return null;} }
+    function histOf(day){ return { cmds:load(CKEY).filter(x=>dayOf(x)===day), memos:[], inb:inbOf(day), pitch:pitchOf(day) }; } /* 특이사항은 달력에 표시하지 않음 (사이드바 HOME에서 보기) */
     function carryCnt(){ const c={}; load(CKEY).forEach(x=>{ if(x.carryCount&&x.carryFrom&&x.kind!=='notice'){ const d=dayOf(x); if(d) c[d]=(c[d]||0)+1; } }); return c; }
-    function histCount(){ const c={}; load(CKEY).forEach(x=>{ const d=dayOf(x); if(d) c[d]=(c[d]||0)+1; }); return c; }
+    function histCount(){ const c={}; load(CKEY).forEach(x=>{ const d=dayOf(x); if(d) c[d]=(c[d]||0)+1; }); try{ const ir=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}'); Object.keys(ir).forEach(d=>{ if(inbOf(d)) c[d]=(c[d]||0)+1; }); }catch(_){} try{ const pr=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}'); Object.keys(pr).forEach(d=>{ if(pitchOf(d)) c[d]=(c[d]||0)+1; }); }catch(_){} return c; }
     /* 달력 기록에서도 이월 작업 판단: 계속 · 날짜 변경 · 수량 수정 · 종료 (부족 완료는 잔량 이월 · 이대로 종료) */
     let chForm=null, chMsg=null;
     function chActs(x){
@@ -4953,12 +4956,16 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const isCarryover=x=>(window.jisuIsCarryover?window.jisuIsCarryover(x):false);
     function drawHist(day,today){
       const box=$('czHist'); if(!box) return; if(day>today){ box.innerHTML=''; return; }
-      const {cmds,memos}=histOf(day), work=cmds.filter(x=>x.kind!=='notice'), notes=cmds.filter(x=>x.kind==='notice');
-      const doneN=work.filter(x=>x.completed).length;
+      const {cmds,memos,inb,pitch}=histOf(day), work=cmds.filter(x=>x.kind!=='notice'), notes=cmds.filter(x=>x.kind==='notice');
+      const doneN=work.filter(x=>x.completed).length, extraN=(inb?1:0)+(pitch?1:0);
       let tgt=0, got=0; work.forEach(x=>{ const m=String(x.text).match(/(\d+(?:\.\d+)?)\s*TON/i); if(m){ tgt+=+m[1]; got+=Math.min(+(x.done||0)||0,+m[1]); } });
-      let html='<div class="ch-head">'+(day===today?'오늘 기록':'그날 기록')+'<span>'+(cmds.length+memos.length)+'건</span></div>';
-      if(!cmds.length && !memos.length){ box.innerHTML=html+'<div class="cz-empty">이 날짜에 남은 기록이 없어요.</div>'; return; }
+      let html='<div class="ch-head">'+(day===today?'오늘 기록':'그날 기록')+'<span>'+(cmds.length+memos.length+extraN)+'건</span></div>';
+      if(!cmds.length && !memos.length && !extraN){ box.innerHTML=html+'<div class="cz-empty">이 날짜에 남은 기록이 없어요.</div>'; return; }
       html+='<div class="ch-sum"><span>작업 <b>'+work.length+'</b>건</span><span>완료 <b>'+doneN+'</b>건</span>'+(tgt?'<span>완료량 <b>'+(Math.round(got*10)/10)+'</b> / '+(Math.round(tgt*10)/10)+' TON</span>':'')+(memos.length?'<span class="m">특이사항 <b>'+memos.length+'</b></span>':'')+'</div>';
+      if(inb||pitch){ html+='<div class="ch-sec">현장 일지</div>';
+        if(inb){ const ist=inb.state==='done'?'<span class="ch-st ok">입고완료</span>':(inb.state==='work'?'<span class="ch-st run">입고중</span>':'<span class="ch-st">기록</span>'); html+='<div class="ch-item'+(inb.state==='done'?' done':'')+'"><div class="ch-top"><b>입고 중량일지</b>'+ist+'</div><div class="ch-txt">'+inb.bags+' BAG · '+inb.ton+' TON ('+Math.round(inb.kg*10)/10+' kg)</div></div>'; }
+        if(pitch){ const pst=pitch.state==='done'?'<span class="ch-st ok">작업완료</span>':(pitch.state==='work'?'<span class="ch-st run">작업중</span>':'<span class="ch-st">기록</span>'); html+='<div class="ch-item'+(pitch.state==='done'?' done':'')+'"><div class="ch-top"><b>피치 작업일지</b>'+pst+'</div><div class="ch-txt">분쇄 현황 '+pitch.grind+' BAG</div></div>'; }
+      }
       if(work.length){ html+='<div class="ch-sec">금일작업</div>'+work.map(x=>{ const m=String(x.text).match(/(\d+(?:\.\d+)?)\s*TON/i);
           const q2=v=>String(Math.round(v*100)/100), mdk=k=>{const p=String(k).split('-');return (+p[1])+'/'+(+p[2]);};
           const dCarry=isCarryover(x);
@@ -4994,12 +5001,14 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       today=today||kstToday(); const sch=load(SKEY); let changed=false; const cmds=load(CKEY);
       sch.forEach(s=>{ if(!s.applied && s.date<=today){ const isPast=s.date<today; const rec={id:'s'+s.id,target:s.target,kind:s.kind,text:s.text,at:isPast?atOf(s.date):nowStr(),day:s.date,sched:s.date,origDay:s.date}; if(s.img) rec.img=s.img; if(s.tonText) rec.tonText=s.tonText; if(s.urgent) rec.urgent=true; if(s.by) rec.by=s.by; if(isPast) rec.closed=true; cmds.push(rec); s.applied=true; s.appliedAt=nowStr(); changed=true; } });
       if(changed){ save(CKEY,cmds); save(SKEY,sch); if(window.jisuCmdRender) window.jisuCmdRender(); }
+      if(window.jisuInboundRefresh) window.jisuInboundRefresh();
       return changed;
     }
     window.jisuApplySchedules=apply; apply(); setInterval(()=>apply(),60000); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') apply(); });
     let view=null, picked=null, editing=null;
     const ymd=(y,m,d)=>y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     function draw(){
+      if(window.jisuInboundRefresh) window.jisuInboundRefresh();
       const [y,m]=view, today=kstToday(); $('calTitle').textContent=y+'년 '+(m+1)+'월';
       const first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate(), sch=load(SKEY), hc=histCount(), cc=carryCnt();
       let html=''; for(let i=0;i<first;i++) html+='<div class="cal-cell empty"></div>';
@@ -5839,8 +5848,10 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       let y=+t.slice(0,4), m=+t.slice(5,7)-1+shift; y+=Math.floor(m/12); m=((m%12)+12)%12; const s=y+'-'+String(m+1).padStart(2,'0')+'-01'; const e=kst(new Date(Date.UTC(y,m+1,0,3))); return [s,e]; }
     function data(){ const [s,e]=range(), days=[]; for(let k=s;k<=e;k=add(k,1)) days.push(k);
       const work=load(CK).filter(x=>x.kind!=='notice'&&dayOf(x)>=s&&dayOf(x)<=e), memos=load(MK).filter(x=>dayOf(x)>=s&&dayOf(x)<=e);
-      const units={}; work.forEach(x=>{ const g=goal(x.text); if(!g) return; const u=units[g.u]||(units[g.u]={goal:0,done:0,byDay:{}}); u.goal+=g.n; const a=doneAmt(x,g); u.done+=a; const d=dayOf(x); u.byDay[d]=(u.byDay[d]||0)+a; });
+      const units={}; work.forEach(x=>{ const g=goal(x.text); if(!g) return; const u=units[g.u]||(units[g.u]={goal:0,done:0,byDay:{}}); if(!(x.carried&&!x.short)) u.goal+=g.n; const a=doneAmt(x,g); u.done+=a; const d=dayOf(x); u.byDay[d]=(u.byDay[d]||0)+a; });
       const zones={}; const Z=t=>zones[t]||(zones[t]={n:0,done:0,carry:0,memo:0}); work.forEach(x=>{ const z=Z(x.target); z.n++; if(x.completed) z.done++; if(x.carryCount&&x.carryFrom) z.carry++; }); memos.forEach(m=>{ Z(m.target).memo++; });
+      try{ const ir=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}'); Object.keys(ir).forEach(d=>{ if(d<s||d>e) return; const r=ir[d]; if(!r) return; const rows=r.rows||[]; if(!rows.length&&(!r.workState||r.workState==='idle')) return; const ton=rows.reduce((sum,x)=>sum+(parseFloat(x.kg)||0),0)/1000; if(ton>0){ const u=units['TON']||(units['TON']={goal:0,done:0,byDay:{}}); u.done+=ton; u.byDay[d]=(u.byDay[d]||0)+ton; } if(rows.length){ const u=units['BAG']||(units['BAG']={goal:0,done:0,byDay:{}}); u.done+=rows.length; u.byDay[d]=(u.byDay[d]||0)+rows.length; } const z=Z('inbound'); z.n++; if(r.workState==='done') z.done++; }); }catch(_){}
+      try{ const pr=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}'); Object.keys(pr).forEach(d=>{ if(d<s||d>e) return; const r=pr[d]; if(!r) return; const g=(parseFloat(r.grind1)||0)+(parseFloat(r.grind2)||0); if(!g&&(!r.workState||r.workState==='idle')) return; if(g>0){ const u=units['BAG']||(units['BAG']={goal:0,done:0,byDay:{}}); u.done+=g; u.byDay[d]=(u.byDay[d]||0)+g; } const z=Z('pitch'); z.n++; if(r.workState==='done') z.done++; }); }catch(_){}
       let envDone=0; try{ envDone=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]').filter(x=>x.day>=s&&x.day<=e).length; }catch(_){}
       return {s,e,days,work,memos,units,zones,envDone,done:work.filter(x=>x.completed).length,carry:work.filter(x=>x.carryCount&&x.carryFrom).length}; }
     function title(d){ if(mode==='week') return (shift===0?'이번 주':(shift===-1?'지난 주':md(d.s)+' 주'))+' · '+md(d.s)+' ~ '+md(d.e); return (+d.s.slice(0,4))+'년 '+(+d.s.slice(5,7))+'월'+(shift===0?' (이번 달)':''); }
@@ -6082,8 +6093,15 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       const todaySch = sch.filter(s => s && s.date === activeDay && s.target === "inbound");
       if (todaySch.length) {
         const txt = todaySch.map(s => s.text).join(" ");
-        const m = txt.match(/(\d+(?:[.,]\d+)?)\s*(?:TON|톤|T)?/i);
-        if (m) { goalTon = parseFloat(m[1].replace(",", ".")); label = "달력 금일 예정"; }
+        const explicitMatches = [...txt.matchAll(/(\d+(?:[.,]\d+)?)\s*(?:TON|톤|T)(?![A-Za-z])/gi)];
+        if (explicitMatches.length) {
+          let sumTon = 0;
+          explicitMatches.forEach(m => { sumTon += parseFloat(m[1].replace(",", ".")) || 0; });
+          if (sumTon > 0) {
+            goalTon = sumTon;
+            label = explicitMatches.length > 1 ? `달력 금일 예정 (${explicitMatches.length}건 합산)` : "달력 금일 예정";
+          }
+        }
       } else {
         const future = sch.filter(s => s && s.target === "inbound" && s.date > activeDay);
         if (future.length) {
@@ -6475,6 +6493,11 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   renderPhotos();
   updateWorkflowUI();
 
+  window.jisuInboundRefresh = () => {
+    const rec = getTodayRecord();
+    const kg = (rec.rows || []).reduce((s, r) => s + (parseFloat(r.kg) || 0), 0);
+    updateKpi(kg, (rec.rows || []).length);
+  };
   window.jisuInboundArchive = {
     getToday: () => getTodayRecord(),
     photos: () => getPhotos(activeDay),
