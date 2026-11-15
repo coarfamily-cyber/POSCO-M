@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611152210">
+  <meta name="jisu-build" content="202611152220">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -800,10 +800,15 @@
       content: '' !important;
       position: absolute !important;
       inset: 0 !important;
+      padding: 1.5px !important;
       border-radius: inherit !important;
       pointer-events: none !important;
-      background: radial-gradient(120% 70% at 20% 0%, rgba(255, 255, 255, 0.38), transparent 60%), linear-gradient(180deg, rgba(255, 255, 255, 0.20), transparent 35%) !important;
-      mix-blend-mode: screen !important;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.88) 0%, rgba(125, 211, 252, 0.58) 25%, rgba(196, 181, 253, 0.42) 50%, rgba(255, 255, 255, 0.14) 76%, rgba(103, 232, 249, 0.50) 100%) !important;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
+      -webkit-mask-composite: xor !important;
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
+      mask-composite: exclude !important;
+      z-index: 2 !important;
     }
     body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-open .expand-card {
       transition: max-height .45s cubic-bezier(.2,.9,.2,1), opacity .28s ease, transform .45s cubic-bezier(.2,.9,.2,1.15), margin-top .3s ease !important;
@@ -2361,6 +2366,18 @@
     body:not(#zz) .env-grid .env-unit{min-height:46px;padding:12px 6px;font-size:13.5px;border-radius:11px;touch-action:manipulation;}
     body:not(#zz) .env-grid .env-unit i{width:9px;height:9px;}
     @media (max-width:900px), (pointer:coarse){ body:not(#zz) .env-grid .env-unit{min-height:52px;font-size:15px;} }
+  </style>
+  <style id="hydrogen-glass-polish">
+    /* 1. 열린 유리 카드 상단 스펙큘러 하이라이트 보강 */
+    body:not(#zz) .hotspot-wrapper.is-open > .expand-card {
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.40), inset 0 1.5px 1px rgba(255, 255, 255, 0.62), inset 0 -1px 1px rgba(125, 211, 252, 0.22) !important;
+    }
+    /* 3. 존 버튼 & 범례 상태 점 유리 렌즈 구슬 효과 (기존 상태 색상 유지) */
+    body:not(#zz) .pulse-ring,
+    body:not(#zz) .map-legend i {
+      background-image: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.38) 28%, transparent 58%), radial-gradient(circle at 70% 75%, rgba(255, 255, 255, 0.22) 0%, transparent 46%) !important;
+      box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.34), inset 0 1px 1.5px rgba(255, 255, 255, 0.68), 0 0 8px currentColor !important;
+    }
   </style>
   <style>
     /* 실적 요약 칸 5개 */
