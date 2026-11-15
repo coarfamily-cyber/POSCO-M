@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151410">
+  <meta name="jisu-build" content="202611151415">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -3880,6 +3880,17 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     const sel=document.getElementById('cmdTarget'), text=document.getElementById('cmdText'), submit=document.getElementById('cmdSubmit'), list=document.getElementById('cmdList'), label=document.getElementById('cmdTargetLabel');
     const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
     const save=v=>localStorage.setItem(KEY,JSON.stringify(v));
+    try{
+      if(!localStorage.getItem('jisu-demo-dispatch-v1')){
+        const cur=load();
+        if(!cur.some(x=>x&&x.id==='demo_dispatch_1')){
+          const td=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+          cur.unshift({id:'demo_dispatch_1',target:'outbound',kind:'instruction',text:'첨부 이미지',img:'./sample-dispatch.jpg',at:'11. 15. 예시',day:td});
+          save(cur);
+        }
+        localStorage.setItem('jisu-demo-dispatch-v1','1');
+      }
+    }catch(_){}
     const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     function goalOf(t){
       const clean=String(t||'').replace(/^\[[^\]]+\]\s*/,'');
