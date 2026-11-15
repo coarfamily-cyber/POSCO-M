@@ -2259,7 +2259,9 @@
     .cmd-side .work-ton-badge{font-size:12.5px;padding:3px 8px;color:#e2e8f0;}
     .cmd-card-img-wrap{display:flex;flex-direction:row;align-items:flex-end;gap:8px;flex-wrap:nowrap;flex:1 1 auto;min-width:0;}
     .cmd-card-img-btn{display:block;width:66px;height:44px;flex:0 0 auto;padding:0;border-radius:8px;overflow:hidden;border:none !important;outline:none !important;background:transparent !important;box-shadow:none !important;cursor:pointer;position:relative;transition:transform .14s ease;}
-    .cmd-card-img-btn:hover{transform:scale(1.03);}
+    @media (hover:hover) and (pointer:fine){
+      .cmd-card-img-btn:hover{transform:scale(1.03);}
+    }
     .cmd-card-img-btn img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;}
     .cmd-card-img-cap{font-size:12.5px;font-weight:700;color:#0f172a;line-height:1.35;flex:1 1 110px;min-width:0;}
     .cmd-side .cmd-card-img-cap{color:#e2e8f0;}
@@ -2271,7 +2273,7 @@
     .cmd-notice-banner.has-img{grid-template-columns:auto 1fr auto;align-items:center;}
     .cmd-notice-banner .cmd-card-img-btn{width:124px;height:82px;margin-top:0;}
     @media (max-width:768px){
-      .cmd-card-img-btn{width:102px;height:68px;}
+      .cmd-card-img-btn{width:102px;height:68px;transform:none !important;}
       .cmd-card-img-wrap{gap:8px;}
       .work-ton-badge{font-size:13.5px;}
     }
