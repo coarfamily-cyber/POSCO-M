@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151735">
+  <meta name="jisu-build" content="202611151740">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -4060,9 +4060,6 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           +'<button type="button" class="work-complete work-progress'+(x.working&&!x.completed?' is-working':'')+'" data-cmd-working="'+x.id+'">작업중</button>'
           +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?(x.short?'부족 완료':'완료됨'):'작업완료')+'</button>'
           +'</div>';
-        if(x.tonText && !hasImg){
-          right='<div class="work-right-col"><div class="work-ton-badge">'+esc(x.tonText)+'</div>'+right+'</div>';
-        }
       }
       const obItem = getObItem(x);
       let kindTag = '';
@@ -4346,7 +4343,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         window.jisuOpenGallery([{id:it.id,at:it.at,name:it.text||'첨부 이미지',data:it.img}],0,null);
       }
     },true);
-    submit.addEventListener('click',()=>{const t=getTarget();if(!t&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v&&!pendingCmdImg){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v&&!pendingCmdImg){text.focus();return;}v=v.replace(/[a-z]/g,c=>c.toUpperCase());const all=load();const norm=v?(window.jisuNormUnit?window.jisuNormUnit(v):v).replace(/[a-z]/g,c=>c.toUpperCase()):'첨부 이미지';const rec={id:Date.now().toString(36),target:t||'*',kind,text:norm,at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(pendingCmdImg) rec.img=pendingCmdImg;const autoTon=v&&window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(v):'';if(autoTon) rec.tonText=autoTon;if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);if(pendingCmdImg&&!rec.tonText&&window.jisuGeminiReadImage){let gk='';try{gk=(localStorage.getItem('jisu-gemini-key')||'').trim();}catch(_){}if(gk){const imgCopy=pendingCmdImg,rid=rec.id;window.jisuGeminiReadImage(gk,imgCopy).then(txt=>{const tt=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(txt):'';if(tt){const a=load();const it=a.find(x=>x.id===rid);if(it){it.tonText=tt;save(a);render();}}}).catch(()=>{});}}text.value='';if(fr)fr.value='';if(to)to.value='';pendingCmdImg=null;const cw=document.getElementById('cmdImgWrap'),ct=document.getElementById('cmdImgThumb');if(cw)cw.style.display='none';if(ct)ct.src='';render();});
+    submit.addEventListener('click',()=>{const t=getTarget();if(!t&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v&&!pendingCmdImg){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v&&!pendingCmdImg){text.focus();return;}v=v.replace(/[a-z]/g,c=>c.toUpperCase());const all=load();const norm=v?(window.jisuNormUnit?window.jisuNormUnit(v):v).replace(/[a-z]/g,c=>c.toUpperCase()):'첨부 이미지';const rec={id:Date.now().toString(36),target:t||'*',kind,text:norm,at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(pendingCmdImg){ rec.img=pendingCmdImg; const autoTon=v&&window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(v):''; if(autoTon) rec.tonText=autoTon; }if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);if(pendingCmdImg&&!rec.tonText&&window.jisuGeminiReadImage){let gk='';try{gk=(localStorage.getItem('jisu-gemini-key')||'').trim();}catch(_){}if(gk){const imgCopy=pendingCmdImg,rid=rec.id;window.jisuGeminiReadImage(gk,imgCopy).then(txt=>{const tt=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(txt):'';if(tt){const a=load();const it=a.find(x=>x.id===rid);if(it){it.tonText=tt;save(a);render();}}}).catch(()=>{});}}text.value='';if(fr)fr.value='';if(to)to.value='';pendingCmdImg=null;const cw=document.getElementById('cmdImgWrap'),ct=document.getElementById('cmdImgThumb');if(cw)cw.style.display='none';if(ct)ct.src='';render();});
     list.addEventListener('click',e=>{const id=e.target.getAttribute('data-cmd-del');if(!id)return;save(load().filter(x=>x.id!==id));render();});
     function goHome(){
       document.querySelectorAll('.hotspot-wrapper.is-open').forEach(w=>w.classList.remove('is-open'));
