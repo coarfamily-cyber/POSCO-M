@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151210">
+  <meta name="jisu-build" content="202611151220">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -3918,8 +3918,20 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         +'<div class="hs-line">오늘 작업 <b>'+work.length+'</b>건 · 완료 <b class="ok">'+done+'</b> · 작업중 <b class="run">'+run+'</b>'+(carry?' · 이월 <b class="carry">'+carry+'</b>':'')+'</div>'
         +(goal?'<div class="hs-goal">오늘 목표 <b>'+r(goal)+' TON</b> 중 <b>'+r(got)+' TON</b> ('+pct+'%)</div><div class="hs-bar"><span style="width:'+Math.min(100,pct)+'%"></span></div>':'')+'</div>';
     }
+    let knownCmdIds=null;
     function renderCards(){
       const all=load().filter(x=>!x.closed);
+      if(knownCmdIds===null){
+        knownCmdIds=new Set(all.map(x=>x.id));
+      }else{
+        const wz=new URLSearchParams(location.search).get('zone');
+        const newOnes=all.filter(x=>!knownCmdIds.has(x.id));
+        newOnes.forEach(x=>{
+          knownCmdIds.add(x.id);
+          const matchZone=!wz||x.target==='*'||x.target===wz||(wz==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(wz==='inbound'&&x.target&&x.target.startsWith('inbound:'));
+          if(matchZone && window.jisuTriggerAlert) window.jisuTriggerAlert(x);
+        });
+      }
       Object.keys(NAMES).forEach(k=>{
         const wrap=document.getElementById('hotspot-'+k); const card=wrap&&wrap.querySelector('.expand-card'); if(!card) return;
         const slot=card.querySelector('[data-cmd-slot]');
@@ -6494,6 +6506,107 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       ml.href='data:application/manifest+json;charset=utf-8,'+encodeURIComponent(JSON.stringify(mObj));
     }
   }catch(e){}
+})();
+</script>
+<script>
+/* 1·3번: 전 구역 새 작업지시/공지사항 차임벨 알람 + 진동 + 상단 배너 + PWA 시스템 알림 기반 */
+(function(){
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>{});
+  }
+  const ZONE_LABEL={outbound:'출고',inbound:'입고',pitch:'피치',environment:'환경',packaging:'포장 C동','packaging-d':'포장 D동','production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H','*':'전체'};
+  function zoneName(t){
+    if(!t) return '현장';
+    if(t.startsWith('outbound:')) return '출고 · '+t.slice(9);
+    if(t.startsWith('inbound:')) return '입고 · '+t.slice(8);
+    return ZONE_LABEL[t]||t;
+  }
+  function playAlertTone(isUrgent){
+    try{
+      const AC=window.AudioContext||window.webkitAudioContext;
+      if(!AC) return;
+      const ctx=new AC();
+      const notes=isUrgent?[987.77,1318.51,1567.98]:[880,1174.66];
+      notes.forEach((freq,i)=>{
+        const osc=ctx.createOscillator();
+        const g=ctx.createGain();
+        const t=ctx.currentTime+i*0.13;
+        osc.type='sine';
+        osc.frequency.setValueAtTime(freq,t);
+        g.gain.setValueAtTime(0.001,t);
+        g.gain.exponentialRampToValueAtTime(0.24,t+0.02);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.26);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t); osc.stop(t+0.28);
+      });
+      setTimeout(()=>{try{ctx.close();}catch(_){}} ,900);
+    }catch(_){}
+  }
+  function showToast(title,body,target){
+    let box=document.getElementById('jisuAlertToast');
+    if(box) box.remove();
+    box=document.createElement('div');
+    box.id='jisuAlertToast';
+    box.style.cssText='position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:2147483600;width:min(92vw,420px);display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;background:rgba(15,23,42,0.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(56,189,248,0.55);box-shadow:0 14px 36px rgba(0,0,0,0.48);color:#f8fafc;cursor:pointer;';
+    box.innerHTML='<span style="font-size:20px;line-height:1;flex-shrink:0;">🔔</span><div style="min-width:0;flex:1;"><div style="font-size:12.5px;font-weight:800;color:#38bdf8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div><div style="font-size:13px;font-weight:700;color:#fff;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div></div>';
+    box.querySelector('div > div:first-child').textContent=title;
+    box.querySelector('div > div:last-child').textContent=body;
+    box.addEventListener('click',()=>{
+      box.remove();
+      const base=(target||'').split(':')[0];
+      const w=document.getElementById('hotspot-'+base);
+      if(w && !w.classList.contains('is-open')) w.classList.add('is-open');
+    });
+    document.body.appendChild(box);
+    setTimeout(()=>{if(box.parentNode)box.remove();},6000);
+  }
+  async function showSystemNotification(title,body,target){
+    if(!('Notification' in window)||Notification.permission!=='granted') return;
+    const base=(target||'').split(':')[0];
+    const url=base&&base!=='*'?('/POSCO-M/JISU/?zone='+encodeURIComponent(base)):'/POSCO-M/JISU/';
+    try{
+      const reg=await navigator.serviceWorker?.getRegistration('./');
+      if(reg&&reg.showNotification){
+        await reg.showNotification(title,{body,icon:'./icon-192.png?v=202611151130',badge:'./icon-192.png?v=202611151130',vibrate:[150,70,150,70,260],tag:'jisu-alert-'+Date.now(),renotify:true,data:{url}});
+        return;
+      }
+    }catch(_){}
+    try{new Notification(title,{body,icon:'./icon-192.png?v=202611151130'});}catch(_){}
+  }
+  window.jisuTriggerAlert=function(item){
+    if(!item) return;
+    const isUrgent=Boolean(item.urgent||item.kind==='notice');
+    const kindLabel=item.kind==='notice'?'공지사항':(item.urgent?'긴급 작업':'새 작업지시');
+    const title=zoneName(item.target)+' · '+kindLabel;
+    const body=item.text||'새 지시가 등록되었습니다.';
+    playAlertTone(isUrgent);
+    try{if(navigator.vibrate)navigator.vibrate(isUrgent?[180,70,180,70,300]:[140,60,180]);}catch(_){}
+    showToast(title,body,item.target);
+    showSystemNotification(title,body,item.target);
+  };
+  if('Notification' in window && Notification.permission==='default'){
+    const pill=document.createElement('button');
+    pill.id='jisuNotifAsk';
+    pill.type='button';
+    pill.textContent='🔔 알림 켜기';
+    const isWorker=document.body.classList.contains('worker-zone-only');
+    const hasBanner=Boolean(document.getElementById('jisuPwaBanner'));
+    pill.style.cssText='position:fixed;right:14px;bottom:'+(hasBanner?'78px':'16px')+';z-index:2147482500;padding:7px 12px;border-radius:9999px;border:1px solid rgba(255,255,255,0.28);background:rgba(15,23,42,0.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#f8fafc;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.35);';
+    pill.addEventListener('click',async()=>{
+      try{
+        const perm=await Notification.requestPermission();
+        playAlertTone(false);
+        try{if(navigator.vibrate)navigator.vibrate(100);}catch(_){}
+        if(perm==='granted'){
+          showToast('알림이 켜졌어요','이제 새 작업·공지가 오면 알람과 진동으로 알려드려요.','');
+          pill.remove();
+        }else if(perm==='denied'){
+          pill.remove();
+        }
+      }catch(_){}
+    });
+    document.body.appendChild(pill);
+  }
 })();
 </script>
 </body>
