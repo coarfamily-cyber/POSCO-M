@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151305">
+  <meta name="jisu-build" content="202611151315">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -4787,10 +4787,18 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       if(!hasTable) return null;
       const items=[]; let skipped1=0;
       const parseDt=(s)=>{
-        let m=String(s||'').match(/(\d{2,4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/);
-        if(m){ const y=m[1].length===2?'20'+m[1]:m[1]; return y+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0'); }
-        m=String(s||'').match(/(\d{1,2})[\/.\-](\d{1,2})/);
-        if(m){ const y=(fallbackDate||kstToday()).slice(0,4); return y+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); }
+        const cleaned=String(s||'').replace(/0\d{1,2}-\d{3,4}-\d{4}/g,' ');
+        let m=cleaned.match(/(\d{2,4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/);
+        if(m){
+          const y=m[1].length===2?'20'+m[1]:m[1];
+          const mo=parseInt(m[2],10), da=parseInt(m[3],10);
+          if(mo>=1&&mo<=12&&da>=1&&da<=31) return y+'-'+String(mo).padStart(2,'0')+'-'+String(da).padStart(2,'0');
+        }
+        m=cleaned.match(/\b(\d{1,2})[\/.\-](\d{1,2})\b/);
+        if(m){
+          const mo=parseInt(m[1],10), da=parseInt(m[2],10);
+          if(mo>=1&&mo<=12&&da>=1&&da<=31){ const y=(fallbackDate||kstToday()).slice(0,4); return y+'-'+String(mo).padStart(2,'0')+'-'+String(da).padStart(2,'0'); }
+        }
         return fallbackDate||kstToday();
       };
       for(const l of lines){
@@ -4911,6 +4919,24 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           document.head.appendChild(s);
         });
       }
+      function preprocessForOcr(url){
+        return new Promise((res)=>{
+          const im=new Image();
+          im.onload=()=>{
+            try{
+              const scale=im.width<2400?2:1;
+              const cv=document.createElement('canvas');
+              cv.width=im.width*scale; cv.height=im.height*scale;
+              const ctx=cv.getContext('2d');
+              ctx.filter='grayscale(1) contrast(1.35) brightness(1.08)';
+              ctx.drawImage(im,0,0,cv.width,cv.height);
+              res(cv.toDataURL('image/png'));
+            }catch(_){ res(url); }
+          };
+          im.onerror=()=>res(url);
+          im.src=url;
+        });
+      }
       async function runBatchOcr(file){
         if(!file||!file.type.startsWith('image/')) return;
         const url=URL.createObjectURL(file);
@@ -4918,8 +4944,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(imgWrap) imgWrap.style.display='block';
         if(ocrStatus){ ocrStatus.textContent='⏳ 무료 OCR로 이미지 읽는 중...'; ocrStatus.style.color='#38bdf8'; }
         try{
-          const T=await loadTesseract();
-          const out=await T.recognize(url,'kor+eng',{
+          const [T,preUrl]=await Promise.all([loadTesseract(),preprocessForOcr(url)]);
+          const out=await T.recognize(preUrl,'kor+eng',{
             logger:m=>{
               if(m.status==='recognizing text'&&ocrStatus){
                 ocrStatus.textContent='⏳ 표 읽는 중... '+Math.round((m.progress||0)*100)+'%';
