@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151515">
+  <meta name="jisu-build" content="202611151520">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -3908,15 +3908,19 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const td=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
       let changed=false;
       cur.forEach(x=>{
+        if(x&&x.tonText&&/^2공장\s*(?:\d+대\s*·\s*)?/.test(x.tonText)){
+          x.tonText=x.tonText.replace(/^2공장\s*(?:\d+대\s*·\s*)?/,'').trim();
+          changed=true;
+        }
         if(x&&x.target==='outbound'&&x.img&&!x.tonText&&x.text==='첨부 이미지'){
-          x.tonText='2공장 7대 · 73.92 TON';
+          x.tonText='73.92 TON';
           changed=true;
         }
       });
       const idx=cur.findIndex(x=>x&&x.id==='demo_dispatch_1');
       if(idx>=0){
-        if(cur[idx].tonText!=='2공장 7대 · 73.92 TON'||cur[idx].img!=='./sample-dispatch.jpg'||cur[idx].day!==td){
-          cur[idx].tonText='2공장 7대 · 73.92 TON';
+        if(cur[idx].tonText!=='73.92 TON'||cur[idx].img!=='./sample-dispatch.jpg'||cur[idx].day!==td){
+          cur[idx].tonText='73.92 TON';
           cur[idx].img='./sample-dispatch.jpg';
           cur[idx].day=td;
           changed=true;
@@ -3927,7 +3931,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           changed=true;
         }
       }else{
-        cur.unshift({id:'demo_dispatch_1',target:'outbound',kind:'instruction',text:'첨부 이미지',img:'./sample-dispatch.jpg',tonText:'2공장 7대 · 73.92 TON',at:'11. 15. 예시',day:td});
+        cur.unshift({id:'demo_dispatch_1',target:'outbound',kind:'instruction',text:'첨부 이미지',img:'./sample-dispatch.jpg',tonText:'73.92 TON',at:'11. 15. 예시',day:td});
         changed=true;
       }
       if(changed) save(cur);
@@ -3968,7 +3972,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       }
       if(!(tons>0)) return '';
       const tStr=(Math.round(tons*100)/100).toFixed(2).replace(/\.?0+$/,'');
-      return '2공장 '+(cnt>0?cnt+'대 · ':'')+tStr+' TON';
+      return tStr+' TON';
     };
     const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     function goalOf(t){
@@ -7125,7 +7129,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       +'</select>'
       +'<input type="date" id="qdDate" style="height:36px;border-radius:9px;background:#0f172a;border:1px solid rgba(148,163,184,0.35);color:#f8fafc;padding:0 10px;font-size:13px;font-weight:700;" />'
       +'</div>'
-      +'<input type="text" id="qdTon" placeholder="2공장 총 톤수 (예: 2공장 7대 · 73.92 TON)" style="width:100%;box-sizing:border-box;height:36px;border-radius:9px;background:#0f172a;border:1px solid rgba(56,189,248,0.45);color:#e0f2fe;padding:0 10px;font-size:12.5px;font-weight:700;margin-bottom:6px;" />'
+      +'<input type="text" id="qdTon" placeholder="2공장 총 톤수 (예: 73.92 TON)" style="width:100%;box-sizing:border-box;height:36px;border-radius:9px;background:#0f172a;border:1px solid rgba(56,189,248,0.45);color:#e0f2fe;padding:0 10px;font-size:12.5px;font-weight:700;margin-bottom:6px;" />'
       +'<div id="qdStatus" style="font-size:11.5px;color:#94a3b8;min-height:16px;margin-bottom:10px;">Enter 또는 바로 등록을 누르면 즉시 반영됩니다.</div>'
       +'<div style="display:flex;gap:8px;justify-content:flex-end;">'
       +'<button type="button" id="qdCancel" style="height:38px;padding:0 14px;border-radius:10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);color:#cbd5e1;font-size:13px;font-weight:700;cursor:pointer;">취소</button>'
