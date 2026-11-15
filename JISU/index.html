@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611150945">
+  <meta name="jisu-build" content="202611150950">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -4047,7 +4047,16 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     function updateSubmitLabel(){const t=getTarget();if(!t){ if(kind==='notice'){ submit.disabled=false; submit.innerHTML='<span class="cmd-submit-target">전체 버튼</span>에 공지사항 등록'; return; } submit.disabled=true;submit.textContent='대상 버튼을 먼저 선택하세요';return;} submit.disabled=false; const nm=NAMES[t]||t; submit.innerHTML='<span class="cmd-submit-target">'+esc(nm)+'</span>에 '+(kind==='notice'?'공지사항 등록':'금일작업 내용 등록');}
     function setKind(k){kind=k;document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cmdKind===k)));updateSubmitLabel();text.placeholder=k==='notice'?'공지사항을 입력하세요':'금일작업 내용을 입력하세요 (예: A- 75 TON · 앞에 ! 붙이면 긴급)';}
     document.querySelectorAll('[data-cmd-kind]').forEach(b=>b.addEventListener('click',()=>setKind(b.dataset.cmdKind)));
-    submit.addEventListener('click',()=>{const t=getTarget();if(!t&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v){text.focus();return;}const all=load();const rec={id:Date.now().toString(36),target:t||'*',kind,text:(window.jisuNormUnit?window.jisuNormUnit(v):v),at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);text.value='';if(fr)fr.value='';if(to)to.value='';render();});
+    document.addEventListener('input',e=>{
+      const el=e.target;
+      if(!el||e.isComposing) return;
+      if(el.tagName!=='TEXTAREA' && !(el.tagName==='INPUT' && (!el.type||el.type==='text'||el.type==='search'))) return;
+      if(el.id==='hdrSearchInput'||el.id==='loginId'||el.id==='loginPw') return;
+      const up=el.value.replace(/[a-z]/g,c=>c.toUpperCase());
+      if(up!==el.value){const s=el.selectionStart,en=el.selectionEnd;el.value=up;try{el.setSelectionRange(s,en);}catch(_){}}
+    });
+    text.addEventListener('input',e=>{if(e.isComposing)return;const up=text.value.replace(/[a-z]/g,c=>c.toUpperCase());if(up!==text.value){const s=text.selectionStart,en=text.selectionEnd;text.value=up;try{text.setSelectionRange(s,en);}catch(_){}}});
+    submit.addEventListener('click',()=>{const t=getTarget();if(!t&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v){text.focus();return;}v=v.replace(/[a-z]/g,c=>c.toUpperCase());const all=load();const norm=(window.jisuNormUnit?window.jisuNormUnit(v):v).replace(/[a-z]/g,c=>c.toUpperCase());const rec={id:Date.now().toString(36),target:t||'*',kind,text:norm,at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);text.value='';if(fr)fr.value='';if(to)to.value='';render();});
     list.addEventListener('click',e=>{const id=e.target.getAttribute('data-cmd-del');if(!id)return;save(load().filter(x=>x.id!==id));render();});
     function goHome(){
       document.querySelectorAll('.hotspot-wrapper.is-open').forEach(w=>w.classList.remove('is-open'));
@@ -5514,6 +5523,17 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   }
 
   const newLotInp = $("inbNewLot");
+  if (newLotInp) {
+    newLotInp.addEventListener("input", e => {
+      if (e.isComposing) return;
+      const up = newLotInp.value.replace(/[a-z]/g, c => c.toUpperCase());
+      if (up !== newLotInp.value) {
+        const s = newLotInp.selectionStart, en = newLotInp.selectionEnd;
+        newLotInp.value = up;
+        try { newLotInp.setSelectionRange(s, en); } catch (_) {}
+      }
+    });
+  }
   const newBagInp = $("inbNewBag");
   const newKgInp = $("inbNewKg");
   const newLocInp = $("inbNewLoc");
