@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611152310">
+  <meta name="jisu-build" content="202611152320">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -2138,6 +2138,8 @@
     .pf-row em i{font-style:normal;font-size:11.5px;} .pf-row em i.c{color:#f9a8d4;} .pf-row em i.m{color:#c4b5fd;}
     .pf-dbl{display:grid;gap:4px;} .pf-dbl .pf-bar{height:8px;}
     .pf-empty{padding:32px 0;text-align:center;font-size:14px;color:#94a3b8;}
+    .pf-ppt-btn{margin-left:auto;margin-right:8px;padding:7px 14px;border-radius:10px;font-size:13px;font-weight:800;color:#fff;background:linear-gradient(135deg,#3b82f6,#6366f1);border:1px solid rgba(191,219,254,.45);box-shadow:0 4px 12px rgba(59,130,246,.32);cursor:pointer;white-space:nowrap;}
+    .pf-ppt-btn:hover{filter:brightness(1.12);}
     /* 실적 창 좌우 이동 버튼: 확대·떠오름 없이 밝아지기만 (위 ✕ 버튼과 겹치지 않게) */
     .perf-box .perf-arrow,.perf-box .perf-arrow:hover,.perf-box .perf-arrow:focus-visible,.perf-box .perf-arrow:active{scale:1 !important;translate:0 0 !important;box-shadow:none !important;}
     .perf-box .perf-arrow:hover{background:rgba(255,255,255,.14) !important;color:#fff !important;}
@@ -6100,6 +6102,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
   <div id="perfModal" class="cal-modal" hidden><div class="cal-box perf-box" role="dialog" aria-label="실적">
     <div class="perf-top"><div class="perf-seg"><button type="button" data-pf-mode="week" class="on">주간</button><button type="button" data-pf-mode="month">월간</button></div>
       <button type="button" class="cal-nav" data-pf-shift="-1" aria-label="이전 기간">‹</button><span class="perf-range" id="pfRange"></span><button type="button" class="cal-nav" data-pf-shift="1" aria-label="다음 기간">›</button>
+      <button type="button" class="pf-ppt-btn" id="pfPptBtn">📊 PPT</button>
       <button type="button" class="cal-close" id="pfClose" aria-label="닫기">✕</button></div>
     <div class="perf-stage"><button type="button" class="perf-arrow l" data-pf-go="-1" aria-label="이전 슬라이드">‹</button><div class="perf-slide" id="pfSlide"></div><button type="button" class="perf-arrow r" data-pf-go="1" aria-label="다음 슬라이드">›</button></div>
     <div class="perf-dots" id="pfDots"></div>
@@ -6179,9 +6182,91 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const zonesHtml=zs.length?'<div class="pf-rows">'+zs.map(z=>{ const x=d.zones[z], p=Math.round(x.done/x.n*100); return '<div class="pf-row"><b>'+esc(NAMES[z]||z)+'</b><div class="pf-bar"><span style="width:'+p+'%"></span></div><em>'+x.done+' / '+x.n+'</em></div>'; }).join('')+'</div>':'<div class="pf-empty">구역별 기록이 없어요.</div>';
       return '<h2>실적 리포트</h2><p class="pf-sub">'+esc(title(d))+' · '+closeTag+'</p><div class="pf-hero">'+ring+kpis+'</div><div class="pf-grid2"><div class="pf-panel"><h3><span>날짜별 완료량'+(unit?' <small>'+esc(unit)+'</small>':'')+'</span>'+unitChips(d)+'</h3>'+chartHtml+'</div><div class="pf-panel"><h3><span>단위 · 구역별 완료</span><small>완료 / 전체</small></h3>'+unitsSum+zonesHtml+'</div></div>';
     }
-    let lastCur=null;
-    function draw(){ const d=dataFor(shift), prev=dataFor(shift-1); lastCur=d; $('pfRange').textContent=title(d); const el=$('pfSlide'); el.innerHTML=renderDash(d,prev); el.classList.add('in');
+    let lastCur=null, lastPrev=null;
+    function draw(){ const d=dataFor(shift), prev=dataFor(shift-1); lastCur=d; lastPrev=prev; $('pfRange').textContent=title(d); const el=$('pfSlide'); el.innerHTML=renderDash(d,prev); el.classList.add('in');
       modal.querySelectorAll('[data-pf-mode]').forEach(b=>b.classList.toggle('on',b.dataset.pfMode===mode)); }
+    /* 순수 JS OOXML(.pptx) 생성 및 다운로드 */
+    function downloadPptReport(d, prev){
+      const te=new TextEncoder();
+      const crcTable=(()=>{const t=new Uint32Array(256);for(let i=0;i<256;i++){let c=i;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[i]=c;}return t;})();
+      const crc32=u8=>{let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=crcTable[(c^u8[i])&0xFF]^(c>>>8);return(c^0xFFFFFFFF)>>>0;};
+      function zipStore(entries){
+        const parts=[], cds=[]; let off=0;
+        for(const [name,txt] of entries){
+          const nb=te.encode(name), db=typeof txt==='string'?te.encode(txt):txt, cr=crc32(db);
+          const lh=new Uint8Array(30+nb.length), lv=new DataView(lh.buffer);
+          lv.setUint32(0,0x04034b50,true); lv.setUint16(4,20,true); lv.setUint16(8,0,true);
+          lv.setUint32(14,cr,true); lv.setUint32(18,db.length,true); lv.setUint32(22,db.length,true);
+          lv.setUint16(26,nb.length,true); lh.set(nb,30);
+          const cd=new Uint8Array(46+nb.length), cv=new DataView(cd.buffer);
+          cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true);
+          cv.setUint32(16,cr,true); cv.setUint32(20,db.length,true); cv.setUint32(24,db.length,true);
+          cv.setUint16(28,nb.length,true); cv.setUint32(42,off,true); cd.set(nb,46);
+          parts.push(lh,db); cds.push(cd); off+=lh.length+db.length;
+        }
+        const cdSize=cds.reduce((s,c)=>s+c.length,0);
+        const eo=new Uint8Array(22), ev=new DataView(eo.buffer);
+        ev.setUint32(0,0x06054b50,true); ev.setUint16(8,entries.length,true); ev.setUint16(10,entries.length,true);
+        ev.setUint32(12,cdSize,true); ev.setUint32(16,off,true);
+        return new Blob([...parts,...cds,eo],{type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+      }
+      const xEsc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      const box=(id,x,y,w,h,fill,paras)=>'<p:sp><p:nvSpPr><p:cNvPr id="'+id+'" name="b'+id+'"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="'+x+'" y="'+y+'"/><a:ext cx="'+w+'" cy="'+h+'"/></a:xfrm><a:prstGeom prst="roundRect"><a:avLst><a:gd name="adj" fmla="val 6000"/></a:avLst></a:prstGeom><a:solidFill><a:srgbClr val="'+fill+'"/></a:solidFill><a:ln w="12700"><a:solidFill><a:srgbClr val="334155"/></a:solidFill></a:ln></p:spPr><p:txBody><a:bodyPr wrap="square" lIns="120000" rIns="120000" tIns="90000" bIns="90000" anchor="ctr"/><a:lstStyle/>'+paras+'</p:txBody></p:sp>';
+      const para=(txt,sz,clr,bold,al)=>'<a:p><a:pPr algn="'+(al||'l')+'"/><a:r><a:rPr lang="ko-KR" sz="'+(sz*100)+'" b="'+(bold?1:0)+'"><a:solidFill><a:srgbClr val="'+clr+'"/></a:solidFill><a:latin typeface="Malgun Gothic"/><a:ea typeface="Malgun Gothic"/></a:rPr><a:t>'+xEsc(txt)+'</a:t></a:r></a:p>';
+      const tbl=(id,x,y,w,h,rows)=>{
+        const cw=Math.floor(w/rows[0].length), rh=Math.min(460000,Math.floor(h/rows.length));
+        const trs=rows.map((r,ri)=>'<a:tr h="'+rh+'">'+r.map(c=>'<a:tc><a:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/>'+para(c,ri===0?12:11,ri===0?'E2E8F0':'F8FAFC',ri===0,'ctr')+'</a:txBody><a:tcPr><a:solidFill><a:srgbClr val="'+(ri===0?'1E3A5F':(ri%2?'1E293B':'0F172A'))+'"/></a:solidFill></a:tcPr></a:tc>').join('')+'</a:tr>').join('');
+        return '<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="'+id+'" name="t'+id+'"/><p:cNvGraphicFramePr><a:graphicFrameLocks noGrp="1"/></p:cNvGraphicFramePr><p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x="'+x+'" y="'+y+'"/><a:ext cx="'+w+'" cy="'+(rh*rows.length)+'"/></p:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table"><a:tbl><a:tblPr firstRow="1" bandRow="1"/><a:tblGrid>'+rows[0].map(()=>'<a:gridCol w="'+cw+'"/>').join('')+'</a:tblGrid>'+trs+'</a:tbl></a:graphicData></a:graphic></p:graphicFrame>';
+      };
+      const slideXml=shapes=>'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:bg><p:bgPr><a:solidFill><a:srgbClr val="0F172A"/></a:solidFill><a:effectLst/></p:bgPr></p:bg><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>'+shapes+'</p:spTree></p:cSld></p:sld>';
+      const pct=d.work.length?Math.round(d.done/d.work.length*100):0;
+      const dTxt=(c,p)=>{const df=c-p; return df>0?'▲ +'+df:(df<0?'▼ '+df:'- 동일');};
+      const s1=box(2,450000,320000,11292000,900000,'1E293B',para('지수 통합 관제 상황실 · '+(mode==='week'?'주간':'월간')+' 실적 보고서',24,'FFFFFF',true)+para(title(d)+'  |  생성: '+today(),13,'93C5FD',false))
+        +box(3,450000,1450000,2500000,2000000,'172554',para(pct+'%',44,'38BDF8',true,'ctr')+para('전체 완료율',14,'CBD5E1',true,'ctr'))
+        +box(4,3150000,1450000,2000000,2000000,'1E293B',para(String(d.work.length),34,'FFFFFF',true,'ctr')+para('총 작업 ('+dTxt(d.work.length,prev.work.length)+')',12,'94A3B8',false,'ctr'))
+        +box(5,5300000,1450000,2000000,2000000,'1E293B',para(String(d.done),34,'60A5FA',true,'ctr')+para('완료 ('+dTxt(d.done,prev.done)+')',12,'94A3B8',false,'ctr'))
+        +box(6,7450000,1450000,2000000,2000000,'1E293B',para(String(d.carry),34,'F472B6',true,'ctr')+para('이월 ('+dTxt(d.carry,prev.carry)+')',12,'94A3B8',false,'ctr'))
+        +box(7,9600000,1450000,2142000,2000000,'1E293B',para(String(d.memos.length),34,'C4B5FD',true,'ctr')+para('특이사항 ('+dTxt(d.memos.length,prev.memos.length)+')',12,'94A3B8',false,'ctr'))
+        +box(8,450000,3750000,11292000,2400000,'1E293B',para('주요 요약',16,'38BDF8',true)+para('• 환경 청소 완료: '+d.envDone+'회 ('+dTxt(d.envDone,prev.envDone)+')',14,'E2E8F0',false)+para('• 등록된 단위 실적: '+(Object.keys(d.units).map(u=>u+' '+r1(d.units[u].done)+'/'+r1(d.units[u].goal)).join('  |  ')||'없음'),14,'E2E8F0',false));
+      const us=Object.keys(d.units);
+      const uRows=[['단위','완료량','목표량','달성률'],...(us.length?us.map(u=>{const x=d.units[u];return[u,r1(x.done),r1(x.goal),(x.goal?Math.round(x.done/x.goal*100):0)+'%'];}):[['기록 없음','-','-','-']])];
+      const zs=Object.keys(d.zones).filter(z=>d.zones[z].n).sort((a,b)=>d.zones[b].n-d.zones[a].n).slice(0,10);
+      const zRows=[['구역','완료','전체','이월·특이'],...(zs.length?zs.map(z=>{const x=d.zones[z];return[NAMES[z]||z,String(x.done),String(x.n),'이월 '+x.carry+' / 특이 '+x.memo];}):[['기록 없음','-','-','-']])];
+      const s2=box(2,450000,300000,11292000,680000,'1E293B',para('단위 · 구역별 완료 현황',20,'FFFFFF',true))
+        +tbl(3,450000,1150000,5200000,5000000,uRows)
+        +tbl(4,5900000,1150000,5842000,5000000,zRows);
+      const dayRows=[['날짜',...(us.length?us:['완료 건수']),'구역별 내역']];
+      d.days.slice(0,14).forEach(k=>{
+        const det=d.dayDetail[k]?Object.keys(d.dayDetail[k]).map(z=>(NAMES[z]||z)+' '+Object.keys(d.dayDetail[k][z]).map(u=>r1(d.dayDetail[k][z][u])+u).join(',')).join(' / '):'-';
+        dayRows.push([md(k),...(us.length?us.map(u=>r1(d.units[u].byDay[k]||0)):[String(d.work.filter(x=>dayOf(x)===k&&x.completed).length)]),det]);
+      });
+      const s3=box(2,450000,300000,11292000,680000,'1E293B',para('날짜별 완료 추이 ('+title(d)+')',20,'FFFFFF',true))
+        +tbl(3,450000,1120000,11292000,5200000,dayRows);
+      const slides=[s1,s2,s3];
+      const entries=[
+        ['[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/><Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/><Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/><Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>'+slides.map((_,i)=>'<Override PartName="/ppt/slides/slide'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>').join('')+'</Types>'],
+        ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>'],
+        ['ppt/presentation.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst><p:sldIdLst>'+slides.map((_,i)=>'<p:sldId id="'+(256+i)+'" r:id="rId'+(i+2)+'"/>').join('')+'</p:sldIdLst><p:sldSz cx="12192000" cy="6858000"/><p:notesSz cx="6858000" cy="9144000"/></p:presentation>'],
+        ['ppt/_rels/presentation.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/><Relationship Id="rId10" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>'+slides.map((_,i)=>'<Relationship Id="rId'+(i+2)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide'+(i+1)+'.xml"/>').join('')+'</Relationships>'],
+        ['ppt/slideMasters/slideMaster1.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld><p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/><p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rId1"/></p:sldLayoutIdLst></p:sldMaster>'],
+        ['ppt/slideMasters/_rels/slideMaster1.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme1.xml"/></Relationships>'],
+        ['ppt/slideLayouts/slideLayout1.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="blank"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld></p:sldLayout>'],
+        ['ppt/slideLayouts/_rels/slideLayout1.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/></Relationships>'],
+        ['ppt/theme/theme1.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Jisu"><a:themeElements><a:clrScheme name="Jisu"><a:dk1><a:srgbClr val="0F172A"/></a:dk1><a:lt1><a:srgbClr val="FFFFFF"/></a:lt1><a:dk2><a:srgbClr val="1E293B"/></a:dk2><a:lt2><a:srgbClr val="E2E8F0"/></a:lt2><a:accent1><a:srgbClr val="3B82F6"/></a:accent1><a:accent2><a:srgbClr val="22C55E"/></a:accent2><a:accent3><a:srgbClr val="EC4899"/></a:accent3><a:accent4><a:srgbClr val="8B5CF6"/></a:accent4><a:accent5><a:srgbClr val="38BDF8"/></a:accent5><a:accent6><a:srgbClr val="F59E0B"/></a:accent6><a:hlink><a:srgbClr val="60A5FA"/></a:hlink><a:folHlink><a:srgbClr val="818CF8"/></a:folHlink></a:clrScheme><a:fontScheme name="Jisu"><a:majorFont><a:latin typeface="Malgun Gothic"/><a:ea typeface="Malgun Gothic"/><a:cs typeface="Malgun Gothic"/></a:majorFont><a:minorFont><a:latin typeface="Malgun Gothic"/><a:ea typeface="Malgun Gothic"/><a:cs typeface="Malgun Gothic"/></a:minorFont></a:fontScheme><a:fmtScheme name="Jisu"><a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst><a:lnStyleLst><a:ln w="9525"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln><a:ln w="19050"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln><a:ln w="25400"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements></a:theme>']
+      ];
+      slides.forEach((s,i)=>{
+        entries.push(['ppt/slides/slide'+(i+1)+'.xml',slideXml(s)]);
+        entries.push(['ppt/slides/_rels/slide'+(i+1)+'.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/></Relationships>']);
+      });
+      const blob=zipStore(entries);
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download='지수_'+(mode==='week'?'주간보고서_'+d.s.replace(/-/g,''):'월간보고서_'+d.s.slice(0,7).replace(/-/g,''))+'.pptx';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),4000);
+    }
+    const pptBtn=$('pfPptBtn'); if(pptBtn) pptBtn.addEventListener('click',e=>{ e.stopPropagation(); if(lastCur&&lastPrev) downloadPptReport(lastCur,lastPrev); });
     btn.addEventListener('click',e=>{ e.stopPropagation(); selDay=null; shift=0; modal.hidden=false; draw(); });
     $('pfClose').addEventListener('click',()=>{ modal.hidden=true; });
     modal.addEventListener('click',e=>{ e.stopPropagation(); if(e.target===modal){ modal.hidden=true; return; }
