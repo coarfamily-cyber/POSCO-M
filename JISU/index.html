@@ -4551,7 +4551,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       if(lb&&lb.classList.contains('is-open')) closeLb(true);
     });
     if($('obStackBtn')) $('obStackBtn').addEventListener('click',e=>{ e.stopPropagation(); openLb(0); });
-    if($('obLbClose')) $('obLbClose').addEventListener('click',()=>closeLb(false));
+    if($('obLbClose')) $('obLbClose').addEventListener('click',e=>{ e.stopPropagation(); closeLb(false); });
     if($('obLbPrev')) $('obLbPrev').addEventListener('click',e=>{ e.stopPropagation(); lbIdx--; renderLb(); });
     if($('obLbNext')) $('obLbNext').addEventListener('click',e=>{ e.stopPropagation(); lbIdx++; renderLb(); });
     if($('obLbStrip')) $('obLbStrip').addEventListener('click',e=>{ const b=e.target.closest('[data-lb-i]'); if(!b) return; lbIdx=+b.dataset.lbI; renderLb(); });
@@ -4569,7 +4569,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       msg('삭제했습니다.');
     });
     if($('obLightbox')){
-      $('obLightbox').addEventListener('click',e=>{ if(e.target===$('obLightbox')||e.target===$('obLbStage')) closeLb(); });
+      $('obLightbox').addEventListener('click',e=>{ e.stopPropagation(); if(e.target===$('obLightbox')||e.target===$('obLbStage')) closeLb(); });
       let tx=0;
       $('obLightbox').addEventListener('touchstart',e=>{ tx=e.touches[0].clientX; },{passive:true});
       $('obLightbox').addEventListener('touchend',e=>{
@@ -4904,7 +4904,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     document.addEventListener('click',e=>{
       const t=e.target; if(!(t instanceof Element)) return;
       if(document.body.classList.contains('worker-zone-only')) return;
-      if(t.closest('.hotspot-wrapper, .cmd-side, #detailModal, #loginModal, .hdr-tools, .bldg-badge, #hdrSearchBox, #hdrSearchPanel')) return;
+      if(t.closest('.hotspot-wrapper, .cmd-side, #detailModal, #loginModal, #obLightbox, #obCam, #jisuQuickDropModal, #calModal, #perfModal, #carryModal, .hdr-tools, .bldg-badge, #hdrSearchBox, #hdrSearchPanel')) return;
       const open=document.querySelectorAll('.hotspot-wrapper.is-open'); if(!open.length) return;
       open.forEach(w=>w.classList.remove('is-open'));
       document.querySelectorAll('[data-production-btn],[data-warehouse-btn]').forEach(b=>{b.classList.remove('is-selected');b.setAttribute('aria-pressed','false');});
