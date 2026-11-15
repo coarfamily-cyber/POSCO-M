@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151620">
+  <meta name="jisu-build" content="202611151635">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -5843,6 +5843,27 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     function goal(t){ const s=String(t), m=s.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||s.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/); if(!m) return null; let u=(m[2]||'').toUpperCase(); if(u==='톤') u='TON'; if(u==='개') u='EA'; return {n:Number(m[1].replace(',','.')),u:u||'건'}; }
     const doneAmt=(x,g)=>{ const d=(x.completed&&!x.short&&(x.done==null||x.done===''))?g.n:(Number(x.done)||0); return Math.max(0,Math.min(d,g.n)); };
     const r1=v=>String(Math.round(v*10)/10), DOW=['일','월','화','수','목','금','토'], md=k=>(+k.slice(5,7))+'/'+(+k.slice(8,10));
+    const CLOSE_KEY='jisu-perf-daily-close-v1';
+    const kstHour=()=>Number(new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',hour:'2-digit',hour12:false}).format(new Date()))%24;
+    function syncDailyClose18(){
+      const t=today();
+      let snap={}; try{ snap=JSON.parse(localStorage.getItem(CLOSE_KEY)||'{}'); }catch(_){ snap={}; }
+      if(kstHour()>=18){
+        const cur={at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour12:false}),closedAt18:true};
+        try{
+          const ir=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}')[t];
+          if(ir&&ir.rows&&ir.rows.length){ cur.inbTon=ir.rows.reduce((s,x)=>s+(parseFloat(x.kg)||0),0)/1000; cur.inbBag=ir.rows.length; }
+          const pr=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}')[t];
+          if(pr){ cur.pitchBag=(parseFloat(pr.grind1)||0)+(parseFloat(pr.grind2)||0); }
+        }catch(_){}
+        snap[t]=cur;
+        try{ localStorage.setItem(CLOSE_KEY,JSON.stringify(snap)); }catch(_){}
+      }
+      return !!snap[t];
+    }
+    window.jisuDailyClose18=()=>{ const ok=syncDailyClose18(); if(!modal.hidden) draw(); return ok; };
+    syncDailyClose18();
+    setInterval(()=>{ const had=!!(JSON.parse(localStorage.getItem(CLOSE_KEY)||'{}')[today()]); const nowClosed=syncDailyClose18(); if(nowClosed&&!had&&!modal.hidden) draw(); },30000);
     let mode='week', shift=0, idx=0, unit=null;
     function range(){ const t=today(); if(mode==='week'){ const dw=(D(t).getUTCDay()+6)%7; const s=add(add(t,-dw),shift*7); return [s,add(s,6)]; }
       let y=+t.slice(0,4), m=+t.slice(5,7)-1+shift; y+=Math.floor(m/12); m=((m%12)+12)%12; const s=y+'-'+String(m+1).padStart(2,'0')+'-01'; const e=kst(new Date(Date.UTC(y,m+1,0,3))); return [s,e]; }
@@ -5858,7 +5879,9 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     function unitChips(d){ const us=Object.keys(d.units); if(us.length<2) return ''; return '<div class="pf-units">'+us.map(u=>'<button type="button" data-pf-unit="'+esc(u)+'" class="'+(u===unit?'on':'')+'">'+esc(u)+'</button>').join('')+'</div>'; }
     const SL=[
       d=>{ const pct=d.work.length?Math.round(d.done/d.work.length*100):0; const us=Object.keys(d.units);
-        return '<h2>실적 요약</h2><p class="pf-sub">'+esc(title(d))+'</p><div class="pf-kpis"><div><b>'+d.work.length+'</b><span>작업</span></div><div class="ok"><b>'+d.done+'</b><span>완료 · '+pct+'%</span></div><div class="carry"><b>'+d.carry+'</b><span>이월</span></div><div class="memo"><b>'+d.memos.length+'</b><span>특이사항</span></div><div class="ok"><b>'+d.envDone+'</b><span>환경 청소 완료</span></div></div>'
+        const closedToday=syncDailyClose18();
+        const closeTag=closedToday?'⏰ 18:00 자동 마감 연동됨':'⏰ 매일 18:00 자동 마감 연동';
+        return '<h2>실적 요약</h2><p class="pf-sub">'+esc(title(d))+' · '+closeTag+'</p><div class="pf-kpis"><div><b>'+d.work.length+'</b><span>작업</span></div><div class="ok"><b>'+d.done+'</b><span>완료 · '+pct+'%</span></div><div class="carry"><b>'+d.carry+'</b><span>이월</span></div><div class="memo"><b>'+d.memos.length+'</b><span>특이사항</span></div><div class="ok"><b>'+d.envDone+'</b><span>환경 청소 완료</span></div></div>'
           +(us.length?'<div class="pf-units-sum">'+us.map(u=>{ const x=d.units[u], p=x.goal?Math.round(x.done/x.goal*100):0; return '<div class="pf-usum"><div class="pf-uh"><b>'+esc(u)+'</b> '+r1(x.done)+' / '+r1(x.goal)+' <i>('+p+'%)</i></div><div class="pf-bar"><span style="width:'+Math.min(100,p)+'%"></span></div></div>'; }).join('')+'</div>':(d.work.length?'':'<div class="pf-empty">이 기간에 작업 기록이 없어요.</div>')); },
       d=>{ const us=Object.keys(d.units); if(!us.length) return '<h2>날짜별 완료량</h2><p class="pf-sub">'+esc(title(d))+'</p><div class="pf-empty">수량이 적힌 작업이 없어요.</div>'; if(!unit||!d.units[unit]) unit=us.includes('TON')?'TON':us[0];
         const u=d.units[unit], mx=Math.max(1,...d.days.map(k=>u.byDay[k]||0)), many=d.days.length>10, t=today();
