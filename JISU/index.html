@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151445">
+  <meta name="jisu-build" content="202611151455">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -899,6 +899,10 @@
       .ob-lb-btn{height:36px;padding:0 12px;font-size:12.5px;font-weight:800;}
       .ob-lb-strip{position:fixed;bottom:calc(env(safe-area-inset-bottom, 0px) + 10px);left:50%;transform:translateX(-50%);z-index:20;}
       .ob-lb-thumb{width:44px;height:44px;}
+    }
+    @media (max-width: 768px) and (orientation: portrait){
+      .ob-lb-stage{display:flex !important;align-items:center !important;justify-content:center !important;overflow:hidden !important;}
+      .ob-lb-img.is-rotated{width:100dvh !important;height:100vw !important;max-width:none !important;max-height:none !important;transform:rotate(90deg) !important;transform-origin:center center !important;object-fit:contain !important;flex:0 0 auto !important;}
     }
     .ob-msg:empty,.ob-grid:empty{display:none !important;}
     .mobile-card-close{display:none;}
@@ -4468,7 +4472,11 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       if(lbIdx<0) lbIdx=items.length-1;
       if(lbIdx>=items.length) lbIdx=0;
       const cur=items[lbIdx];
-      $('obLbImg').src=cur.data;
+      const imgEl=$('obLbImg');
+      imgEl.classList.remove('is-rotated');
+      imgEl.onload=()=>{ if(imgEl.naturalWidth>imgEl.naturalHeight) imgEl.classList.add('is-rotated'); else imgEl.classList.remove('is-rotated'); };
+      imgEl.src=cur.data;
+      if(imgEl.complete && imgEl.naturalWidth>imgEl.naturalHeight) imgEl.classList.add('is-rotated');
       $('obLbCount').textContent=(lbIdx+1)+' / '+items.length;
       $('obLbTime').textContent=cur.at||'';
       const dl=$('obLbDl'); dl.href=cur.data; dl.download=cur.name||'outbound.jpg';
