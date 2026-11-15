@@ -1125,8 +1125,15 @@
       border-top: 0 !important;
       border-radius: 18px !important;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06) !important;
-      padding: 10px 12px !important;
+      padding: 8px 12px !important;
       margin-top: 8px !important;
+      min-height: 84px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+    }
+    body:not(#z1#z2#z3#z4#z5) .expand-card .cmd-item .cmd-row {
+      align-items: flex-end !important;
     }
     .expand-card .cmd-text {
       color: #0f172a !important;
@@ -2271,6 +2278,7 @@
     .cmd-notice-banner.has-img{grid-template-columns:auto 1fr auto;align-items:center;}
     .cmd-notice-banner .cmd-card-img-btn{width:124px;height:82px;margin-top:0;}
     @media (max-width:768px){
+      body:not(#z1#z2#z3#z4#z5) .expand-card .cmd-item{min-height:112px !important;padding:10px 12px !important;}
       .cmd-card-img-btn{width:102px;height:68px;transform:none !important;}
       .cmd-card-img-wrap{gap:8px;}
       .work-ton-badge{font-size:13.5px;}
