@@ -1139,8 +1139,11 @@
       color: #0f172a !important;
       font-weight: 800 !important;
       font-size: 14px !important;
-      line-height: 1.15 !important;
-      padding-bottom: 7px !important;
+      line-height: 1.2 !important;
+      min-height: 30px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      padding-bottom: 0 !important;
       text-shadow: none !important;
     }
     .expand-card .cmd-item .meta {
@@ -1237,8 +1240,10 @@
       font-weight: 800 !important;
       font-size: 12px !important;
       line-height: 1 !important;
-      padding-bottom: 7px !important;
-      align-items: baseline !important;
+      min-height: 30px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      padding-bottom: 0 !important;
     }
     .expand-card .work-done-num input {
       background: rgba(255, 255, 255, 0.55) !important;
@@ -1247,7 +1252,7 @@
       color: #0f172a !important;
       font-weight: 800 !important;
       width: 46px !important;
-      height: 28px !important;
+      height: 30px !important;
       font-size: 14px !important;
       padding: 2px 6px !important;
     }
@@ -1270,7 +1275,8 @@
       border-radius: 9999px !important;
       font-weight: 800 !important;
       font-size: 11.5px !important;
-      padding: 6px 14px !important;
+      height: 30px !important;
+      padding: 0 14px !important;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
       transition: all 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.25) !important;
     }
@@ -2274,7 +2280,7 @@
     .cmd-item.has-img .cmd-row{align-items:flex-end !important;flex-wrap:nowrap !important;gap:6px !important;max-width:100%;}
     .expand-card .cmd-item.has-img{padding:8px 12px !important;}
     .work-right-col{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;flex-wrap:nowrap;gap:4px;flex:0 0 auto;margin-left:auto;}
-    .work-ton-badge{padding:3px 2px;border-radius:8px;background:transparent;border:none;color:#0f172a;font-size:13px;font-weight:900;letter-spacing:-.03em;white-space:nowrap;box-shadow:none;flex:0 0 auto;}
+    .work-ton-badge{display:inline-flex;align-items:center;min-height:30px;padding:0 2px;border-radius:8px;background:transparent;border:none;color:#0f172a;font-size:13px;font-weight:900;letter-spacing:-.03em;white-space:nowrap;box-shadow:none;flex:0 0 auto;}
     .cmd-side .work-ton-badge{font-size:12.5px;padding:3px 8px;color:#e2e8f0;}
     .cmd-card-img-wrap{display:flex;flex-direction:row;align-items:flex-end;gap:8px;flex-wrap:nowrap;flex:1 1 auto;min-width:0;}
     .cmd-card-img-btn{display:block;width:66px;height:44px;flex:0 0 auto;padding:0;border-radius:8px;overflow:hidden;border:none !important;outline:none !important;background:transparent !important;box-shadow:none !important;cursor:pointer;position:relative;scale:1 !important;translate:none !important;transform:none !important;transition:none !important;}
@@ -2291,12 +2297,12 @@
     .cmd-notice-banner .cmd-card-img-btn{width:124px;height:82px;margin-top:0;}
     @media (max-width:768px){
       body:not(#z1#z2#z3#z4#z5) .expand-card .cmd-item{min-height:112px !important;padding:10px 12px !important;}
-      .expand-card .cmd-text{font-size:14.5px !important;padding-bottom:7px !important;}
+      .expand-card .cmd-text{font-size:14.5px !important;min-height:30px !important;padding-bottom:0 !important;}
       .expand-card .work-done-num,.expand-card .work-unit{font-size:13px !important;}
-      .expand-card .work-done-num input{width:46px !important;height:28px !important;font-size:14px !important;}
+      .expand-card .work-done-num input{width:46px !important;height:30px !important;font-size:14px !important;}
       .cmd-card-img-btn{width:102px;height:68px;transform:none !important;}
       .cmd-card-img-wrap{gap:8px;}
-      .work-ton-badge{font-size:14px;padding-bottom:7px;line-height:1;}
+      .work-ton-badge{font-size:14px;min-height:30px;padding-bottom:0;line-height:1;}
     }
     .cmd-attach-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:6px 0 4px;}
     .cmd-attach-btn{padding:4px 9px;border-radius:8px;border:1px solid rgba(56,189,248,.45);background:rgba(14,165,233,.18);color:#e0f2fe;font-size:11.5px;font-weight:800;cursor:pointer;}
