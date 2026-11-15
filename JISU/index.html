@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151500">
+  <meta name="jisu-build" content="202611151510">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -2248,8 +2248,8 @@
     /* 카드 첨부 이미지 & 등록 첨부 UI */
     .cmd-item.has-img .meta{justify-content:flex-end !important;margin-bottom:4px !important;}
     .cmd-item.has-img .cmd-row{align-items:flex-end !important;}
-    .work-right-col{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:0 0 auto;margin-left:auto;}
-    .work-ton-badge{padding:4px 10px;border-radius:8px;background:rgba(56,189,248,.18);border:1px solid rgba(56,189,248,.48);color:#e0f2fe;font-size:12px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;}
+    .work-right-col{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;flex:0 0 auto;margin-left:auto;}
+    .work-ton-badge{padding:5px 10px;border-radius:8px;background:rgba(56,189,248,.18);border:1px solid rgba(56,189,248,.48);color:#e0f2fe;font-size:12px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;}
     .cmd-side .work-ton-badge{font-size:11px;padding:3px 8px;}
     .cmd-card-img-wrap{display:flex;flex-direction:row;align-items:center;gap:8px;flex-wrap:wrap;flex:1 1 auto;min-width:0;}
     .cmd-card-img-btn{display:block;width:124px;height:82px;flex:0 0 auto;padding:0;border-radius:10px;overflow:hidden;border:1.5px solid rgba(255,255,255,.32);background:rgba(15,23,42,.45);cursor:pointer;position:relative;transition:transform .14s ease,border-color .14s ease;}
@@ -4486,22 +4486,40 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       $('obLbNext').style.display=items.length>1?'':'none';
       $('obLbStrip').innerHTML=items.map((p,i)=>'<button type="button" class="ob-lb-thumb'+(i===lbIdx?' is-active':'')+'" data-lb-i="'+i+'"><img src="'+p.data+'" alt=""></button>').join('');
     }
+    function pushLbHistory(){
+      try{ if(!(history.state&&history.state.jisuLb)) history.pushState({jisuLb:true},''); }catch(_){}
+    }
     function openLb(idx){
       lbItems=null; lbOnDel=null;
       if(!(root._items&&root._items.length)){ msg('저장된 출고 사진이 아직 없습니다. PHOTO로 촬영해 주세요.'); return; }
       msg(''); lbIdx=idx||0; renderLb();
       $('obLightbox').classList.add('is-open');
+      pushLbHistory();
     }
     window.jisuOpenGallery=function(items, idx, onDelete){
       lbItems=items||[]; lbOnDel=onDelete||null;
       if(!lbItems.length) return false;
       lbIdx=idx||0; renderLb();
       $('obLightbox').classList.add('is-open');
+      pushLbHistory();
       return true;
     };
-    function closeLb(){ const lb=$('obLightbox'); if(lb) lb.classList.remove('is-open'); lbItems=null; lbOnDel=null; }
+    function closeLb(fromPop){
+      const lb=$('obLightbox');
+      const wasOpen=lb&&lb.classList.contains('is-open');
+      if(lb){ lb.classList.remove('is-open'); lb.classList.remove('is-rotated'); }
+      const img=$('obLbImg'); if(img) img.classList.remove('is-rotated');
+      lbItems=null; lbOnDel=null;
+      if(!fromPop && wasOpen){
+        try{ if(history.state&&history.state.jisuLb) history.back(); }catch(_){}
+      }
+    }
+    window.addEventListener('popstate',()=>{
+      const lb=$('obLightbox');
+      if(lb&&lb.classList.contains('is-open')) closeLb(true);
+    });
     if($('obStackBtn')) $('obStackBtn').addEventListener('click',e=>{ e.stopPropagation(); openLb(0); });
-    if($('obLbClose')) $('obLbClose').addEventListener('click',closeLb);
+    if($('obLbClose')) $('obLbClose').addEventListener('click',()=>closeLb(false));
     if($('obLbPrev')) $('obLbPrev').addEventListener('click',e=>{ e.stopPropagation(); lbIdx--; renderLb(); });
     if($('obLbNext')) $('obLbNext').addEventListener('click',e=>{ e.stopPropagation(); lbIdx++; renderLb(); });
     if($('obLbStrip')) $('obLbStrip').addEventListener('click',e=>{ const b=e.target.closest('[data-lb-i]'); if(!b) return; lbIdx=+b.dataset.lbI; renderLb(); });
@@ -7062,6 +7080,138 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     });
     document.body.appendChild(pill);
   }
+})();
+</script>
+<script>
+/* PC 카톡 지시서 3초 빠른 등록 (아무 데서나 Ctrl+V 또는 드래그 앤 드롭) */
+(function(){
+  if(document.documentElement.classList.contains('worker-zone-only')) return;
+  let qImg=null;
+  const ZONES=[
+    ['outbound','출고'],['inbound','입고'],['pitch','피치'],
+    ['packaging','포장 C동'],['packaging-d','포장 D동'],
+    ['production-a','생산 A'],['production-b','생산 B'],['production-c','생산 C'],
+    ['production-d','생산 D'],['production-e','생산 E'],['production-f','생산 F'],
+    ['production-g','생산 G'],['production-h','생산 H'],['environment','환경']
+  ];
+  function ensureModal(){
+    let m=document.getElementById('jisuQuickDropModal');
+    if(m) return m;
+    m=document.createElement('div');
+    m.id='jisuQuickDropModal';
+    m.style.cssText='display:none;position:fixed;inset:0;z-index:2147483000;background:rgba(2,6,23,0.78);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px;';
+    m.innerHTML=''
+      +'<div style="width:100%;max-width:440px;background:linear-gradient(160deg,#1e293b,#0f172a);border:1px solid rgba(148,163,184,0.32);border-radius:18px;padding:16px;color:#f8fafc;box-shadow:0 24px 60px rgba(0,0,0,0.55);font-family:inherit;">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
+      +'<div style="font-size:15px;font-weight:900;">📋 카톡 지시서 빠른 등록</div>'
+      +'<button type="button" id="qdClose" style="background:rgba(255,255,255,0.1);border:none;color:#e2e8f0;width:28px;height:28px;border-radius:8px;cursor:pointer;font-weight:800;">✕</button>'
+      +'</div>'
+      +'<img id="qdPreview" alt="지시서 미리보기" style="width:100%;max-height:190px;object-fit:contain;border-radius:10px;background:#020617;border:1px solid rgba(255,255,255,0.1);margin-bottom:10px;" />'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">'
+      +'<select id="qdZone" style="height:36px;border-radius:9px;background:#0f172a;border:1px solid rgba(148,163,184,0.35);color:#f8fafc;padding:0 10px;font-size:13px;font-weight:700;">'
+      +ZONES.map(z=>'<option value="'+z[0]+'"'+(z[0]==='outbound'?' selected':'')+'>'+z[1]+'</option>').join('')
+      +'</select>'
+      +'<input type="date" id="qdDate" style="height:36px;border-radius:9px;background:#0f172a;border:1px solid rgba(148,163,184,0.35);color:#f8fafc;padding:0 10px;font-size:13px;font-weight:700;" />'
+      +'</div>'
+      +'<input type="text" id="qdTon" placeholder="2공장 총 톤수 (예: 2공장 7대 · 73.92 TON)" style="width:100%;box-sizing:border-box;height:36px;border-radius:9px;background:#0f172a;border:1px solid rgba(56,189,248,0.45);color:#e0f2fe;padding:0 10px;font-size:12.5px;font-weight:700;margin-bottom:6px;" />'
+      +'<div id="qdStatus" style="font-size:11.5px;color:#94a3b8;min-height:16px;margin-bottom:10px;">Enter 또는 바로 등록을 누르면 즉시 반영됩니다.</div>'
+      +'<div style="display:flex;gap:8px;justify-content:flex-end;">'
+      +'<button type="button" id="qdCancel" style="height:38px;padding:0 14px;border-radius:10px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);color:#cbd5e1;font-size:13px;font-weight:700;cursor:pointer;">취소</button>'
+      +'<button type="button" id="qdSubmit" style="height:38px;padding:0 18px;border-radius:10px;background:#3b82f6;border:none;color:#fff;font-size:13px;font-weight:800;cursor:pointer;">바로 등록</button>'
+      +'</div></div>';
+    document.body.appendChild(m);
+    const close=()=>{ m.style.display='none'; qImg=null; };
+    m.querySelector('#qdClose').addEventListener('click',close);
+    m.querySelector('#qdCancel').addEventListener('click',close);
+    m.addEventListener('click',e=>{ if(e.target===m) close(); });
+    m.querySelector('#qdSubmit').addEventListener('click',()=>{
+      if(!qImg) return;
+      const zone=m.querySelector('#qdZone').value||'outbound';
+      const dateVal=m.querySelector('#qdDate').value;
+      const tonVal=(m.querySelector('#qdTon').value||'').trim();
+      const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+      const nowStr=()=>{ const d=new Date(); return String(d.getMonth()+1).padStart(2,'0')+'. '+String(d.getDate()).padStart(2,'0')+'. '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
+      let u=''; try{u=localStorage.getItem('jisu-user')||'';}catch(_){}
+      if(!dateVal || dateVal<=today){
+        let all=[]; try{all=JSON.parse(localStorage.getItem('jisu-commands-v1')||'[]');}catch(_){}
+        const rec={id:Date.now().toString(36),target:zone,kind:'instruction',text:'첨부 이미지',img:qImg,at:nowStr(),day:today};
+        if(tonVal) rec.tonText=tonVal;
+        if(u) rec.by=u;
+        all.push(rec);
+        try{localStorage.setItem('jisu-commands-v1',JSON.stringify(all));}catch(_){}
+        if(window.jisuCmdRender) window.jisuCmdRender();
+      }else{
+        let sch=[]; try{sch=JSON.parse(localStorage.getItem('jisu-schedules-v1')||'[]');}catch(_){}
+        const rec={id:Date.now().toString(36),date:dateVal,target:zone,kind:'instruction',text:'첨부 이미지',img:qImg,created:nowStr()};
+        if(tonVal) rec.tonText=tonVal;
+        if(u) rec.by=u;
+        sch.push(rec);
+        try{localStorage.setItem('jisu-schedules-v1',JSON.stringify(sch));}catch(_){}
+        if(window.jisuApplySchedules) window.jisuApplySchedules();
+      }
+      close();
+    });
+    m.addEventListener('keydown',e=>{ if(e.key==='Enter'&&m.style.display==='flex'){ e.preventDefault(); m.querySelector('#qdSubmit').click(); } else if(e.key==='Escape'&&m.style.display==='flex'){ close(); } });
+    return m;
+  }
+  function openWithFile(file){
+    if(!file||!file.type||!file.type.startsWith('image/')) return;
+    const r=new FileReader();
+    r.onload=()=>{
+      const im=new Image();
+      im.onload=()=>{
+        const max=2048; let w=im.width,h=im.height;
+        if(w>max||h>max){ if(w>=h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;} }
+        const c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(im,0,0,w,h);
+        qImg=c.toDataURL('image/jpeg',0.90);
+        const m=ensureModal();
+        m.querySelector('#qdPreview').src=qImg;
+        m.querySelector('#qdDate').value=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+        m.querySelector('#qdTon').value='';
+        const st=m.querySelector('#qdStatus');
+        st.textContent='Enter 또는 바로 등록을 누르면 즉시 반영됩니다.';
+        st.style.color='#94a3b8';
+        m.style.display='flex';
+        let gk=''; try{gk=(localStorage.getItem('jisu-gemini-key')||'').trim();}catch(_){}
+        if(gk && window.jisuGeminiReadImage){
+          st.textContent='✨ Gemini로 2공장 총 톤수 계산 중...';
+          st.style.color='#38bdf8';
+          window.jisuGeminiReadImage(gk,qImg).then(txt=>{
+            const tt=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(txt):'';
+            if(tt){
+              m.querySelector('#qdTon').value=tt;
+              st.textContent='✅ 2공장 톤수 자동 계산 완료! 바로 등록을 누르세요.';
+              st.style.color='#4ade80';
+            }else{
+              st.textContent='2공장 중량이 감지되지 않았습니다. 필요 시 직접 입력 후 등록하세요.';
+              st.style.color='#cbd5e1';
+            }
+          }).catch(()=>{
+            st.textContent='자동 계산을 건너뛰었습니다. 바로 등록하거나 톤수를 직접 입력하세요.';
+            st.style.color='#94a3b8';
+          });
+        }
+      };
+      im.src=r.result;
+    };
+    r.readAsDataURL(file);
+  }
+  document.addEventListener('paste',e=>{
+    const a=document.activeElement;
+    if(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.isContentEditable)) return;
+    const items=(e.clipboardData&&e.clipboardData.items)||[];
+    for(const it of items){
+      if(it.type&&it.type.startsWith('image/')){ e.preventDefault(); openWithFile(it.getAsFile()); break; }
+    }
+  });
+  document.addEventListener('dragover',e=>{
+    if(e.dataTransfer&&Array.from(e.dataTransfer.types||[]).includes('Files')) e.preventDefault();
+  });
+  document.addEventListener('drop',e=>{
+    const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+    if(f&&f.type&&f.type.startsWith('image/')){ e.preventDefault(); openWithFile(f); }
+  });
 })();
 </script>
 </body>
