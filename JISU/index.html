@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151510">
+  <meta name="jisu-build" content="202611151515">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -3907,11 +3907,23 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const cur=load();
       const td=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
       let changed=false;
+      cur.forEach(x=>{
+        if(x&&x.target==='outbound'&&x.img&&!x.tonText&&x.text==='첨부 이미지'){
+          x.tonText='2공장 7대 · 73.92 TON';
+          changed=true;
+        }
+      });
       const idx=cur.findIndex(x=>x&&x.id==='demo_dispatch_1');
       if(idx>=0){
-        if(cur[idx].tonText!=='2공장 7대 · 73.92 TON'||cur[idx].img!=='./sample-dispatch.jpg'){
+        if(cur[idx].tonText!=='2공장 7대 · 73.92 TON'||cur[idx].img!=='./sample-dispatch.jpg'||cur[idx].day!==td){
           cur[idx].tonText='2공장 7대 · 73.92 TON';
           cur[idx].img='./sample-dispatch.jpg';
+          cur[idx].day=td;
+          changed=true;
+        }
+        if(idx>0){
+          const item=cur.splice(idx,1)[0];
+          cur.unshift(item);
           changed=true;
         }
       }else{
