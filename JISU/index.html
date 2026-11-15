@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151150">
+  <meta name="jisu-build" content="202611151155">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -1009,14 +1009,22 @@
         justify-content:center;
       }
     }
-    /* 작업자 모바일 전용 링크(?zone=outbound 등) : 바깥 배경 없이 자세히보기 카드만 화면 100% 꽉 차게 표시 */
-    body.worker-zone-only{
+    /* 작업자 모바일 전용 링크(?zone=outbound 등) : 바깥 배경 없이 자세히보기 카드만 화면 100% 꽉 차게 + 자연 스크롤 */
+    html:has(body.worker-zone-only){
+      height:auto !important;min-height:100dvh !important;
+      overflow-x:hidden !important;overflow-y:auto !important;
+      -webkit-overflow-scrolling:touch !important;
+    }
+    body.worker-zone-only:not(#z1#z2#z3#z4#z5){
       background:linear-gradient(160deg,#4b5563 0%,#334155 52%,#1e293b 100%) !important;
-      overflow-y:auto !important;
+      height:auto !important;min-height:100dvh !important;
+      overflow-x:hidden !important;overflow-y:auto !important;
+      -webkit-overflow-scrolling:touch !important;
       margin:0 !important;padding:0 !important;
     }
-    body.worker-zone-only main{
-      margin:0 !important;padding:0 !important;width:100% !important;max-width:none !important;min-height:100dvh !important;
+    body.worker-zone-only:not(#z1#z2#z3#z4#z5) main{
+      margin:0 !important;padding:0 !important;width:100% !important;max-width:none !important;
+      height:auto !important;min-height:100dvh !important;overflow:visible !important;
     }
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) header,
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .cmd-side,
@@ -1039,7 +1047,8 @@
     }
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone{
       position:static !important;left:auto !important;top:auto !important;transform:none !important;
-      width:100% !important;max-width:none !important;min-height:100dvh !important;margin:0 !important;z-index:auto !important;
+      width:100% !important;max-width:none !important;height:auto !important;min-height:100dvh !important;
+      margin:0 !important;z-index:auto !important;overflow:visible !important;
     }
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone::before,
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .hotspot-pill,
@@ -1047,12 +1056,13 @@
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .expand-card .mobile-card-close{
       display:none !important;
     }
-    body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .expand-card{
+    body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone > .expand-card{
       position:static !important;left:auto !important;right:auto !important;top:auto !important;bottom:auto !important;
       transform:none !important;opacity:1 !important;pointer-events:auto !important;
-      width:100% !important;max-width:none !important;min-height:100dvh !important;max-height:none !important;
+      width:100% !important;max-width:none !important;height:auto !important;min-height:100dvh !important;max-height:none !important;
+      overflow:visible !important;
       margin:0 !important;display:block !important;border-radius:0 !important;border:none !important;box-shadow:none !important;
-      padding:16px 14px 40px !important;
+      padding:16px 14px 48px !important;
       background:linear-gradient(160deg,rgba(148,163,184,0.45) 0%,rgba(71,85,105,0.55) 50%,rgba(30,41,59,0.75) 100%) !important;
     }
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-photo-sq-btn{
