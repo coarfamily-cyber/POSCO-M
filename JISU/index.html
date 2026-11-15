@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611152030">
+  <meta name="jisu-build" content="202611152200">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -2266,8 +2266,9 @@
   </style>
   <style>
     /* 이동작업 모션: 점선이 출발→도착 방향으로 흐르고, 빛나는 점이 경로를 따라 이동 */
-    body:not(#zz) .move-path{animation:moveFlow 1.1s linear infinite !important;}
-    body:not(#zz) .move-path.is-working{animation:moveFlow .55s linear infinite !important;}
+    @keyframes moveFlow{to{stroke-dashoffset:-24;}}
+    body:not(#zz) .move-path{stroke-dasharray:8 4;animation:moveFlow 1.1s linear infinite !important;}
+    body:not(#zz) .move-path.is-working{stroke-dasharray:8 4;animation:moveFlow .55s linear infinite !important;}
     .move-runner{fill:#fff7d6;stroke:#fbbf24;stroke-width:2.5;filter:drop-shadow(0 0 5px rgba(251,191,36,.95)) drop-shadow(0 0 2px rgba(0,0,0,.6));}
     .move-runner.is-working{fill:#eafff1;stroke:#4ade80;filter:drop-shadow(0 0 6px rgba(74,222,128,.95)) drop-shadow(0 0 2px rgba(0,0,0,.6));}
     @media (prefers-reduced-motion: reduce){ body:not(#zz) .move-path{animation:none !important;} }
@@ -3232,7 +3233,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       </div>
       <button type="button" class="cmd-submit" id="cmdSubmit">금일작업 내용 등록</button>
       <div class="cmd-summary" id="cmdSummary"></div>
-      <label>등록 내역 <span id="cmdTargetLabel">· 창고</span></label>
+      <label>등록 내역 <span id="cmdTargetLabel">· HOME</span></label>
       <div class="cmd-list" id="cmdList"></div>
       <!-- 사이드바 맨 아래: 키오스크 -->
       <div class="side-tools-row side-tools-bottom" id="sideToolsBottom">
@@ -3448,7 +3449,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
             </div>
             <section class="ob-photo" id="obPhoto">
               <div class="ob-actions">
-                <input type="file" id="obFile" accept="image/*" capture="environment" multiple hidden>
+                <input type="file" id="obFile" accept="image/*" multiple hidden>
                 <button type="button" class="ob-btn ob-jisu" id="obJisuBtn">🔒 지수가 확인 (나중에삭제하기)</button>
               </div>
               <div class="ob-msg" id="obMsg"></div>
@@ -4363,7 +4364,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     const PLACE_LABEL={A:'A동',B:'B동',C:'C동',D:'D동',outbound:'출고',inbound:'입고',packaging:'포장','packaging-d':'포장(D동)',pitch:'피치',environment:'환경','production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H'};
     function detectMove(t){
       t=String(t||'').replace(/＞/g,'>'); if(!/이동|→|->|⇒|>|에서|운반|옮/.test(t)) return null;
-      const pats=[[/생산\s*([A-H])/gi,m=>'production-'+m[1].toLowerCase()],[/출고/g,()=>'outbound'],[/입고/g,()=>'inbound'],[/포장/g,()=>'packaging'],[/피치/g,()=>'pitch'],
+      const pats=[[/생산\s*([A-H])/gi,m=>'production-'+m[1].toLowerCase()],[/포장\s*\(?D동\)?|D동\s*포장/gi,()=>'packaging-d'],[/환경/g,()=>'environment'],[/출고/g,()=>'outbound'],[/입고/g,()=>'inbound'],[/포장/g,()=>'packaging'],[/피치/g,()=>'pitch'],
         [/([ABCD])\s*동/gi,m=>m[1].toUpperCase()],[/(?<![A-Za-z가-힣])([ABCD])(?=\s*(?:에서|으로|로|까지|→|->|⇒|>|~))/gi,m=>m[1].toUpperCase()],[/(?:→|->|⇒|>|~)\s*([ABCD])(?![A-Za-z])/gi,m=>m[1].toUpperCase()],[/(?:^|\s)([ABCD])(?=\s*-)/gi,m=>m[1].toUpperCase()],[/-\s*([ABCD])(?![A-Za-z0-9])/gi,m=>m[1].toUpperCase()]];
       const hits=[]; pats.forEach(([re,f])=>{let m; re.lastIndex=0; while((m=re.exec(t))){hits.push({i:m.index,e:m.index+m[0].length,k:f(m)});}});
       hits.sort((a,b)=>a.i-b.i||b.e-a.e); const seq=[]; let end=-1; hits.forEach(x=>{if(x.i<end)return; end=x.e; if(!seq.length||seq[seq.length-1]!==x.k) seq.push(x.k);});
@@ -4656,7 +4657,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     const $=id=>document.getElementById(id);
     const DB='jisu-photos', STORE='outbound';
     function openDb(){return new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>r.result.createObjectStore(STORE,{keyPath:'id'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
-    async function tx(mode,fn){const db=await openDb();return new Promise((res,rej)=>{const t=db.transaction(STORE,mode);const s=t.objectStore(STORE);const out=fn(s);t.oncomplete=()=>res(out&&out.result!==undefined?out.result:undefined);t.onerror=()=>rej(t.error);});}
+    async function tx(mode,fn){const db=await openDb();try{return await new Promise((res,rej)=>{const t=db.transaction(STORE,mode);const s=t.objectStore(STORE);const out=fn(s);t.oncomplete=()=>res(out&&out.result!==undefined?out.result:undefined);t.onerror=()=>rej(t.error);});}finally{db.close();}}
     const all=()=>tx('readonly',s=>s.getAll());
     const put=rec=>tx('readwrite',s=>s.put(rec));
     const del=id=>tx('readwrite',s=>s.delete(id));
@@ -4669,7 +4670,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       let items=[];try{items=(await all())||[];}catch(e){msg('이 브라우저에서는 사진 저장소를 열 수 없습니다.');}
       items.sort((a,b)=>a.id<b.id?1:-1);
       if($('obCount'))$('obCount').textContent=items.length+'장';
-      $('obGrid').innerHTML=items.map(p=>'<div class="ob-item" data-ob-id="'+p.id+'" title="'+p.name+'"><img src="'+p.data+'" alt="출고 사진"><time>'+p.at+'</time><span class="ob-del" data-ob-del="'+p.id+'" title="삭제">✕</span></div>').join('');
+      const esc=window.JisuCore?window.JisuCore.esc:(s=>String(s??''));const safeSrc=window.JisuCore?window.JisuCore.safeImgSrc:(u=>String(u||''));
+      $('obGrid').innerHTML=items.map(p=>{const src=safeSrc(p.data);if(!src)return '';return '<div class="ob-item" data-ob-id="'+esc(p.id)+'" title="'+esc(p.name)+'"><img src="'+src+'" alt="출고 사진"><time>'+esc(p.at)+'</time><span class="ob-del" data-ob-del="'+esc(p.id)+'" title="삭제">✕</span></div>';}).join('');
       const st=$('obStackBtn');
       if(st){
         const c1=st.querySelector('.c1'), c2=st.querySelector('.c2'), c3=st.querySelector('.c3');
@@ -4899,7 +4901,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       if(sr.height<360){ /* phone: map too small, let the card open below normally (page scroll), only keep it inside horizontally */
         card.style.top='100%'; card.style.bottom='auto'; card.style.maxHeight='none'; card.classList.remove('opens-up');
         const w0=card.offsetWidth, cx0=br.left+br.width/2; let l0=cx0-w0/2, d0=0; const vw=document.documentElement.clientWidth; if(l0<M) d0=M-l0; else if(l0+w0>vw-M) d0=(vw-M)-(l0+w0); card.style.transform='translate(calc(-50% + '+Math.round(d0)+'px), 0)'; return; }
-      const scrollBody=wrap.id==='hotspot-pitch'?card.querySelector('.pitch-scroll-body'):(wrap.id==='hotspot-inbound'?card.querySelector('.inbound-scroll-body'):null),cardCss=getComputedStyle(card),natural=(scrollBody?scrollBody.scrollHeight+80+parseFloat(cardCss.paddingTop)+parseFloat(cardCss.paddingBottom):card.scrollHeight)*z, cap=Math.max(260,sr.height*(wrap.id==='hotspot-environment'?0.98:0.46)); /* 환경 카드는 호기 버튼·특이사항이 다 보이게 높이 제한 완화 */
+      const scrollBody=wrap.id==='hotspot-pitch'?card.querySelector('.pitch-scroll-body'):(wrap.id==='hotspot-inbound'?card.querySelector('.inbound-scroll-body'):null),cardCss=getComputedStyle(card),natural=(scrollBody?scrollBody.scrollHeight+80+parseFloat(cardCss.paddingTop)+parseFloat(cardCss.paddingBottom):card.scrollHeight)*z, capRatio=wrap.id==='hotspot-environment'?0.98:((wrap.id==='hotspot-inbound'||wrap.id==='hotspot-pitch')?0.92:0.46), cap=Math.max(260,sr.height*capRatio); /* 환경 카드는 호기 버튼·특이사항이 다 보이게 높이 제한 완화 */
       const below=sr.bottom-br.bottom-M-8, above=br.top-sr.top-M-8;
       let up=false, maxH;
       if(natural<=below){ maxH=below; } else if(natural<=above){ up=true; maxH=above; } else { up=above>below; maxH=Math.max(above,below); }
@@ -5051,7 +5053,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(options.pitchCompletion)throw e;
         // fallback: CSV that Excel opens directly
         const rows=doneToday.map(row); const head=HEAD;
-        const csv='\ufeff'+[head.join(',')].concat(rows.map(r=>head.map(k=>'"'+String(r[k]).replace(/"/g,'""')+'"').join(','))).join('\r\n');
+        const cell=window.JisuCore?window.JisuCore.csvCell:(v=>'"'+String(v??'').replace(/"/g,'""')+'"');
+        const csv='\ufeff'+[head.map(cell).join(',')].concat(rows.map(r=>head.map(k=>cell(r[k])).join(','))).join('\r\n');
         const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download=fname+'.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
       }finally{ btn.disabled=false; btn.innerHTML=label; }
     }
@@ -5137,7 +5140,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const md=s=>{ const m=String(s||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); return m?(+m[1])+'/'+(+m[2])+' ':''; };
     function inbOf(day){ try{ const r=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}')[day]; if(!r) return null; const rows=r.rows||[]; if(!rows.length&&(!r.workState||r.workState==='idle')) return null; const kg=rows.reduce((s,x)=>s+(parseFloat(x.kg)||0),0); return {day,bags:rows.length,kg,ton:Math.round(kg/10)/100,state:r.workState||'idle'}; }catch(_){return null;} }
     function pitchOf(day){ try{ const r=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}')[day]; if(!r) return null; const g=(parseFloat(r.grind1)||0)+(parseFloat(r.grind2)||0); const hasAdd=[...(r.add1s||[]),...(r.add2s||[]),...(r.moves||[])].some(v=>String(v||'').trim()); if(!g&&!hasAdd&&(!r.workState||r.workState==='idle')) return null; return {day,grind:g,state:r.workState||'idle'}; }catch(_){return null;} }
-    function histOf(day){ return { cmds:load(CKEY).filter(x=>dayOf(x)===day), memos:[], inb:inbOf(day), pitch:pitchOf(day) }; } /* 특이사항은 달력에 표시하지 않음 (사이드바 HOME에서 보기) */
+    function histOf(day){ return { cmds:load(CKEY).filter(x=>dayOf(x)===day), memos:load(MKEY).filter(m=>dayOf(m)===day), inb:inbOf(day), pitch:pitchOf(day) }; } /* 특이사항은 달력에 표시하지 않음 (사이드바 HOME에서 보기) */
     function carryCnt(){ const c={}; load(CKEY).forEach(x=>{ if(x.carryCount&&x.carryFrom&&x.kind!=='notice'){ const d=dayOf(x); if(d) c[d]=(c[d]||0)+1; } }); return c; }
     function histCount(){ const c={}; load(CKEY).forEach(x=>{ const d=dayOf(x); if(d) c[d]=(c[d]||0)+1; }); try{ const ir=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}'); Object.keys(ir).forEach(d=>{ if(inbOf(d)) c[d]=(c[d]||0)+1; }); }catch(_){} try{ const pr=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}'); Object.keys(pr).forEach(d=>{ if(pitchOf(d)) c[d]=(c[d]||0)+1; }); }catch(_){} return c; }
     /* 달력 기록에서도 이월 작업 판단: 계속 · 날짜 변경 · 수량 수정 · 종료 (부족 완료는 잔량 이월 · 이대로 종료) */
@@ -5189,7 +5192,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           if(schMap[x.id]){
             const sDate=schMap[x.id];
             if(x.day!==sDate){ x.day=sDate; x.origDay=sDate; ch=true; }
-            if(sDate<today && !x.closed){ x.closed=true; ch=true; }
+            if(sDate<today && !x.closed && (x.completed || x.kind==='notice')){ x.closed=true; ch=true; }
           }
           if(x.review==='pending' && !x.short){ x.review='ok'; ch=true; }
           if(!x.origDay && x.day && x.day<today){ x.origDay=x.day; ch=true; }
@@ -5537,8 +5540,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       if(m) return { y:new Date().getFullYear(), m:parseInt(m[1],10), d:parseInt(m[2],10), trailing:(m[3]||'').trim() };
       m=line.match(/^(\d{1,2})\s*\.\s*(\d{1,2})(?:일|\.|\s*\([월화수목금토일]\)|\s*[:：])\s*(.*)$/i);
       if(m) return { y:new Date().getFullYear(), m:parseInt(m[1],10), d:parseInt(m[2],10), trailing:(m[3]||'').trim() };
-      m=line.match(/^(\d{1,2})\s*\.\s*(\d{1,2})$/i);
-      if(m) return { y:new Date().getFullYear(), m:parseInt(m[1],10), d:parseInt(m[2],10), trailing:'' };
+      m=line.match(/^(\d{1,2})\.(\d{2})$/);
+      if(m && parseInt(m[1],10)>=1 && parseInt(m[1],10)<=12 && parseInt(m[2],10)>=1 && parseInt(m[2],10)<=31) return { y:new Date().getFullYear(), m:parseInt(m[1],10), d:parseInt(m[2],10), trailing:'' };
       return null;
     }
 
@@ -5577,7 +5580,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       for(let raw of lines){
         const line=raw.trim();
         if(!line) continue;
-        if(ignoreRes.some(r=>r.test(line))) continue;
+        if(!/\d+\s*(?:TON|톤|EA|개|BAG|kg|set|박스|파레트|팔레트)/i.test(line) && ignoreRes.some(r=>r.test(line))) continue;
         const dh=isDateHeader(line);
         if(dh && dh.m>=1 && dh.m<=12 && dh.d>=1 && dh.d<=31){
           curDate=dh.y+'-'+String(dh.m).padStart(2,'0')+'-'+String(dh.d).padStart(2,'0');
@@ -5746,11 +5749,13 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     function render(){
       const all=load();
       wraps.forEach(w=>{ const k=keyOf(w), items=all.filter(m=>m.target===k&&!m.ack).reverse(); const b=box(w); /* 확인한 특이사항은 카드에서 숨김 (기록·액셀에는 남음) */
-        const keep=(b.querySelector('.memo-input')||{}).value||'';
-        b.innerHTML='<div class="memo-h">특이사항'+(items.length?' <span>'+items.length+'</span>':'')+'</div>'
-          +(items.length?'<div class="memo-list">'+items.slice(0,6).map(m=>'<div class="memo-item"><div class="memo-text">'+esc(m.text)+'</div><div class="memo-meta">'+(m.by?esc(m.by)+' · ':'')+esc(m.at)+'<button type="button" class="memo-ack" data-memo-ack="'+m.id+'" title="확인하면 이 칸에서 사라져요 (액셀에는 남음)">확인</button></div></div>').join('')+(items.length>6?'<div class="memo-more">외 '+(items.length-6)+'건</div>':'')+'</div>':'')
-          +'<div class="memo-row enscape-prompt-box"><div class="memo-enscape-top"><input class="memo-input" type="text" maxlength="300" placeholder="Start writing... (특이사항 적기)"></div><div class="memo-enscape-bottom"><button type="button" class="memo-send">Generate</button></div></div>';
-        b.querySelector('.memo-input').value=keep;
+        let hdr=b.querySelector(':scope > .memo-h'), lst=b.querySelector(':scope > .memo-list-wrap'), row=b.querySelector(':scope > .memo-row');
+        if(!row){
+          b.innerHTML='<div class="memo-h">특이사항</div><div class="memo-list-wrap"></div><div class="memo-row enscape-prompt-box"><div class="memo-enscape-top"><input class="memo-input" type="text" maxlength="300" placeholder="Start writing... (특이사항 적기)"></div><div class="memo-enscape-bottom"><button type="button" class="memo-send">Generate</button></div></div>';
+          hdr=b.querySelector(':scope > .memo-h'); lst=b.querySelector(':scope > .memo-list-wrap');
+        }
+        hdr.innerHTML='특이사항'+(items.length?' <span>'+items.length+'</span>':'');
+        lst.innerHTML=items.length?'<div class="memo-list">'+items.slice(0,6).map(m=>'<div class="memo-item"><div class="memo-text">'+esc(m.text)+'</div><div class="memo-meta">'+(m.by?esc(m.by)+' · ':'')+esc(m.at)+'<button type="button" class="memo-ack" data-memo-ack="'+esc(m.id)+'" title="확인하면 이 칸에서 사라져요 (액셀에는 남음)">확인</button></div></div>').join('')+(items.length>6?'<div class="memo-more">외 '+(items.length-6)+'건</div>':'')+'</div>':'';
         const btn=w.querySelector(':scope > button'); if(btn){ let bd=btn.querySelector('.memo-count'); if(items.length){ if(!bd){bd=document.createElement('span');bd.className='memo-count';btn.appendChild(bd);} bd.textContent='+'+items.length; bd.title='특이사항 '+items.length+'건'; } else if(bd) bd.remove(); }
       });
     }
@@ -6092,7 +6097,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     function range(){ const t=today(); if(mode==='week'){ const dw=(D(t).getUTCDay()+6)%7; const s=add(add(t,-dw),shift*7); return [s,add(s,6)]; }
       let y=+t.slice(0,4), m=+t.slice(5,7)-1+shift; y+=Math.floor(m/12); m=((m%12)+12)%12; const s=y+'-'+String(m+1).padStart(2,'0')+'-01'; const e=kst(new Date(Date.UTC(y,m+1,0,3))); return [s,e]; }
     function data(){ const [s,e]=range(), days=[]; for(let k=s;k<=e;k=add(k,1)) days.push(k);
-      const work=load(CK).filter(x=>x.kind!=='notice'&&dayOf(x)>=s&&dayOf(x)<=e), memos=load(MK).filter(x=>dayOf(x)>=s&&dayOf(x)<=e);
+      const work=load(CK).filter(x=>x.kind!=='notice'&&x.review!=='moved'&&!x.ended&&dayOf(x)>=s&&dayOf(x)<=e), memos=load(MK).filter(x=>dayOf(x)>=s&&dayOf(x)<=e);
       const units={}; work.forEach(x=>{ const g=goal(x.text); if(!g) return; const u=units[g.u]||(units[g.u]={goal:0,done:0,byDay:{}}); if(!(x.carried&&!x.short)) u.goal+=g.n; const a=doneAmt(x,g); u.done+=a; const d=dayOf(x); u.byDay[d]=(u.byDay[d]||0)+a; });
       const zones={}; const Z=t=>zones[t]||(zones[t]={n:0,done:0,carry:0,memo:0}); work.forEach(x=>{ const z=Z(x.target); z.n++; if(x.completed) z.done++; if(x.carryCount&&x.carryFrom) z.carry++; }); memos.forEach(m=>{ Z(m.target).memo++; });
       try{ const ir=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}'); Object.keys(ir).forEach(d=>{ if(d<s||d>e) return; const r=ir[d]; if(!r) return; const rows=r.rows||[]; if(!rows.length&&(!r.workState||r.workState==='idle')) return; const ton=rows.reduce((sum,x)=>sum+(parseFloat(x.kg)||0),0)/1000; if(ton>0){ const u=units['TON']||(units['TON']={goal:0,done:0,byDay:{}}); u.done+=ton; u.byDay[d]=(u.byDay[d]||0)+ton; } if(rows.length){ const u=units['BAG']||(units['BAG']={goal:0,done:0,byDay:{}}); u.done+=rows.length; u.byDay[d]=(u.byDay[d]||0)+rows.length; } const z=Z('inbound'); z.n++; if(r.workState==='done') z.done++; }); }catch(_){}
@@ -6199,7 +6204,7 @@ document.getElementById('pitchDownloadAgain').addEventListener('click',async()=>
 root.addEventListener('input',e=>{if(e.target.matches('[data-pitch-list-field],[data-pitch-field]')){if(e.target.matches('.pitch-num'))e.target.value=e.target.value.replace(/\D/g,'');save();updateWork();document.getElementById('pitchSaveStatus').textContent='입력값은 이 기기 브라우저에만 저장됩니다.';}});root.addEventListener('click',e=>{const b=e.target.closest('[data-pitch-add]');if(!b)return;const k=b.dataset.pitchAdd;save();const row=records()[active]||{},vals=listValues(row,k);vals.push('');drawList(k,vals);save();updateWork();[...root.querySelectorAll('[data-pitch-list="'+k+'"] input')].at(-1)?.focus()});setInterval(()=>{const d=kstDate();if(d!==active&&!busy){save();active=d;paint()}},15000);
 async function migrateLegacy(){const all=records();for(const day of Object.keys(all)){const row=all[day];if(row&&row.workState==='done'&&!row.completionId){const snap=await makeSnapshot(row,'legacy-'+day+'-'+String(row.completedAt||'done').replace(/[^0-9]/g,''),day);await window.jisuPitchArchive.put(snap);const fresh=records(),current=fresh[day];if(current&&current.workState==='done'&&!current.completionId&&current.completedAt===row.completedAt){current.completionId=snap.id;localStorage.setItem(KEY,JSON.stringify(fresh));}}}}
 window.jisuPitchMigration=migrateLegacy().then(()=>{updateWork();}).catch(e=>console.error('피치 이전 완료기록 보관 실패',e));
-async function loadPhotos(){try{const db=await dbOpen();const rows=await new Promise((res,rej)=>{const q=db.transaction(STORE,'readonly').objectStore(STORE).getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error)});db.close();const list=rows.filter(p=>p.day===active).sort((a,b)=>a.id.localeCompare(b.id));document.getElementById('pitchPhotoThumbs').innerHTML=list.map(p=>'<img src="'+p.data+'" alt="피치 사진">').join('');const sb=document.getElementById('pitchStackBtn');if(sb){const c1=sb.querySelector('.c1'),c2=sb.querySelector('.c2'),c3=sb.querySelector('.c3'),rev=[...list].reverse();if(c1)c1.innerHTML=rev[0]?'<img src="'+rev[0].data+'" alt="최근 피치 사진">':'<svg class="ob-stack-empty-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';if(c2)c2.innerHTML=rev[1]?'<img src="'+rev[1].data+'" alt="이전 피치 사진">':'';if(c3)c3.innerHTML=rev[2]?'<img src="'+rev[2].data+'" alt="이전 피치 사진">':'';sb._items=rev;}}catch(e){console.error(e)}}document.getElementById('pitchPhotoBtn').addEventListener('click',()=>document.getElementById('pitchPhotoInput').click());if(document.getElementById('pitchTopPhotoBtn'))document.getElementById('pitchTopPhotoBtn').addEventListener('click',e=>{e.stopPropagation();if(window.jisuOpenCam){window.jisuOpenCam(async data=>{const db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close();await loadPhotos();},()=>document.getElementById('pitchPhotoInput').click());}else{document.getElementById('pitchPhotoInput').click();}});if(document.getElementById('pitchStackBtn'))document.getElementById('pitchStackBtn').addEventListener('click',e=>{e.stopPropagation();const sb=e.currentTarget;const items=(sb._items||[]).map(p=>({id:p.id,at:p.at||p.day,name:p.name||'피치 사진',data:p.data}));if(!items.length){document.getElementById('pitchPhotoInput').click();return;}if(window.jisuOpenGallery)window.jisuOpenGallery(items,0,async cur=>{const db=await dbOpen();await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).delete(cur.id);t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close();await loadPhotos();return (sb._items||[]).map(p=>({id:p.id,at:p.at||p.day,name:p.name||'피치 사진',data:p.data}));});});document.getElementById('pitchPhotoInput').addEventListener('change',async e=>{for(const f of [...e.target.files])await new Promise(resolve=>{const im=new Image();im.onload=async()=>{try{const sc=Math.min(1,2048/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*sc);c.height=Math.round(im.naturalHeight*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);const data=c.toDataURL('image/jpeg',.90),db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close()}catch(err){console.error(err)}URL.revokeObjectURL(im.src);resolve()};im.onerror=()=>resolve();im.src=URL.createObjectURL(f)});e.target.value='';loadPhotos()});paint()})();</script>
+async function loadPhotos(){try{const db=await dbOpen();const rows=await new Promise((res,rej)=>{const q=db.transaction(STORE,'readonly').objectStore(STORE).getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error)});db.close();const list=rows.filter(p=>p.day===active).sort((a,b)=>a.id.localeCompare(b.id));const safeSrc=window.JisuCore?window.JisuCore.safeImgSrc:(u=>String(u||''));document.getElementById('pitchPhotoThumbs').innerHTML=list.map(p=>{const s=safeSrc(p.data);return s?'<img src="'+s+'" alt="피치 사진">':'';}).join('');const sb=document.getElementById('pitchStackBtn');if(sb){const c1=sb.querySelector('.c1'),c2=sb.querySelector('.c2'),c3=sb.querySelector('.c3'),rev=[...list].reverse();if(c1)c1.innerHTML=rev[0]?'<img src="'+rev[0].data+'" alt="최근 피치 사진">':'<svg class="ob-stack-empty-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';if(c2)c2.innerHTML=rev[1]?'<img src="'+rev[1].data+'" alt="이전 피치 사진">':'';if(c3)c3.innerHTML=rev[2]?'<img src="'+rev[2].data+'" alt="이전 피치 사진">':'';sb._items=rev;}}catch(e){console.error(e)}}document.getElementById('pitchPhotoBtn').addEventListener('click',()=>document.getElementById('pitchPhotoInput').click());if(document.getElementById('pitchTopPhotoBtn'))document.getElementById('pitchTopPhotoBtn').addEventListener('click',e=>{e.stopPropagation();if(window.jisuOpenCam){window.jisuOpenCam(async data=>{const db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close();await loadPhotos();},()=>document.getElementById('pitchPhotoInput').click());}else{document.getElementById('pitchPhotoInput').click();}});if(document.getElementById('pitchStackBtn'))document.getElementById('pitchStackBtn').addEventListener('click',e=>{e.stopPropagation();const sb=e.currentTarget;const items=(sb._items||[]).map(p=>({id:p.id,at:p.at||p.day,name:p.name||'피치 사진',data:p.data}));if(!items.length){document.getElementById('pitchPhotoInput').click();return;}if(window.jisuOpenGallery)window.jisuOpenGallery(items,0,async cur=>{const db=await dbOpen();await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).delete(cur.id);t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close();await loadPhotos();return (sb._items||[]).map(p=>({id:p.id,at:p.at||p.day,name:p.name||'피치 사진',data:p.data}));});});document.getElementById('pitchPhotoInput').addEventListener('change',async e=>{for(const f of [...e.target.files])await new Promise(resolve=>{const im=new Image();im.onload=async()=>{try{const sc=Math.min(1,2048/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*sc);c.height=Math.round(im.naturalHeight*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);const data=c.toDataURL('image/jpeg',.90),db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close()}catch(err){console.error(err)}URL.revokeObjectURL(im.src);resolve()};im.onerror=()=>{URL.revokeObjectURL(im.src);resolve();};im.src=URL.createObjectURL(f)});e.target.value='';loadPhotos()});paint()})();</script>
 <script>
 /* ==========================================================================
    입고(INBOUND) 전용 모듈: 입고원료 중량 기록일지, 사진 증적, 달력 목표 연동, 엑셀
@@ -6215,7 +6220,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
 
   const kstDate = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const kstTime = () => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
-  const activeDay = kstDate();
+  let activeDay = kstDate();
 
   // IndexedDB Helpers
   function openDb(name, storeName) {
@@ -6272,20 +6277,9 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e) { return {}; }
   }
   function saveAllRecords(data) {
-    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch(e) {}
+    if (window.JisuCore) { return window.JisuCore.safeSaveJson(KEY, data, () => alert('저장 공간이 부족합니다.')); }
+    try { localStorage.setItem(KEY, JSON.stringify(data)); return true; } catch(e) { return false; }
   }
-
-  // Prepopulate today with the 8 real rows from today paper log if empty
-  const DEFAULT_ROWS_TODAY = [
-    { lot: "SH2609007", bag: "6", kg: "924.2", loc: "5710", worker: "김지수" },
-    { lot: "SH2609007", bag: "12", kg: "923.4", loc: "6508", worker: "김지수" },
-    { lot: "SH2609021", bag: "16", kg: "922.4", loc: "2809", worker: "김지수" },
-    { lot: "SH2609021", bag: "20", kg: "923.0", loc: "6508", worker: "김지수" },
-    { lot: "SH2609020", bag: "20", kg: "923.8", loc: "2595", worker: "김지수" },
-    { lot: "SH2609005", bag: "8", kg: "922.1", loc: "6025", worker: "김지수" },
-    { lot: "SH2609020", bag: "3", kg: "922.9", loc: "2934", worker: "김지수" },
-    { lot: "SH2609005", bag: "10", kg: "922.3", loc: "2934", worker: "김지수" }
-  ];
 
   function getTodayRecord() {
     const all = loadAllRecords();
@@ -6293,7 +6287,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       all[activeDay] = {
         day: activeDay,
         workState: "idle",
-        rows: DEFAULT_ROWS_TODAY.map(r => ({ ...r }))
+        rows: []
       };
       saveAllRecords(all);
     }
@@ -6327,10 +6321,13 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   const saveStatusEl = $("inboundSaveStatus");
   const downloadAgainBtn = $("inboundDownloadAgain");
 
-  if (dateEl) {
-    const [y, m, d] = activeDay.split("-");
-    dateEl.textContent = `${y}. ${m}. ${d}.`;
+  function refreshDateHeader() {
+    if (dateEl) {
+      const [y, m, d] = activeDay.split("-");
+      dateEl.textContent = `${y}. ${m}. ${d}.`;
+    }
   }
+  refreshDateHeader();
 
   function getCalendarGoal() {
     let goalTon = 36.0;
@@ -6426,6 +6423,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     if (sumTonEl) sumTonEl.textContent = (totalKg / 1000).toFixed(2);
 
     updateKpi(totalKg, count);
+    if (typeof updateWorkflowUI === "function") updateWorkflowUI();
   }
 
   tbody.addEventListener("click", e => {
@@ -6482,6 +6480,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
 
   if (calLinkBtn) {
     calLinkBtn.addEventListener("click", () => {
+      const wrap = document.getElementById("hotspot-inbound");
+      if (wrap) wrap.classList.remove("is-open");
       const clock = $("liveClock");
       if (clock) clock.click();
     });
@@ -6557,12 +6557,18 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     }
     if (!photoThumbs) return;
     if (!list.length) { photoThumbs.innerHTML = ""; return; }
-    photoThumbs.innerHTML = list.map(p => `
-      <div class="inbound-photo-thumb-wrap">
-        <img src="${p.data}" alt="입고 증적 사진" onclick="window.open('${p.data}')">
-        <button type="button" class="inbound-photo-del" data-pdel="${p.id}" title="사진 삭제">×</button>
-      </div>
-    `).join("");
+    const esc = window.JisuCore ? window.JisuCore.esc : (s => String(s ?? ""));
+    const safeSrc = window.JisuCore ? window.JisuCore.safeImgSrc : (u => String(u || ""));
+    photoThumbs.innerHTML = list.map(p => {
+      const src = safeSrc(p.data);
+      if (!src) return "";
+      return `
+        <div class="inbound-photo-thumb-wrap" data-pid="${esc(p.id)}">
+          <img src="${src}" alt="입고 증적 사진">
+          <button type="button" class="inbound-photo-del" data-pdel="${esc(p.id)}" title="사진 삭제">×</button>
+        </div>
+      `;
+    }).join("");
   }
 
   if (ibStackBtn) {
@@ -6592,11 +6598,28 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   if (photoThumbs) {
     photoThumbs.addEventListener("click", async e => {
       const del = e.target.closest(".inbound-photo-del");
-      if (!del) return;
+      if (del) {
+        e.stopPropagation();
+        if (!confirm("이 입고 사진을 삭제할까요?")) return;
+        await deletePhoto(del.dataset.pdel);
+        renderPhotos();
+        return;
+      }
+      const wrap = e.target.closest(".inbound-photo-thumb-wrap");
+      if (!wrap) return;
       e.stopPropagation();
-      if (!confirm("이 입고 사진을 삭제할까요?")) return;
-      await deletePhoto(del.dataset.pdel);
-      renderPhotos();
+      const safeSrc = window.JisuCore ? window.JisuCore.safeImgSrc : (u => String(u || ""));
+      const list = await getPhotos(activeDay);
+      const item = list.find(p => p.id === wrap.dataset.pid);
+      const src = item ? safeSrc(item.data) : "";
+      if (!src) return;
+      try {
+        const res = await fetch(src);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank", "noopener");
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      } catch (_) {}
     });
   }
 
@@ -6664,7 +6687,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     const st = rec.workState || "idle";
     startBtn.classList.toggle("is-active-work", st === "work");
     completeBtn.classList.toggle("is-active-done", st === "done");
-    completeBtn.disabled = (st !== "work" && st !== "done");
+    const hasValidRows = (rec.rows || []).some(r => parseFloat(r.kg) > 0);
+    completeBtn.disabled = (st === "done") || !hasValidRows;
     
     if (st === "work") {
       workStatusEl.textContent = `● 입고 작업 진행중 (${rec.startedAt || ""})`;
@@ -6726,8 +6750,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     completeBtn.disabled = true;
     completeBtn.textContent = "엑셀 생성중…";
     await exportInboundExcel();
-    completeBtn.disabled = false;
     completeBtn.textContent = "입고완료 (엑셀)";
+    updateWorkflowUI();
 
     if (saveStatusEl) saveStatusEl.textContent = `입고완료 및 엑셀 일지 다운로드 완료! (${rec.completedAt})`;
   });
@@ -6735,6 +6759,24 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   if (downloadAgainBtn) {
     downloadAgainBtn.addEventListener("click", () => exportInboundExcel());
   }
+
+  setInterval(() => {
+    const d = kstDate();
+    if (d !== activeDay) {
+      activeDay = d;
+      refreshDateHeader();
+      renderRows();
+      renderPhotos();
+      updateWorkflowUI();
+    }
+  }, 15000);
+
+  window.addEventListener("storage", e => {
+    if (e.key === KEY || e.key === "jisu-schedule-v1") {
+      renderRows();
+      updateWorkflowUI();
+    }
+  });
 
   renderRows();
   renderPhotos();
