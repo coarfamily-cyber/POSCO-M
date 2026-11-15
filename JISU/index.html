@@ -1797,9 +1797,9 @@
     .cal-box .cal-cell.is-today{background:rgba(74,222,128,.20) !important;}
     /* ===== 모든 버튼: 시계와 같은 hover 모션 (12% 확대 + 위로 떠오름 + 그림자) ===== */
     button:not(.cal-cell),[role="button"]:not(#liveClock),label.ob-btn,select{transition:scale .18s cubic-bezier(.2,.9,.3,1.25),translate .18s cubic-bezier(.2,.9,.3,1.25),box-shadow .18s,background-color .18s,color .18s,opacity .18s !important;transform-origin:center;}
-    button:not(.cal-cell):not(:disabled):hover,[role="button"]:not(#liveClock):hover,label.ob-btn:hover,select:hover,
-    button:not(.cal-cell):not(:disabled):focus-visible{scale:1.12;translate:0 -2px;box-shadow:0 12px 28px rgba(0,0,0,.40) !important;z-index:5;}
-    button:not(.cal-cell):not(:disabled):active,label.ob-btn:active{scale:1.05;translate:0 0;}
+    button:not(.cal-cell):not(.cmd-card-img-btn):not(:disabled):hover,[role="button"]:not(#liveClock):hover,label.ob-btn:hover,select:hover,
+    button:not(.cal-cell):not(.cmd-card-img-btn):not(:disabled):focus-visible{scale:1.12;translate:0 -2px;box-shadow:0 12px 28px rgba(0,0,0,.40) !important;z-index:5;}
+    button:not(.cal-cell):not(.cmd-card-img-btn):not(:disabled):active,label.ob-btn:active{scale:1.05;translate:0 0;}
     .rv-btn:hover{transform:none !important;}
     .hotspot-wrapper > button:hover{z-index:6;}
     .cmd-side{overflow-x:hidden;}
@@ -2258,10 +2258,8 @@
     .work-ton-badge{padding:3px 2px;border-radius:8px;background:transparent;border:none;color:#0f172a;font-size:13px;font-weight:900;letter-spacing:-.03em;white-space:nowrap;box-shadow:none;flex:0 0 auto;}
     .cmd-side .work-ton-badge{font-size:12.5px;padding:3px 8px;color:#e2e8f0;}
     .cmd-card-img-wrap{display:flex;flex-direction:row;align-items:flex-end;gap:8px;flex-wrap:nowrap;flex:1 1 auto;min-width:0;}
-    .cmd-card-img-btn{display:block;width:66px;height:44px;flex:0 0 auto;padding:0;border-radius:8px;overflow:hidden;border:none !important;outline:none !important;background:transparent !important;box-shadow:none !important;cursor:pointer;position:relative;transition:transform .14s ease;}
-    @media (hover:hover) and (pointer:fine){
-      .cmd-card-img-btn:hover{transform:scale(1.03);}
-    }
+    .cmd-card-img-btn{display:block;width:66px;height:44px;flex:0 0 auto;padding:0;border-radius:8px;overflow:hidden;border:none !important;outline:none !important;background:transparent !important;box-shadow:none !important;cursor:pointer;position:relative;scale:1 !important;translate:none !important;transform:none !important;transition:none !important;}
+    .cmd-card-img-btn:hover,.cmd-card-img-btn:focus,.cmd-card-img-btn:focus-visible,.cmd-card-img-btn:active{scale:1 !important;translate:none !important;transform:none !important;box-shadow:none !important;}
     .cmd-card-img-btn img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;}
     .cmd-card-img-cap{font-size:12.5px;font-weight:700;color:#0f172a;line-height:1.35;flex:1 1 110px;min-width:0;}
     .cmd-side .cmd-card-img-cap{color:#e2e8f0;}
