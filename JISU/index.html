@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151140">
+  <meta name="jisu-build" content="202611151145">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -1009,11 +1009,14 @@
         justify-content:center;
       }
     }
-    /* 작업자 모바일 전용 링크(?zone=outbound 등) : 배경 없이 자세히보기만 화면 꽉 차게 표시 */
+    /* 작업자 모바일 전용 링크(?zone=outbound 등) : 바깥 배경 없이 자세히보기 카드만 화면 100% 꽉 차게 표시 */
     body.worker-zone-only{
-      background:#e2e8f0 !important;
+      background:linear-gradient(160deg,#4b5563 0%,#334155 52%,#1e293b 100%) !important;
       overflow-y:auto !important;
       margin:0 !important;padding:0 !important;
+    }
+    body.worker-zone-only main{
+      margin:0 !important;padding:0 !important;width:100% !important;max-width:none !important;min-height:100dvh !important;
     }
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) header,
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .cmd-side,
@@ -1028,7 +1031,7 @@
     }
     body.worker-zone-only .map-stage{
       position:static !important;width:100% !important;height:auto !important;min-height:100dvh !important;
-      background:#e2e8f0 !important;display:block !important;
+      background:transparent !important;display:block !important;
       padding:0 !important;margin:0 !important;overflow:visible !important;
     }
     body.worker-zone-only .map-stage > img{
@@ -1048,8 +1051,8 @@
       transform:none !important;opacity:1 !important;pointer-events:auto !important;
       width:100% !important;max-width:none !important;min-height:100dvh !important;max-height:none !important;
       margin:0 !important;display:block !important;border-radius:0 !important;border:none !important;box-shadow:none !important;
-      padding:16px 14px 36px !important;
-      background:rgba(226,232,240,0.96) !important;
+      padding:16px 14px 40px !important;
+      background:linear-gradient(160deg,rgba(148,163,184,0.45) 0%,rgba(71,85,105,0.55) 50%,rgba(30,41,59,0.75) 100%) !important;
     }
     body.worker-zone-only .hotspot-wrapper.is-worker-zone .ob-photo-sq-btn{
       right:0 !important;
