@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151315">
+  <meta name="jisu-build" content="202611151320">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -4919,24 +4919,6 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           document.head.appendChild(s);
         });
       }
-      function preprocessForOcr(url){
-        return new Promise((res)=>{
-          const im=new Image();
-          im.onload=()=>{
-            try{
-              const scale=im.width<2400?2:1;
-              const cv=document.createElement('canvas');
-              cv.width=im.width*scale; cv.height=im.height*scale;
-              const ctx=cv.getContext('2d');
-              ctx.filter='grayscale(1) contrast(1.35) brightness(1.08)';
-              ctx.drawImage(im,0,0,cv.width,cv.height);
-              res(cv.toDataURL('image/png'));
-            }catch(_){ res(url); }
-          };
-          im.onerror=()=>res(url);
-          im.src=url;
-        });
-      }
       async function runBatchOcr(file){
         if(!file||!file.type.startsWith('image/')) return;
         const url=URL.createObjectURL(file);
@@ -4944,8 +4926,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(imgWrap) imgWrap.style.display='block';
         if(ocrStatus){ ocrStatus.textContent='⏳ 무료 OCR로 이미지 읽는 중...'; ocrStatus.style.color='#38bdf8'; }
         try{
-          const [T,preUrl]=await Promise.all([loadTesseract(),preprocessForOcr(url)]);
-          const out=await T.recognize(preUrl,'kor+eng',{
+          const T=await loadTesseract();
+          const out=await T.recognize(url,'kor+eng',{
             logger:m=>{
               if(m.status==='recognizing text'&&ocrStatus){
                 ocrStatus.textContent='⏳ 표 읽는 중... '+Math.round((m.progress||0)*100)+'%';
