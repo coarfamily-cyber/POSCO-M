@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151225">
+  <meta name="jisu-build" content="202611151235">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -3408,7 +3408,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
             <span>💡 여러 날짜가 감지되었습니다.</span>
             <button type="button" id="czQuickBatchBtn">공지 일괄등록으로 전환</button>
           </div>
-          <div class="cal-hint">맨 앞에 버튼 이름, 띄우고 내용. 공지는 앞에 "공지". Enter로 줄을 바꿔 여러 개 쓰고 저장.</div>
+          <div class="cal-hint">맨 앞에 버튼 이름, 띄우고 내용. 공지는 앞에 "공지". 지시서 표 붙여넣기 시 2공장만 자동 추출됩니다.</div>
           <div class="cz-msg" id="czMsg"></div>
           <button type="button" class="cz-save" id="czSave">저장</button></div>
         <div class="cz-list" id="czList"></div>
@@ -4769,10 +4769,58 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     $('calNext').addEventListener('click',()=>{ view=view[1]<11?[view[0],view[1]+1]:[view[0]+1,0]; draw(); });
     $('calToday').addEventListener('click',()=>{ const t=kstToday().split('-').map(Number); view=[t[0],t[1]-1]; draw(); });
     $('calGrid').addEventListener('click',e=>{ const c=e.target.closest('[data-day]'); if(c) openZoom(c.getAttribute('data-day')); });
-    function saveNew(){ const msg=$('czMsg'); msg.textContent=''; msg.className='cz-msg'; const v=$('czText').value; if(!v.trim()){ $('czText').focus(); return; } if(picked<kstToday()) return;
+    function parseDispatchRows(raw, fallbackDate){
+      const lines=String(raw||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      if(!lines.length) return null;
+      const hasTable=lines.some(l=>(l.includes('\t')||/\s{2,}/.test(l))&&(/공장|윙바디|카고|톤|KG|PLT|차량번호|상차일/i.test(l)));
+      if(!hasTable) return null;
+      const items=[]; let skipped1=0;
+      const parseDt=(s)=>{
+        let m=String(s||'').match(/(\d{2,4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/);
+        if(m){ const y=m[1].length===2?'20'+m[1]:m[1]; return y+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0'); }
+        m=String(s||'').match(/(\d{1,2})[\/.\-](\d{1,2})/);
+        if(m){ const y=(fallbackDate||kstToday()).slice(0,4); return y+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); }
+        return fallbackDate||kstToday();
+      };
+      for(const l of lines){
+        if(/상차일|입차시간|차량번호/.test(l)&&/공장|하차지/.test(l)) continue;
+        const cols=(l.includes('\t')?l.split('\t'):l.split(/\s{2,}/)).map(c=>c.trim());
+        if(cols.length<5) continue;
+        const rowTxt=cols.join(' ');
+        if(/1공장/.test(rowTxt)&&!/2공장/.test(rowTxt)){ skipped1++; continue; }
+        if(!/2공장/.test(rowTxt)) continue;
+        const dt=parseDt(cols[0]);
+        const time=cols[1]||'', to=cols[4]||'', ton=cols[5]||'', name=cols[6]||'', car=cols[7]||'', phone=cols[8]||'', qty=cols[9]||'', note=cols[10]||'';
+        const parts=[time?('['+time+']'):'',car,name?(phone?('('+name+' '+phone+')'):('('+name+')')):'',ton,qty,to?(note?(to+' · '+note):to):note].filter(Boolean);
+        items.push({date:dt,target:'outbound',kind:'work',text:parts.join(' · ').replace(/\]\s*·\s*/,'] ')});
+      }
+      return {items,skipped1};
+    }
+    $('czText').addEventListener('input',()=>{
+      const msg=$('czMsg'); if(!msg) return;
+      const res=parseDispatchRows($('czText').value,picked);
+      if(res){
+        msg.textContent='💡 2공장 출고 배차 '+res.items.length+'건 감지됨'+(res.skipped1?' (1공장 '+res.skipped1+'건 자동 제외)':'')+' — 저장 누르면 상차일 출고에 자동 전달됩니다.';
+        msg.className='cz-msg ok';
+      }
+    });
+    function saveNew(){ const msg=$('czMsg'); msg.textContent=''; msg.className='cz-msg'; const v=$('czText').value; if(!v.trim()){ $('czText').focus(); return; }
+      let u=''; try{u=localStorage.getItem('jisu-user')||'';}catch(e){}
+      const disp=parseDispatchRows(v,picked);
+      if(disp){
+        if(!disp.items.length){ msg.textContent='2공장 배차 내역이 없습니다.'+(disp.skipped1?' (1공장 '+disp.skipped1+'건 제외됨)':''); msg.className='cz-msg err'; return; }
+        const today=kstToday();
+        const valid=disp.items.filter(x=>x.date>=today);
+        if(!valid.length){ msg.textContent='지난 날짜('+(disp.items[0].date)+')는 예약할 수 없습니다.'; msg.className='cz-msg err'; return; }
+        const sch=load(SKEY);
+        valid.forEach((x,i)=>{ const rec={id:Date.now().toString(36)+i,date:x.date,target:x.target,kind:x.kind,text:x.text,created:nowStr()}; if(u) rec.by=u; sch.push(rec); });
+        save(SKEY,sch); $('czText').value='';
+        msg.textContent='2공장 출고 '+valid.length+'건 저장 완료!'+(disp.skipped1?' (1공장 '+disp.skipped1+'건 제외)':''); msg.className='cz-msg ok';
+        apply(); drawZoom(); draw(); return;
+      }
+      if(picked<kstToday()) return;
       const lines=v.split(/\n/).map(parseLine).filter(Boolean), bad=lines.filter(x=>x.err);
       if(bad.length){ msg.textContent=bad.map(b=>b.err).join(' / '); msg.className='cz-msg err'; return; }
-      let u=''; try{u=localStorage.getItem('jisu-user')||'';}catch(e){}
       const sch=load(SKEY); lines.forEach((x,i)=>{ const rec={id:Date.now().toString(36)+i,date:picked,target:x.target,kind:x.kind,text:x.text,created:nowStr()}; if(x.urgent) rec.urgent=true; if(u) rec.by=u; sch.push(rec); });
       save(SKEY,sch); $('czText').value=''; msg.textContent=lines.length+'건 저장 · '+lines.map(x=>(NAMES[x.target]||x.target)+(x.kind==='notice'?' 공지':'')).join(', '); msg.className='cz-msg ok'; apply(); drawZoom(); draw(); }
     $('czSave').addEventListener('click',saveNew);
