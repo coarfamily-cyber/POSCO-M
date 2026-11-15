@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611151220">
+  <meta name="jisu-build" content="202611151225">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -6548,9 +6548,9 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     box=document.createElement('div');
     box.id='jisuAlertToast';
     box.style.cssText='position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:2147483600;width:min(92vw,420px);display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;background:rgba(15,23,42,0.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(56,189,248,0.55);box-shadow:0 14px 36px rgba(0,0,0,0.48);color:#f8fafc;cursor:pointer;';
-    box.innerHTML='<span style="font-size:20px;line-height:1;flex-shrink:0;">🔔</span><div style="min-width:0;flex:1;"><div style="font-size:12.5px;font-weight:800;color:#38bdf8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div><div style="font-size:13px;font-weight:700;color:#fff;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div></div>';
-    box.querySelector('div > div:first-child').textContent=title;
-    box.querySelector('div > div:last-child').textContent=body;
+    box.innerHTML='<span style="font-size:20px;line-height:1;flex-shrink:0;">🔔</span><div style="min-width:0;flex:1;"><div id="jisuAlertTitle" style="font-size:12.5px;font-weight:800;color:#38bdf8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div><div id="jisuAlertBody" style="font-size:13px;font-weight:700;color:#fff;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div></div>';
+    box.querySelector('#jisuAlertTitle').textContent=title;
+    box.querySelector('#jisuAlertBody').textContent=body;
     box.addEventListener('click',()=>{
       box.remove();
       const base=(target||'').split(':')[0];
