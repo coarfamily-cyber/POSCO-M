@@ -4788,6 +4788,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     const fileStamp=()=>{const d=new Date(Date.now()+9*3600e3).toISOString();return d.slice(0,19).replace(/[-:T]/g,'');};
     function toJpeg(source,w,h){const max=2048,sc=Math.min(1,max/Math.max(w,h));const c=document.createElement('canvas');c.width=Math.round(w*sc);c.height=Math.round(h*sc);c.getContext('2d').drawImage(source,0,0,c.width,c.height);return c.toDataURL('image/jpeg',0.90);}
     const todayDay=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+    /* 실시간 DB에서 사진이 내려오면 자동 새로고침 */
+    try{ window.addEventListener('jisu:photo-sync',function(e){ const z=e&&e.detail&&e.detail.zone; if(!z||z==='outbound') render(); }); }catch(_){}
     async function savePhoto(dataUrl){const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await put({id,day:todayDay(),at:stamp(),name:'출고_'+fileStamp()+'.jpg',data:dataUrl});await render();msg('저장했습니다 ('+stamp()+')');}
     async function render(){
       let items=[];try{items=(await all())||[];}catch(e){msg('이 브라우저에서는 사진 저장소를 열 수 없습니다.');}
@@ -6493,7 +6495,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     setInterval(draw,30000); draw(); window.jisuEnvDraw=draw;
   })();
   </script>
-<script>(function(){const root=document.getElementById('pitchLog');if(!root)return;const KEY='jisu-pitch-records-v1',DB='jisu-pitch-photos',STORE='pitch';const DEF={add1:'',add2:'',grind1:'',grind2:'',move:''};const kstDate=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());const pretty=d=>{const [y,m,day]=d.split('-');return y+'. '+m+'. '+day+'.'};let active=kstDate();const dbOpen=()=>new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE,{keyPath:'id'});};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});const records=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}};function listValues(row,k){const prop=k==='move'?'moves':k+'s';let v=row[prop];if(Array.isArray(v))return v.length?v:[DEF[k]];const legacy=row[k];return [legacy??DEF[k]]}function drawList(k,values){const box=root.querySelector('[data-pitch-list="'+k+'"]');box.replaceChildren();values.forEach((v,i)=>{const label=document.createElement('label');label.className='pitch-row';const num=document.createElement('span');num.textContent=(i+1)+'.';const input=document.createElement('input');input.className='pitch-input';input.type='text';input.maxLength=40;input.placeholder='RPB12345678-999';input.autocomplete='off';input.dataset.pitchListField=k;input.value=v??'';label.append(num,input);if(i===values.length-1){const add=document.createElement('button');add.type='button';add.className='pitch-add';add.dataset.pitchAdd=k;add.textContent='+ 추가';label.append(add)}box.append(label)})}const workStamp=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});let busy=false;
+<script>(function(){const root=document.getElementById('pitchLog');if(!root)return;const KEY='jisu-pitch-records-v1',DB='jisu-pitch-photos',STORE='pitch';const DEF={add1:'',add2:'',grind1:'',grind2:'',move:''};try{window.addEventListener('jisu:photo-sync',function(e){if(!e||!e.detail||!e.detail.zone||e.detail.zone==='pitch'){try{loadPhotos();}catch(_){}}});}catch(_){}const kstDate=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());const pretty=d=>{const [y,m,day]=d.split('-');return y+'. '+m+'. '+day+'.'};let active=kstDate();const dbOpen=()=>new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE,{keyPath:'id'});};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});const records=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}};function listValues(row,k){const prop=k==='move'?'moves':k+'s';let v=row[prop];if(Array.isArray(v))return v.length?v:[DEF[k]];const legacy=row[k];return [legacy??DEF[k]]}function drawList(k,values){const box=root.querySelector('[data-pitch-list="'+k+'"]');box.replaceChildren();values.forEach((v,i)=>{const label=document.createElement('label');label.className='pitch-row';const num=document.createElement('span');num.textContent=(i+1)+'.';const input=document.createElement('input');input.className='pitch-input';input.type='text';input.maxLength=40;input.placeholder='RPB12345678-999';input.autocomplete='off';input.dataset.pitchListField=k;input.value=v??'';label.append(num,input);if(i===values.length-1){const add=document.createElement('button');add.type='button';add.className='pitch-add';add.dataset.pitchAdd=k;add.textContent='+ 추가';label.append(add)}box.append(label)})}const workStamp=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});let busy=false;
 const draftFields=()=>{const v={};['add1','add2','move'].forEach(k=>v[k==='move'?'moves':k+'s']=[...root.querySelectorAll('[data-pitch-list-field="'+k+'"]')].map(i=>i.value));root.querySelectorAll('[data-pitch-field]').forEach(i=>v[i.dataset.pitchField]=i.value);return v;};
 const hasContent=()=>[...root.querySelectorAll('[data-pitch-list-field],[data-pitch-field]')].some(i=>i.value.trim()!=='');
 const signature=r=>JSON.stringify({add1s:r.add1s||[],add2s:r.add2s||[],moves:r.moves||[],grind1:r.grind1||'',grind2:r.grind2||''});
@@ -7531,6 +7533,9 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     }catch(e){}
   }
 
+  /* 실시간 DB에서 사진이 내려오면 구역별 스택 자동 새로고침 */
+  try{ window.addEventListener('jisu:photo-sync',function(e){ const z=e&&e.detail&&e.detail.zone; if(!z){ Object.keys(stackRefs).forEach(function(k){ refreshStack(k); }); return; } if(stackRefs[z]) refreshStack(z); }); }catch(_){}
+
   let activeZone='';
   const fileInp=document.createElement('input');
   fileInp.type='file'; fileInp.accept='image/*'; fileInp.capture='environment'; fileInp.multiple=true; fileInp.hidden=true;
@@ -8017,7 +8022,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   }catch(_){}
 
   /* ---------- 4) 사진 (24시간) 동기화 ---------- */
-  var photoMuted=0, pulled={};
+  var photoMuted=0, pulled={}, pulling=false;
   function zoneStore(zone){ return PHOTO_DB[zone]||ZONE_STORE; }
   function idbOpen(name,store){
     return new Promise(function(res,rej){
@@ -8123,7 +8128,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     try{ await idbPut(t.db,t.store,rec); }
     catch(e){ console.warn('[jisu-db] 사진 반영 실패:',e&&e.message); }
     finally{ photoMuted--; }
-    try{ window.dispatchEvent(new CustomEvent('jisu:photo-sync',{detail:{zone:zone,id:id}})); }catch(_){}
+    if(!pulling){ try{ window.dispatchEvent(new CustomEvent('jisu:photo-sync',{detail:{zone:zone,id:id}})); }catch(_){} }
   }
   async function removePhotoLocal(zone,id){
     var t=zoneStore(zone);
@@ -8133,20 +8138,26 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     try{ window.dispatchEvent(new CustomEvent('jisu:photo-sync',{detail:{zone:zone,id:String(id),removed:true}})); }catch(_){}
   }
   async function pullPhotos(){
-    var snap=await db.ref(ROOT+'/photos').once('value');
-    var val=snap.val()||{};
-    for(var zone in val){
-      var recs=val[zone]||{}, ids=Object.keys(recs);
-      if(!ids.length) continue;
-      var t=zoneStore(zone);
-      var local=[]; try{ local=await idbAll(t.db,t.store); }catch(_){ local=[]; }
-      var have={}; local.forEach(function(p){ have[String(p.id)]=p.data; });
-      for(var i=0;i<ids.length;i++){
-        var p=recs[ids[i]]; if(!p) continue;
-        if(p.ts&&Date.now()-p.ts>DAY) continue;
-        if(have[ids[i]]===p.data) continue;
-        await insertPhoto(zone,p);
+    pulling=true;
+    try{
+      var snap=await db.ref(ROOT+'/photos').once('value');
+      var val=snap.val()||{};
+      for(var zone in val){
+        var recs=val[zone]||{}, ids=Object.keys(recs);
+        if(!ids.length) continue;
+        var t=zoneStore(zone);
+        var local=[]; try{ local=await idbAll(t.db,t.store); }catch(_){ local=[]; }
+        var have={}; local.forEach(function(p){ have[String(p.id)]=p.data; });
+        for(var i=0;i<ids.length;i++){
+          var p=recs[ids[i]]; if(!p) continue;
+          if(p.ts&&Date.now()-p.ts>DAY) continue;
+          if(have[ids[i]]===p.data) continue;
+          await insertPhoto(zone,p);
+        }
       }
+    }finally{
+      pulling=false;
+      try{ window.dispatchEvent(new CustomEvent('jisu:photo-sync',{detail:{zone:'',pulled:true}})); }catch(_){}
     }
   }
   async function seedLocalPhotos(){
