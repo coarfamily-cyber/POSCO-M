@@ -22,6 +22,7 @@ Firebase REST 쓰기는 X-Firebase-ETag / if-match 조건부 요청으로 보호
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 import urllib.error
@@ -33,7 +34,7 @@ ROOT = "jisu"
 STATE = f"{ROOT}/state"
 SKEY = "jisu-schedule-v1"
 CKEY = "jisu-commands-v1"
-BY = "gh-actions-0800"
+BY = os.environ.get("JISU_APPLY_BY", "gh-actions-0800")   # 실행 주체 표기(기록용)
 
 KST = timezone(timedelta(hours=9))  # 한국 표준시는 DST 없음 (tzdata 불필요)
 TIMEOUT = 30
