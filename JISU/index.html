@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611161230">
+  <meta name="jisu-build" content="202611161300">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -5195,7 +5195,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
   (function(){
     const SKEY='jisu-schedule-v1', CKEY='jisu-commands-v1', $=id=>document.getElementById(id);
     const modal=$('calModal'), clock=$('liveClock'); if(!modal||!clock) return;
-    const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(e){return []}}, save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+    const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(e){return []}}, save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){console.warn('cal save err',e);return false;}};
     const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const kstToday=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
     const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
@@ -5210,7 +5210,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       if(/^전체(\s|[:：]|공지|$)/.test(s)){ let rest=s.replace(/^전체\s*[:：]?\s*/,'').replace(/^공지\s*[:：]?\s*/,''); if(/^[!！]/.test(rest)){ urgent=true; rest=rest.replace(/^[!！]+\s*/,''); } if(!rest) return {err:'"'+line.trim()+'" - 내용이 없어요'}; return {target:'*',kind:'notice',text:rest,urgent}; }
       for(const [a,k] of ALIAS){ const ac=a.replace(/\s+/g,'').toUpperCase(); if(compact.startsWith(ac)){
           let i=0,j=0; while(i<s.length && j<ac.length){ if(/\s/.test(s[i])){i++;continue;} i++; j++; }
-          let rest=s.slice(i).trim(); if(/^공지(\s|[:：]|$)/.test(rest)){ kind='notice'; rest=rest.replace(/^공지\s*[:：]?\s*/,''); }
+          let rest=s.slice(i).trim().replace(/^[:：\-]\s*/,''); if(/^공지(\s|[:：]|$)/.test(rest)){ kind='notice'; rest=rest.replace(/^공지\s*[:：]?\s*/,''); }
           if(!rest) return {err:'"'+line.trim()+'" - 내용이 없어요'}; if(/^[!！]/.test(rest)){ urgent=true; rest=rest.replace(/^[!！]+\s*/,''); } if(!rest) return {err:'"'+line.trim()+'" - 내용이 없어요'}; return {target:k,kind,text:(window.jisuNormUnit?window.jisuNormUnit(rest):rest),urgent}; } }
       return {err:'"'+line.trim()+'" - 맨 앞에 버튼 이름(출고, 입고, 생산A…)을 써주세요'};
     }
@@ -5409,7 +5409,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(!valid.length){ msg.textContent='지난 날짜('+(disp.items[0].date)+')는 예약할 수 없습니다.'; msg.className='cz-msg err'; return; }
         const sch=load(SKEY);
         valid.forEach((x,i)=>{ const rec={id:Date.now().toString(36)+i,date:x.date,target:x.target,kind:x.kind,text:x.text,created:nowStr()}; if(pendingCzImg) rec.img=pendingCzImg; if(u) rec.by=u; sch.push(rec); });
-        save(SKEY,sch); $('czText').value=''; pendingCzImg=null; if($('czImgWrap'))$('czImgWrap').style.display='none'; if($('czImgThumb'))$('czImgThumb').src='';
+        if(!save(SKEY,sch)){ msg.textContent='저장 공간이 부족해요. 오래된 사진/기록을 정리한 뒤 다시 시도해 주세요.'; msg.className='cz-msg err'; return; }
+        $('czText').value=''; pendingCzImg=null; if($('czImgWrap'))$('czImgWrap').style.display='none'; if($('czImgThumb'))$('czImgThumb').src='';
         msg.textContent='2공장 출고 '+valid.length+'건 저장 완료!'+(disp.skipped1?' (1공장 '+disp.skipped1+'건 제외)':''); msg.className='cz-msg ok';
         apply(); drawZoom(); draw(); return;
       }
@@ -5418,7 +5419,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const lines=rawText.split(/\n/).map(parseLine).filter(Boolean), bad=lines.filter(x=>x.err);
       if(bad.length){ msg.textContent=bad.map(b=>b.err).join(' / '); msg.className='cz-msg err'; return; }
       const sch=load(SKEY); lines.forEach((x,i)=>{ const rec={id:Date.now().toString(36)+i,date:picked,target:x.target,kind:x.kind,text:x.text,created:nowStr()}; if(pendingCzImg) rec.img=pendingCzImg; if(x.urgent) rec.urgent=true; if(u) rec.by=u; sch.push(rec); });
-      save(SKEY,sch); $('czText').value=''; pendingCzImg=null; if($('czImgWrap'))$('czImgWrap').style.display='none'; if($('czImgThumb'))$('czImgThumb').src='';
+      if(!save(SKEY,sch)){ msg.textContent='저장 공간이 부족해요. 사진 크기를 줄이거나 오래된 기록을 정리해 주세요.'; msg.className='cz-msg err'; return; }
+      $('czText').value=''; pendingCzImg=null; if($('czImgWrap'))$('czImgWrap').style.display='none'; if($('czImgThumb'))$('czImgThumb').src='';
       msg.textContent=lines.length+'건 저장 · '+lines.map(x=>(NAMES[x.target]||x.target)+(x.kind==='notice'?' 공지':'')).join(', '); msg.className='cz-msg ok'; apply(); drawZoom(); draw(); }
     $('czSave').addEventListener('click',saveNew);
     (function(){ const hb=$('czHist'); if(!hb) return;
@@ -5642,7 +5644,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const groups=new Map();
 
       function addLineItem(d,raw){
-        let clean=raw.replace(/^[-*•·]\s*/,'').replace(/^\d+[.)]\s*/,'').trim();
+        let clean=raw.replace(/^[-*•·|]+\s*/,'').replace(/^\d+[.)]\s*/,'').trim();
         if(!clean) return;
         const p=parseLine(clean);
         if(p&&!p.err){
@@ -5668,7 +5670,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(dh && dh.m>=1 && dh.m<=12 && dh.d>=1 && dh.d<=31){
           curDate=dh.y+'-'+String(dh.m).padStart(2,'0')+'-'+String(dh.d).padStart(2,'0');
           if(!groups.has(curDate)) groups.set(curDate,[]);
-          if(dh.trailing) addLineItem(curDate,dh.trailing);
+          if(dh.trailing){ const tr=dh.trailing.replace(/^[\s|:：\-]+/,'').trim(); if(tr) addLineItem(curDate,tr); }
           continue;
         }
         if(curDate){
@@ -5775,7 +5777,15 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
             addedCount++;
           });
         });
-        save(SKEY,sch);
+        if(!save(SKEY,sch)){
+          if(batchMsg){ batchMsg.textContent='저장 공간이 부족해요. 사진 첨부를 빼거나 오래된 기록을 정리해 주세요.'; batchMsg.className='cz-msg err'; }
+          return;
+        }
+        batchText.value=''; batchImgData=null;
+        if($('czBatchImgWrap')) $('czBatchImgWrap').style.display='none';
+        if($('czBatchImgThumb')) $('czBatchImgThumb').src='';
+        if($('czBatchOcrStatus')){ $('czBatchOcrStatus').textContent='입력창에서 Ctrl+V로 이미지 바로 붙여넣기 가능'; $('czBatchOcrStatus').style.color='#94a3b8'; }
+        renderBatchPreview();
         apply();
         draw();
         drawZoom();
