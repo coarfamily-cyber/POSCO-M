@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611161205">
+  <meta name="jisu-build" content="202611161230">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -1045,10 +1045,15 @@
         content:"";position:fixed;inset:0;background:rgba(2,6,23,0.62);
         backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:210;
       }
+      body:not(#z1#z2#z3#z4#z5):not(.worker-zone-only) .expand-card{
+        transform:none !important;
+        transition:opacity 0.16s ease !important;
+      }
       body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-open .expand-card{
         position:fixed !important;
         left:10px !important;right:10px !important;top:50% !important;bottom:auto !important;
-        transform:translateY(-50%) scale(1) !important;
+        transform:none !important;
+        transition:opacity 0.16s ease !important;
         width:calc(100vw - 20px) !important;max-width:460px !important;
         max-height:84dvh !important;margin:0 auto !important;
         padding:14px !important;border-radius:24px !important;
@@ -4950,13 +4955,14 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
   (function(){
     const stage=document.getElementById('mapStage'); if(!stage) return;
     const M=10;
-    function reset(card){ ['top','bottom','left','right','maxHeight','transform','marginTop','marginBottom','width'].forEach(p=>card.style.removeProperty(p)); card.classList.remove('opens-up'); }
+    function reset(card){ ['top','bottom','left','right','maxHeight','transform','transition','marginTop','marginBottom','width'].forEach(p=>card.style.removeProperty(p)); card.classList.remove('opens-up'); }
     function fitCard(wrap){
       const card=wrap.querySelector(':scope > .expand-card'); if(!card) return;
       if(!wrap.classList.contains('is-open')){ reset(card); return; } /* keep up/down + sideways position while it fades out (no flash) */
       if(window.innerWidth<=768){
         if(document.body.classList.contains('worker-zone-only')){ reset(card); return; }
-        /* 모바일 관리자 모드: .hotspot-wrapper의 transform / #mapStage의 container-type 때문에 position:fixed 기준이 뷰포트에서 어긋나는 것을 보정해 화면 정중앙 배치 */
+        /* 모바일 관리자 모드: .hotspot-wrapper의 transform / #mapStage의 container-type 보정 및 열릴 때 옆에서 튕김 방지 */
+        card.style.setProperty('transition','opacity 0.16s ease','important');
         card.style.setProperty('left','0px','important');
         card.style.setProperty('top','0px','important');
         card.style.setProperty('right','auto','important');
