@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162040">
+  <meta name="jisu-build" content="202611162045">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -3665,7 +3665,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
                         <td><input type="text" id="inbNewBag" placeholder="Bag"></td>
                         <td><input type="number" step="0.1" id="inbNewKg" placeholder="중량"></td>
                         <td><input type="text" id="inbNewLoc" placeholder="차량번호"></td>
-                        <td><input type="text" id="inbNewWorker" value="김지수" placeholder="작업자"></td>
+                        <td><input type="text" id="inbNewWorker" value="" placeholder="이름"></td>
                         <td><button type="button" id="inboundAddRowBtn" class="inb-save-row-btn">저장</button></td>
                       </tr>
                     </tbody>
@@ -5143,7 +5143,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
               irows.forEach((r, i) => {
                 const kg = parseFloat(r.kg) || 0;
                 tKg += kg;
-                sInb.push([i + 1, inb.day || "", r.lot || "", r.bag || "", kg, r.worker || "김지수", r.loc || ""]);
+                sInb.push([i + 1, inb.day || "", r.lot || "", r.bag || "", kg, r.worker || "", r.loc || ""]);
               });
               sInb.push([]);
               sInb.push(["합계", "", "", irows.length + " BAG", tKg, "", (tKg / 1000).toFixed(2) + " TON"]);
@@ -6807,7 +6807,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
         <td>${escHtml(r.bag || "-")}</td>
         <td>${r.kg ? escHtml(r.kg) : "-"}</td>
         <td>${escHtml(r.loc || "-")}</td>
-        <td>${escHtml(r.worker || "김지수")}</td>
+        <td>${escHtml(r.worker || "-")}</td>
         <td><button type="button" class="inb-del-btn" data-del="${idx}" title="삭제">×</button></td>
       `;
       tbody.appendChild(tr);
@@ -6840,7 +6840,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     const bag = (newBagInp && newBagInp.value.trim()) || "";
     const kg = (newKgInp && newKgInp.value.trim()) || "";
     const loc = (newLocInp && newLocInp.value.trim()) || "";
-    const worker = (newWorkerInp && newWorkerInp.value.trim()) || localStorage.getItem("jisu-user") || "김지수";
+    const worker = (newWorkerInp && newWorkerInp.value.trim()) || localStorage.getItem("jisu-user") || "";
     if (!lot && !bag && !kg && !loc) {
       if (newLotInp) newLotInp.focus();
       return;
@@ -7041,7 +7041,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       let totalKg = 0;
       const sheetData = [
         ["입고원료 중량 기록일지"],
-        [`입고일자: ${activeDay}`, "", `확인자: 출하 / 파트장`, "", `작업자: ${localStorage.getItem("jisu-user") || "김지수"}`],
+        [`입고일자: ${activeDay}`, "", `확인자: 출하 / 파트장`, "", `작업자: ${localStorage.getItem("jisu-user") || ""}`],
         [],
         ["번호", "입고일자", "LOT 번호", "Bag No.", "실측 중량(kg)", "작업자", "차량번호"]
       ];
@@ -7055,7 +7055,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
           r.lot || "",
           r.bag || "",
           kg,
-          r.worker || "김지수",
+          r.worker || "",
           r.loc || ""
         ]);
       });
