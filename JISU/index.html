@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611161120">
+  <meta name="jisu-build" content="202611161125">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -2506,10 +2506,10 @@
       .cmd-item.has-img .cmd-row{flex-wrap:wrap !important;align-items:flex-end !important;gap:8px 6px !important;}
       .cmd-card-img-wrap{flex:1 1 auto !important;min-width:0 !important;align-items:flex-end !important;gap:8px !important;}
       .cmd-card-img-btn{width:clamp(92px,26vw,120px);height:clamp(62px,17.5vw,80px);transform:none !important;}
-      .work-ton-badge{flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:2px;font-size:clamp(12.5px,3.5vw,14px);min-height:30px;margin-right:0;padding:0 0 2px;line-height:1.15;white-space:nowrap;}
+      .work-ton-badge{flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:2px;font-size:clamp(11.5px,3.2vw,13px);min-height:30px;margin-right:0;padding:0 0 2px;line-height:1.15;white-space:nowrap;}
       .work-ton-badge .ton-sep{display:none;}
-      .work-ton-badge .ton-cnt{font-size:clamp(12px,3.3vw,13.5px);color:#334155;}
-      .work-ton-badge .ton-val{font-size:clamp(13px,3.6vw,14.5px);color:#0f172a;}
+      .work-ton-badge .ton-cnt{font-size:clamp(11px,3vw,12.5px);color:#334155;}
+      .work-ton-badge .ton-val{font-size:clamp(11.5px,3.2vw,13px);color:#0f172a;}
       .cmd-item.has-img .work-right-col{flex:0 0 auto !important;margin-left:auto !important;max-width:100% !important;}
     }
     .cmd-attach-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:6px 0 4px;}
@@ -4758,11 +4758,10 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       if(lbIdx>=items.length) lbIdx=0;
       const cur=items[lbIdx];
       const imgEl=$('obLbImg');
-      const setRot=on=>{ imgEl.classList.toggle('is-rotated',on); lb.classList.toggle('is-rotated',on); };
+      const setRot=on=>{ imgEl.classList.toggle('is-rotated',false); lb.classList.toggle('is-rotated',false); };
       setRot(false);
-      imgEl.onload=()=>{ setRot(imgEl.naturalWidth>imgEl.naturalHeight); };
+      imgEl.onload=()=>{ setRot(false); };
       imgEl.src=cur.data;
-      if(imgEl.complete && imgEl.naturalWidth>imgEl.naturalHeight) setRot(true);
       $('obLbCount').textContent=(lbIdx+1)+' / '+items.length;
       $('obLbTime').textContent=cur.at||'';
       const dl=$('obLbDl'); dl.href=cur.data; dl.download=cur.name||'outbound.jpg';
