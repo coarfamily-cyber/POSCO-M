@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611161300">
+  <meta name="jisu-build" content="202611161400">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -3760,6 +3760,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <label for="czBatchTarget">기본 대상 버튼</label>
           <select id="czBatchTarget" class="cz-batch-select">
             <option value="inbound" selected>입고 (기본값)</option>
+            <option value="*">전체 공지</option>
             <option value="outbound">출고</option>
             <option value="packaging">포장</option>
             <option value="packaging-d">포장(D동)</option>
@@ -3780,8 +3781,12 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           </select>
         </div>
         <div class="cal-hint" style="margin-bottom:4px;">
-          카톡·메신저 공지글 또는 지시서 표/이미지를 붙여넣으세요. (표는 2공장만 자동 추출)
+          카톡·메신저 공지글, 지시서 표/이미지, 또는 날짜 없는 여러 줄을 붙여넣으세요. (표는 2공장만 자동 추출)
         </div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#cbd5e1;margin-bottom:6px;cursor:pointer;">
+          <input type="checkbox" id="czBatchLockTarget">
+          <span>선택한 기본 대상 버튼으로만 고정 등록 (다른 구역명 자동 전환 끄기)</span>
+        </label>
         <div class="gem-key-box">
           <input type="password" id="czGemKeyInput" placeholder="✨ Gemini 무료 API 키 입력 (선택)" autocomplete="off">
           <button type="button" id="czGemSaveBtn" class="gem-key-save">키 저장</button>
@@ -5366,7 +5371,15 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(!/2공장/.test(rowTxt)) continue;
         if(cols.length>=8){
           const dt=parseDt(cols[0]);
-          const car=cols[7]||'', qty=cols[9]||'';
+          let car=cols[7]||'', qty=cols[9]||'';
+          if(!/[가-힣]{2}\s*\d{2,3}\s*[가-힣]\s*\d{4}/.test(car)){
+            const carM=l.match(/[가-힣]{2}\s*\d{2,3}\s*[가-힣]\s*\d{4}/);
+            if(carM) car=carM[0].replace(/\s+/g,'');
+          }
+          if(!/\d+(?:[.,]\d+)?\s*(?:KG|kg|T|TON|EA|P(?:LT)?)/i.test(qty)){
+            const qtyM=l.match(/\d+(?:[.,]\d+)?\s*(?:KG|kg|T|TON)\s*\/?\s*\d*\s*P(?:LT)?/i);
+            if(qtyM) qty=qtyM[0].replace(/\s+/g,' ').trim();
+          }
           const parts=[car,qty].filter(Boolean);
           if(parts.length){ items.push({date:dt,target:'outbound',kind:'work',text:parts.join(' · ')}); continue; }
         }
@@ -5477,7 +5490,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     window.jisuSetBatchView=setBatchView;
 
     /* 공지 일괄 등록: 이미지 첨부 + Ctrl+V 붙여넣기 + Gemini 무료 AI 우선 / Tesseract 폴백 */
-    let batchImgData=null;
+    let batchImgData=null, batchImgTon='';
     (function(){
       const imgBtn=$('czBatchImgBtn'), imgInput=$('czBatchImgInput'), ocrStatus=$('czBatchOcrStatus');
       const imgWrap=$('czBatchImgWrap'), imgThumb=$('czBatchImgThumb'), imgClear=$('czBatchImgClear');
@@ -5557,6 +5570,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           if(ocrStatus){ ocrStatus.textContent='✨ Gemini AI가 지시서를 읽고 있습니다...'; ocrStatus.style.color='#c4b5fd'; }
           try{
             const gTxt=await runGeminiExtract(gKey,batchImgData);
+            batchImgTon=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(gTxt):'';
             batchText.value=gTxt;
             renderBatchPreview();
             if(ocrStatus){ ocrStatus.textContent='✅ Gemini AI 분석 완료! 아래 미리보기 확인 후 저장하세요.'; ocrStatus.style.color='#4ade80'; }
@@ -5590,7 +5604,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       imgBtn.addEventListener('click',()=>imgInput.click());
       imgInput.addEventListener('change',()=>{ const f=imgInput.files&&imgInput.files[0]; if(f) runBatchOcr(f); imgInput.value=''; });
       if(imgClear) imgClear.addEventListener('click',()=>{
-        batchImgData=null;
+        batchImgData=null; batchImgTon='';
         if(imgWrap) imgWrap.style.display='none';
         if(imgThumb) imgThumb.src='';
         if(ocrStatus){ ocrStatus.textContent='입력창에서 Ctrl+V로 이미지 바로 붙여넣기 가능'; ocrStatus.style.color='#94a3b8'; }
@@ -5616,21 +5630,30 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     if(batchCancelBtn) batchCancelBtn.addEventListener('click',()=>setBatchView(false));
     if(batchBackTopBtn) batchBackTopBtn.addEventListener('click',()=>setBatchView(false));
 
+    function inferBatchYear(mo){
+      const now=new Date();
+      const curY=now.getFullYear(), curM=now.getMonth()+1;
+      return (curM>=10 && mo<=3)?(curY+1):curY;
+    }
+
     function isDateHeader(line){
       let m=line.match(/^(\d{4})[년.\-/]\s*(\d{1,2})[월.\-/]\s*(\d{1,2})일?(?:\s*\([월화수목금토일]\))?(?:\s*[:：])?\s*(.*)$/i);
       if(m) return { y:parseInt(m[1],10), m:parseInt(m[2],10), d:parseInt(m[3],10), trailing:(m[4]||'').trim() };
       m=line.match(/^(\d{1,2})월\s*(\d{1,2})일?(?:\s*\([월화수목금토일]\))?(?:\s*[:：])?\s*(.*)$/i);
-      if(m) return { y:new Date().getFullYear(), m:parseInt(m[1],10), d:parseInt(m[2],10), trailing:(m[3]||'').trim() };
+      if(m){ const mo=parseInt(m[1],10); return { y:inferBatchYear(mo), m:mo, d:parseInt(m[2],10), trailing:(m[3]||'').trim() }; }
       m=line.match(/^(\d{1,2})\s*\/\s*(\d{1,2})일?(?:\s*\([월화수목금토일]\))?(?:\s*[:：])?\s*(.*)$/i);
-      if(m) return { y:new Date().getFullYear(), m:parseInt(m[1],10), d:parseInt(m[2],10), trailing:(m[3]||'').trim() };
+      if(m){ const mo=parseInt(m[1],10); return { y:inferBatchYear(mo), m:mo, d:parseInt(m[2],10), trailing:(m[3]||'').trim() }; }
       m=line.match(/^(\d{1,2})\s*\.\s*(\d{1,2})(?:일|\.|\s*\([월화수목금토일]\)|\s*[:：])\s*(.*)$/i);
-      if(m) return { y:new Date().getFullYear(), m:parseInt(m[1],10), d:parseInt(m[2],10), trailing:(m[3]||'').trim() };
-      m=line.match(/^(\d{1,2})\.(\d{2})$/);
-      if(m && parseInt(m[1],10)>=1 && parseInt(m[1],10)<=12 && parseInt(m[2],10)>=1 && parseInt(m[2],10)<=31) return { y:new Date().getFullYear(), m:parseInt(m[1],10), d:parseInt(m[2],10), trailing:'' };
+      if(m){ const mo=parseInt(m[1],10); return { y:inferBatchYear(mo), m:mo, d:parseInt(m[2],10), trailing:(m[3]||'').trim() }; }
+      m=line.match(/^(\d{1,2})\.(\d{1,2})$/);
+      if(m && parseInt(m[1],10)>=1 && parseInt(m[1],10)<=12 && parseInt(m[2],10)>=1 && parseInt(m[2],10)<=31){
+        const mo=parseInt(m[1],10);
+        return { y:inferBatchYear(mo), m:mo, d:parseInt(m[2],10), trailing:'' };
+      }
       return null;
     }
 
-    function parseBatch(text,defTarget){
+    function parseBatch(text,defTarget,lockTarget){
       if(!text||!text.trim()) return [];
       const lines=text.split(/\r?\n/);
       const ignoreRes=[
@@ -5641,20 +5664,23 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         /^이상입니다\.?$/
       ];
       let curDate=null;
+      const fallbackDate=picked||kstToday();
       const groups=new Map();
 
       function addLineItem(d,raw){
         let clean=raw.replace(/^[-*•·|]+\s*/,'').replace(/^\d+[.)]\s*/,'').trim();
         if(!clean) return;
-        const p=parseLine(clean);
+        const tgtDefault=defTarget||'inbound';
+        const p=lockTarget?null:parseLine(clean);
         if(p&&!p.err){
           groups.get(d).push({target:p.target,kind:p.kind,text:p.text,urgent:!!p.urgent});
         } else {
-          let urgent=false, kind='instruction';
+          let urgent=false, kind=(tgtDefault==='*'?'notice':'instruction');
           if(/^[!！]/.test(clean)){ urgent=true; clean=clean.replace(/^[!！]+\s*/,''); }
           if(/^공지\s*[:：]?\s*/.test(clean)){ kind='notice'; clean=clean.replace(/^공지\s*[:：]?\s*/,''); }
+          if(!clean) return;
           groups.get(d).push({
-            target:defTarget||'inbound',
+            target:tgtDefault,
             kind,
             text:(window.jisuNormUnit?window.jisuNormUnit(clean):clean),
             urgent
@@ -5673,9 +5699,11 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           if(dh.trailing){ const tr=dh.trailing.replace(/^[\s|:：\-]+/,'').trim(); if(tr) addLineItem(curDate,tr); }
           continue;
         }
-        if(curDate){
-          addLineItem(curDate,line);
+        if(!curDate){
+          curDate=fallbackDate;
+          if(!groups.has(curDate)) groups.set(curDate,[]);
         }
+        addLineItem(curDate,line);
       }
 
       return Array.from(groups.entries())
@@ -5687,18 +5715,21 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     function renderBatchPreview(){
       if(!batchPreview||!batchText) return;
       const defTarget=(batchTarget&&batchTarget.value)||'inbound';
+      const lockTarget=Boolean($('czBatchLockTarget')&&$('czBatchLockTarget').checked);
       const text=batchText.value;
-      const disp=typeof parseDispatchRows==='function'?parseDispatchRows(text,kstToday()):null;
+      const disp=typeof parseDispatchRows==='function'?parseDispatchRows(text,picked||kstToday()):null;
       const incImgEl=$('czBatchIncludeImg');
       const useImgOnly=!text.trim() && batchImgData && incImgEl && incImgEl.checked;
       if(useImgOnly){
-        parsedBatchData=[{date:kstToday(),items:[{target:defTarget,kind:'instruction',text:'배차 지시서'}]}];
+        const item={target:defTarget,kind:(defTarget==='*'?'notice':'instruction'),text:'배차 지시서'};
+        if(batchImgTon) item.tonText=batchImgTon;
+        parsedBatchData=[{date:picked||kstToday(),items:[item]}];
       } else if(disp&&disp.items.length){
         const gMap=new Map();
-        disp.items.forEach(x=>{ if(!gMap.has(x.date)) gMap.set(x.date,[]); gMap.get(x.date).push({target:'outbound',kind:'work',text:x.text}); });
+        disp.items.forEach(x=>{ if(!gMap.has(x.date)) gMap.set(x.date,[]); gMap.get(x.date).push({target:lockTarget?defTarget:'outbound',kind:'work',text:x.text}); });
         parsedBatchData=Array.from(gMap.entries()).map(([date,items])=>({date,items})).sort((a,b)=>a.date.localeCompare(b.date));
       }else{
-        parsedBatchData=parseBatch(text,defTarget);
+        parsedBatchData=parseBatch(text,defTarget,lockTarget);
       }
 
       let totalCount=0;
@@ -5707,26 +5738,28 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       if(batchCountBadge) batchCountBadge.textContent=totalCount+'건';
       if(batchSaveBtn){
         batchSaveBtn.disabled=totalCount===0;
-        batchSaveBtn.textContent=totalCount>0?('날짜별 일괄 저장 ('+totalCount+'건)'):'날짜별 일괄 저장';
+        batchSaveBtn.textContent=totalCount>0?('일괄 저장 ('+totalCount+'건)'):'일괄 저장';
       }
 
       if(!text.trim()&&!useImgOnly){
-        batchPreview.innerHTML='<div class="cz-empty">위 입력창에 공지글을 붙여넣으면 날짜별 분류 결과가 여기에 표시됩니다.</div>';
+        batchPreview.innerHTML='<div class="cz-empty">위 입력창에 공지글이나 여러 줄 작업을 붙여넣으면 분류 결과가 여기에 표시됩니다.</div>';
         if(batchMsg){ batchMsg.textContent=''; batchMsg.className='cz-msg'; }
         return;
       }
 
       if(!parsedBatchData.length){
-        batchPreview.innerHTML='<div class="cz-empty" style="color:#f87171;">날짜 머리글(예: 11월10일, 11/11)을 찾지 못했습니다. 날짜 형식을 확인해 주세요.</div>';
+        batchPreview.innerHTML='<div class="cz-empty" style="color:#f87171;">등록할 수 있는 항목을 찾지 못했습니다. 입력 내용을 확인해 주세요.</div>';
         return;
       }
 
+      const today=kstToday();
       batchPreview.innerHTML=parsedBatchData.map(g=>{
         const [y,m,d]=g.date.split('-').map(Number);
         const dow=DOW[new Date(y,m-1,d).getDay()];
+        const isPast=g.date<today;
         return '<div class="cz-batch-group">'
           +'<div class="cz-batch-group-title">'
-          +'<b>📅 '+m+'월 '+d+'일 ('+dow+')</b>'
+          +'<b>📅 '+m+'월 '+d+'일 ('+dow+')'+(isPast?' <span style="color:#fbbf24;font-size:10.5px;">⚠️ 지난 날짜(마감 기록)</span>':'')+'</b>'
           +'<span>'+g.items.length+'건</span>'
           +'</div>'
           +g.items.map(it=>{
@@ -5749,16 +5782,25 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     if(batchTarget){
       batchTarget.addEventListener('change',renderBatchPreview);
     }
+    if($('czBatchLockTarget')){
+      $('czBatchLockTarget').addEventListener('change',renderBatchPreview);
+    }
 
     if(batchSaveBtn){
       batchSaveBtn.addEventListener('click',()=>{
         if(!parsedBatchData.length) return;
+        const today=kstToday();
+        const pastGroups=parsedBatchData.filter(g=>g.date<today);
+        if(pastGroups.length){
+          const pastCnt=pastGroups.reduce((s,g)=>s+g.items.length,0);
+          if(!confirm('지난 날짜('+pastCnt+'건)가 포함되어 있습니다. 마감 기록으로 저장할까요?')) return;
+        }
         let u=''; try{u=localStorage.getItem('jisu-user')||'';}catch(e){}
         const sch=load(SKEY);
         let addedCount=0;
         const incImg=$('czBatchIncludeImg')&&$('czBatchIncludeImg').checked&&batchImgData;
         parsedBatchData.forEach(g=>{
-          const groupTon=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(g.items.map(x=>x.text).join('\n')):'';
+          const groupTon=(g.items.length===1&&window.jisuCalcFactory2Tons)?window.jisuCalcFactory2Tons(g.items[0].text):'';
           g.items.forEach((it,idx)=>{
             const rec={
               id:Date.now().toString(36)+Math.random().toString(36).slice(2,6)+idx,
@@ -5768,8 +5810,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
               text:it.text,
               created:nowStr()
             };
-            if(incImg) rec.img=batchImgData;
-            const itemTon=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(it.text):'';
+            if(incImg && idx===0) rec.img=batchImgData;
+            const itemTon=it.tonText||(window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(it.text):'');
             if(itemTon||groupTon) rec.tonText=itemTon||groupTon;
             if(it.urgent) rec.urgent=true;
             if(u) rec.by=u;
@@ -5781,7 +5823,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           if(batchMsg){ batchMsg.textContent='저장 공간이 부족해요. 사진 첨부를 빼거나 오래된 기록을 정리해 주세요.'; batchMsg.className='cz-msg err'; }
           return;
         }
-        batchText.value=''; batchImgData=null;
+        batchText.value=''; batchImgData=null; batchImgTon='';
         if($('czBatchImgWrap')) $('czBatchImgWrap').style.display='none';
         if($('czBatchImgThumb')) $('czBatchImgThumb').src='';
         if($('czBatchOcrStatus')){ $('czBatchOcrStatus').textContent='입력창에서 Ctrl+V로 이미지 바로 붙여넣기 가능'; $('czBatchOcrStatus').style.color='#94a3b8'; }
@@ -5792,7 +5834,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         setBatchView(false);
         const msg=$('czMsg');
         if(msg){
-          msg.textContent='메신저 공지 '+addedCount+'건이 날짜별로 달력에 일괄 저장되었습니다!';
+          msg.textContent='일괄 저장 '+addedCount+'건이 달력에 등록되었습니다!';
           msg.className='cz-msg ok';
         }
       });
