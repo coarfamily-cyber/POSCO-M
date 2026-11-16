@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162000">
+  <meta name="jisu-build" content="202611162005">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -3204,6 +3204,18 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <span class="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse"></span> LIVE
         </span>
         <span id="jisuDbBadge" title="Firebase 실시간 DB 연결 상태 (PC ↔ 모바일 동기화)" style="padding:2px 8px;font-size:10.5px;font-weight:800;border-radius:9999px;border:1px solid rgba(148,163,184,0.45);background:rgba(148,163,184,0.12);color:#cbd5e1;white-space:nowrap;flex-shrink:0;">DB 대기</span>
+        <span style="position:relative;display:inline-flex;align-items:center;flex-shrink:0;">
+          <button type="button" id="jisuSysInfoBtn" aria-label="자동 저장 및 DB 운영 안내" aria-expanded="false" title="운영 안내 보기" style="width:18px;height:18px;border-radius:9999px;border:1px solid rgba(255,255,255,0.28);background:rgba(255,255,255,0.08);color:#e2e8f0;font-size:11px;font-weight:900;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;">!</button>
+          <div id="jisuSysInfoPop" hidden style="position:fixed;top:56px;left:16px;z-index:1200;width:min(320px,calc(100vw - 32px));padding:12px 14px;border-radius:14px;background:rgba(15,23,42,0.96);border:1px solid rgba(255,255,255,0.2);box-shadow:0 18px 40px rgba(0,0,0,0.55);color:#f1f5f9;font-size:12px;line-height:1.55;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);">
+            <div style="font-weight:800;font-size:12.5px;color:#7dd3fc;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
+              <span>시스템 자동 운영 안내</span>
+              <button type="button" id="jisuSysInfoClose" style="background:none;border:none;color:#94a3b8;font-size:13px;cursor:pointer;padding:0 2px;">✕</button>
+            </div>
+            <div style="margin-bottom:4px;">• <b>실시간 동기화</b>: PC 관리자 ↔ 모바일 작업자 1초 이내 자동 반영</div>
+            <div style="margin-bottom:4px;">• <b>매일 17:30 자동 엑셀 다운로드</b>: 전 구역 작업·오늘 사진 <code>.xlsx</code> 자동 저장 (1일 1회)</div>
+            <div>• <b>DB 사진 18시 기준 24시간 자동 삭제</b>: 오늘 찍은 사진은 내일 18:00에 DB에서 자동 정리</div>
+          </div>
+        </span>
       </div>
     </div>
 
@@ -7950,6 +7962,25 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     var v=m[state]||m.none;
     try{ el.textContent=v[0]; el.style.background=v[1]; el.style.color=v[2]; el.style.borderColor=v[3]; }catch(_){}
   }
+  (function initSysInfoPop(){
+    var btn=document.getElementById('jisuSysInfoBtn'), pop=document.getElementById('jisuSysInfoPop'), cls=document.getElementById('jisuSysInfoClose');
+    if(!btn||!pop) return;
+    function setOpen(open){
+      if(open){
+        var r=btn.getBoundingClientRect();
+        pop.style.top=(Math.round(r.bottom)+8)+'px';
+        pop.style.left=Math.max(12,Math.min(Math.round(r.left)-12, window.innerWidth-Math.min(320,window.innerWidth-32)-12))+'px';
+        pop.removeAttribute('hidden'); btn.setAttribute('aria-expanded','true');
+      }else{
+        pop.setAttribute('hidden',''); btn.setAttribute('aria-expanded','false');
+      }
+    }
+    btn.addEventListener('click',function(e){ e.stopPropagation(); setOpen(pop.hasAttribute('hidden')); });
+    if(cls) cls.addEventListener('click',function(e){ e.stopPropagation(); setOpen(false); });
+    pop.addEventListener('click',function(e){ e.stopPropagation(); });
+    document.addEventListener('click',function(){ setOpen(false); });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape') setOpen(false); });
+  })();
   if(!CFG||!CFG.databaseURL||typeof window.firebase==='undefined'||!window.firebase.initializeApp){
     paint('none'); console.warn('[jisu-db] Firebase SDK 또는 설정이 없어 로컬 저장 모드로 동작합니다.'); return;
   }
