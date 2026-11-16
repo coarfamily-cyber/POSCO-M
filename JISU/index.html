@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611161945">
+  <meta name="jisu-build" content="202611161950">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -5585,6 +5585,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         }
       }
       syncGemUi();
+      window.addEventListener('storage', e => { if(!e || !e.key || e.key===GKEY) syncGemUi(); });
       if(gemBtn&&gemIn){
         gemBtn.addEventListener('click',()=>{
           const v=gemIn.value.trim();
