@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162110">
+  <meta name="jisu-build" content="202611162115">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -2805,7 +2805,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
 
     /* 4번: 워크플로 버튼 (피치와 완벽 통일) */
     .inbound-workflow { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
-    .inbound-work-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .inbound-work-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .inbound-work-btn {
       height: 38px; border-radius: 10px; border: 1px solid rgba(255,255,255,.22);
       background: rgba(255,255,255,.12); color: #f8fafc; font-size: 12px; font-weight: 800;
@@ -3707,12 +3707,11 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
                 <div id="inboundPhotoThumbs" class="inbound-photo-thumbs"></div>
               </div>
 
-              <!-- 4번: 워크플로 버튼 (입고시작/임시저장/입고완료 엑셀) -->
+              <!-- 4번: 워크플로 버튼 (임시저장/입고완료) -->
               <div class="inbound-workflow">
                 <div class="inbound-work-actions">
-                  <button type="button" id="inboundStartBtn" class="inbound-work-btn">입고시작</button>
                   <button type="button" id="inboundSaveBtn" class="inbound-work-btn">임시저장</button>
-                  <button type="button" id="inboundCompleteBtn" class="inbound-work-btn">입고완료 (엑셀)</button>
+                  <button type="button" id="inboundCompleteBtn" class="inbound-work-btn">입고완료</button>
                 </div>
                 <div id="inboundWorkStatus" class="inbound-work-status" aria-live="polite"></div>
                 <span id="inboundSaveStatus" class="inbound-save-status" aria-live="polite"></span>
@@ -7100,7 +7099,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   function updateWorkflowUI() {
     const rec = getTodayRecord();
     const st = rec.workState || "idle";
-    startBtn.classList.toggle("is-active-work", st === "work");
+    if (startBtn) startBtn.classList.toggle("is-active-work", st === "work");
     completeBtn.classList.toggle("is-active-done", st === "done");
     const hasValidRows = (rec.rows || []).some(r => parseFloat(r.kg) > 0);
     completeBtn.disabled = (st === "done") || !hasValidRows;
@@ -7127,7 +7126,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     if (window.jisuStateRefresh) window.jisuStateRefresh();
   }
 
-  startBtn.addEventListener("click", () => {
+  if (startBtn) startBtn.addEventListener("click", () => {
     const all = loadAllRecords();
     const rec = all[activeDay] || getTodayRecord();
     if (rec.workState === "work") {
@@ -7165,7 +7164,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     completeBtn.disabled = true;
     completeBtn.textContent = "엑셀 생성중…";
     await exportInboundExcel();
-    completeBtn.textContent = "입고완료 (엑셀)";
+    completeBtn.textContent = "입고완료";
     updateWorkflowUI();
 
     if (saveStatusEl) saveStatusEl.textContent = `입고완료 및 엑셀 일지 다운로드 완료! (${rec.completedAt})`;
