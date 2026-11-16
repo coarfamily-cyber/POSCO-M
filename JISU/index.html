@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162245">
+  <meta name="jisu-build" content="202611162250">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -8451,11 +8451,11 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
 
   setTimeout(function(){
     try{
-      db.ref(ROOT+'/photos').on('child_added',function(zs){
-        var zone=zs.key;
-        zs.ref.on('child_added',function(ps){ insertPhoto(zone,ps.val()); });
-        zs.ref.on('child_changed',function(ps){ insertPhoto(zone,ps.val()); });
-        zs.ref.on('child_removed',function(ps){ removePhotoLocal(zone,ps.key); });
+      ALL_ZONES.forEach(function(zone){
+        var zr=db.ref(ROOT+'/photos/'+zone);
+        zr.on('child_added',function(ps){ insertPhoto(zone,ps.val()); });
+        zr.on('child_changed',function(ps){ insertPhoto(zone,ps.val()); });
+        zr.on('child_removed',function(ps){ removePhotoLocal(zone,ps.key); });
       });
     }catch(e){ console.warn('[jisu-db] 사진 구독 실패:',e); }
     pullPhotos().then(function(){ return seedLocalPhotos(); }).catch(function(e){ console.warn('[jisu-db] 사진 동기화 실패:',e&&e.message); });
