@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162015">
+  <meta name="jisu-build" content="202611162020">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -3247,7 +3247,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       <button type="button" id="jisuSysInfoClose" style="background:none;border:none;color:#94a3b8;font-size:13px;cursor:pointer;padding:0 2px;">✕</button>
     </div>
     <div style="margin-bottom:4px;">• <b>실시간 동기화</b>: PC 관리자 ↔ 모바일 작업자 1초 이내 자동 반영</div>
-    <div style="margin-bottom:4px;">• <b>매일 17:30 자동 엑셀 다운로드</b>: 전 구역 작업·오늘 사진 <code>.xlsx</code> 자동 저장 (1일 1회)</div>
+    <div style="margin-bottom:4px;">• <b>매일 17:30 자동 엑셀 다운로드</b>: 데스크탑에서 전 구역 작업·오늘 사진 <code>.xlsx</code> 자동 저장 (1일 1회)</div>
     <div>• <b>DB 사진 18시 기준 24시간 자동 삭제</b>: 오늘 찍은 사진은 내일 18:00에 DB에서 자동 정리</div>
   </div>
   <div id="hdrSearchPanel" class="hdr-search-panel" hidden role="listbox" aria-label="대시보드 검색 결과"></div>
@@ -5214,12 +5214,20 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       }finally{ btn.disabled=false; btn.innerHTML=label; }
     }
     window.jisuExportWork=exportWork;btn.addEventListener('click',()=>exportWork());
-    /* 매일 오후 5시 30분(17:30 KST) 관리자 화면에서 엑셀 자동 다운로드 (1일 1회) */
+    /* 매일 오후 5시 30분(17:30 KST) 데스크탑 관리자 화면에서만 엑셀 자동 다운로드 (1일 1회) */
     (function autoExcelScheduler(){
       if(document.documentElement.classList.contains('worker-zone-only') || document.body.classList.contains('worker-zone-only')) return;
+      function isDesktopView(){
+        if(window.innerWidth <= 768) return false;
+        if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'')) return false;
+        if(window.matchMedia && window.matchMedia('(pointer: coarse)').matches && window.innerWidth < 1024) return false;
+        return true;
+      }
+      if(!isDesktopView()) return;
       const AUTO_KEY='jisu-auto-excel-day';
       async function checkAutoExcel(){
         try{
+          if(!isDesktopView()) return;
           const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()).map(x=>[x.type,x.value]));
           const hh=Number(parts.hour==='24'?0:parts.hour), mm=Number(parts.minute);
           const todayKey=parts.year+'-'+parts.month+'-'+parts.day;
