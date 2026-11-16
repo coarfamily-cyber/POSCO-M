@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162020">
+  <meta name="jisu-build" content="202611162025">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -3247,6 +3247,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       <button type="button" id="jisuSysInfoClose" style="background:none;border:none;color:#94a3b8;font-size:13px;cursor:pointer;padding:0 2px;">✕</button>
     </div>
     <div style="margin-bottom:4px;">• <b>실시간 동기화</b>: PC 관리자 ↔ 모바일 작업자 1초 이내 자동 반영</div>
+    <div style="margin-bottom:4px;">• <b>매일 08:00 달력 스케줄 자동 적용</b>: 예약된 오늘 작업·공지를 각 구역 버튼에 자동 반영</div>
     <div style="margin-bottom:4px;">• <b>매일 17:30 자동 엑셀 다운로드</b>: 데스크탑에서 전 구역 작업·오늘 사진 <code>.xlsx</code> 자동 저장 (1일 1회)</div>
     <div>• <b>DB 사진 18시 기준 24시간 자동 삭제</b>: 오늘 찍은 사진은 내일 18:00에 DB에서 자동 정리</div>
   </div>
@@ -5384,14 +5385,44 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       }catch(_){}
     })();
     const atOf=day=>{const p=String(day).split('-');return p[1]+'. '+p[2]+'. 00:00';};
-    function apply(today){
-      today=today||kstToday(); const sch=load(SKEY); let changed=false; const cmds=load(CKEY);
-      sch.forEach(s=>{ if(!s.applied && s.date<=today){ const isPast=s.date<today; const rec={id:'s'+s.id,target:s.target,kind:s.kind,text:s.text,at:isPast?atOf(s.date):nowStr(),day:s.date,sched:s.date,origDay:s.date}; if(s.img) rec.img=s.img; if(s.tonText) rec.tonText=s.tonText; if(s.urgent) rec.urgent=true; if(s.by) rec.by=s.by; if(isPast) rec.closed=true; cmds.push(rec); s.applied=true; s.appliedAt=nowStr(); changed=true; } });
+    /* 달력 예약 스케줄 자동 적용 시각 (KST · 테스트 중이라 추후 변경 쉽게 상수 분리) */
+    window.JISU_SCHEDULE_APPLY_TIME = window.JISU_SCHEDULE_APPLY_TIME || { hour: 8, minute: 0 };
+    function kstHourMin(){
+      const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()).map(x=>[x.type,x.value]));
+      return { hh: Number(parts.hour==='24'?0:parts.hour), mm: Number(parts.minute) };
+    }
+    function isScheduleApplyTimeReached(){
+      const cfg=window.JISU_SCHEDULE_APPLY_TIME||{hour:8,minute:0};
+      const hm=kstHourMin();
+      return (hm.hh > cfg.hour) || (hm.hh === cfg.hour && hm.mm >= cfg.minute);
+    }
+    function apply(today, opts){
+      today=today||kstToday(); opts=opts||{};
+      const allowToday = !!opts.immediateToday || isScheduleApplyTimeReached();
+      const sch=load(SKEY); let changed=false; const cmds=load(CKEY);
+      sch.forEach(s=>{
+        if(s.applied) return;
+        if(s.date < today){
+          if(!cmds.some(c=>c.id==='s'+s.id)){
+            const rec={id:'s'+s.id,target:s.target,kind:s.kind,text:s.text,at:atOf(s.date),day:s.date,sched:s.date,origDay:s.date,closed:true};
+            if(s.img) rec.img=s.img; if(s.tonText) rec.tonText=s.tonText; if(s.urgent) rec.urgent=true; if(s.by) rec.by=s.by;
+            cmds.push(rec);
+          }
+          s.applied=true; s.appliedAt=nowStr(); changed=true;
+        } else if(s.date === today && allowToday){
+          if(!cmds.some(c=>c.id==='s'+s.id)){
+            const rec={id:'s'+s.id,target:s.target,kind:s.kind,text:s.text,at:nowStr(),day:s.date,sched:s.date,origDay:s.date};
+            if(s.img) rec.img=s.img; if(s.tonText) rec.tonText=s.tonText; if(s.urgent) rec.urgent=true; if(s.by) rec.by=s.by;
+            cmds.push(rec);
+          }
+          s.applied=true; s.appliedAt=nowStr(); changed=true;
+        }
+      });
       if(changed){ save(CKEY,cmds); save(SKEY,sch); if(window.jisuCmdRender) window.jisuCmdRender(); }
       if(window.jisuInboundRefresh) window.jisuInboundRefresh();
       return changed;
     }
-    window.jisuApplySchedules=apply; apply(); setInterval(()=>apply(),60000); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') apply(); });
+    window.jisuApplySchedules=apply; apply(); setInterval(()=>apply(),30000); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') apply(); });
     let view=null, picked=null, editing=null;
     const ymd=(y,m,d)=>y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     function draw(){
@@ -5520,7 +5551,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(!save(SKEY,sch)){ msg.textContent='저장 공간이 부족해요. 오래된 사진/기록을 정리한 뒤 다시 시도해 주세요.'; msg.className='cz-msg err'; return; }
         $('czText').value=''; pendingCzImg=null; if($('czImgWrap'))$('czImgWrap').style.display='none'; if($('czImgThumb'))$('czImgThumb').src='';
         msg.textContent='2공장 출고 '+valid.length+'건 저장 완료!'+(disp.skipped1?' (1공장 '+disp.skipped1+'건 제외)':''); msg.className='cz-msg ok';
-        apply(); drawZoom(); draw(); return;
+        apply(null,{immediateToday:true}); drawZoom(); draw(); return;
       }
       if(picked<kstToday()) return;
       const rawText=v.trim()||'출고 첨부 이미지';
@@ -5529,7 +5560,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const sch=load(SKEY); lines.forEach((x,i)=>{ const rec={id:Date.now().toString(36)+i,date:picked,target:x.target,kind:x.kind,text:x.text,created:nowStr()}; if(pendingCzImg) rec.img=pendingCzImg; if(x.urgent) rec.urgent=true; if(u) rec.by=u; sch.push(rec); });
       if(!save(SKEY,sch)){ msg.textContent='저장 공간이 부족해요. 사진 크기를 줄이거나 오래된 기록을 정리해 주세요.'; msg.className='cz-msg err'; return; }
       $('czText').value=''; pendingCzImg=null; if($('czImgWrap'))$('czImgWrap').style.display='none'; if($('czImgThumb'))$('czImgThumb').src='';
-      msg.textContent=lines.length+'건 저장 · '+lines.map(x=>(NAMES[x.target]||x.target)+(x.kind==='notice'?' 공지':'')).join(', '); msg.className='cz-msg ok'; apply(); drawZoom(); draw(); }
+      msg.textContent=lines.length+'건 저장 · '+lines.map(x=>(NAMES[x.target]||x.target)+(x.kind==='notice'?' 공지':'')).join(', '); msg.className='cz-msg ok'; apply(null,{immediateToday:true}); drawZoom(); draw(); }
     $('czSave').addEventListener('click',saveNew);
     (function(){ const hb=$('czHist'); if(!hb) return;
       const after=(focus)=>{ drawZoom(); draw(); if(focus){ const fi=$('czHist').querySelector('.rv-in'); if(fi){ fi.focus(); if(fi.type==='text') fi.select(); } } };
@@ -5942,7 +5973,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if($('czBatchImgThumb')) $('czBatchImgThumb').src='';
         if($('czBatchOcrStatus')){ $('czBatchOcrStatus').textContent='입력창에서 Ctrl+V로 이미지 바로 붙여넣기 가능'; $('czBatchOcrStatus').style.color='#94a3b8'; }
         renderBatchPreview();
-        apply();
+        apply(null,{immediateToday:true});
         draw();
         drawZoom();
         setBatchView(false);
