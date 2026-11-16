@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611161400">
+  <meta name="jisu-build" content="202611161430">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -1987,9 +1987,14 @@
     }
     .cal-box .cal-grid .cal-cell{min-height:64px;}
     @media(max-width:720px){
+      .cal-box{padding:10px !important;max-width:100% !important;overflow-x:hidden !important;}
+      .cal-head{flex-wrap:wrap;gap:6px !important;}
+      .cal-grid{gap:2px !important;}
+      .cal-box .cal-grid .cal-cell{min-width:0 !important;min-height:50px !important;padding:3px 2px !important;}
       .cal-box .cal-side{grid-template-columns:1fr !important;}
       .cal-box .cal-side > #czBatchView{display:none !important;padding-left:0;border-left:0;}
       .cal-box .cal-side > #czBatchView.is-open-mobile{display:flex !important;}
+      .cal-box.is-batch-mobile .cal-weekdays,.cal-box.is-batch-mobile .cal-grid,.cal-box.is-batch-mobile #czSingleView{display:none !important;}
     }
     /* ===== 이월 색: 핑크 (#EC4899) — 작업중(주황)과 구분, 3회 이상은 빨강 유지 ===== */
     .carry-tag:not(.hot){background:#ec4899 !important;box-shadow:0 0 6px rgba(236,72,153,.55) !important;}
@@ -2502,7 +2507,8 @@
     @media (max-width:768px){
       body:not(#z1#z2#z3#z4#z5) .expand-card .cmd-item{min-height:92px !important;padding:10px 12px !important;}
       body:not(#z1#z2#z3#z4#z5) .expand-card .cmd-item .cmd-row{flex-wrap:wrap !important;align-items:flex-end !important;gap:8px 6px !important;}
-      .expand-card .cmd-text{flex:1 1 110px !important;min-width:110px !important;min-height:30px !important;padding-bottom:0 !important;font-size:clamp(14px,3.8vw,15px) !important;line-height:1.25 !important;display:flex !important;flex-wrap:wrap !important;align-items:center !important;gap:2px 6px !important;overflow-wrap:break-word !important;word-break:keep-all !important;}
+      .expand-card .cmd-text{flex:1 1 130px !important;min-width:130px !important;min-height:30px !important;padding:0 !important;margin:0 !important;font-size:clamp(14px,3.8vw,15px) !important;line-height:1.25 !important;display:flex !important;flex-direction:column !important;align-items:flex-start !important;justify-content:center !important;gap:2px !important;overflow-wrap:break-word !important;word-break:keep-all !important;}
+      .expand-card .carry-sub{display:block !important;margin-left:0 !important;margin-top:1px !important;font-size:11px !important;line-height:1.2 !important;white-space:nowrap !important;}
       .expand-card .work-ctrl{margin-left:auto !important;max-width:100% !important;column-gap:5px !important;}
       .expand-card .work-done-num,.expand-card .work-unit{font-size:clamp(12px,3.3vw,13px) !important;}
       .expand-card .work-unit{min-width:0 !important;}
@@ -2524,6 +2530,7 @@
     .cmd-attach-preview img{display:block;width:100%;max-height:92px;object-fit:contain;}
     .cmd-attach-clear{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:9999px;border:0;background:rgba(15,23,42,.85);color:#fff;font-size:11px;cursor:pointer;}
     .gem-key-box{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 8px;margin-bottom:7px;border-radius:10px;background:rgba(139,92,246,.14);border:1px solid rgba(167,139,250,.35);}
+    .gem-key-box[hidden]{display:none !important;}
     .gem-key-box input{flex:1;min-width:130px;padding:4px 8px;border-radius:7px;border:1px solid rgba(255,255,255,.22);background:rgba(15,23,42,.72);color:#fff;font-size:11.5px;outline:none;}
     .gem-key-box button,.gem-key-box a{padding:4px 8px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer;text-decoration:none;white-space:nowrap;}
     .gem-key-save{background:#8b5cf6;color:#fff;border:0;}
@@ -3787,7 +3794,11 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <input type="checkbox" id="czBatchLockTarget">
           <span>선택한 기본 대상 버튼으로만 고정 등록 (다른 구역명 자동 전환 끄기)</span>
         </label>
-        <div class="gem-key-box">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+          <button type="button" id="czGemToggleBtn" class="cz-b" style="font-size:11px;padding:4px 8px;background:rgba(139,92,246,.22) !important;border-color:rgba(167,139,250,.45) !important;color:#e9d5ff !important;">✨ Gemini AI 키 설정 ▾</button>
+          <span id="czGemMiniSt" style="font-size:11px;color:#94a3b8;">키 미등록 시 기본 무료 OCR</span>
+        </div>
+        <div class="gem-key-box" id="czGemKeyBox" hidden>
           <input type="password" id="czGemKeyInput" placeholder="✨ Gemini 무료 API 키 입력 (선택)" autocomplete="off">
           <button type="button" id="czGemSaveBtn" class="gem-key-save">키 저장</button>
           <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="gem-key-link">무료 키 발급 ↗</a>
@@ -5470,13 +5481,16 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
 
     function setBatchView(show){
       if(!singleView || !batchView) return;
+      const calBoxEl=modal.querySelector('.cal-box');
       if(window.innerWidth>720){
+        if(calBoxEl) calBoxEl.classList.remove('is-batch-mobile');
         singleView.style.display='flex';
         batchView.style.display='flex';
         batchView.classList.remove('is-open-mobile');
         if(show && batchText){ batchText.focus(); renderBatchPreview(); }
         return;
       }
+      if(calBoxEl) calBoxEl.classList.toggle('is-batch-mobile',Boolean(show));
       singleView.style.display=show?'none':'block';
       batchView.style.display=show?'flex':'none';
       batchView.classList.toggle('is-open-mobile',Boolean(show));
@@ -5496,6 +5510,14 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const imgWrap=$('czBatchImgWrap'), imgThumb=$('czBatchImgThumb'), imgClear=$('czBatchImgClear');
       const gemIn=$('czGemKeyInput'), gemBtn=$('czGemSaveBtn'), gemSt=$('czGemStatus');
       const gemGuideBtn=$('czGemGuideBtn'), gemGuideBox=$('czGemGuideBox');
+      const gemToggleBtn=$('czGemToggleBtn'), gemKeyBox=$('czGemKeyBox'), gemMiniSt=$('czGemMiniSt');
+      if(gemToggleBtn&&gemKeyBox){
+        gemToggleBtn.addEventListener('click',()=>{
+          const open=gemKeyBox.hasAttribute('hidden');
+          if(open){ gemKeyBox.removeAttribute('hidden'); gemToggleBtn.textContent='✨ Gemini AI 키 접기 ▴'; }
+          else{ gemKeyBox.setAttribute('hidden',''); gemToggleBtn.textContent='✨ Gemini AI 키 설정 ▾'; }
+        });
+      }
       if(gemGuideBtn&&gemGuideBox){
         gemGuideBtn.addEventListener('click',()=>{
           const open=gemGuideBox.hasAttribute('hidden');
@@ -5511,6 +5533,10 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(gemSt){
           gemSt.textContent=k?'✅ Gemini 무료 AI 연결됨 (이미지 붙여넣기 시 2공장 자동 추출)':'키 미등록 시 기본 무료 OCR로 동작 · 무료 키 등록 시 정확도 100%';
           gemSt.style.color=k?'#86efac':'#ddd6fe';
+        }
+        if(gemMiniSt){
+          gemMiniSt.textContent=k?'✅ AI 연결됨':'키 미등록 시 기본 무료 OCR';
+          gemMiniSt.style.color=k?'#86efac':'#94a3b8';
         }
       }
       syncGemUi();
