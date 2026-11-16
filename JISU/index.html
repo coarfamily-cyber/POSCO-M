@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611161900">
+  <meta name="jisu-build" content="202611161925">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -9,6 +9,25 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
+  <!-- ======================================================================
+       JISU_FIREBASE_CONFIG · 지수 대시보드 실시간 DB 설정 (★이관 시 이 블록만 교체★)
+       - 프로젝트: posco-m-jisu (Firebase 무료 Spark 플랜, 카드 등록 없음)
+       - Realtime Database 위치: 싱가포르 (asia-southeast1)
+       - 이관 안내: 지수 주임님 Firebase 계정에서 웹 앱을 만들고 아래 값만 바꾸면
+         코드 수정은 끝납니다. (규칙은 /jisu 노드 read/write 허용)
+       ====================================================================== -->
+  <script>
+  window.JISU_FIREBASE_CONFIG = {
+    apiKey: "AIzaSyA8b5Am0NOyZlN3hzlYWFcJN-8J4qkrICc",
+    authDomain: "posco-m-jisu.firebaseapp.com",
+    databaseURL: "https://posco-m-jisu-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "posco-m-jisu",
+    storageBucket: "posco-m-jisu.firebasestorage.app",
+    messagingSenderId: "1036931213595",
+    appId: "1:1036931213595:web:132e909e0435bccce7cbbe"
+  };
+  window.JISU_DB_ROOT = "jisu";   // Realtime DB 루트 노드 (보안 규칙도 /jisu 기준)
+  </script>
   <link rel="manifest" id="jisuManifestLink" href="./manifest.webmanifest?v=202611151130" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=202611151130" />
   <link rel="apple-touch-icon" href="./icon-192.png?v=202611151130" />
@@ -3184,6 +3203,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 flex-shrink-0">
           <span class="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse"></span> LIVE
         </span>
+        <span id="jisuDbBadge" title="Firebase 실시간 DB 연결 상태 (PC ↔ 모바일 동기화)" style="padding:2px 8px;font-size:10.5px;font-weight:800;border-radius:9999px;border:1px solid rgba(148,163,184,0.45);background:rgba(148,163,184,0.12);color:#cbd5e1;white-space:nowrap;flex-shrink:0;">DB 대기</span>
       </div>
     </div>
 
@@ -4408,7 +4428,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         newOnes.forEach(x=>{
           knownCmdIds.add(x.id);
           const matchZone=!wz||x.target==='*'||x.target===wz||(wz==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(wz==='inbound'&&x.target&&x.target.startsWith('inbound:'));
-          if(matchZone && window.jisuTriggerAlert) window.jisuTriggerAlert(x);
+          if(matchZone && window.jisuTriggerAlert && !window.jisuSuppressAlert) window.jisuTriggerAlert(x);
         });
       }
       Object.keys(NAMES).forEach(k=>{
@@ -7865,6 +7885,329 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
     if(f&&f.type&&f.type.startsWith('image/')){ e.preventDefault(); openWithFile(f); }
   });
+})();
+</script>
+
+<!-- ======================================================================
+     JISU 실시간 동기화 엔진 (Firebase Realtime Database · 무료 Spark)
+     · PC 관리자 화면 ↔ 모바일 작업자 화면 자동 동기화 (새로고침 없음)
+     · DB 경로: /jisu/state/{localStorage키} , /jisu/photos/{구역}/{사진id}
+     · Firebase 장애·오프라인·CDN 차단 시에도 기존 localStorage 동작은 그대로
+     ====================================================================== -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script>
+(function(){
+  'use strict';
+  var CFG=window.JISU_FIREBASE_CONFIG;
+  var ROOT=String(window.JISU_DB_ROOT||'jisu').replace(/^\/+|\/+$/g,'');
+  var DAY=24*60*60*1000;
+  var STATE_KEYS=['jisu-commands-v1','jisu-memos-v1','jisu-pitch-records-v1','jisu-inbound-records-v1','jisu-schedule-v1','jisu-schedules-v1','jisu-env-v1','jisu-env-log-v1'];
+  var PHOTO_DB={outbound:{db:'jisu-photos',store:'outbound'},pitch:{db:'jisu-pitch-photos',store:'pitch'}};
+  var ZONE_STORE={db:'jisu-zone-photos-v1',store:'photos'};
+  var ALL_ZONES=['outbound','inbound','pitch','packaging','packaging-d','environment','warehouse','production-a','production-b','production-c','production-d','production-e','production-f','production-g','production-h'];
+
+  function paint(state){
+    var el=document.getElementById('jisuDbBadge'); if(!el) return;
+    var m={on:['DB 연결','rgba(16,185,129,0.18)','#6ee7b7','rgba(16,185,129,0.5)'],
+           wait:['DB 연결중','rgba(245,158,11,0.16)','#fcd34d','rgba(245,158,11,0.45)'],
+           off:['DB 오프라인','rgba(148,163,184,0.12)','#cbd5e1','rgba(148,163,184,0.45)'],
+           none:['DB 수동','rgba(148,163,184,0.12)','#cbd5e1','rgba(148,163,184,0.45)']};
+    var v=m[state]||m.none;
+    try{ el.textContent=v[0]; el.style.background=v[1]; el.style.color=v[2]; el.style.borderColor=v[3]; }catch(_){}
+  }
+  if(!CFG||!CFG.databaseURL||typeof window.firebase==='undefined'||!window.firebase.initializeApp){
+    paint('none'); console.warn('[jisu-db] Firebase SDK 또는 설정이 없어 로컬 저장 모드로 동작합니다.'); return;
+  }
+  var db=null;
+  try{ if(!firebase.apps||!firebase.apps.length) firebase.initializeApp(CFG); db=firebase.database(); }
+  catch(e){ paint('none'); console.warn('[jisu-db] 초기화 실패:',e); return; }
+  paint('wait');
+
+  var lsSet=localStorage.setItem.bind(localStorage);
+  var lsGet=localStorage.getItem.bind(localStorage);
+  var readyKey={}, dirtyKey={}, lastSent={}, suppressDepth=0, pushTimer=null, suppressTimer=null;
+
+  function userName(){ try{ return lsGet('jisu-user')||''; }catch(_){ return ''; } }
+  function todayKST(){ try{ return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }catch(_){ return ''; } }
+
+  /* ---------- 1) localStorage → DB ---------- */
+  function payloadOf(k){
+    var raw; try{ raw=lsGet(k); }catch(_){ return null; }
+    if(raw==null) return null;
+    var v; try{ v=JSON.parse(raw); }catch(_){ return null; }
+    if(k==='jisu-commands-v1'&&Array.isArray(v)) v=v.filter(function(x){ return x&&x.id!=='demo_dispatch_1'; });
+    try{ return JSON.stringify(v); }catch(_){ return null; }
+  }
+  function pushKey(k){
+    var json=payloadOf(k); if(json==null) return;
+    if(lastSent[k]===json) return;
+    lastSent[k]=json;
+    try{
+      db.ref(ROOT+'/state/'+k).set({v:json,t:firebase.database.ServerValue.TIMESTAMP,by:userName()})
+        .catch(function(e){ lastSent[k]=null; console.warn('[jisu-db] 저장 실패('+k+'):',e&&e.code); paint('off'); });
+    }catch(e){ lastSent[k]=null; }
+  }
+  function schedulePush(){
+    if(pushTimer) return;
+    pushTimer=setTimeout(function(){
+      pushTimer=null;
+      Object.keys(dirtyKey).forEach(function(k){ if(dirtyKey[k]){ dirtyKey[k]=false; pushKey(k); } });
+    },150);
+  }
+  try{
+    localStorage.setItem=function(k,v){
+      lsSet(k,v);                                   // 기존 동작은 항상 먼저 보장
+      try{
+        if(STATE_KEYS.indexOf(k)<0) return;
+        if(!readyKey[k]) return;                    // 페이지 초기화 쓰기는 원격과 충돌 방지를 위해 보류
+        dirtyKey[k]=true; schedulePush();
+      }catch(_){}
+    };
+  }catch(_){}
+
+  /* ---------- 2) DB → localStorage (다른 기기 변경 반영) ---------- */
+  function fireStorage(k,value){
+    try{
+      var ev;
+      try{ ev=new StorageEvent('storage',{key:k,oldValue:null,newValue:value,storageArea:localStorage,url:location.href}); }
+      catch(_){ ev=document.createEvent('Event'); ev.initEvent('storage',false,false); ev.key=k; ev.newValue=value; ev.storageArea=localStorage; }
+      window.dispatchEvent(ev);
+      window.dispatchEvent(new CustomEvent('jisu:remote-sync',{detail:{key:k}}));
+    }catch(e){ console.warn('[jisu-db] 화면 갱신 실패:',e); }
+  }
+  function applyRemote(k,json){
+    lastSent[k]=json;
+    suppressDepth++;
+    window.jisuSuppressAlert=true;
+    try{ lsSet(k,json); fireStorage(k,json); }
+    catch(e){ console.warn('[jisu-db] 원격 반영 실패('+k+'):',e); }
+    finally{
+      if(suppressTimer) clearTimeout(suppressTimer);
+      suppressTimer=setTimeout(function(){ suppressDepth=0; window.jisuSuppressAlert=false; },900);
+    }
+  }
+
+  STATE_KEYS.forEach(function(k){
+    var seen=false;
+    try{
+      db.ref(ROOT+'/state/'+k).on('value',function(snap){
+        var d=snap.val();
+        var remote=(d&&typeof d.v==='string')?d.v:null;
+        if(!seen){
+          seen=true;
+          if(dirtyKey[k]){ dirtyKey[k]=false; if(remote!=null) lastSent[k]=remote; pushKey(k); }
+          else if(remote==null) pushKey(k);                     // 최초 시드: 이 기기 기록을 DB로
+          else if(payloadOf(k)!==remote){ applyRemote(k,remote); }
+          else { lastSent[k]=remote; }
+          readyKey[k]=true;
+          return;
+        }
+        if(remote==null) return;
+        if(remote===lastSent[k]) return;                        // 내가 보낸 값의 메아리
+        if(payloadOf(k)===remote){ lastSent[k]=remote; return; }
+        applyRemote(k,remote);
+      },function(err){ console.warn('[jisu-db] 구독 실패('+k+'):',err&&err.code); paint('off'); });
+    }catch(e){ console.warn('[jisu-db] 구독 예외('+k+'):',e); }
+  });
+
+  /* ---------- 3) 연결 상태 ---------- */
+  try{
+    db.ref('.info/connected').on('value',function(s){ paint(s.val()===true?'on':'off'); });
+  }catch(_){}
+
+  /* ---------- 4) 사진 (24시간) 동기화 ---------- */
+  var photoMuted=0, pulled={};
+  function zoneStore(zone){ return PHOTO_DB[zone]||ZONE_STORE; }
+  function idbOpen(name,store){
+    return new Promise(function(res,rej){
+      var r=indexedDB.open(name,1);
+      r.onupgradeneeded=function(){ if(!r.result.objectStoreNames.contains(store)) r.result.createObjectStore(store,{keyPath:'id'}); };
+      r.onsuccess=function(){ res(r.result); }; r.onerror=function(){ rej(r.error); };
+    });
+  }
+  function idbAll(name,store){
+    return idbOpen(name,store).then(function(d){ return new Promise(function(res,rej){ var q=d.transaction(store,'readonly').objectStore(store).getAll(); q.onsuccess=function(){res(q.result||[]);}; q.onerror=function(){rej(q.error);}; }).then(function(v){ d.close(); return v; },function(e){ d.close(); throw e; }); });
+  }
+  function idbGet(name,store,id){
+    return idbOpen(name,store).then(function(d){ return new Promise(function(res,rej){ var q=d.transaction(store,'readonly').objectStore(store).get(String(id)); q.onsuccess=function(){res(q.result||null);}; q.onerror=function(){rej(q.error);}; }).then(function(v){ d.close(); return v; },function(e){ d.close(); throw e; }); });
+  }
+  function idbPut(name,store,rec){
+    return idbOpen(name,store).then(function(d){ return new Promise(function(res,rej){ var t=d.transaction(store,'readwrite'); t.objectStore(store).put(rec); t.oncomplete=function(){res(true);}; t.onerror=function(){rej(t.error);}; }).then(function(v){ d.close(); return v; },function(e){ d.close(); throw e; }); });
+  }
+  function idbDel(name,store,id){
+    return idbOpen(name,store).then(function(d){ return new Promise(function(res,rej){ var t=d.transaction(store,'readwrite'); t.objectStore(store).delete(String(id)); t.oncomplete=function(){res(true);}; t.onerror=function(){rej(t.error);}; }).then(function(v){ d.close(); return v; },function(e){ d.close(); throw e; }); });
+  }
+  function shrink(dataUrl,px,q){
+    return new Promise(function(res){
+      try{
+        var im=new Image();
+        im.onload=function(){
+          try{
+            var w=im.naturalWidth||px,h=im.naturalHeight||px,sc=Math.min(1,px/Math.max(w,h));
+            var c=document.createElement('canvas');
+            c.width=Math.max(1,Math.round(w*sc)); c.height=Math.max(1,Math.round(h*sc));
+            c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+            res(c.toDataURL('image/jpeg',q));
+          }catch(e){ res(dataUrl); }
+        };
+        im.onerror=function(){ res(dataUrl); };
+        im.src=dataUrl;
+      }catch(e){ res(dataUrl); }
+    });
+  }
+  function shrinkToLimit(dataUrl){
+    return shrink(dataUrl,1200,0.75).then(function(o1){
+      if(o1.length<=340000) return o1;
+      return shrink(o1,1000,0.68).then(function(o2){
+        if(o2.length<=340000) return o2;
+        return shrink(o2,820,0.6);
+      });
+    });
+  }
+  function pushPhoto(zone,rec){
+    if(!zone||!rec||typeof rec.data!=='string'||rec.data.indexOf('data:image')!==0) return;
+    var id=String(rec.id||rec.key||''); if(!id) return;
+    var stamp=Date.now();
+    shrinkToLimit(rec.data).then(function(data){
+      return db.ref(ROOT+'/photos/'+zone+'/'+id).set({id:id,zone:zone,day:rec.day||todayKST(),at:rec.at||'',name:rec.name||'',data:data,ts:stamp});
+    }).catch(function(e){ console.warn('[jisu-db] 사진 저장 실패:',e&&e.code); });
+  }
+  function removePhotoRemote(zone,id){
+    var upd={};
+    if(zone) upd[zone+'/'+id]=null;
+    else ALL_ZONES.forEach(function(z){ upd[z+'/'+id]=null; });
+    try{ db.ref(ROOT+'/photos').update(upd).catch(function(){}); }catch(_){}
+  }
+  function isPhotoStore(store){
+    try{ var n=store.transaction.db.name; return n==='jisu-photos'||n==='jisu-pitch-photos'||n==='jisu-zone-photos-v1'; }catch(_){ return false; }
+  }
+  function zoneOfStore(store,rec){
+    try{
+      var n=store.name;
+      if(n==='outbound') return 'outbound';
+      if(n==='pitch') return 'pitch';
+      if(n==='photos') return (rec&&rec.zone)||'';
+    }catch(_){}
+    return '';
+  }
+  try{
+    var P=IDBObjectStore.prototype, oPut=P.put, oDel=P.delete;
+    P.put=function(value,key){
+      var req=(arguments.length>1)?oPut.call(this,value,key):oPut.call(this,value);
+      try{
+        if(!photoMuted&&isPhotoStore(this)&&value&&typeof value.data==='string'&&value.data.indexOf('data:image')===0){
+          var z=zoneOfStore(this,value);
+          if(z&&pulled[String(value.id)]!==value.data) pushPhoto(z,value);
+        }
+      }catch(_){}
+      return req;
+    };
+    P.delete=function(key){
+      var req=oDel.apply(this,arguments);
+      try{ if(!photoMuted&&isPhotoStore(this)) removePhotoRemote(zoneOfStore(this,null),String(key)); }catch(_){}
+      return req;
+    };
+  }catch(e){ console.warn('[jisu-db] 사진 후크 실패:',e); }
+
+  async function insertPhoto(zone,p){
+    if(!p||typeof p.data!=='string'||p.data.indexOf('data:image')!==0) return;
+    if(p.ts&&Date.now()-p.ts>DAY) return;
+    var id=String(p.id||''); if(!id) return;
+    var t=zoneStore(zone);
+    var ex=null; try{ ex=await idbGet(t.db,t.store,id); }catch(_){ ex=null; }
+    if(ex&&ex.data===p.data) return;
+    var rec={id:id,day:p.day||'',at:p.at||'',name:p.name||'',data:p.data};
+    if(zone!=='outbound'&&zone!=='pitch') rec.zone=zone;
+    photoMuted++; pulled[id]=p.data;
+    try{ await idbPut(t.db,t.store,rec); }
+    catch(e){ console.warn('[jisu-db] 사진 반영 실패:',e&&e.message); }
+    finally{ photoMuted--; }
+    try{ window.dispatchEvent(new CustomEvent('jisu:photo-sync',{detail:{zone:zone,id:id}})); }catch(_){}
+  }
+  async function removePhotoLocal(zone,id){
+    var t=zoneStore(zone);
+    photoMuted++;
+    try{ await idbDel(t.db,t.store,String(id)); }catch(_){}
+    finally{ photoMuted--; }
+    try{ window.dispatchEvent(new CustomEvent('jisu:photo-sync',{detail:{zone:zone,id:String(id),removed:true}})); }catch(_){}
+  }
+  async function pullPhotos(){
+    var snap=await db.ref(ROOT+'/photos').once('value');
+    var val=snap.val()||{};
+    for(var zone in val){
+      var recs=val[zone]||{}, ids=Object.keys(recs);
+      if(!ids.length) continue;
+      var t=zoneStore(zone);
+      var local=[]; try{ local=await idbAll(t.db,t.store); }catch(_){ local=[]; }
+      var have={}; local.forEach(function(p){ have[String(p.id)]=p.data; });
+      for(var i=0;i<ids.length;i++){
+        var p=recs[ids[i]]; if(!p) continue;
+        if(p.ts&&Date.now()-p.ts>DAY) continue;
+        if(have[ids[i]]===p.data) continue;
+        await insertPhoto(zone,p);
+      }
+    }
+  }
+  async function seedLocalPhotos(){
+    var today=todayKST(), sent=0;
+    /* ① 구역 전용 저장소: 오늘 사진 중 DB에 없는 것만 올린다 (기기당 최대 15장/구역) */
+    for(var zone in ALL_ZONES){
+      var z=ALL_ZONES[zone]; if(z!=='outbound'&&z!=='pitch') continue;
+      var t=zoneStore(z); var local=[];
+      try{ local=await idbAll(t.db,t.store); }catch(_){ continue; }
+      var todays=local.filter(function(p){ return p&&p.day===today&&typeof p.data==='string'; }).slice(-15);
+      if(!todays.length) continue;
+      var remote={};
+      try{ var s=await db.ref(ROOT+'/photos/'+z).once('value'); remote=s.val()||{}; }catch(_){}
+      for(var i=0;i<todays.length;i++){
+        var p=todays[i]; if(remote[String(p.id)]) continue;
+        pushPhoto(z,p); sent++;
+      }
+    }
+    /* ② 통합 사진 저장소(jisu-zone-photos-v1): 레코드의 zone 값을 써서 올린다 */
+    try{
+      var local2=await idbAll(ZONE_STORE.db,ZONE_STORE.store);
+      var todays2=local2.filter(function(r){ return r&&r.zone&&r.day===today&&typeof r.data==='string'; }).slice(-30);
+      for(var j=0;j<todays2.length;j++){
+        var r2=todays2[j], zs='';
+        try{ var s2=await db.ref(ROOT+'/photos/'+r2.zone+'/'+String(r2.id)).once('value'); zs=s2.exists()?String(r2.id):''; }catch(_){}
+        if(zs) continue;
+        pushPhoto(r2.zone,r2); sent++;
+      }
+    }catch(_){}
+    return sent;
+  }
+  async function purgeExpired(){
+    try{
+      var snap=await db.ref(ROOT+'/photos').once('value');
+      var val=snap.val()||{}, upd={}, n=0;
+      for(var zone in val){
+        for(var id in (val[zone]||{})){
+          var p=val[zone][id];
+          if(p&&p.ts&&Date.now()-p.ts>DAY){ upd[zone+'/'+id]=null; n++; }
+        }
+      }
+      if(n) await db.ref(ROOT+'/photos').update(upd);
+    }catch(_){}
+  }
+
+  setTimeout(function(){
+    try{
+      db.ref(ROOT+'/photos').on('child_added',function(zs){
+        var zone=zs.key;
+        zs.ref.on('child_added',function(ps){ insertPhoto(zone,ps.val()); });
+        zs.ref.on('child_changed',function(ps){ insertPhoto(zone,ps.val()); });
+        zs.ref.on('child_removed',function(ps){ removePhotoLocal(zone,ps.key); });
+      });
+    }catch(e){ console.warn('[jisu-db] 사진 구독 실패:',e); }
+    pullPhotos().then(function(){ return seedLocalPhotos(); }).catch(function(e){ console.warn('[jisu-db] 사진 동기화 실패:',e&&e.message); });
+    purgeExpired();
+    setInterval(purgeExpired,10*60*1000);
+  },1500);
+
+  window.jisuDb={ root:ROOT, ref:function(p){ return db.ref(ROOT+'/'+p); }, push:pushKey, pull:pullPhotos, purge:purgeExpired, status:paint };
+  console.log('[jisu-db] 실시간 동기화 시작 · /'+ROOT);
 })();
 </script>
 </body>
