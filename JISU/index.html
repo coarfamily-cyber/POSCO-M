@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162155">
+  <meta name="jisu-build" content="202611162200">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -491,11 +491,15 @@
       position:fixed !important;top:0 !important;left:0 !important;right:0 !important;bottom:0 !important;
       width:100vw !important;height:100dvh !important;z-index:2147483647 !important;
       background:#000;display:block !important;padding:0;margin:0;overflow:hidden;
+      opacity:0;transition:opacity .18s ease;
     }
+    .ob-cam.is-open{opacity:1;}
     .ob-cam video{
       width:100%;height:100%;max-width:none;max-height:none;border-radius:0;
       background:#000;object-fit:cover;display:block;
+      opacity:0;transition:opacity .2s ease;
     }
+    .ob-cam.is-ready video{opacity:1;}
     .ob-cam .ob-actions{
       position:fixed;left:0;right:0;bottom:max(28px, env(safe-area-inset-bottom, 28px));
       display:flex;align-items:center;justify-content:center;
@@ -4861,7 +4865,19 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     }
     // camera
     let stream=null;
-    function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}$('obCam').hidden=true;}
+    function pushCamHistory(){
+      try{ if(!(history.state&&history.state.jisuCam)) history.pushState({jisuCam:true},''); }catch(_){}
+    }
+    function stopCam(fromPop){
+      const cam=$('obCam');
+      const wasOpen=cam&&!cam.hidden;
+      if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+      const v=$('obVideo'); if(v) v.srcObject=null;
+      if(cam){ cam.classList.remove('is-open','is-ready'); cam.hidden=true; }
+      if(!fromPop && wasOpen){
+        try{ if(history.state&&history.state.jisuCam) history.back(); }catch(_){}
+      }
+    }
     let lbIdx=0, lbItems=null, lbOnDel=null;
     function renderLb(){
       const items=lbItems||(root._items||[]);
@@ -4915,6 +4931,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       }
     }
     window.addEventListener('popstate',()=>{
+      const cam=$('obCam');
+      if(cam&&!cam.hidden){ stopCam(true); return; }
       const lb=$('obLightbox');
       if(lb&&lb.classList.contains('is-open')) closeLb(true);
     });
@@ -4951,11 +4969,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         else if(e.key==='ArrowRight'){ lbIdx++; renderLb(); }
       });
     }
-    $('obCamBtn').addEventListener('click',async e=>{e.stopPropagation();camSaveCb=null;
-      if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('obFile').click();return;}
-      try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:3840},height:{ideal:2160}},audio:false});$('obVideo').srcObject=stream;$('obCam').hidden=false;msg('카메라가 켜졌습니다. 셔터를 누르세요.');}
-      catch(err){msg('카메라를 쓸 수 없어 사진 선택 창을 엽니다.');$('obFile').click();}
-    });
+    $('obCamBtn').addEventListener('click',e=>{e.stopPropagation();if(window.jisuOpenCam)window.jisuOpenCam(null,()=>$('obFile').click());});
     function playShutterFx(){
       try{ if(navigator.vibrate) navigator.vibrate([35,25,20]); }catch(_){}
       try{
@@ -4984,11 +4998,23 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     window.jisuOpenCam=async function(onSave,onFallback){
       camSaveCb=typeof onSave==='function'?onSave:null;
       if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){if(onFallback)onFallback();else $('obFile').click();return;}
-      try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:3840},height:{ideal:2160}},audio:false});$('obVideo').srcObject=stream;$('obCam').hidden=false;msg('카메라가 켜졌습니다. 셔터를 누르세요.');}
-      catch(err){if(onFallback)onFallback();else{msg('카메라를 쓸 수 없어 사진 선택 창을 엽니다.');$('obFile').click();}}
+      const cam=$('obCam'), v=$('obVideo');
+      if(cam){ cam.classList.remove('is-ready'); cam.hidden=false; requestAnimationFrame(()=>cam.classList.add('is-open')); pushCamHistory(); }
+      try{
+        stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
+        if(cam && cam.hidden){ stream.getTracks().forEach(t=>t.stop()); stream=null; return; }
+        v.srcObject=stream;
+        v.onloadedmetadata=()=>{ if(cam) cam.classList.add('is-ready'); };
+        setTimeout(()=>{ if(cam && !cam.hidden) cam.classList.add('is-ready'); }, 350);
+        msg('카메라가 켜졌습니다. 셔터를 누르세요.');
+      }
+      catch(err){
+        stopCam(false);
+        if(onFallback)onFallback();else{msg('카메라를 쓸 수 없어 사진 선택 창을 엽니다.');$('obFile').click();}
+      }
     };
     $('obShot').addEventListener('click',async e=>{e.stopPropagation();const v=$('obVideo');if(!v.videoWidth){msg('카메라 준비 중입니다. 잠시 후 다시 눌러 주세요.');return;}playShutterFx();const data=toJpeg(v,v.videoWidth,v.videoHeight);if(camSaveCb)await camSaveCb(data);else await savePhoto(data);});
-    $('obCamClose').addEventListener('click',e=>{e.stopPropagation();stopCam();msg('');});
+    $('obCamClose').addEventListener('click',e=>{e.stopPropagation();stopCam(false);msg('');});
     // file / mobile camera
     $('obFile').addEventListener('change',async e=>{const files=[...e.target.files];for(const f of files){await new Promise(res=>{const img=new Image();img.onload=async()=>{await savePhoto(toJpeg(img,img.naturalWidth,img.naturalHeight));URL.revokeObjectURL(img.src);res();};img.onerror=()=>{msg('이미지를 읽지 못했습니다: '+f.name);res();};img.src=URL.createObjectURL(f);});}e.target.value='';});
     // gallery
