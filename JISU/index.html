@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162200">
+  <meta name="jisu-build" content="202611162205">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -2385,9 +2385,12 @@
     .move-runner.fl:not(.is-working){filter:drop-shadow(0 0 4px var(--mv,#fbbf24)) drop-shadow(0 1px 2px rgba(0,0,0,.7));}
   </style>
   <script>
-  /* 단위 표시 통일: "50톤" → "50 TON", "50개" → "50 EA" (등록·달력·이월·표시 모두) */
+  /* 단위 표시 통일: "50톤" → "50 TON", "576EA"/"576ea" → "576 EA", "16kg" → "16 KG" (등록·달력·이월·표시 모두) */
   (function(){
-    const norm=t=>String(t==null?'':t).replace(/(\d+(?:[.,]\d+)?)\s*톤(?![가-힣])/g,'$1 TON').replace(/(\d+(?:[.,]\d+)?)\s*개(?![가-힣])/g,'$1 EA');
+    const norm=t=>String(t==null?'':t)
+      .replace(/(\d+(?:[.,]\d+)?)\s*톤(?![가-힣])/g,'$1 TON')
+      .replace(/(\d+(?:[.,]\d+)?)\s*개(?![가-힣])/g,'$1 EA')
+      .replace(/(\d+(?:[.,]\d+)?)\s*(ton|ea|set|kg|bag|pcs|ml|mm|cm|g|l)(?![A-Za-z0-9가-힣])/gi,(_,n,u)=>n+' '+u.toUpperCase());
     window.jisuNormUnit=norm;
     ['jisu-commands-v1','jisu-schedule-v1'].forEach(k=>{ try{ const a=JSON.parse(localStorage.getItem(k)||'null'); if(!Array.isArray(a)) return; let ch=false; a.forEach(x=>{ if(x&&typeof x.text==='string'){ const n=norm(x.text); if(n!==x.text){ x.text=n; ch=true; } } }); if(ch) localStorage.setItem(k,JSON.stringify(a)); }catch(e){} });
   })();
@@ -4430,6 +4433,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         const clean = rawText.replace(OB_STRIP_RE, '').trim();
         if(clean) rawText = clean;
       }
+      if(window.jisuNormUnit) rawText = window.jisuNormUnit(rawText);
       rawText = rawText.replace(/[a-z]+/g, m => m.toUpperCase());
       let dispText = esc(rawText).replace(/(?:,\s*|\s+)(?=(?:오전|오후)\s+)/g, '<br>');
       const mv=moveOf(x);
