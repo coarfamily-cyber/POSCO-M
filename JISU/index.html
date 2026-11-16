@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162140">
+  <meta name="jisu-build" content="202611162145">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -4421,11 +4421,12 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           kindTag = '<span class="tag '+x.kind+'">'+(x.kind==='notice'?'공지':'금일작업')+'</span>';
         }
       }
-      let dispText = esc(x.text);
+      let rawText = String(x.text || '');
       if(obItem){
-        const clean = String(x.text||'').replace(OB_STRIP_RE, '').trim();
-        if(clean) dispText = esc(clean);
+        const clean = rawText.replace(OB_STRIP_RE, '').trim();
+        if(clean) rawText = clean;
       }
+      let dispText = esc(rawText).replace(/(?:,\s*|\s+)(?=(?:오전|오후)\s+)/g, '<br>');
       const mv=moveOf(x);
       const moveTag=mv?'<span class="move-tag">이동 '+esc(PLACE_LABEL[mv.from]||mv.from)+' → '+esc(PLACE_LABEL[mv.to]||mv.to)+'</span>':'';
       const tonBadgeHtml = x.tonText ? (() => {
