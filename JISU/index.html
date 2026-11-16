@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611161430">
+  <meta name="jisu-build" content="202611161800">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -1276,13 +1276,28 @@
     .expand-card .cmd-text {
       color: #0f172a !important;
       font-weight: 800 !important;
-      font-size: 14px !important;
-      line-height: 1.2 !important;
+      font-size: 16.5px !important;
+      line-height: 1.25 !important;
       min-height: 30px !important;
       display: inline-flex !important;
       align-items: center !important;
       padding-bottom: 0 !important;
       text-shadow: none !important;
+    }
+    .expand-card .work-ctrl {
+      align-items: flex-end !important;
+    }
+    .work-done-col {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+    }
+    .work-done-col .carry-sub {
+      margin-left: 0 !important;
+      font-size: 11px;
+      line-height: 1.15;
+      white-space: nowrap;
     }
     .expand-card .cmd-item .meta {
       color: #334155 !important;
@@ -2507,9 +2522,9 @@
     @media (max-width:768px){
       body:not(#z1#z2#z3#z4#z5) .expand-card .cmd-item{min-height:92px !important;padding:10px 12px !important;}
       body:not(#z1#z2#z3#z4#z5) .expand-card .cmd-item .cmd-row{flex-wrap:wrap !important;align-items:flex-end !important;gap:8px 6px !important;}
-      .expand-card .cmd-text{flex:1 1 130px !important;min-width:130px !important;min-height:30px !important;padding:0 !important;margin:0 !important;font-size:clamp(14px,3.8vw,15px) !important;line-height:1.25 !important;display:flex !important;flex-direction:column !important;align-items:flex-start !important;justify-content:center !important;gap:2px !important;overflow-wrap:break-word !important;word-break:keep-all !important;}
-      .expand-card .carry-sub{display:block !important;margin-left:0 !important;margin-top:1px !important;font-size:11px !important;line-height:1.2 !important;white-space:nowrap !important;}
-      .expand-card .work-ctrl{margin-left:auto !important;max-width:100% !important;column-gap:5px !important;}
+      .expand-card .cmd-text{flex:1 1 84px !important;min-width:84px !important;min-height:30px !important;padding:0 !important;margin:0 !important;font-size:clamp(17px,4.8vw,20px) !important;font-weight:800 !important;line-height:1.25 !important;display:flex !important;flex-direction:column !important;align-items:flex-start !important;justify-content:center !important;gap:2px !important;overflow-wrap:break-word !important;word-break:keep-all !important;}
+      .expand-card .carry-sub,.expand-card .work-done-col .carry-sub{display:block !important;margin-left:0 !important;margin-top:0 !important;font-size:10.5px !important;line-height:1.15 !important;letter-spacing:-0.02em !important;white-space:nowrap !important;}
+      .expand-card .work-ctrl{margin-left:auto !important;max-width:100% !important;column-gap:5px !important;align-items:flex-end !important;}
       .expand-card .work-done-num,.expand-card .work-unit{font-size:clamp(12px,3.3vw,13px) !important;}
       .expand-card .work-unit{min-width:0 !important;}
       .expand-card .work-done-num input{width:clamp(44px,12vw,52px) !important;height:30px !important;font-size:14px !important;}
@@ -4319,7 +4334,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       if(isWork){
         const isGoalDone = !!(x.completed || (g && x.done != null && x.done !== '' && !isNaN(Number(x.done)) && Number(x.done) === Number(g.n)));
         right='<div class="work-ctrl">'
-          +(isMove ? '<label class="work-done-num">완료 <input type="text" class="'+(isGoalDone?'is-goal-done':'is-in-progress')+'" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" enterkeyhint="done" data-cmd-progress="'+x.id+'" data-cmd-goal="'+(g?esc(g.n):'')+'" value="'+(x.done!=null?esc(x.done):'')+'" placeholder="0"'+(x.completed?' disabled':'')+'>'+'<span class="work-unit">'+(g?'/ '+esc(g.n)+(g.u?' '+esc(g.u):''):'')+'</span>'+'</label>' : '')
+          +(isMove ? '<div class="work-done-col">'+carrySub(x)+'<label class="work-done-num">완료 <input type="text" class="'+(isGoalDone?'is-goal-done':'is-in-progress')+'" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" enterkeyhint="done" data-cmd-progress="'+x.id+'" data-cmd-goal="'+(g?esc(g.n):'')+'" value="'+(x.done!=null?esc(x.done):'')+'" placeholder="0"'+(x.completed?' disabled':'')+'>'+'<span class="work-unit">'+(g?'/ '+esc(g.n)+(g.u?' '+esc(g.u):''):'')+'</span>'+'</label></div>' : '')
           +'<button type="button" class="work-complete work-progress'+(x.working&&!x.completed?' is-working':'')+'" data-cmd-working="'+x.id+'">작업중</button>'
           +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?(x.short?'부족 완료':'완료됨'):'작업완료')+'</button>'
           +'</div>';
@@ -4348,8 +4363,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         return '<div class="work-ton-badge">'+esc(x.tonText)+'</div>';
       })() : '';
       const bodyHtml = hasImg
-        ? '<div class="cmd-card-img-wrap"><button type="button" class="cmd-card-img-btn" data-cmd-img-open="'+esc(x.id)+'"><img src="'+x.img+'" alt="첨부 이미지"></button>'+tonBadgeHtml+(x.text&&x.text!=='첨부 이미지'?'<div class="cmd-card-img-cap">'+dispText+'</div>':'')+carrySub(x)+'</div>'
-        : '<div class="cmd-text">'+dispText+carrySub(x)+'</div>';
+        ? '<div class="cmd-card-img-wrap"><button type="button" class="cmd-card-img-btn" data-cmd-img-open="'+esc(x.id)+'"><img src="'+x.img+'" alt="첨부 이미지"></button>'+tonBadgeHtml+(x.text&&x.text!=='첨부 이미지'?'<div class="cmd-card-img-cap">'+dispText+'</div>':'')+(isMove?'':carrySub(x))+'</div>'
+        : '<div class="cmd-text">'+dispText+(isMove?'':carrySub(x))+'</div>';
       const metaLeft='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;">'+kindTag+moveTag+(x.target==='*'&&!hasImg?'<span class="all-tag">전체</span>':'')+carryTags(x)+'</div>';
       return '<div class="cmd-item'+(hasImg?' has-img':'')+(x.completed?' is-completed':'')+(x.review==='pending'?' is-pending':'')+(isCarryover(x)?' is-carry':'')+(x.urgent&&!x.completed?' is-urgent':'')+'"><div class="meta">'+metaLeft+'<span style="margin-left:auto;">'+(x.by?esc(x.by)+' · ':'')+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):(x.working&&x.startedAt?' · 작업중 '+esc(x.startedAt):''))+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
         +'<div class="cmd-row">'+bodyHtml+right+'</div></div>';
