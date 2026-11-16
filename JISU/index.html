@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162205">
+  <meta name="jisu-build" content="202611162210">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -3724,7 +3724,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
                   <button type="button" id="inboundSaveBtn" class="inbound-work-btn">임시저장</button>
                   <button type="button" id="inboundCompleteBtn" class="inbound-work-btn">입고완료</button>
                 </div>
-                <div id="inboundWorkStatus" class="inbound-work-status" aria-live="polite"></div>
+                <div id="inboundWorkStatus" class="inbound-work-status" aria-live="polite" hidden></div>
                 <span id="inboundSaveStatus" class="inbound-save-status" aria-live="polite"></span>
                 <button type="button" id="inboundDownloadAgain" class="inbound-download-again" hidden>완료 파일 다시 받기</button>
               </div>
@@ -7164,8 +7164,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       workStatusEl.style.color = "#60a5fa";
       if (downloadAgainBtn) downloadAgainBtn.hidden = false;
     } else {
-      workStatusEl.textContent = "대기중";
-      workStatusEl.style.color = "#94a3b8";
+      workStatusEl.textContent = "";
       if (downloadAgainBtn) downloadAgainBtn.hidden = true;
     }
 
