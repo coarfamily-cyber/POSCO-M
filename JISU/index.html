@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162230">
+  <meta name="jisu-build" content="202611162235">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -2768,39 +2768,40 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     .inbound-photo-btn:hover { background: rgba(255,255,255,.22); color: #fff; transform: translateY(-1px); }
 
     /* 3번: 달력 연동 입고 예정 목표 & 달성률 바 */
+    .inbound-title-row time { color: #334155 !important; font-weight: 800; }
     .inbound-sched-box {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.36);
+      border: 1px solid rgba(255, 255, 255, 0.48);
       border-radius: 12px;
       padding: 10px 12px;
       display: flex; flex-direction: column; gap: 6px;
     }
     .inbound-sched-head { display: flex; align-items: center; justify-content: space-between; }
-    .isb-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; color: #6ee7b7; }
-    .isb-dot { width: 7px; height: 7px; border-radius: 9999px; background: #34d399; box-shadow: 0 0 6px #34d399; }
+    .isb-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; color: #047857; }
+    .isb-dot { width: 7px; height: 7px; border-radius: 9999px; background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,.55); }
     .inbound-cal-link {
-      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22);
-      color: #f1f5f9; font-size: 10.5px; font-weight: 700; border-radius: 8px; padding: 3px 8px;
+      background: rgba(255,255,255,.58); border: 1px solid rgba(15,23,42,.16);
+      color: #0f172a; font-size: 10.5px; font-weight: 800; border-radius: 8px; padding: 3px 8px;
       cursor: pointer; transition: all .15s;
     }
-    .inbound-cal-link:hover { background: rgba(255,255,255,.22); color: #fff; }
+    .inbound-cal-link:hover { background: rgba(255,255,255,.82); color: #0f172a; }
     .isb-target-row { display: flex; align-items: baseline; justify-content: space-between; }
-    .isb-target-row b { font-size: 13.5px; font-weight: 900; color: #fff; }
-    .isb-target-row span { font-size: 12px; font-weight: 900; color: #34d399; }
-    .isb-progress-bg { height: 7px; background: rgba(255,255,255,.14); border-radius: 9999px; overflow: hidden; }
-    .isb-progress-bar { height: 100%; background: linear-gradient(90deg, #10b981, #34d399); border-radius: 9999px; transition: width .4s cubic-bezier(.2,.8,.3,1); }
-    .isb-sub-info { display: flex; justify-content: space-between; font-size: 10.5px; color: #94a3b8; }
+    .isb-target-row b { font-size: 13.5px; font-weight: 900; color: #0f172a; }
+    .isb-target-row span { font-size: 12px; font-weight: 900; color: #047857; }
+    .isb-progress-bg { height: 7px; background: rgba(15,23,42,.12); border-radius: 9999px; overflow: hidden; }
+    .isb-progress-bar { height: 100%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 9999px; transition: width .4s cubic-bezier(.2,.8,.3,1); }
+    .isb-sub-info { display: flex; justify-content: space-between; font-size: 10.5px; color: #334155; font-weight: 700; }
 
     /* 1번: 입고원료 중량 기록일지 테이블 */
     .inbound-table-section { display: flex; flex-direction: column; gap: 6px; }
     .inbound-sec-head { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
-    .inbound-sec-title { font-size: 12px; font-weight: 900; color: #e2e8f0; }
+    .inbound-sec-title { font-size: 12px; font-weight: 900; color: #0f172a; }
     .inbound-add-btn, .inb-save-row-btn {
-      background: rgba(16, 185, 129, 0.25); border: 1px solid rgba(52, 211, 153, 0.45);
-      color: #a7f3d0; font-size: 11px; font-weight: 800; border-radius: 7px; padding: 4px 8px;
+      background: rgba(16, 185, 129, 0.22); border: 1px solid rgba(5, 150, 105, 0.45);
+      color: #065f46; font-size: 11px; font-weight: 900; border-radius: 7px; padding: 4px 8px;
       cursor: pointer; transition: all .15s; white-space: nowrap;
     }
-    .inbound-add-btn:hover, .inb-save-row-btn:hover { background: rgba(16, 185, 129, 0.42); color: #fff; }
+    .inbound-add-btn:hover, .inb-save-row-btn:hover { background: rgba(16, 185, 129, 0.36); color: #022c22; }
 
     .inbound-table-wrap {
       max-height: 240px; overflow-x: clip; overflow-y: auto;
@@ -2831,12 +2832,12 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     /* 합계 요약 바 */
     .inbound-tbl-summary {
       display: flex; align-items: center; justify-content: space-between;
-      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.36); border: 1px solid rgba(255,255,255,.48);
       border-radius: 10px; padding: 7px 10px; font-size: 11px;
     }
-    .inbound-sum-item { display: flex; align-items: baseline; gap: 4px; color: #cbd5e1; }
-    .inbound-sum-item b { font-size: 13px; font-weight: 900; color: #34d399; }
-    .inbound-sum-item small { font-size: 9.5px; color: #94a3b8; }
+    .inbound-sum-item { display: flex; align-items: baseline; gap: 4px; color: #0f172a; font-weight: 800; }
+    .inbound-sum-item b { font-size: 13px; font-weight: 900; color: #047857; }
+    .inbound-sum-item small { font-size: 9.5px; color: #334155; font-weight: 700; }
 
     /* 2번: PHOTO 썸네일 그리드 */
     .inbound-photo-thumbs {
@@ -2855,12 +2856,12 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     .inbound-workflow { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
     .inbound-work-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .inbound-work-btn {
-      height: 38px; border-radius: 10px; border: 1px solid rgba(255,255,255,.22);
-      background: rgba(255,255,255,.12); color: #f8fafc; font-size: 12px; font-weight: 800;
+      height: 38px; border-radius: 10px; border: 1px solid rgba(15,23,42,.15);
+      background: rgba(255,255,255,.48); color: #0f172a; font-size: 12px; font-weight: 800;
       backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
       cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center;
     }
-    .inbound-work-btn:hover { background: rgba(255,255,255,.2); color: #fff; }
+    .inbound-work-btn:hover { background: rgba(255,255,255,.72); color: #0f172a; }
     .inbound-work-btn.is-active-work {
       background: #10b981 !important; color: #042f1d !important; font-weight: 900 !important;
       border-color: #34d399 !important; box-shadow: 0 0 14px rgba(16,185,129,.6) !important;
