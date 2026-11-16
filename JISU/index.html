@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162025">
+  <meta name="jisu-build" content="202611162030">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -3352,6 +3352,17 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       <div class="cmd-summary" id="cmdSummary"></div>
       <label>등록 내역 <span id="cmdTargetLabel">· HOME</span></label>
       <div class="cmd-list" id="cmdList"></div>
+      <!-- 상시 표시: 시스템 자동 운영 안내 -->
+      <div class="sys-info-always" id="sysInfoAlways" style="margin-top:8px;padding:9px 11px;border-radius:11px;background:rgba(15,23,42,0.72);border:1px solid rgba(125,211,252,0.22);font-size:11px;line-height:1.5;color:#cbd5e1;">
+        <div style="font-weight:800;color:#7dd3fc;margin-bottom:4px;display:flex;align-items:center;gap:5px;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:9999px;border:1px solid rgba(125,211,252,0.5);font-size:10px;font-weight:900;line-height:1;">!</span>
+          <span>시스템 자동 운영 안내</span>
+        </div>
+        <div>• <b>실시간 동기화</b>: PC ↔ 모바일 1초 이내 반영</div>
+        <div>• <b>08:00 자동 적용</b>: 달력 작업·공지 각 구역 반영</div>
+        <div>• <b>17:30 자동 엑셀</b>: 데스크탑 <code>.xlsx</code> 자동 저장</div>
+        <div>• <b>18:00 사진 정리</b>: 18시 기준 24시간 후 DB 삭제</div>
+      </div>
       <!-- 사이드바 맨 아래: 키오스크 -->
       <div class="side-tools-row side-tools-bottom" id="sideToolsBottom">
         <button type="button" id="kioskBtn" class="side-tool-btn kiosk-tool-btn" title="상황실 PC용 키오스크(전체화면) 실행 파일 받기">
