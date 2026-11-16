@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162115">
+  <meta name="jisu-build" content="202611162120">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -1115,8 +1115,9 @@
         width:38px;height:38px;border-radius:9px;
       }
       body:not(#z1#z2#z3#z4#z5) .inbound-table-wrap{
-        overflow-x:hidden !important;overflow-y:visible !important;touch-action:pan-y !important;
+        overflow:clip !important;touch-action:pan-y !important;
         overscroll-behavior:auto !important;max-height:none !important;
+        border-radius:12px !important;
       }
       body:not(#z1#z2#z3#z4#z5) #hotspot-inbound .inbound-scroll-body,
       body:not(#z1#z2#z3#z4#z5) #hotspot-pitch .pitch-scroll-body{
@@ -1130,8 +1131,8 @@
         grid-template-columns:1.4fr 0.75fr 1fr;
         gap:6px !important;
         padding:8px !important;
-        background:rgba(15,23,42,0.72) !important;
-        border-bottom:1px solid rgba(52,211,153,0.35) !important;
+        background:transparent !important;
+        border-bottom:1px solid rgba(255,255,255,0.22) !important;
       }
       body:not(#z1#z2#z3#z4#z5) .inbound-tbl tr.inb-entry-row td{
         display:block !important;
@@ -1258,9 +1259,11 @@
       padding:12px 10px !important;margin-left:0 !important;margin-right:0 !important;width:100% !important;box-sizing:border-box !important;
     }
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .inbound-scroll-body,
-    body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .pitch-scroll-body,
-    body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .inbound-table-wrap{
+    body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .pitch-scroll-body{
       overflow:visible !important;overscroll-behavior:auto !important;flex:none !important;height:auto !important;max-height:none !important;padding-right:0 !important;touch-action:pan-y !important;
+    }
+    body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .inbound-table-wrap{
+      overflow:clip !important;overscroll-behavior:auto !important;flex:none !important;height:auto !important;max-height:none !important;padding-right:0 !important;touch-action:pan-y !important;border-radius:12px !important;
     }
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-photo-sq-btn{
       right:0 !important;
