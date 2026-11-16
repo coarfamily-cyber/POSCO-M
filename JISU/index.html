@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162145">
+  <meta name="jisu-build" content="202611162150">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -3641,7 +3641,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
               <div class="inbound-head">
                 <div class="inbound-title-row" style="margin-top:0;">
                   <time id="inboundDate"></time>
-                  <input id="inboundPhotoInput" type="file" accept="image/*" capture="environment" multiple hidden />
+                  <input id="inboundPhotoInput" type="file" accept="image/*" multiple hidden />
                 </div>
               </div>
 
@@ -4426,6 +4426,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         const clean = rawText.replace(OB_STRIP_RE, '').trim();
         if(clean) rawText = clean;
       }
+      rawText = rawText.replace(/[a-z]+/g, m => m.toUpperCase());
       let dispText = esc(rawText).replace(/(?:,\s*|\s+)(?=(?:오전|오후)\s+)/g, '<br>');
       const mv=moveOf(x);
       const moveTag=mv?'<span class="move-tag">이동 '+esc(PLACE_LABEL[mv.from]||mv.from)+' → '+esc(PLACE_LABEL[mv.to]||mv.to)+'</span>':'';
@@ -6918,12 +6919,13 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   }
 
   if (photoBtn && photoInput) {
-    photoBtn.addEventListener("click", () => {
+    photoBtn.addEventListener("click", e => {
+      e.stopPropagation();
       if (window.jisuOpenCam) {
         window.jisuOpenCam(async dataUrl => {
           const photoId = "inb-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6);
           await savePhoto({ id: photoId, day: activeDay, data: dataUrl, at: new Date().toISOString() });
-          renderPhotos();
+          await renderPhotos();
         }, () => photoInput.click());
       } else {
         photoInput.click();
@@ -6933,8 +6935,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       const files = Array.from(e.target.files || []);
       if (!files.length) return;
       photoBtn.disabled = true;
-      const sp = photoBtn.querySelector("span");
-      if (sp) sp.textContent = "저장중…";
+      photoBtn.textContent = "저장중…";
       for (const file of files) {
         try {
           const dataUrl = await resizeImage(file, 2048, 2048, 0.90);
@@ -6944,8 +6945,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       }
       photoInput.value = "";
       photoBtn.disabled = false;
-      if (sp) sp.textContent = "PHOTO";
-      renderPhotos();
+      photoBtn.textContent = "PHOTO";
+      await renderPhotos();
     });
   }
 
@@ -7013,7 +7014,10 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
         at: activeDay,
         name: '입고_' + activeDay + '_' + String(p.id).slice(-4) + '.jpg'
       }));
-      if (!items.length) { alert('저장된 입고 사진이 아직 없습니다. PHOTO로 촬영해 주세요.'); return; }
+      if (!items.length) {
+        if (photoInput) photoInput.click();
+        return;
+      }
       if (window.jisuOpenGallery) {
         window.jisuOpenGallery(items, 0, async cur => {
           await deletePhoto(cur.id);
