@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611161800">
+  <meta name="jisu-build" content="202611161805">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -4302,7 +4302,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       if(x.short) s+='<span class="short-tag">부족 완료</span>';
       return s;
     }
-    function carrySub(x){ if(!x.carryCount || !isMoveWork(x)) return ''; const p=[]; if(x.origDay){const q=String(x.origDay).split('-'); p.push((+q[1])+'/'+(+q[2])+'부터');} if(x.origGoal!=null){const g=goalOf(x.text); p.push('원래 '+x.origGoal+(g&&g.u?' '+g.u:''));} return p.length?'<span class="carry-sub">'+esc(p.join(' · '))+'</span>':''; }
+    function carrySub(x){ return ''; }
     function getObItem(x){
       let tag='';
       if(x.target&&x.target.startsWith('outbound:')){ tag=x.target.slice('outbound:'.length); }
