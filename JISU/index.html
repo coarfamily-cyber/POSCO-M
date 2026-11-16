@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611161950">
+  <meta name="jisu-build" content="202611162000">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -5202,6 +5202,25 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       }finally{ btn.disabled=false; btn.innerHTML=label; }
     }
     window.jisuExportWork=exportWork;btn.addEventListener('click',()=>exportWork());
+    /* 매일 오후 5시 30분(17:30 KST) 관리자 화면에서 엑셀 자동 다운로드 (1일 1회) */
+    (function autoExcelScheduler(){
+      if(document.documentElement.classList.contains('worker-zone-only') || document.body.classList.contains('worker-zone-only')) return;
+      const AUTO_KEY='jisu-auto-excel-day';
+      async function checkAutoExcel(){
+        try{
+          const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()).map(x=>[x.type,x.value]));
+          const hh=Number(parts.hour==='24'?0:parts.hour), mm=Number(parts.minute);
+          const todayKey=parts.year+'-'+parts.month+'-'+parts.day;
+          if((hh===17 && mm>=30) || hh>=18){
+            if(localStorage.getItem(AUTO_KEY)===todayKey) return;
+            localStorage.setItem(AUTO_KEY, todayKey);
+            await exportWork({auto:true});
+          }
+        }catch(e){ console.warn('[autoExcel]', e); }
+      }
+      setTimeout(checkAutoExcel, 4000);
+      setInterval(checkAutoExcel, 30*1000);
+    })();
   })();
   </script>
   <script>
@@ -7908,6 +7927,15 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   var CFG=window.JISU_FIREBASE_CONFIG;
   var ROOT=String(window.JISU_DB_ROOT||'jisu').replace(/^\/+|\/+$/g,'');
   var DAY=24*60*60*1000;
+  /* 18시(KST) 기준 24시간 지난 사진 자동 삭제 판정 */
+  function photoCutoffMs(){
+    var kstNow=Date.now()+9*3600*1000;
+    var d=new Date(kstNow);
+    var today18Utc=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),18,0,0,0)-9*3600*1000;
+    var last18=(Date.now()>=today18Utc)?today18Utc:(today18Utc-DAY);
+    return last18-DAY;
+  }
+  function isPhotoExpired(ts){ return Boolean(ts&&ts<photoCutoffMs()); }
   var STATE_KEYS=['jisu-commands-v1','jisu-memos-v1','jisu-pitch-records-v1','jisu-inbound-records-v1','jisu-schedule-v1','jisu-schedules-v1','jisu-env-v1','jisu-env-log-v1','jisu-gemini-key'];
   var PHOTO_DB={outbound:{db:'jisu-photos',store:'outbound'},pitch:{db:'jisu-pitch-photos',store:'pitch'}};
   var ZONE_STORE={db:'jisu-zone-photos-v1',store:'photos'};
@@ -8135,7 +8163,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
 
   async function insertPhoto(zone,p){
     if(!p||typeof p.data!=='string'||p.data.indexOf('data:image')!==0) return;
-    if(p.ts&&Date.now()-p.ts>DAY) return;
+    if(isPhotoExpired(p.ts)) return;
     var id=String(p.id||''); if(!id) return;
     var t=zoneStore(zone);
     var ex=null; try{ ex=await idbGet(t.db,t.store,id); }catch(_){ ex=null; }
@@ -8168,7 +8196,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
         var have={}; local.forEach(function(p){ have[String(p.id)]=p.data; });
         for(var i=0;i<ids.length;i++){
           var p=recs[ids[i]]; if(!p) continue;
-          if(p.ts&&Date.now()-p.ts>DAY) continue;
+          if(isPhotoExpired(p.ts)) continue;
           if(have[ids[i]]===p.data) continue;
           await insertPhoto(zone,p);
         }
@@ -8214,7 +8242,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       for(var zone in val){
         for(var id in (val[zone]||{})){
           var p=val[zone][id];
-          if(p&&p.ts&&Date.now()-p.ts>DAY){ upd[zone+'/'+id]=null; n++; }
+          if(p&&isPhotoExpired(p.ts)){ upd[zone+'/'+id]=null; n++; }
         }
       }
       if(n) await db.ref(ROOT+'/photos').update(upd);
