@@ -7960,8 +7960,10 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       Object.keys(dirtyKey).forEach(function(k){ if(dirtyKey[k]){ dirtyKey[k]=false; pushKey(k); } });
     },150);
   }
+  /* 기존 localStorage.setItem 을 감싸기만 하고, 원래 동작은 항상 먼저 수행한다.
+     (iOS Safari 포함 전 브라우저에서 동작하도록 Storage 프로토타입 수준에서 감싼다) */
   try{
-    localStorage.setItem=function(k,v){
+    Storage.prototype.setItem=function(k,v){
       lsSet(k,v);                                   // 기존 동작은 항상 먼저 보장
       try{
         if(STATE_KEYS.indexOf(k)<0) return;
