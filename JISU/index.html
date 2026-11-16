@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162105">
+  <meta name="jisu-build" content="202611162110">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -2678,12 +2678,14 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     /* ==========================================================================
        입고(INBOUND) 전용 모듈 스타일: 실물 중량일지 전산화, 달력 연동, PHOTO, 엑셀
        ========================================================================== */
-    body:not(#z1#z2#z3#z4#z5) #hotspot-inbound > .expand-card {
-      width: min(480px, 94vw) !important;
-      display: flex !important;
-      flex-direction: column !important;
-      padding: 14px !important;
-      overflow: hidden !important;
+    @media (min-width: 769px) {
+      body:not(#z1#z2#z3#z4#z5):not(.worker-zone-only) #hotspot-inbound > .expand-card {
+        width: min(480px, 94vw) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        padding: 14px !important;
+        overflow: hidden !important;
+      }
     }
     #hotspot-inbound .inbound-scroll-body {
       flex: 1 1 auto;
@@ -2755,22 +2757,23 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
 
     .inbound-table-wrap {
       max-height: 240px; overflow-y: auto; overflow-x: auto;
-      border: 1px solid rgba(255,255,255,.18); border-radius: 12px; background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.26); border-radius: 12px; background: rgba(255,255,255,.18);
     }
     .inbound-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
     .inbound-tbl th {
-      position: sticky; top: 0; background: rgba(255,255,255,.10); color: #e2e8f0; font-weight: 800;
-      padding: 6px 4px; text-align: center; border-bottom: 1px solid rgba(255,255,255,.16); z-index: 2;
+      position: sticky; top: 0; background: rgba(255,255,255,.24); color: #0f172a; font-weight: 900;
+      padding: 6px 4px; text-align: center; border-bottom: 1px solid rgba(15,23,42,.12); z-index: 2;
       backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     }
-    .inbound-tbl td { padding: 5px 3px; border-bottom: 1px solid rgba(255,255,255,.08); vertical-align: middle; text-align: center; color: #f1f5f9; font-weight: 700; }
-    .inbound-tbl tr.inb-entry-row td { background: transparent; border-bottom: 1px solid rgba(255, 255, 255, 0.14); padding: 6px 3px; }
-    .inbound-tbl tr.inb-saved-row:hover td { background: rgba(255, 255, 255, 0.06); }
+    .inbound-tbl td { padding: 5px 3px; border-bottom: 1px solid rgba(255,255,255,.14); vertical-align: middle; text-align: center; color: #0f172a; font-weight: 800; }
+    .inbound-tbl tr.inb-entry-row td { background: transparent; border-bottom: 1px solid rgba(255, 255, 255, 0.22); padding: 6px 3px; }
+    .inbound-tbl tr.inb-saved-row:hover td { background: rgba(255, 255, 255, 0.14); }
     .inbound-tbl input {
-      width: 100%; box-sizing: border-box; background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.20);
-      border-radius: 8px; color: #fff; font-size: 11px; font-weight: 700; padding: 5px 6px; text-align: center;
+      width: 100%; box-sizing: border-box; background: rgba(255,255,255,.32); border: 1px solid rgba(255,255,255,.42);
+      border-radius: 8px; color: #0f172a; font-size: 11px; font-weight: 800; padding: 5px 6px; text-align: center;
     }
-    .inbound-tbl input:focus { border-color: #34d399; outline: none; background: rgba(255,255,255,.14); box-shadow: 0 0 0 1px rgba(52,211,153,.5); }
+    .inbound-tbl input::placeholder { color: rgba(15,23,42,.72); font-weight: 800; }
+    .inbound-tbl input:focus { border-color: #10b981; outline: none; background: rgba(255,255,255,.52); box-shadow: 0 0 0 1px rgba(16,185,129,.45); }
     .inbound-tbl .inb-del-btn {
       background: transparent; border: 0; color: #f87171; font-size: 13px; font-weight: 900;
       cursor: pointer; padding: 2px 4px; border-radius: 4px;
