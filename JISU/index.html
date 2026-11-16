@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162030">
+  <meta name="jisu-build" content="202611162040">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -1181,21 +1181,24 @@
     html:has(body.worker-zone-only){
       background:linear-gradient(160deg,#4b5563 0%,#334155 52%,#1e293b 100%) !important;
       height:auto !important;min-height:100dvh !important;
-      overflow-x:hidden !important;overflow-y:auto !important;
-      -webkit-overflow-scrolling:touch !important;
+      overflow-x:clip !important;overflow-y:visible !important;
+      touch-action:pan-y !important;
     }
     html.worker-zone-only body:not(#z1#z2#z3#z4#z5),
     body.worker-zone-only:not(#z1#z2#z3#z4#z5){
       background:linear-gradient(160deg,#4b5563 0%,#334155 52%,#1e293b 100%) !important;
       height:auto !important;min-height:100dvh !important;
-      overflow-x:hidden !important;overflow-y:auto !important;
-      -webkit-overflow-scrolling:touch !important;
+      overflow:visible !important;
+      touch-action:pan-y !important;
       margin:0 !important;padding:0 !important;
     }
     html.worker-zone-only main,
-    body.worker-zone-only:not(#z1#z2#z3#z4#z5) main{
+    body.worker-zone-only:not(#z1#z2#z3#z4#z5) main,
+    body.worker-zone-only:not(#z1#z2#z3#z4#z5) .cmd-layout,
+    body.worker-zone-only:not(#z1#z2#z3#z4#z5) .cmd-map-wrap{
+      display:block !important;
       margin:0 !important;padding:0 !important;width:100% !important;max-width:none !important;
-      height:auto !important;min-height:100dvh !important;overflow:visible !important;
+      height:auto !important;min-height:100dvh !important;max-height:none !important;overflow:visible !important;
     }
     html.worker-zone-only header,
     html.worker-zone-only .cmd-side,
@@ -1219,7 +1222,7 @@
       display:none !important;
     }
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .map-stage{
-      position:static !important;width:100% !important;height:auto !important;min-height:100dvh !important;
+      position:static !important;width:100% !important;max-width:none !important;height:auto !important;min-height:100dvh !important;max-height:none !important;aspect-ratio:auto !important;container-type:normal !important;
       background:transparent !important;display:block !important;
       padding:0 !important;margin:0 !important;overflow:visible !important;
     }
