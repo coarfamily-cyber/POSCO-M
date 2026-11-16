@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162240">
+  <meta name="jisu-build" content="202611162245">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -1081,7 +1081,7 @@
         max-height:88dvh !important;margin:0 !important;
         padding:14px 12px !important;border-radius:20px !important;
         z-index:220 !important;overflow-y:auto !important;-webkit-overflow-scrolling:touch;
-        touch-action:pan-y !important;
+        touch-action:pan-y !important;overscroll-behavior:contain !important;
       }
       body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-open .expand-card .mobile-card-close{
         position:absolute !important;top:8px !important;right:8px !important;z-index:30 !important;
@@ -5387,7 +5387,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     document.addEventListener('click',e=>{
       const t=e.target; if(!(t instanceof Element)) return;
       if(document.body.classList.contains('worker-zone-only')) return;
-      if(t.closest('.hotspot-wrapper, .cmd-side, #detailModal, #loginModal, #obLightbox, #obCam, #jisuQuickDropModal, #calModal, #perfModal, #carryModal, .hdr-tools, .bldg-badge, #hdrSearchBox, #hdrSearchPanel')) return;
+      if(window.__jisuBlockCloseUntil && Date.now() < window.__jisuBlockCloseUntil) return;
+      if(t.matches('input[type="file"]') || t.closest('.hotspot-wrapper, .cmd-side, #detailModal, #loginModal, #obLightbox, #obCam, #jisuQuickDropModal, #calModal, #perfModal, #carryModal, .hdr-tools, .bldg-badge, #hdrSearchBox, #hdrSearchPanel')) return;
       const open=document.querySelectorAll('.hotspot-wrapper.is-open'); if(!open.length) return;
       open.forEach(w=>w.classList.remove('is-open'));
       document.querySelectorAll('[data-production-btn],[data-warehouse-btn]').forEach(b=>{b.classList.remove('is-selected');b.setAttribute('aria-pressed','false');});
@@ -7786,7 +7787,14 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     sb.addEventListener('click',async ev=>{
       ev.stopPropagation();
       const list=await allPhotos(zone);
-      if(!list.length){ activeZone=zone; fileInp.click(); return; }
+      if(!list.length){
+        activeZone=zone;
+        window.__jisuBlockCloseUntil = Date.now() + 2500;
+        const restoreFocus = () => { window.__jisuBlockCloseUntil = Date.now() + 1200; window.removeEventListener('focus', restoreFocus); };
+        window.addEventListener('focus', restoreFocus);
+        fileInp.click();
+        return;
+      }
       if(window.jisuOpenGallery){
         window.jisuOpenGallery(list,0,async cur=>{
           await delPhoto(cur.id);
