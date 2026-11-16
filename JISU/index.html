@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611161925">
+  <meta name="jisu-build" content="202611161945">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -5610,7 +5610,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           +'1) 물류/배차 지시서 표라면 "세종2공장" 또는 "2공장" 행만 골라내고("세종1공장"·"1공장" 제외), 각 행을 반드시 "YYYY-MM-DD | 차량번호 · 수량(PLT)" 형식 한 줄씩 출력하세요. 예: 2026-11-11 | 부산96아2809 · 660KG / 16P\n'
           +'2) 일반 카톡/안내 공지 이미지라면 날짜 머리글(예: 11월15일) 아래 작업 내용을 한 줄씩 정리하세요.\n'
           +'설명이나 마크다운 기호 없이 결과 줄만 출력하세요.';
-        const models=['gemini-3.1-flash-lite-preview','gemini-2.5-flash-lite','gemini-2.5-flash'];
+        const models=['gemini-3.8-flash','gemini-3.1-flash-lite-preview','gemini-2.5-flash-lite','gemini-2.5-flash'];
         let lastErr='';
         for(const md of models){
           try{
@@ -7907,7 +7907,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   var CFG=window.JISU_FIREBASE_CONFIG;
   var ROOT=String(window.JISU_DB_ROOT||'jisu').replace(/^\/+|\/+$/g,'');
   var DAY=24*60*60*1000;
-  var STATE_KEYS=['jisu-commands-v1','jisu-memos-v1','jisu-pitch-records-v1','jisu-inbound-records-v1','jisu-schedule-v1','jisu-schedules-v1','jisu-env-v1','jisu-env-log-v1'];
+  var STATE_KEYS=['jisu-commands-v1','jisu-memos-v1','jisu-pitch-records-v1','jisu-inbound-records-v1','jisu-schedule-v1','jisu-schedules-v1','jisu-env-v1','jisu-env-log-v1','jisu-gemini-key'];
   var PHOTO_DB={outbound:{db:'jisu-photos',store:'outbound'},pitch:{db:'jisu-pitch-photos',store:'pitch'}};
   var ZONE_STORE={db:'jisu-zone-photos-v1',store:'photos'};
   var ALL_ZONES=['outbound','inbound','pitch','packaging','packaging-d','environment','warehouse','production-a','production-b','production-c','production-d','production-e','production-f','production-g','production-h'];
@@ -7940,6 +7940,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   function payloadOf(k){
     var raw; try{ raw=lsGet(k); }catch(_){ return null; }
     if(raw==null) return null;
+    if(k==='jisu-gemini-key'){ try{ return JSON.stringify(String(raw).trim()); }catch(_){ return null; } }
     var v; try{ v=JSON.parse(raw); }catch(_){ return null; }
     if(k==='jisu-commands-v1'&&Array.isArray(v)) v=v.filter(function(x){ return x&&x.id!=='demo_dispatch_1'; });
     try{ return JSON.stringify(v); }catch(_){ return null; }
@@ -7985,6 +7986,9 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   }
   function applyRemote(k,json){
     lastSent[k]=json;                       // 비교 기준은 DB 원본 값
+    if(k==='jisu-gemini-key'){
+      try{ json=String(JSON.parse(json)||'').trim(); }catch(_){ json=String(json||'').trim(); }
+    }
     /* 금일작업은 각 기기의 기본 예시(demo_dispatch_1)를 유지한 상태로 반영한다 (DB에는 올리지 않음) */
     if(k==='jisu-commands-v1'){
       try{
