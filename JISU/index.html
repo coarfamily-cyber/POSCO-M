@@ -7984,7 +7984,18 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     }catch(e){ console.warn('[jisu-db] 화면 갱신 실패:',e); }
   }
   function applyRemote(k,json){
-    lastSent[k]=json;
+    lastSent[k]=json;                       // 비교 기준은 DB 원본 값
+    /* 금일작업은 각 기기의 기본 예시(demo_dispatch_1)를 유지한 상태로 반영한다 (DB에는 올리지 않음) */
+    if(k==='jisu-commands-v1'){
+      try{
+        var arr=JSON.parse(json), cur=JSON.parse(lsGet(k)||'[]');
+        var demo=Array.isArray(cur)?cur.filter(function(x){ return x&&x.id==='demo_dispatch_1'; }):[];
+        if(Array.isArray(arr)&&demo.length){
+          arr=arr.filter(function(x){ return !(x&&x.id==='demo_dispatch_1'); });
+          json=JSON.stringify(demo.concat(arr));
+        }
+      }catch(_){}
+    }
     suppressDepth++;
     window.jisuSuppressAlert=true;
     try{ lsSet(k,json); fireStorage(k,json); }
