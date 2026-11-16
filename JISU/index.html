@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611170845">
+  <meta name="jisu-build" content="202611170850">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -7188,6 +7188,18 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     }
   }
 
+  const isMobInbound = () => document.documentElement.classList.contains("worker-zone-only") || window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || "");
+
+  function maybeAutoDownloadInboundExcel(rec) {
+    if (isMobInbound() || !rec || rec.workState !== "done" || !rec.completedAt) return;
+    const markKey = "jisu-inb-auto-xlsx-" + activeDay;
+    if (localStorage.getItem(markKey) === rec.completedAt) return;
+    localStorage.setItem(markKey, rec.completedAt);
+    exportInboundExcel().then(() => {
+      if (saveStatusEl) saveStatusEl.textContent = `모바일 입고완료 수신 · 엑셀 자동 저장됨! (${rec.completedAt})`;
+    }).catch(() => {});
+  }
+
   function updateWorkflowUI() {
     const rec = getTodayRecord();
     const st = rec.workState || "idle";
@@ -7203,7 +7215,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     } else if (st === "done") {
       workStatusEl.textContent = `✓ 입고 작업 완료 (${rec.completedAt || ""})`;
       workStatusEl.style.color = "#60a5fa";
-      if (downloadAgainBtn) downloadAgainBtn.hidden = false;
+      if (downloadAgainBtn) downloadAgainBtn.hidden = isMobInbound();
     } else {
       workStatusEl.textContent = "";
       if (downloadAgainBtn) downloadAgainBtn.hidden = true;
@@ -7252,12 +7264,12 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     saveAllRecords(all);
     updateWorkflowUI();
 
-    const isMobInbound = document.documentElement.classList.contains("worker-zone-only") || window.innerWidth <= 768;
-    if (isMobInbound) {
+    if (isMobInbound()) {
       if (saveStatusEl) saveStatusEl.textContent = `입고완료 저장됨! (${rec.completedAt})`;
       return;
     }
 
+    localStorage.setItem("jisu-inb-auto-xlsx-" + activeDay, rec.completedAt);
     completeBtn.disabled = true;
     completeBtn.textContent = "엑셀 생성중…";
     await exportInboundExcel();
@@ -7286,6 +7298,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     if (e.key === KEY || e.key === "jisu-schedule-v1") {
       renderRows();
       updateWorkflowUI();
+      if (e.key === KEY) maybeAutoDownloadInboundExcel(getTodayRecord());
     }
   });
 
