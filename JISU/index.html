@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162120">
+  <meta name="jisu-build" content="202611162130">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -1182,7 +1182,7 @@
         justify-content:center;
       }
     }
-    /* 작업자 모바일 전용 링크(?zone=outbound 등) : 바깥 배경 없이 자세히보기 카드만 화면 100% 꽉 차게 + 자연 스크롤 + 첫 프레임 깜빡임 차단 */
+    /* 작업자 모바일 전용 링크(?zone=outbound 등) : 바깥 배경 없이 자세히보기 카드만 화면 100% 꽉 차게 + 자연 스크롤 */
     html.worker-zone-only,
     html:has(body.worker-zone-only){
       background:linear-gradient(160deg,#4b5563 0%,#334155 52%,#1e293b 100%) !important;
@@ -2759,24 +2759,31 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     .inbound-add-btn:hover, .inb-save-row-btn:hover { background: rgba(16, 185, 129, 0.42); color: #fff; }
 
     .inbound-table-wrap {
-      max-height: 240px; overflow-y: auto; overflow-x: auto;
-      border: 1px solid rgba(255,255,255,.26); border-radius: 12px; background: rgba(255,255,255,.18);
+      max-height: 240px; overflow: clip;
+      border: 1px solid rgba(15,23,42,.16); border-radius: 12px;
+      background-color: #f4f1ea;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E"), linear-gradient(180deg, #f8f5ee 0%, #efebe1 100%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.75), 0 2px 8px rgba(15,23,42,.12);
     }
     .inbound-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
     .inbound-tbl th {
-      position: sticky; top: 0; background: rgba(255,255,255,.24); color: #0f172a; font-weight: 900;
-      padding: 6px 4px; text-align: center; border-bottom: 1px solid rgba(15,23,42,.12); z-index: 2;
-      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      position: sticky; top: 0; background: rgba(235,230,218,.88); color: #0f172a; font-weight: 900;
+      padding: 6px 4px; text-align: center; border-bottom: 1px solid rgba(15,23,42,.14); z-index: 2;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
     }
-    .inbound-tbl td { padding: 5px 3px; border-bottom: 1px solid rgba(255,255,255,.14); vertical-align: middle; text-align: center; color: #0f172a; font-weight: 800; }
-    .inbound-tbl tr.inb-entry-row td { background: transparent; border-bottom: 1px solid rgba(255, 255, 255, 0.22); padding: 6px 3px; }
-    .inbound-tbl tr.inb-saved-row:hover td { background: rgba(255, 255, 255, 0.14); }
+    .inbound-tbl td { padding: 5px 3px; border-bottom: 1px solid rgba(15,23,42,.10); vertical-align: middle; text-align: center; color: #0f172a; font-weight: 800; }
+    .inbound-tbl tr.inb-entry-row td { background: transparent; border-bottom: 1px solid rgba(15, 23, 42, 0.14); padding: 6px 3px; }
+    .inbound-tbl tr.inb-saved-row:hover td { background: rgba(15, 23, 42, 0.05); }
     .inbound-tbl input {
-      width: 100%; box-sizing: border-box; background: rgba(255,255,255,.32); border: 1px solid rgba(255,255,255,.42);
+      width: 100%; box-sizing: border-box; background: rgba(255,255,255,.45); border: 1px solid rgba(15,23,42,.22);
       border-radius: 8px; color: #0f172a; font-size: 11px; font-weight: 800; padding: 5px 6px; text-align: center;
     }
     .inbound-tbl input::placeholder { color: rgba(15,23,42,.72); font-weight: 800; }
-    .inbound-tbl input:focus { border-color: #10b981; outline: none; background: rgba(255,255,255,.52); box-shadow: 0 0 0 1px rgba(16,185,129,.45); }
+    .inbound-tbl input:focus { border-color: #059669; outline: none; background: rgba(255,255,255,.82); box-shadow: 0 0 0 1.5px rgba(5,150,105,.45); }
+    .inb-save-row-btn {
+      background: rgba(5, 150, 105, 0.16) !important; border: 1px solid rgba(5, 150, 105, 0.45) !important;
+      color: #065f46 !important; font-weight: 900 !important;
+    }
     .inbound-tbl .inb-del-btn {
       background: transparent; border: 0; color: #f87171; font-size: 13px; font-weight: 900;
       cursor: pointer; padding: 2px 4px; border-radius: 4px;
