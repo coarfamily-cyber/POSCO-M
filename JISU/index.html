@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162250">
+  <meta name="jisu-build" content="202611170845">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -7251,6 +7251,12 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     all[activeDay] = rec;
     saveAllRecords(all);
     updateWorkflowUI();
+
+    const isMobInbound = document.documentElement.classList.contains("worker-zone-only") || window.innerWidth <= 768;
+    if (isMobInbound) {
+      if (saveStatusEl) saveStatusEl.textContent = `입고완료 저장됨! (${rec.completedAt})`;
+      return;
+    }
 
     completeBtn.disabled = true;
     completeBtn.textContent = "엑셀 생성중…";
