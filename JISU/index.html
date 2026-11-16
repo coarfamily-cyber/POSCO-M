@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611161105">
+  <meta name="jisu-build" content="202611161120">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -2478,7 +2478,8 @@
     .cmd-item.has-img .cmd-row{align-items:flex-end !important;flex-wrap:nowrap !important;gap:6px !important;max-width:100%;}
     .expand-card .cmd-item.has-img{padding:8px 12px !important;}
     .work-right-col{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;flex-wrap:nowrap;gap:4px;flex:0 0 auto;margin-left:auto;}
-    .work-ton-badge{display:inline-flex;align-items:center;min-height:30px;padding:0 2px;margin-right:6px;border-radius:8px;background:transparent;border:none;color:#0f172a;font-size:13px;font-weight:900;letter-spacing:-.03em;white-space:nowrap;box-shadow:none;flex:0 0 auto;}
+    .work-ton-badge{display:inline-flex;align-items:center;gap:4px;min-height:30px;padding:0 2px;margin-right:6px;border-radius:8px;background:transparent;border:none;color:#0f172a;font-size:13px;font-weight:900;letter-spacing:-.03em;white-space:nowrap;box-shadow:none;flex:0 0 auto;}
+    .work-ton-badge .ton-sep{opacity:.65;}
     .cmd-side .work-ton-badge{font-size:12.5px;padding:3px 8px;color:#e2e8f0;}
     .cmd-card-img-wrap{display:flex;flex-direction:row;align-items:flex-end;gap:8px;flex-wrap:nowrap;flex:1 1 auto;min-width:0;}
     .cmd-card-img-btn{display:block;width:66px;height:44px;flex:0 0 auto;padding:0;border-radius:8px;overflow:hidden;border:none !important;outline:none !important;background:transparent !important;box-shadow:none !important;cursor:pointer;position:relative;scale:1 !important;translate:none !important;transform:none !important;transition:none !important;}
@@ -2495,17 +2496,20 @@
     .cmd-notice-banner .cmd-card-img-btn{width:124px;height:82px;margin-top:0;}
     @media (max-width:768px){
       body:not(#z1#z2#z3#z4#z5) .expand-card .cmd-item{min-height:92px !important;padding:10px 12px !important;}
-      body:not(#z1#z2#z3#z4#z5) .expand-card .cmd-item .cmd-row{flex-wrap:wrap !important;align-items:center !important;gap:8px 6px !important;}
-      .expand-card .cmd-text{flex:1 1 100% !important;min-width:0 !important;min-height:24px !important;padding-bottom:0 !important;font-size:clamp(14px,3.9vw,15.5px) !important;line-height:1.35 !important;display:flex !important;flex-wrap:wrap !important;align-items:baseline !important;gap:4px 8px !important;overflow-wrap:break-word !important;word-break:keep-all !important;}
+      body:not(#z1#z2#z3#z4#z5) .expand-card .cmd-item .cmd-row{flex-wrap:wrap !important;align-items:flex-end !important;gap:8px 6px !important;}
+      .expand-card .cmd-text{flex:1 1 110px !important;min-width:110px !important;min-height:30px !important;padding-bottom:0 !important;font-size:clamp(14px,3.8vw,15px) !important;line-height:1.25 !important;display:flex !important;flex-wrap:wrap !important;align-items:center !important;gap:2px 6px !important;overflow-wrap:break-word !important;word-break:keep-all !important;}
       .expand-card .work-ctrl{margin-left:auto !important;max-width:100% !important;column-gap:5px !important;}
       .expand-card .work-done-num,.expand-card .work-unit{font-size:clamp(12px,3.3vw,13px) !important;}
       .expand-card .work-unit{min-width:0 !important;}
       .expand-card .work-done-num input{width:clamp(44px,12vw,52px) !important;height:30px !important;font-size:14px !important;}
-      .expand-card .work-complete{font-size:clamp(11px,3.1vw,12px) !important;padding:5px clamp(8px,2.5vw,11px) !important;min-width:clamp(54px,15.5vw,68px) !important;height:30px !important;}
-      .cmd-item.has-img .cmd-row{flex-wrap:wrap !important;align-items:center !important;gap:8px 6px !important;}
-      .cmd-card-img-wrap{flex:1 1 auto !important;min-width:0 !important;align-items:center !important;gap:8px !important;}
-      .cmd-card-img-btn{width:clamp(68px,20vw,94px);height:clamp(46px,13.5vw,62px);transform:none !important;}
-      .work-ton-badge{font-size:clamp(12.5px,3.6vw,14px);min-height:28px;margin-right:0;padding:0;line-height:1.1;white-space:nowrap;}
+      .expand-card .work-complete{font-size:clamp(11px,3.1vw,12px) !important;padding:5px clamp(8px,2.4vw,11px) !important;min-width:clamp(54px,15vw,66px) !important;height:30px !important;}
+      .cmd-item.has-img .cmd-row{flex-wrap:wrap !important;align-items:flex-end !important;gap:8px 6px !important;}
+      .cmd-card-img-wrap{flex:1 1 auto !important;min-width:0 !important;align-items:flex-end !important;gap:8px !important;}
+      .cmd-card-img-btn{width:clamp(92px,26vw,120px);height:clamp(62px,17.5vw,80px);transform:none !important;}
+      .work-ton-badge{flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:2px;font-size:clamp(12.5px,3.5vw,14px);min-height:30px;margin-right:0;padding:0 0 2px;line-height:1.15;white-space:nowrap;}
+      .work-ton-badge .ton-sep{display:none;}
+      .work-ton-badge .ton-cnt{font-size:clamp(12px,3.3vw,13.5px);color:#334155;}
+      .work-ton-badge .ton-val{font-size:clamp(13px,3.6vw,14.5px);color:#0f172a;}
       .cmd-item.has-img .work-right-col{flex:0 0 auto !important;margin-left:auto !important;max-width:100% !important;}
     }
     .cmd-attach-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:6px 0 4px;}
@@ -4317,8 +4321,13 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       }
       const mv=moveOf(x);
       const moveTag=mv?'<span class="move-tag">이동 '+esc(PLACE_LABEL[mv.from]||mv.from)+' → '+esc(PLACE_LABEL[mv.to]||mv.to)+'</span>':'';
+      const tonBadgeHtml = x.tonText ? (() => {
+        const pts = String(x.tonText).split(/\s*·\s*/);
+        if(pts.length >= 2) return '<div class="work-ton-badge"><span class="ton-cnt">'+esc(pts[0])+'</span><span class="ton-sep">·</span><span class="ton-val">'+esc(pts.slice(1).join(' · '))+'</span></div>';
+        return '<div class="work-ton-badge">'+esc(x.tonText)+'</div>';
+      })() : '';
       const bodyHtml = hasImg
-        ? '<div class="cmd-card-img-wrap"><button type="button" class="cmd-card-img-btn" data-cmd-img-open="'+esc(x.id)+'"><img src="'+x.img+'" alt="첨부 이미지"></button>'+(x.tonText?'<div class="work-ton-badge">'+esc(x.tonText)+'</div>':'')+(x.text&&x.text!=='첨부 이미지'?'<div class="cmd-card-img-cap">'+dispText+'</div>':'')+carrySub(x)+'</div>'
+        ? '<div class="cmd-card-img-wrap"><button type="button" class="cmd-card-img-btn" data-cmd-img-open="'+esc(x.id)+'"><img src="'+x.img+'" alt="첨부 이미지"></button>'+tonBadgeHtml+(x.text&&x.text!=='첨부 이미지'?'<div class="cmd-card-img-cap">'+dispText+'</div>':'')+carrySub(x)+'</div>'
         : '<div class="cmd-text">'+dispText+carrySub(x)+'</div>';
       const metaLeft='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;">'+kindTag+moveTag+(x.target==='*'&&!hasImg?'<span class="all-tag">전체</span>':'')+carryTags(x)+'</div>';
       return '<div class="cmd-item'+(hasImg?' has-img':'')+(x.completed?' is-completed':'')+(x.review==='pending'?' is-pending':'')+(isCarryover(x)?' is-carry':'')+(x.urgent&&!x.completed?' is-urgent':'')+'"><div class="meta">'+metaLeft+'<span style="margin-left:auto;">'+(x.by?esc(x.by)+' · ':'')+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):(x.working&&x.startedAt?' · 작업중 '+esc(x.startedAt):''))+'</span>'+(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'')+'</div>'
