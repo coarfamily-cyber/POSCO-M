@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162135">
+  <meta name="jisu-build" content="202611162140">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -2759,7 +2759,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     .inbound-add-btn:hover, .inb-save-row-btn:hover { background: rgba(16, 185, 129, 0.42); color: #fff; }
 
     .inbound-table-wrap {
-      max-height: 240px; overflow: clip;
+      max-height: 240px; overflow-x: clip; overflow-y: auto;
       border: 1px solid rgba(255,255,255,.16); border-radius: 12px;
       background: rgba(255,255,255,.08);
     }
@@ -6864,6 +6864,11 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     const worker = (newWorkerInp && newWorkerInp.value.trim()) || localStorage.getItem("jisu-user") || "";
     if (!lot && !bag && !kg && !loc) {
       if (newLotInp) newLotInp.focus();
+      if (addBtn) {
+        const prev = addBtn.textContent;
+        addBtn.textContent = "값 입력";
+        setTimeout(() => { addBtn.textContent = prev; }, 1100);
+      }
       return;
     }
 
@@ -6875,7 +6880,15 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     saveAllRecords(all);
     renderRows();
 
-    if (newKgInp) { newKgInp.value = ""; newKgInp.focus(); }
+    if (addBtn) {
+      addBtn.textContent = "✓ 저장됨";
+      addBtn.style.background = "rgba(16, 185, 129, 0.45)";
+      setTimeout(() => {
+        addBtn.textContent = "저장";
+        addBtn.style.background = "";
+      }, 900);
+    }
+    if (newKgInp) newKgInp.value = "";
     if (newBagInp && bag && /^\d+$/.test(bag)) {
       newBagInp.value = String(parseInt(bag, 10) + 1);
     }
@@ -6976,7 +6989,6 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     if (!photoThumbs) return;
     if (!list.length) { photoThumbs.innerHTML = ""; return; }
     const esc = window.JisuCore ? window.JisuCore.esc : (s => String(s ?? ""));
-    const safeSrc = window.JisuCore ? window.JisuCore.safeImgSrc : (u => String(u || ""));
     photoThumbs.innerHTML = list.map(p => {
       const src = safeSrc(p.data);
       if (!src) return "";
