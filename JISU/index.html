@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162005">
+  <meta name="jisu-build" content="202611162010">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -5226,7 +5226,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           if((hh===17 && mm>=30) || hh>=18){
             if(localStorage.getItem(AUTO_KEY)===todayKey) return;
             localStorage.setItem(AUTO_KEY, todayKey);
-            await exportWork({auto:true});
+            await exportWork({auto:true, skipPrompt:true});
           }
         }catch(e){ console.warn('[autoExcel]', e); }
       }
