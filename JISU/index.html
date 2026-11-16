@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611162225">
+  <meta name="jisu-build" content="202611162230">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -6985,6 +6985,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     });
   }
 
+  /* 실시간 DB에서 입고 사진 내려오면 자동 갱신 */
+  try{ window.addEventListener('jisu:photo-sync',function(e){ var z=e&&e.detail&&e.detail.zone; if(!z||z==='inbound') renderPhotos(); }); }catch(_){}
   if (photoBtn && photoInput) {
     photoBtn.addEventListener("click", e => {
       e.stopPropagation();
@@ -7727,7 +7729,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
 
   let activeZone='';
   const fileInp=document.createElement('input');
-  fileInp.type='file'; fileInp.accept='image/*'; fileInp.capture='environment'; fileInp.multiple=true; fileInp.hidden=true;
+  fileInp.type='file'; fileInp.accept='image/*'; fileInp.multiple=true; fileInp.hidden=true;
   document.body.appendChild(fileInp);
 
   fileInp.addEventListener('change',async e=>{
@@ -7778,7 +7780,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
           await putPhoto({id,zone,day:kstDay(),at,name:(zone+'_'+id+'.jpg'),data});
           await refreshStack(zone);
         },()=>{ activeZone=zone; fileInp.click(); });
-      }else{ fileInp.click(); }
+      }else{ activeZone=zone; fileInp.click(); }
     });
     sb.addEventListener('click',async ev=>{
       ev.stopPropagation();
@@ -8106,7 +8108,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   }
   function isPhotoExpired(ts){ return Boolean(ts&&ts<photoCutoffMs()); }
   var STATE_KEYS=['jisu-commands-v1','jisu-memos-v1','jisu-pitch-records-v1','jisu-inbound-records-v1','jisu-schedule-v1','jisu-schedules-v1','jisu-env-v1','jisu-env-log-v1','jisu-gemini-key'];
-  var PHOTO_DB={outbound:{db:'jisu-photos',store:'outbound'},pitch:{db:'jisu-pitch-photos',store:'pitch'}};
+  var PHOTO_DB={outbound:{db:'jisu-photos',store:'outbound'},inbound:{db:'jisu-inbound-photos',store:'inbound'},pitch:{db:'jisu-pitch-photos',store:'pitch'}};
   var ZONE_STORE={db:'jisu-zone-photos-v1',store:'photos'};
   var ALL_ZONES=['outbound','inbound','pitch','packaging','packaging-d','environment','warehouse','production-a','production-b','production-c','production-d','production-e','production-f','production-g','production-h'];
 
@@ -8319,12 +8321,13 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     try{ db.ref(ROOT+'/photos').update(upd).catch(function(){}); }catch(_){}
   }
   function isPhotoStore(store){
-    try{ var n=store.transaction.db.name; return n==='jisu-photos'||n==='jisu-pitch-photos'||n==='jisu-zone-photos-v1'; }catch(_){ return false; }
+    try{ var n=store.transaction.db.name; return n==='jisu-photos'||n==='jisu-inbound-photos'||n==='jisu-pitch-photos'||n==='jisu-zone-photos-v1'; }catch(_){ return false; }
   }
   function zoneOfStore(store,rec){
     try{
       var n=store.name;
       if(n==='outbound') return 'outbound';
+      if(n==='inbound') return 'inbound';
       if(n==='pitch') return 'pitch';
       if(n==='photos') return (rec&&rec.zone)||'';
     }catch(_){}
