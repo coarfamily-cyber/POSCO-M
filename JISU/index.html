@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611161125">
+  <meta name="jisu-build" content="202611161205">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -4950,16 +4950,31 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
   (function(){
     const stage=document.getElementById('mapStage'); if(!stage) return;
     const M=10;
-    function reset(card){ ['top','bottom','maxHeight','transform','marginTop','marginBottom','width'].forEach(p=>card.style[p]=''); card.classList.remove('opens-up'); }
+    function reset(card){ ['top','bottom','left','right','maxHeight','transform','marginTop','marginBottom','width'].forEach(p=>card.style.removeProperty(p)); card.classList.remove('opens-up'); }
     function fitCard(wrap){
       const card=wrap.querySelector(':scope > .expand-card'); if(!card) return;
-      if(!wrap.classList.contains('is-open')){ card.style.maxHeight=''; return; } /* keep up/down + sideways position while it fades out (no flash) */
+      if(!wrap.classList.contains('is-open')){ reset(card); return; } /* keep up/down + sideways position while it fades out (no flash) */
+      if(window.innerWidth<=768){
+        if(document.body.classList.contains('worker-zone-only')){ reset(card); return; }
+        /* 모바일 관리자 모드: .hotspot-wrapper의 transform / #mapStage의 container-type 때문에 position:fixed 기준이 뷰포트에서 어긋나는 것을 보정해 화면 정중앙 배치 */
+        card.style.setProperty('left','0px','important');
+        card.style.setProperty('top','0px','important');
+        card.style.setProperty('right','auto','important');
+        card.style.setProperty('bottom','auto','important');
+        card.style.setProperty('transform','none','important');
+        card.style.setProperty('margin','0','important');
+        const r=card.getBoundingClientRect();
+        const targetLeft=Math.round((window.innerWidth-r.width)/2);
+        const targetTop=Math.max(10,Math.round((window.innerHeight-r.height)/2));
+        card.style.setProperty('left',(targetLeft-r.left)+'px','important');
+        card.style.setProperty('top',(targetTop-r.top)+'px','important');
+        return;
+      }
       const btn=wrap.querySelector(':scope > button, :scope > .hotspot-pill') || wrap.firstElementChild;
       const sr=stage.getBoundingClientRect(), br=btn.getBoundingClientRect();
       // width: never wider than the map
       const z=parseFloat(getComputedStyle(card).zoom)||1;
       const maxW=sr.width-2*M; card.style.width = card.offsetWidth*z>maxW ? (maxW/z)+'px' : '';
-      if(window.innerWidth<=768){ reset(card); return; }
       if(sr.height<360){ /* phone: map too small, let the card open below normally (page scroll), only keep it inside horizontally */
         card.style.top='100%'; card.style.bottom='auto'; card.style.maxHeight='none'; card.classList.remove('opens-up');
         const w0=card.offsetWidth, cx0=br.left+br.width/2; let l0=cx0-w0/2, d0=0; const vw=document.documentElement.clientWidth; if(l0<M) d0=M-l0; else if(l0+w0>vw-M) d0=(vw-M)-(l0+w0); card.style.transform='translate(calc(-50% + '+Math.round(d0)+'px), 0)'; return; }
