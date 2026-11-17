@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611180700">
+  <meta name="jisu-build" content="202611180712">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
@@ -1294,6 +1294,13 @@
       body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-cmd-wrap .cmd-in-card-h{
         padding-right:140px !important;
       }
+    }
+    /* 작업자 모바일 전용 화면(?zone=): 빈 안내 문구가 배경색과 거의 같아 보이지 않던 문제 */
+    html.worker-zone-only .cmd-empty,
+    body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .cmd-empty{
+      color:#0f172a !important;
+      font-size:12.5px !important;
+      opacity:.88 !important;
     }
     .expand-card .cmd-in-card-h span {
       background: #0284c7 !important;
