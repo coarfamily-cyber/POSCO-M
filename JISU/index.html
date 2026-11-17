@@ -6540,12 +6540,12 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     function rangeFor(sh){ const t=today(); if(mode==='week'){ const dw=(D(t).getUTCDay()+6)%7; const s=add(add(t,-dw),sh*7); return [s,add(s,6)]; }
       let y=+t.slice(0,4), m=+t.slice(5,7)-1+sh; y+=Math.floor(m/12); m=((m%12)+12)%12; const s=y+'-'+String(m+1).padStart(2,'0')+'-01'; const e=kst(new Date(Date.UTC(y,m+1,0,3))); return [s,e]; }
     function dataFor(sh){ const [s,e]=rangeFor(sh), days=[]; for(let k=s;k<=e;k=add(k,1)) days.push(k);
-      const work=load(CK).filter(x=>x.kind!=='notice'&&x.id!=='demo_dispatch_1'&&x.review!=='moved'&&!x.ended&&dayOf(x)>=s&&dayOf(x)<=e), memos=load(MK).filter(x=>dayOf(x)>=s&&dayOf(x)<=e);
+      const work=load(CK).filter(x=>x.kind!=='notice'&&x.id!=='demo_dispatch_1'&&x.review!=='moved'&&!x.ended&&dayOf(x)>=s&&dayOf(x)<=e&&(x.closed||dayOf(x)<today())), memos=load(MK).filter(x=>dayOf(x)>=s&&dayOf(x)<=e);
       const units={}; const dayDetail={};
       const addDayZone=(d,z,u,amt)=>{ if(!dayDetail[d]) dayDetail[d]={}; if(!dayDetail[d][z]) dayDetail[d][z]={}; dayDetail[d][z][u]=(dayDetail[d][z][u]||0)+amt; };
       work.forEach(x=>{ const g=goal(x.text); if(!g) return; const u=units[g.u]||(units[g.u]={goal:0,done:0,byDay:{}}); if(!(x.carried&&!x.short)) u.goal+=g.n; const a=doneAmt(x,g); u.done+=a; const d=dayOf(x); u.byDay[d]=(u.byDay[d]||0)+a; if(a>0) addDayZone(d,x.target,g.u,a); });
       const zones={}; const Z=t=>zones[t]||(zones[t]={n:0,done:0,carry:0,memo:0}); work.forEach(x=>{ const z=Z(x.target); z.n++; if(x.completed) z.done++; if(x.carryCount&&x.carryFrom) z.carry++; }); memos.forEach(m=>{ Z(m.target).memo++; });
-      try{ const ir=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}'); Object.keys(ir).forEach(d=>{ if(d<s||d>e) return; const r=ir[d]; if(!r) return; const rows=[...(r.archivedRows||[]),...(r.rows||[])]; if(!rows.length&&(!r.workState||r.workState==='idle')) return; const ton=rows.reduce((sum,x)=>sum+(parseFloat(x.kg)||0),0)/1000; if(ton>0){ const u=units['TON']||(units['TON']={goal:0,done:0,byDay:{}}); u.done+=ton; u.byDay[d]=(u.byDay[d]||0)+ton; addDayZone(d,'inbound','TON',ton); } if(rows.length){ const u=units['BAG']||(units['BAG']={goal:0,done:0,byDay:{}}); u.done+=rows.length; u.byDay[d]=(u.byDay[d]||0)+rows.length; addDayZone(d,'inbound','BAG',rows.length); } const z=Z('inbound'); z.n++; if(r.workState==='done'||(r.archivedRows&&r.archivedRows.length)) z.done++; }); }catch(_){}
+      try{ const ir=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}'); Object.keys(ir).forEach(d=>{ if(d<s||d>e) return; const r=ir[d]; if(!r) return; const rows=r.archivedRows||[]; if(!rows.length) return; const ton=rows.reduce((sum,x)=>sum+(parseFloat(x.kg)||0),0)/1000; if(ton>0){ const u=units['TON']||(units['TON']={goal:0,done:0,byDay:{}}); u.done+=ton; u.byDay[d]=(u.byDay[d]||0)+ton; addDayZone(d,'inbound','TON',ton); } if(rows.length){ const u=units['BAG']||(units['BAG']={goal:0,done:0,byDay:{}}); u.done+=rows.length; u.byDay[d]=(u.byDay[d]||0)+rows.length; addDayZone(d,'inbound','BAG',rows.length); } const z=Z('inbound'); z.n++; z.done++; }); }catch(_){}
       try{ const pr=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}'); Object.keys(pr).forEach(d=>{ if(d<s||d>e) return; const r=pr[d]; if(!r) return; const g=(parseFloat(r.grind1)||0)+(parseFloat(r.grind2)||0); if(!g&&(!r.workState||r.workState==='idle')) return; if(g>0){ const u=units['BAG']||(units['BAG']={goal:0,done:0,byDay:{}}); u.done+=g; u.byDay[d]=(u.byDay[d]||0)+g; addDayZone(d,'pitch','BAG',g); } const z=Z('pitch'); z.n++; if(r.workState==='done') z.done++; }); }catch(_){}
       let envDone=0; try{ envDone=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]').filter(x=>x.day>=s&&x.day<=e).length; }catch(_){}
       return {s,e,days,work,memos,units,zones,dayDetail,envDone,done:work.filter(x=>x.completed).length,carry:work.filter(x=>x.carryCount&&x.carryFrom).length}; }
@@ -7283,10 +7283,10 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   const isMobInbound = () => document.documentElement.classList.contains("worker-zone-only") || window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || "");
 
   function maybeAutoDownloadInboundExcel(rec) {
-    if (isMobInbound() || !rec || rec.workState !== "done" || !rec.completedAt) return;
-    const markKey = "jisu-inb-auto-xlsx-" + activeDay;
-    if (localStorage.getItem(markKey) === rec.completedAt) return;
-    localStorage.setItem(markKey, rec.completedAt);
+    if (isMobInbound() || !rec || !Array.isArray(rec.archivedRows) || !rec.archivedRows.length || !rec.shiftKey) return;
+    const markKey = "jisu-inb-auto-xlsx-" + rec.shiftKey;
+    if (localStorage.getItem(markKey) === String(rec.archivedRows.length)) return;
+    localStorage.setItem(markKey, String(rec.archivedRows.length));
     exportInboundExcel().then(() => {
       if (saveStatusEl) saveStatusEl.textContent = `모바일 입고완료 수신 · 엑셀 자동 저장됨! (${rec.completedAt})`;
     }).catch(() => {});
