@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611171235">
+  <meta name="jisu-build" content="202611171245">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -823,6 +823,12 @@
       content: none !important;
     }
     body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-open .expand-card {
+      max-height: min(72vh, calc(100dvh - 100px)) !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y !important;
+      overscroll-behavior: contain !important;
       transition: max-height .45s cubic-bezier(.2,.9,.2,1), opacity .28s ease, transform .45s cubic-bezier(.2,.9,.2,1.15), margin-top .3s ease !important;
     }
 
