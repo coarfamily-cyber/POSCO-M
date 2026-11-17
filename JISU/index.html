@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611171020">
+  <meta name="jisu-build" content="202611171025">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -8265,7 +8265,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       window.dispatchEvent(new CustomEvent('jisu:remote-sync',{detail:{key:k}}));
     }catch(e){ console.warn('[jisu-db] 화면 갱신 실패:',e); }
   }
-  function applyRemote(k,json){
+  function applyRemote(k,json,suppressAlert){
     lastSent[k]=json;                       // 비교 기준은 DB 원본 값
     if(k==='jisu-gemini-key'){
       try{ json=String(JSON.parse(json)||'').trim(); }catch(_){ json=String(json||'').trim(); }
@@ -8282,12 +8282,17 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       }catch(_){}
     }
     suppressDepth++;
-    window.jisuSuppressAlert=true;
+    if(suppressAlert===false){ if(suppressTimer) clearTimeout(suppressTimer); window.jisuSuppressAlert=false; }
+    else { window.jisuSuppressAlert=true; }
     try{ lsSet(k,json); fireStorage(k,json); }
     catch(e){ console.warn('[jisu-db] 원격 반영 실패('+k+'):',e); }
     finally{
-      if(suppressTimer) clearTimeout(suppressTimer);
-      suppressTimer=setTimeout(function(){ suppressDepth=0; window.jisuSuppressAlert=false; },900);
+      if(suppressAlert!==false){
+        if(suppressTimer) clearTimeout(suppressTimer);
+        suppressTimer=setTimeout(function(){ suppressDepth=0; window.jisuSuppressAlert=false; },900);
+      }else{
+        suppressDepth=0; window.jisuSuppressAlert=false;
+      }
     }
   }
 
@@ -8301,7 +8306,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
           seen=true;
           if(dirtyKey[k]){ dirtyKey[k]=false; if(remote!=null) lastSent[k]=remote; pushKey(k); }
           else if(remote==null) pushKey(k);                     // 최초 시드: 이 기기 기록을 DB로
-          else if(payloadOf(k)!==remote){ applyRemote(k,remote); }
+          else if(payloadOf(k)!==remote){ applyRemote(k,remote,true); }
           else { lastSent[k]=remote; }
           readyKey[k]=true;
           return;
@@ -8309,7 +8314,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
         if(remote==null) return;
         if(remote===lastSent[k]) return;                        // 내가 보낸 값의 메아리
         if(payloadOf(k)===remote){ lastSent[k]=remote; return; }
-        applyRemote(k,remote);
+        applyRemote(k,remote,false);
       },function(err){ console.warn('[jisu-db] 구독 실패('+k+'):',err&&err.code); paint('off'); });
     }catch(e){ console.warn('[jisu-db] 구독 예외('+k+'):',e); }
   });
