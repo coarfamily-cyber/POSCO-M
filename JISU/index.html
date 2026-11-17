@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611180640">
+  <meta name="jisu-build" content="202611180730">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
+  <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
+  try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
+    Object.keys(ob).forEach(function(k){ m['outbound:'+k]='출고 · '+ob[k]; }); Object.keys(ib).forEach(function(k){ m['inbound:'+k]='입고 · '+ib[k]; }); return m; })(); }catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -5423,6 +5426,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const kstToday=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
     const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
     const NAMES={}; [...document.querySelectorAll('#cmdTarget option')].forEach(o=>{ if(o.value) NAMES[o.value]=o.textContent; }); Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
+    try{ Object.assign(NAMES, window.JISU_SUB_LABELS||{}); }catch(_){}
     const ALIAS=[]; Object.keys(NAMES).forEach(k=>{ const n=NAMES[k]; ALIAS.push([n,k]); ALIAS.push([n.replace(/[()\s]/g,''),k]); });
     ALIAS.push(['D동포장','packaging-d'],['포장D','packaging-d'],['D포장','packaging-d']); ALIAS.sort((a,b)=>b[0].length-a[0].length);
     function parseLine(line){
@@ -6212,6 +6216,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
     const me=()=>{try{return localStorage.getItem('jisu-user')||''}catch(e){return ''}};
     const NAMES={}; [...document.querySelectorAll('#cmdTarget option')].forEach(o=>{ if(o.value) NAMES[o.value]=o.textContent; }); Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
+    try{ Object.assign(NAMES, window.JISU_SUB_LABELS||{}); }catch(_){}
     function dayOf(rec){ if(rec.day) return rec.day; const m=String(rec.at||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); if(!m) return rec.sched||'';
       const t=kstToday(), ty=+t.slice(0,4); let k=ty+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); if(k>t) k=(ty-1)+k.slice(4); return k; }
     const RE_END=/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/, RE_ANY=/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/;
@@ -6472,6 +6477,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(e){return []}};
     const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const NAMES={}; [...document.querySelectorAll('#cmdTarget option')].forEach(o=>{ if(o.value) NAMES[o.value]=o.textContent; }); Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
+    try{ Object.assign(NAMES, window.JISU_SUB_LABELS||{}); }catch(_){}
     const kst=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
     const today=()=>kst(new Date()), D=k=>new Date(k+'T12:00:00+09:00'), add=(k,n)=>kst(new Date(D(k).getTime()+n*864e5));
     function dayOf(r){ if(r.day) return r.day; const m=String(r.at||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); if(!m) return r.sched||''; const t=today(), y=+t.slice(0,4); let k=y+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); if(k>t) k=(y-1)+k.slice(4); return k; }
@@ -8395,7 +8401,15 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
 
   /* ---------- 3) 연결 상태 ---------- */
   try{
-    db.ref('.info/connected').on('value',function(s){ paint(s.val()===true?'on':'off'); });
+    /* 첫 접속 직후에는 잠시 '연결중'으로 두고, 8초 동안 계속 끊겨 있을 때만 '오프라인'으로 표시 */
+    var everConnected=false, offTimer=null;
+    db.ref('.info/connected').on('value',function(s){
+      var on=s.val()===true;
+      if(on){ everConnected=true; if(offTimer){ clearTimeout(offTimer); offTimer=null; } paint('on'); return; }
+      if(everConnected){ paint('off'); return; }
+      if(offTimer) return;
+      offTimer=setTimeout(function(){ offTimer=null; if(!everConnected) paint('off'); },8000);
+    });
   }catch(_){}
 
   /* ---------- 4) 사진 (24시간) 동기화 ---------- */
