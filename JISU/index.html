@@ -5329,11 +5329,32 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         const ibRaw=await readStore('jisu-inbound-photos','inbound');
         const ptRaw=await readStore('jisu-pitch-photos','pitch');
         const znRaw=await readStore('jisu-zone-photos-v1','photos');
-        let photos=[]
+        let dbTodayPhotos=[];
+        try{
+          const r=await fetch('https://posco-m-jisu-default-rtdb.asia-southeast1.firebasedatabase.app/jisu/photos.json');
+          if(r.ok){
+            const allP=await r.json()||{};
+            const zMap={outbound:'출고',inbound:'입고',pitch:'피치'};
+            Object.keys(allP).forEach(z=>{
+              const recs=allP[z]||{};
+              Object.keys(recs).forEach(id=>{
+                const p=recs[id];
+                if(p&&isTodayPhoto(p)&&isImgData(p.data)){
+                  dbTodayPhotos.push({...p,id:p.id||id,kind:zMap[z]||NAMES[z]||z,name:p.name||((zMap[z]||NAMES[z]||z)+'_'+(p.id||id)+'.jpg')});
+                }
+              });
+            });
+          }
+        }catch(_){}
+        const photoById=new Map();
+        []
           .concat(obRaw.filter(p=>isTodayPhoto(p)&&isImgData(p.data)).map(p=>({...p,kind:'출고'})))
           .concat(ibRaw.filter(p=>isTodayPhoto(p)&&isImgData(p.data)).map(p=>({...p,kind:'입고',name:p.name||('입고_'+(p.id||'')+'.jpg')})))
           .concat(ptRaw.filter(p=>isTodayPhoto(p)&&isImgData(p.data)).map(p=>({...p,kind:'피치'})))
-          .concat(znRaw.filter(p=>isTodayPhoto(p)&&isImgData(p.data)).map(p=>({...p,kind:NAMES[p.zone]||p.zone||'현장',name:p.name||((NAMES[p.zone]||p.zone||'현장')+'_'+(p.id||'')+'.jpg')})));
+          .concat(znRaw.filter(p=>isTodayPhoto(p)&&isImgData(p.data)).map(p=>({...p,kind:NAMES[p.zone]||p.zone||'현장',name:p.name||((NAMES[p.zone]||p.zone||'현장')+'_'+(p.id||'')+'.jpg')})))
+          .concat(dbTodayPhotos)
+          .forEach(p=>{ if(p&&p.id) photoById.set(String(p.id), p); });
+        let photos=[...photoById.values()];
         const archivedPhotos=new Map();pitchCompleted.forEach(r=>(r.photos||[]).forEach(p=>{if(isImgData(p.data))archivedPhotos.set(p.id,{...p,kind:'피치 완료'});}));photos=photos.concat([...archivedPhotos.values()]);
         for(let i=0;i<photos.length;i++){photos[i].data=await toJpegData(photos[i].data);}
         photos.sort((p,q)=>String(p.id).localeCompare(String(q.id)));const PH=photos.map((p,i)=>[i+1,p.kind||'출고',p.at||'',p.name||'','']);
