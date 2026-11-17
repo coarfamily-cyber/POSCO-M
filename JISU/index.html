@@ -8635,12 +8635,20 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     try{
       var snap=await db.ref(ROOT+'/photos').once('value');
       var val=snap.val()||{};
-      for(var zone in val){
+      for(var zi=0;zi<ALL_ZONES.length;zi++){
+        var zone=ALL_ZONES[zi];
         var recs=val[zone]||{}, ids=Object.keys(recs);
-        if(!ids.length) continue;
         var t=zoneStore(zone);
         var local=[]; try{ local=await idbAll(t.db,t.store); }catch(_){ local=[]; }
-        var have={}; local.forEach(function(p){ have[String(p.id)]=p.data; });
+        var have={};
+        for(var li=0;li<local.length;li++){
+          var lp=local[li]; if(!lp) continue;
+          var lid=String(lp.id);
+          if(lp.zone&&lp.zone!==zone) continue;
+          if(lid==='demo1'||lid==='demo2'){ have[lid]=lp.data; continue; }
+          if(!recs[lid]||isPhotoExpired(recs[lid].ts)){ await removePhotoLocal(zone,lid); continue; }
+          have[lid]=lp.data;
+        }
         for(var i=0;i<ids.length;i++){
           var p=recs[ids[i]]; if(!p) continue;
           if(isPhotoExpired(p.ts)) continue;
