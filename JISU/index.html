@@ -3382,10 +3382,11 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         <option value="packaging-d">포장(D동)</option>
         <option value="pitch">피치</option>
         <option value="environment">환경</option>
-        <option value="A">A동</option>
-        <option value="B">B동</option>
-        <option value="C">C동</option>
-        <option value="D">D동</option>
+        <option value="1">1동</option>
+        <option value="2">2동</option>
+        <option value="3">3동</option>
+        <option value="4">4동</option>
+        <option value="W">창고</option>
       </select>
       <!-- 출고 선택 시 표시되는 출하 목록 선택 바 -->
       <div class="ob-sub-selector" id="obSubSelector" style="display:none;">
@@ -3445,8 +3446,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         <button type="button" id="cmdImgClear" class="cmd-attach-clear" aria-label="사진 지우기">✕</button>
       </div>
       <div class="cmd-move" id="cmdMove">
-        <span class="cmd-move-h">이동작업 <small>(선택 · 글에 "A동→C동" 쓰면 자동)</small></span>
-        <div class="cmd-move-row"><select id="cmdFrom" aria-label="출발"><option value="">선택 안 함</option><option value="A">A동</option><option value="B">B동</option><option value="C">C동</option><option value="D">D동</option><option value="outbound">출고</option><option value="inbound">입고</option><option value="packaging">포장</option><option value="packaging-d">포장(D동)</option><option value="pitch">피치</option><option value="environment">환경</option><option value="production-a">생산A</option><option value="production-b">생산B</option><option value="production-c">생산C</option><option value="production-d">생산D</option><option value="production-e">생산E</option><option value="production-f">생산F</option><option value="production-g">생산G</option><option value="production-h">생산H</option></select><span class="cmd-move-arrow">→</span><select id="cmdTo" aria-label="도착"><option value="">선택 안 함</option><option value="A">A동</option><option value="B">B동</option><option value="C">C동</option><option value="D">D동</option><option value="outbound">출고</option><option value="inbound">입고</option><option value="packaging">포장</option><option value="packaging-d">포장(D동)</option><option value="pitch">피치</option><option value="environment">환경</option><option value="production-a">생산A</option><option value="production-b">생산B</option><option value="production-c">생산C</option><option value="production-d">생산D</option><option value="production-e">생산E</option><option value="production-f">생산F</option><option value="production-g">생산G</option><option value="production-h">생산H</option></select></div>
+        <span class="cmd-move-h">이동작업 <small>(선택 · 글에 "1동→2동" 쓰면 자동)</small></span>
+        <div class="cmd-move-row"><select id="cmdFrom" aria-label="출발"><option value="">선택 안 함</option><option value="A">1동</option><option value="C">2동</option><option value="D">3동</option><option value="4">4동</option><option value="W">창고</option><option value="outbound">출고</option><option value="inbound">입고</option><option value="packaging">포장</option><option value="packaging-d">포장(3동)</option><option value="pitch">피치</option><option value="environment">환경</option><option value="production-a">생산A</option><option value="production-b">생산B</option><option value="production-c">생산C</option><option value="production-d">생산D</option><option value="production-e">생산E</option><option value="production-f">생산F</option><option value="production-g">생산G</option><option value="production-h">생산H</option></select><span class="cmd-move-arrow">→</span><select id="cmdTo" aria-label="도착"><option value="">선택 안 함</option><option value="A">1동</option><option value="C">2동</option><option value="D">3동</option><option value="4">4동</option><option value="W">창고</option><option value="outbound">출고</option><option value="inbound">입고</option><option value="packaging">포장</option><option value="packaging-d">포장(3동)</option><option value="pitch">피치</option><option value="environment">환경</option><option value="production-a">생산A</option><option value="production-b">생산B</option><option value="production-c">생산C</option><option value="production-d">생산D</option><option value="production-e">생산E</option><option value="production-f">생산F</option><option value="production-g">생산G</option><option value="production-h">생산H</option></select></div>
       </div>
       <button type="button" class="cmd-submit" id="cmdSubmit">금일작업 내용 등록</button>
       <div class="cmd-summary" id="cmdSummary"></div>
@@ -3464,15 +3465,18 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     <div class="map-stage" id="mapStage">
       <img src="./assets/plant-map.jpg" alt="POSCO M 3D 공장 조감도" class="map-bg" />
 
-      <!-- Building Badges A ~ G (Clickable to inspect building status) -->
-      <button type="button" class="bldg-badge" style="left: 14.6%; top: 68%;" data-bldg="A" title="A동 상태 보기">
-        A
+      <!-- Building Badges: 1동, 2동, 3동, 4동, 창고 -->
+      <button type="button" class="bldg-badge" style="left: 14.6%; top: 68%;" data-bldg="A" title="1동 상태 보기">
+        1동
       </button>
-      <button type="button" class="bldg-badge" style="left: 28.4%; top: 68%;" data-bldg="B" title="B동 상태 보기">
-        B
+      <button type="button" class="bldg-badge" style="left: 17.5%; top: 28%;" data-bldg="4" title="4동 상태 보기">
+        4동
       </button>
-      <button type="button" class="bldg-badge" style="left: 69.9%; top: 30%;" data-bldg="C" title="C동 상태 보기">
-        C
+      <button type="button" class="bldg-badge" style="left: 74.5%; top: 5.5%;" data-bldg="W" title="창고 상태 보기">
+        창고
+      </button>
+      <button type="button" class="bldg-badge" style="left: 69.9%; top: 30%;" data-bldg="C" title="2동 상태 보기">
+        2동
       </button>
       <!-- Production buttons placed at their respective factory lines -->
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-a" style="left: 66.6%; top: 46%;">
@@ -3603,8 +3607,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <div class="cmd-slot" data-cmd-slot="production-h"></div>
         </div>
       </div>
-      <button type="button" class="bldg-badge" style="left: 70%; top: 71.5%;" data-bldg="D" title="D동 상태 보기">
-        D
+      <button type="button" class="bldg-badge" style="left: 70%; top: 71.5%;" data-bldg="D" title="3동 상태 보기">
+        3동
       </button>
 
       <!-- 환경 (A동 옆) -->
@@ -3928,10 +3932,11 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
             <option value="production-f">생산F</option>
             <option value="production-g">생산G</option>
             <option value="production-h">생산H</option>
-            <option value="A">A동</option>
-            <option value="B">B동</option>
-            <option value="C">C동</option>
-            <option value="D">D동</option>
+            <option value="A">1동</option>
+            <option value="C">2동</option>
+            <option value="D">3동</option>
+            <option value="4">4동</option>
+            <option value="W">창고</option>
           </select>
         </div>
         <div class="cal-hint" style="margin-bottom:4px;">
@@ -4092,10 +4097,11 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     };
 
     const BUILDING_DETAILS = {
-      A: { title: 'A동 (주 생산 1동)', desc: '대형 주력 생산 설비 및 태양광 루프탑 발전 가동 중', rate: '97.2%', temp: '24.1°C', power: '4.8 MW' },
-      B: { title: 'B동 (전처리 및 물류 허브동)', desc: 'A동 연계 브릿지 및 입·출고 완충 물류 자동화 라인', rate: '95.8%', temp: '22.8°C', power: '2.1 MW' },
-      C: { title: 'C동 (생산동)', desc: '포장·피치 공정 및 생산 A~D 라인 위치', rate: '-', temp: '-', power: '-' },
-      D: { title: 'D동 (주 생산 2동)', desc: '고효율 모듈/소재 열처리 및 대량 생산 라인', rate: '96.5%', temp: '24.7°C', power: '3.2 MW' },
+      A: { title: '1동 (주 생산 1동)', desc: '대형 주력 생산 설비 및 태양광 루프탑 발전 가동 중', rate: '97.2%', temp: '24.1°C', power: '4.8 MW' },
+      C: { title: '2동 (생산동)', desc: '포장·피치 공정 및 생산 A~D 라인 위치', rate: '-', temp: '-', power: '-' },
+      D: { title: '3동 (주 생산 2동)', desc: '고효율 모듈/소재 열처리 및 대량 생산 라인', rate: '96.5%', temp: '24.7°C', power: '3.2 MW' },
+      '4': { title: '4동', desc: '1동 상단 보조 생산·설비동', rate: '-', temp: '-', power: '-' },
+      W: { title: '창고', desc: '2동 상단 우측 물류 창고동', rate: '-', temp: '-', power: '-' },
       E: { title: 'E동 (유틸리티 1동)', desc: '공업용수 처리 및 보조 공조 설비 가동', rate: '99.0%', temp: '21.0°C', power: '0.2 MW' },
       F: { title: 'F동 (유틸리티 2동)', desc: '압축공기·가스 공급 및 환경 설비 가동', rate: '98.4%', temp: '21.5°C', power: '0.2 MW' },
       G: { title: 'G동 (통합 유틸리티·냉각타워동)', desc: '대형 쿨링타워 및 수전·변전 전력 제어 설비', rate: '99.5%', temp: '20.4°C', power: '0.5 MW' }
@@ -4311,7 +4317,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
   <script>
   (function(){
     const KEY='jisu-commands-v1';
-    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","environment":"환경","A":"A동","B":"B동","C":"C동","D":"D동",
+    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","environment":"환경","A":"1동","B":"B동","C":"2동","D":"3동","1":"1동","2":"2동","3":"3동","4":"4동","W":"창고",
       "outbound:RAS-2":"출고 · RAS-2","outbound:L1":"출고 · L1","outbound:CP3K":"출고 · CP3K","outbound:C3B":"출고 · C3B","outbound:연구요청":"출고 · 연구요청","outbound:분진상차":"출고 · 분진상차","outbound:내화물상차":"출고 · 내화물상차","outbound:폐파레트":"출고 · 폐파레트","outbound:2공장→1공장":"출고 · 공장간이송(2공장→1공장)","outbound:1공장→2공장":"출고 · 공장간이송(1공장→2공장)","inbound:SH":"입고 · SH","inbound:HH":"입고 · HH","inbound:16kg 파렛트":"입고 · 16kg 파렛트","inbound:알루미늄 파우치백":"입고 · 알루미늄 파우치백","inbound:사각박스":"입고 · 사각박스","inbound:분진상차":"입고 · 분진상차","inbound:내화물상차":"입고 · 내화물상차","inbound:폐파레트":"입고 · 폐파레트","inbound:2공장→1공장":"입고 · 공장간이송(2공장→1공장)","inbound:1공장→2공장":"입고 · 공장간이송(1공장→2공장)"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     let kind='instruction';
     const sel=document.getElementById('cmdTarget'), text=document.getElementById('cmdText'), submit=document.getElementById('cmdSubmit'), list=document.getElementById('cmdList'), label=document.getElementById('cmdTargetLabel');
@@ -4599,10 +4605,10 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const liveNum=(liveVal!==null&&liveVal!=='')?Number(liveVal):null;
       update(id,it=>{if(liveNum!==null&&!isNaN(liveNum))it.done=liveNum;if(it.completed){it.completed=false;it.completedAt=null;if(it.short){delete it.short;if(it.review==='pending'&&!it.carryFrom)delete it.review;}if('doneBefore' in it){it.done=it.doneBefore;delete it.doneBefore;}}else{const g=isMoveWork(it)?goalOf(it.text):null;it.completed=true;it.working=false;it.completedAt=nowStr();it.doneBefore=(it.done==null?null:it.done);if(g){const goal=Number(g.n);const cur=Number(it.done);if(it.done!=null&&it.done!==''&&!isNaN(cur)&&cur<goal){it.short=true;it.review='pending';}else{it.done=(it.done==null||it.done===''||isNaN(cur))?goal:cur;}}}});}
     [document.getElementById('mapStage'),document.getElementById('modalCmds'),list].forEach(el=>{if(!el)return;el.addEventListener('change',onChange,true);el.addEventListener('click',onClick,true);el.addEventListener('focus',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){const inp=e.target;setTimeout(()=>{try{inp.select();if(inp.setSelectionRange)inp.setSelectionRange(0,inp.value.length);}catch(_){}},20);}},true);el.addEventListener('keydown',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){e.stopPropagation();if(e.key==='Enter')e.target.blur();}},true);el.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){const c=e.target.value.replace(/[^0-9.,]/g,'');if(c!==e.target.value)e.target.value=c;const ga=e.target.getAttribute('data-cmd-goal');const gn=(ga!==null&&ga!=='')?Number(ga):NaN;const vn=c.trim()===''?NaN:Number(c.replace(',','.'));const met=!isNaN(gn)&&!isNaN(vn)&&vn===gn;e.target.classList.toggle('is-goal-done',met);e.target.classList.toggle('is-in-progress',!met);const pid=e.target.getAttribute('data-cmd-progress');if(pid){const all=load();const it=all.find(x=>x.id===pid);if(it){it.done=(c.trim()===''||isNaN(vn))?null:vn;save(all);}}}},true);});
-    const PLACE_LABEL={A:'A동',B:'B동',C:'C동',D:'D동',outbound:'출고',inbound:'입고',packaging:'포장','packaging-d':'포장(D동)',pitch:'피치',environment:'환경','production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H'};
+    const PLACE_LABEL={A:'1동',B:'B동',C:'2동',D:'3동','1':'1동','2':'2동','3':'3동','4':'4동',W:'창고',outbound:'출고',inbound:'입고',packaging:'포장','packaging-d':'포장(3동)',pitch:'피치',environment:'환경','production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H'};
     function detectMove(t){
       t=String(t||'').replace(/＞/g,'>'); if(!/이동|→|->|⇒|>|에서|운반|옮/.test(t)) return null;
-      const pats=[[/생산\s*([A-H])/gi,m=>'production-'+m[1].toLowerCase()],[/포장\s*\(?D동\)?|D동\s*포장/gi,()=>'packaging-d'],[/환경/g,()=>'environment'],[/출고/g,()=>'outbound'],[/입고/g,()=>'inbound'],[/포장/g,()=>'packaging'],[/피치/g,()=>'pitch'],
+      const pats=[[/생산\s*([A-H])/gi,m=>'production-'+m[1].toLowerCase()],[/포장\s*\(?D동\)?|D동\s*포장/gi,()=>'packaging-d'],[/환경/g,()=>'environment'],[/출고/g,()=>'outbound'],[/입고/g,()=>'inbound'],[/포장/g,()=>'packaging'],[/피치/g,()=>'pitch'],[/창고/g,()=>'W'],[/1\s*동/g,()=>'A'],[/2\s*동/g,()=>'C'],[/3\s*동/g,()=>'D'],[/4\s*동/g,()=>'4'],
         [/([ABCD])\s*동/gi,m=>m[1].toUpperCase()],[/(?<![A-Za-z가-힣])([ABCD])(?=\s*(?:에서|으로|로|까지|→|->|⇒|>|~))/gi,m=>m[1].toUpperCase()],[/(?:→|->|⇒|>|~)\s*([ABCD])(?![A-Za-z])/gi,m=>m[1].toUpperCase()],[/(?:^|\s)([ABCD])(?=\s*-)/gi,m=>m[1].toUpperCase()],[/-\s*([ABCD])(?![A-Za-z0-9])/gi,m=>m[1].toUpperCase()]];
       const hits=[]; pats.forEach(([re,f])=>{let m; re.lastIndex=0; while((m=re.exec(t))){hits.push({i:m.index,e:m.index+m[0].length,k:f(m)});}});
       hits.sort((a,b)=>a.i-b.i||b.e-a.e); const seq=[]; let end=-1; hits.forEach(x=>{if(x.i<end)return; end=x.e; if(!seq.length||seq[seq.length-1]!==x.k) seq.push(x.k);});
@@ -5216,7 +5222,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
   /* 금일 작업완료 → Excel (.xlsx) */
   (function(){
     const btn=document.getElementById('xlsxDoneBtn'); if(!btn) return;
-    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","A":"A동","B":"B동","C":"C동","D":"D동","environment":"환경",
+    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(3동)","pitch":"피치","A":"1동","B":"B동","C":"2동","D":"3동","1":"1동","2":"2동","3":"3동","4":"4동","W":"창고","environment":"환경",
       "outbound:RAS-2":"출고 · RAS-2","outbound:L1":"출고 · L1","outbound:CP3K":"출고 · CP3K","outbound:C3B":"출고 · C3B","outbound:연구요청":"출고 · 연구요청","outbound:분진상차":"출고 · 분진상차","outbound:내화물상차":"출고 · 내화물상차","outbound:폐파레트":"출고 · 폐파레트","outbound:2공장→1공장":"출고 · 공장간이송(2공장→1공장)","outbound:1공장→2공장":"출고 · 공장간이송(1공장→2공장)","inbound:SH":"입고 · SH","inbound:HH":"입고 · HH","inbound:16kg 파렛트":"입고 · 16kg 파렛트","inbound:알루미늄 파우치백":"입고 · 알루미늄 파우치백","inbound:사각박스":"입고 · 사각박스","inbound:분진상차":"입고 · 분진상차","inbound:내화물상차":"입고 · 내화물상차","inbound:폐파레트":"입고 · 폐파레트","inbound:2공장→1공장":"입고 · 공장간이송(2공장→1공장)","inbound:1공장→2공장":"입고 · 공장간이송(1공장→2공장)"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     const kstParts=()=>{const p=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const g=t=>p.find(x=>x.type===t).value;return {y:g('year'),m:g('month'),d:g('day')};};
     function loadLib(){ if(window.XLSX) return Promise.resolve(window.XLSX); return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';s.onload=()=>res(window.XLSX);s.onerror=()=>rej(new Error('lib'));document.head.appendChild(s);}); }
