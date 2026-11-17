@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611171025">
+  <meta name="jisu-build" content="202611171035">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -4784,7 +4784,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         window.jisuOpenGallery([{id:it.id,at:it.at,name:it.text||'첨부 이미지',data:it.img}],0,null);
       }
     },true);
-    submit.addEventListener('click',()=>{const t=getTarget();if(!t&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v&&!pendingCmdImg){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v&&!pendingCmdImg){text.focus();return;}v=v.replace(/[a-z]/g,c=>c.toUpperCase());const all=load();const norm=v?(window.jisuNormUnit?window.jisuNormUnit(v):v).replace(/[a-z]/g,c=>c.toUpperCase()):'첨부 이미지';const rec={id:Date.now().toString(36),target:t||'*',kind,text:norm,at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(pendingCmdImg){ rec.img=pendingCmdImg; const autoTon=v&&window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(v):''; if(autoTon) rec.tonText=autoTon; }if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);if(pendingCmdImg&&!rec.tonText&&window.jisuGeminiReadImage){let gk='';try{gk=(localStorage.getItem('jisu-gemini-key')||'').trim();}catch(_){}if(gk){const imgCopy=pendingCmdImg,rid=rec.id;window.jisuGeminiReadImage(gk,imgCopy).then(txt=>{const tt=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(txt):'';if(tt){const a=load();const it=a.find(x=>x.id===rid);if(it){it.tonText=tt;save(a);render();}}}).catch(()=>{});}}text.value='';if(fr)fr.value='';if(to)to.value='';pendingCmdImg=null;const cw=document.getElementById('cmdImgWrap'),ct=document.getElementById('cmdImgThumb');if(cw)cw.style.display='none';if(ct)ct.src='';render();});
+    submit.addEventListener('click',()=>{const t=getTarget();if(!t&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v&&!pendingCmdImg){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v&&!pendingCmdImg){text.focus();return;}v=v.replace(/[a-z]/g,c=>c.toUpperCase());const all=load();const norm=v?(window.jisuNormUnit?window.jisuNormUnit(v):v).replace(/[a-z]/g,c=>c.toUpperCase()):'첨부 이미지';const rec={id:Date.now().toString(36),target:t||'*',kind,text:norm,at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(pendingCmdImg){ rec.img=pendingCmdImg; const autoTon=v&&window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(v):''; if(autoTon) rec.tonText=autoTon; }if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);if(window.jisuSendNtfy)window.jisuSendNtfy(rec);if(pendingCmdImg&&!rec.tonText&&window.jisuGeminiReadImage){let gk='';try{gk=(localStorage.getItem('jisu-gemini-key')||'').trim();}catch(_){}if(gk){const imgCopy=pendingCmdImg,rid=rec.id;window.jisuGeminiReadImage(gk,imgCopy).then(txt=>{const tt=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(txt):'';if(tt){const a=load();const it=a.find(x=>x.id===rid);if(it){it.tonText=tt;save(a);render();}}}).catch(()=>{});}}text.value='';if(fr)fr.value='';if(to)to.value='';pendingCmdImg=null;const cw=document.getElementById('cmdImgWrap'),ct=document.getElementById('cmdImgThumb');if(cw)cw.style.display='none';if(ct)ct.src='';render();});
     list.addEventListener('click',e=>{const id=e.target.getAttribute('data-cmd-del');if(!id)return;save(load().filter(x=>x.id!==id));render();});
     function goHome(){
       document.querySelectorAll('.hotspot-wrapper.is-open').forEach(w=>w.classList.remove('is-open'));
@@ -8010,6 +8010,61 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     });
     document.body.appendChild(pill);
   }
+  /* 무료 ntfy 백그라운드 푸시 (브라우저·앱 꺼짐 상태에서도 폰 알림 수신) */
+  const NTFY_PREFIX='posco-jisu-9m4k2p';
+  window.JISU_NTFY_PREFIX=NTFY_PREFIX;
+  window.jisuSendNtfy=function(rec){
+    if(!rec) return;
+    const base=(rec.target||'*').split(':')[0]||'*';
+    const isUrgent=Boolean(rec.urgent||rec.kind==='notice');
+    const kindLabel=rec.kind==='notice'?'공지사항':(rec.urgent?'긴급 작업':'새 작업지시');
+    const title=zoneName(rec.target)+' · '+kindLabel;
+    const message=rec.text||'새 지시가 등록되었습니다.';
+    const clickUrl='https://coarfamily-cyber.github.io/POSCO-M/JISU/'+(base&&base!=='*'?('?zone='+encodeURIComponent(base)):'');
+    const priority=rec.urgent?5:(rec.kind==='notice'?4:3);
+    const tags=rec.urgent?['rotating_light']:['bell'];
+    const topics=base==='*'?[NTFY_PREFIX+'-all',NTFY_PREFIX+'-master']:[NTFY_PREFIX+'-'+base,NTFY_PREFIX+'-master'];
+    topics.forEach(topic=>{
+      try{
+        fetch('https://ntfy.sh/',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({topic,title,message,priority,tags,click:clickUrl})
+        }).catch(()=>{});
+      }catch(_){}
+    });
+  };
+  (function initNtfyBtn(){
+    const wz=new URLSearchParams(location.search).get('zone');
+    const ntfyBtn=document.createElement('button');
+    ntfyBtn.id='jisuNtfyBtn';
+    ntfyBtn.type='button';
+    ntfyBtn.textContent='📲 꺼짐 푸시';
+    const hasAsk=Boolean(document.getElementById('jisuNotifAsk'));
+    const hasBanner=Boolean(document.getElementById('jisuPwaBanner'));
+    const bottomPx=(hasBanner?78:16)+(hasAsk?38:0);
+    ntfyBtn.style.cssText='position:fixed;right:14px;bottom:'+bottomPx+'px;z-index:2147482499;padding:6px 11px;border-radius:9999px;border:1px solid rgba(56,189,248,0.42);background:rgba(15,23,42,0.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#bae6fd;font-size:11.5px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.35);';
+    ntfyBtn.addEventListener('click',e=>{
+      e.stopPropagation();
+      const old=document.getElementById('jisuNtfyPop'); if(old){old.remove();return;}
+      const pop=document.createElement('div');
+      pop.id='jisuNtfyPop';
+      pop.style.cssText='position:fixed;right:14px;bottom:'+(bottomPx+40)+'px;z-index:2147482600;width:min(320px,calc(100vw - 28px));padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,0.22);background:rgba(15,23,42,0.96);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#f8fafc;font-size:12.5px;line-height:1.5;box-shadow:0 16px 40px rgba(0,0,0,0.55);';
+      const topicMain=wz?(NTFY_PREFIX+'-'+wz):(NTFY_PREFIX+'-master');
+      const topicAll=NTFY_PREFIX+'-all';
+      const labelMain=wz?(zoneName(wz)+' 전용 채널'):'전체 구역 통합 채널(관리자)';
+      pop.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><b style="font-size:13.5px;color:#38bdf8;">📲 브라우저 꺼짐 상태 푸시</b><button type="button" id="jisuNtfyClose" style="background:none;border:none;color:#94a3b8;font-size:15px;cursor:pointer;">✕</button></div>'
+        +'<div style="font-size:11.5px;color:#cbd5e1;margin-bottom:10px;">무료 <b>ntfy</b> 앱을 깔고 아래 채널을 구독하면 브라우저가 완전히 꺼져 있어도 1초 만에 폰 알림이 울립니다.</div>'
+        +'<div style="display:flex;flex-direction:column;gap:6px;">'
+        +'<a href="ntfy://ntfy.sh/'+topicMain+'" style="display:block;text-align:center;padding:8px 10px;border-radius:9px;background:#0284c7;color:#fff;font-weight:800;text-decoration:none;">1. '+labelMain+' 구독하기</a>'
+        +(wz?'<a href="ntfy://ntfy.sh/'+topicAll+'" style="display:block;text-align:center;padding:8px 10px;border-radius:9px;background:rgba(245,158,11,0.22);border:1px solid rgba(245,158,11,0.5);color:#fde68a;font-weight:800;text-decoration:none;">2. 전체 공지 채널 구독하기</a>':'')
+        +'<a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener" style="display:block;text-align:center;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:11px;text-decoration:none;">Android ntfy 무료 앱 설치 (Google Play)</a>'
+        +'</div>';
+      pop.querySelector('#jisuNtfyClose').addEventListener('click',()=>pop.remove());
+      document.body.appendChild(pop);
+    });
+    document.body.appendChild(ntfyBtn);
+  })();
 })();
 </script>
 <script>

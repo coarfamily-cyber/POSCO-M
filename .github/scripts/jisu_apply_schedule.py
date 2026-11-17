@@ -232,6 +232,27 @@ def run(dry: bool = False) -> int:
                         {"by": BY, "t": t, "v": dump_v(sch)}, sch_etag, dry)
         if ok:
             print(f"[jisu] 완료 — 카드 {added}건 추가 · 예약 {marked}건 applied 마킹")
+            if not dry and added > 0:
+                for rec in cmds[-added:]:
+                    try:
+                        base = str(rec.get("target") or "*").split(":")[0] or "*"
+                        kind = "공지사항" if rec.get("kind") == "notice" else ("긴급 작업" if rec.get("urgent") else "새 작업지시")
+                        title = f"{'전체' if base == '*' else base} · {kind}"
+                        msg = str(rec.get("text") or "새 지시가 등록되었습니다.")
+                        prio = 5 if rec.get("urgent") else (4 if rec.get("kind") == "notice" else 3)
+                        topics = ["posco-jisu-9m4k2p-all", "posco-jisu-9m4k2p-master"] if base == "*" else [f"posco-jisu-9m4k2p-{base}", "posco-jisu-9m4k2p-master"]
+                        for tp in topics:
+                            payload = json.dumps({
+                                "topic": tp,
+                                "title": title,
+                                "message": msg,
+                                "priority": prio,
+                                "tags": ["rotating_light"] if rec.get("urgent") else ["bell"],
+                                "click": "https://coarfamily-cyber.github.io/POSCO-M/JISU/" + (f"?zone={base}" if base != "*" else "")
+                            }, ensure_ascii=False).encode("utf-8")
+                            _request("https://ntfy.sh/", "POST", payload, {"Content-Type": "application/json"})
+                    except Exception as e:
+                        print(f"[warn] ntfy 발송 실패: {e}")
             return 0
         time.sleep(1)   # 다른 기기 저장과 겹침 → 다시 읽고 재계산
 
