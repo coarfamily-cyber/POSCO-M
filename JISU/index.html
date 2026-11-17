@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611172240">
+  <meta name="jisu-build" content="202611180640">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -2767,30 +2767,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     }
     .inbound-photo-btn:hover { background: rgba(255,255,255,.22); color: #fff; transform: translateY(-1px); }
 
-    /* 3번: 달력 연동 입고 예정 목표 & 달성률 바 */
+    /* 입고 상단 날짜 표기 */
     .inbound-title-row time { color: #334155 !important; font-weight: 800; }
-    .inbound-sched-box {
-      background: rgba(255, 255, 255, 0.36);
-      border: 1px solid rgba(255, 255, 255, 0.48);
-      border-radius: 12px;
-      padding: 10px 12px;
-      display: flex; flex-direction: column; gap: 6px;
-    }
-    .inbound-sched-head { display: flex; align-items: center; justify-content: space-between; }
-    .isb-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; color: #047857; }
-    .isb-dot { width: 7px; height: 7px; border-radius: 9999px; background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,.55); }
-    .inbound-cal-link {
-      background: rgba(255,255,255,.58); border: 1px solid rgba(15,23,42,.16);
-      color: #0f172a; font-size: 10.5px; font-weight: 800; border-radius: 8px; padding: 3px 8px;
-      cursor: pointer; transition: all .15s;
-    }
-    .inbound-cal-link:hover { background: rgba(255,255,255,.82); color: #0f172a; }
-    .isb-target-row { display: flex; align-items: baseline; justify-content: space-between; }
-    .isb-target-row b { font-size: 13.5px; font-weight: 900; color: #0f172a; }
-    .isb-target-row span { font-size: 12px; font-weight: 900; color: #047857; }
-    .isb-progress-bg { height: 7px; background: rgba(15,23,42,.12); border-radius: 9999px; overflow: hidden; }
-    .isb-progress-bar { height: 100%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 9999px; transition: width .4s cubic-bezier(.2,.8,.3,1); }
-    .isb-sub-info { display: flex; justify-content: space-between; font-size: 10.5px; color: #334155; font-weight: 700; }
 
     /* 1번: 입고원료 중량 기록일지 테이블 */
     .inbound-table-section { display: flex; flex-direction: column; gap: 6px; }
@@ -3707,25 +3685,6 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
                 <div class="inbound-title-row" style="margin-top:0;">
                   <time id="inboundDate"></time>
                   <input id="inboundPhotoInput" type="file" accept="image/*" multiple hidden />
-                </div>
-              </div>
-
-              <!-- 3번: 달력 연동 입고 예정 목표 & 달성률 바 -->
-              <div class="inbound-sched-box">
-                <div class="inbound-sched-head">
-                  <div class="isb-badge"><span class="isb-dot"></span><span id="inboundGoalLabel">달력 연동 입고 예정</span></div>
-                  <button type="button" id="inboundCalLink" class="inbound-cal-link">📅 달력 예정 등록</button>
-                </div>
-                <div class="isb-target-row">
-                  <b id="inboundGoalTonText">입고 예정: 36.0 TON</b>
-                  <span id="inboundAchieveRate">달성률 0%</span>
-                </div>
-                <div class="isb-progress-bg">
-                  <div id="inboundProgressBar" class="isb-progress-bar" style="width: 0%;"></div>
-                </div>
-                <div class="isb-sub-info">
-                  <span id="inboundLiveActual">금일 실적: 0 BAG · 0.00 TON</span>
-                  <span id="inboundRemainTon">잔여: 36.0 TON</span>
                 </div>
               </div>
 
@@ -6866,14 +6825,6 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   const sumKgEl = $("inboundSumKg");
   const sumTonEl = $("inboundSumTon");
   
-  const goalLabelEl = $("inboundGoalLabel");
-  const goalTonTextEl = $("inboundGoalTonText");
-  const achieveRateEl = $("inboundAchieveRate");
-  const progressBarEl = $("inboundProgressBar");
-  const liveActualEl = $("inboundLiveActual");
-  const remainTonEl = $("inboundRemainTon");
-  const calLinkBtn = $("inboundCalLink");
-
   const photoBtn = $("ibCamBtn") || $("inboundPhotoBtn");
   const ibStackBtn = $("ibStackBtn");
   const photoInput = $("inboundPhotoInput");
@@ -6893,50 +6844,6 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     }
   }
   refreshDateHeader();
-
-  function getCalendarGoal() {
-    let goalTon = 36.0;
-    let label = "달력 연동 입고 예정";
-    try {
-      const sch = JSON.parse(localStorage.getItem("jisu-schedule-v1") || "[]");
-      const isInboundTarget = t => t === "inbound" || (typeof t === "string" && t.startsWith("inbound:"));
-      const todaySch = sch.filter(s => s && s.date === activeDay && isInboundTarget(s.target));
-      if (todaySch.length) {
-        const txt = todaySch.map(s => s.text).join(" ");
-        const explicitMatches = [...txt.matchAll(/(\d+(?:[.,]\d+)?)\s*(?:TON|톤|T)(?![A-Za-z])/gi)];
-        if (explicitMatches.length) {
-          let sumTon = 0;
-          explicitMatches.forEach(m => { sumTon += parseFloat(m[1].replace(",", ".")) || 0; });
-          if (sumTon > 0) {
-            goalTon = sumTon;
-            label = explicitMatches.length > 1 ? `달력 금일 예정 (${explicitMatches.length}건 합산)` : "달력 금일 예정";
-          }
-        }
-      } else {
-        const future = sch.filter(s => s && isInboundTarget(s.target) && s.date > activeDay);
-        if (future.length) {
-          const next = future[0];
-          label = `달력 차기 예정 (${next.date.slice(5)})`;
-        }
-      }
-    } catch(e) {}
-    return { goalTon, label };
-  }
-
-  function updateKpi(totalKg, bagCount) {
-    const totalTon = (totalKg / 1000).toFixed(2);
-    const { goalTon, label } = getCalendarGoal();
-    if (goalLabelEl) goalLabelEl.textContent = label;
-    if (goalTonTextEl) goalTonTextEl.textContent = `입고 목표: ${goalTon.toFixed(1)} TON`;
-    
-    const rate = Math.min(100, Math.round((totalKg / (goalTon * 1000)) * 100));
-    if (achieveRateEl) achieveRateEl.textContent = `달성률 ${rate}%`;
-    if (progressBarEl) progressBarEl.style.width = `${rate}%`;
-    if (liveActualEl) liveActualEl.textContent = `금일 실적: ${bagCount} BAG · ${totalTon} TON`;
-    
-    const remain = Math.max(0, goalTon - (totalKg / 1000)).toFixed(2);
-    if (remainTonEl) remainTonEl.textContent = `잔여: ${remain} TON`;
-  }
 
   const newLotInp = $("inbNewLot");
   if (newLotInp) {
@@ -6991,7 +6898,6 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     if (sumKgEl) sumKgEl.textContent = totalKg.toLocaleString("ko-KR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
     if (sumTonEl) sumTonEl.textContent = (totalKg / 1000).toFixed(2);
 
-    updateKpi(totalKg, count);
     if (typeof updateWorkflowUI === "function") updateWorkflowUI();
   }
 
@@ -7068,15 +6974,6 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       if (e.key === "Enter") { e.preventDefault(); addEntryRow(); }
     });
   });
-
-  if (calLinkBtn) {
-    calLinkBtn.addEventListener("click", () => {
-      const wrap = document.getElementById("hotspot-inbound");
-      if (wrap) wrap.classList.remove("is-open");
-      const clock = $("liveClock");
-      if (clock) clock.click();
-    });
-  }
 
   /* 실시간 DB에서 입고 사진 내려오면 자동 갱신 */
   try{ window.addEventListener('jisu:photo-sync',function(e){ var z=e&&e.detail&&e.detail.zone; if(!z||z==='inbound') renderPhotos(); }); }catch(_){}
@@ -7399,11 +7296,6 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   renderPhotos();
   updateWorkflowUI();
 
-  window.jisuInboundRefresh = () => {
-    const rec = getTodayRecord();
-    const kg = (rec.rows || []).reduce((s, r) => s + (parseFloat(r.kg) || 0), 0);
-    updateKpi(kg, (rec.rows || []).length);
-  };
   window.jisuInboundArchive = {
     getToday: () => getTodayRecord(),
     photos: () => getPhotos(activeDay),
