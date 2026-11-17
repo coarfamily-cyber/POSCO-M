@@ -37,11 +37,15 @@ self.addEventListener('push', (event) => {
 });
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = (event.notification.data && event.notification.data.url) || '/POSCO-M/JISU/';
+  const rawUrl = (event.notification.data && event.notification.data.url) || '/POSCO-M/JISU/';
+  const targetUrl = new URL(rawUrl, self.location.origin).href;
+  const targetZone = new URL(targetUrl).searchParams.get('zone');
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {
-        if (client.url.includes('/POSCO-M/JISU/') && 'focus' in client) {
+        if (!client.url.includes('/POSCO-M/JISU/') || !('focus' in client)) continue;
+        const cz = new URL(client.url).searchParams.get('zone');
+        if (targetZone ? cz === targetZone : !cz) {
           return client.focus();
         }
       }
