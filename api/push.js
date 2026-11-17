@@ -3,14 +3,28 @@ const webpush = require('web-push');
 const RTDB_SUBS = 'https://posco-m-jisu-default-rtdb.asia-southeast1.firebasedatabase.app/jisu/pushSubs';
 const RTDB_FLAT = 'https://posco-m-jisu-default-rtdb.asia-southeast1.firebasedatabase.app/jisu/push_subs';
 
-function setCors(res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+const ALLOWED_ORIGIN = 'https://coarfamily-cyber.github.io';
+const ALLOWED_URL_PREFIX = 'https://coarfamily-cyber.github.io/POSCO-M/';
+const DEFAULT_URL = 'https://coarfamily-cyber.github.io/POSCO-M/JISU/';
+
+function setCors(req, res) {
+  const origin = req.headers && req.headers.origin;
+  if (origin === ALLOWED_ORIGIN) {
+    res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+    res.setHeader('Vary', 'Origin');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
+// 알림 클릭 시 열리는 주소는 이 저장소의 페이지로만 허용한다 (피싱 링크 차단)
+function safeUrl(raw) {
+  const s = String(raw || '');
+  return s.startsWith(ALLOWED_URL_PREFIX) ? s.slice(0, 300) : DEFAULT_URL;
+}
+
 module.exports = async function handler(req, res) {
-  setCors(res);
+  setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
@@ -26,15 +40,19 @@ module.exports = async function handler(req, res) {
     try { body = JSON.parse(body); } catch (_) { body = {}; }
   }
   body = body || {};
+  // 클라이언트는 { target, payload:{title,body,url,tag,badge} } 형식으로 보낸다.
+  // 구형 평면 형식({ target, title, body, ... })도 함께 받는다.
+  const p = (body.payload && typeof body.payload === 'object') ? body.payload : body;
 
-  const target = String(body.target || body.zone || '*').split(':')[0] || '*';
-  const title = String(body.title || '지수 통합 관제 상황실').slice(0, 120);
-  const message = String(body.body || '새 작업/공지가 등록되었습니다.').slice(0, 500);
-  const url = String(body.url || 'https://coarfamily-cyber.github.io/POSCO-M/JISU/');
-  const tag = String(body.tag || 'jisu-push');
-  const badge = typeof body.badge === 'number' ? body.badge : 1;
+  const target = String(body.target || body.zone || p.target || '*').split(':')[0] || '*';
+  const title = String(p.title || '지수 통합 관제 상황실').slice(0, 120);
+  const message = String(p.body || '새 작업/공지가 등록되었습니다.').slice(0, 500);
+  const url = safeUrl(p.url);
+  const tag = String(p.tag || 'jisu-push').slice(0, 80);
+  const badge = typeof p.badge === 'number' ? p.badge : 1;
 
   try {
+    // 구독 목록은 항상 DB에서 직접 읽는다. 요청 본문의 subscriptions 는 무시한다.
     const [r1, r2] = await Promise.all([
       fetch(`${RTDB_SUBS}.json`),
       fetch(`${RTDB_FLAT}.json`)
