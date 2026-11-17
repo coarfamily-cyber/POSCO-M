@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611171015">
+  <meta name="jisu-build" content="202611171020">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -5095,10 +5095,18 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     const wrap=document.getElementById('hotspot-outbound');
     if(wrap) new MutationObserver(()=>{if(!wrap.classList.contains('is-open'))stopCam();}).observe(wrap,{attributes:true,attributeFilter:['class']});
     async function seedDemoIfNeeded(){
-      try{ await del('demo1'); await del('demo2'); }catch(_){}
+      if(localStorage.getItem('jisu-ob-demo-seeded-v1')) return;
+      const cur=await all();
+      if(!cur.length){
+        const toDataUrl=async p=>{const r=await fetch(p);const b=await r.blob();return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(b);});};
+        try{
+          await put({id:'demo1',name:'예시_카피바라.jpg',at:'11. 14. 예시',data:await toDataUrl('./assets/demo-capybara.jpg')});
+          await put({id:'demo2',name:'예시_고양이.jpg',at:'11. 14. 예시',data:await toDataUrl('./assets/demo-cat.jpg')});
+        }catch(_){}
+      }
       localStorage.setItem('jisu-ob-demo-seeded-v1','1');
     }
-    seedDemoIfNeeded().catch(()=>{}).then(render).then(()=>{ try{ window.dispatchEvent(new CustomEvent('jisu:photo-sync',{detail:{zone:'outbound'}})); }catch(_){} });
+    seedDemoIfNeeded().catch(()=>{}).then(render);
   })();
   </script>
   <script>
