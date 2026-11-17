@@ -8313,13 +8313,12 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   var CFG=window.JISU_FIREBASE_CONFIG;
   var ROOT=String(window.JISU_DB_ROOT||'jisu').replace(/^\/+|\/+$/g,'');
   var DAY=24*60*60*1000;
-  /* 18시(KST) 기준 24시간 지난 사진 자동 삭제 판정 */
+  /* 무조건 18시(KST)가 지나면 그 이전 사진 자동 삭제 판정 */
   function photoCutoffMs(){
     var kstNow=Date.now()+9*3600*1000;
     var d=new Date(kstNow);
     var today18Utc=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),18,0,0,0)-9*3600*1000;
-    var last18=(Date.now()>=today18Utc)?today18Utc:(today18Utc-DAY);
-    return last18-DAY;
+    return (Date.now()>=today18Utc)?today18Utc:(today18Utc-DAY);
   }
   function isPhotoExpired(ts){ return Boolean(ts&&ts<photoCutoffMs()); }
   var STATE_KEYS=['jisu-commands-v1','jisu-memos-v1','jisu-pitch-records-v1','jisu-inbound-records-v1','jisu-schedule-v1','jisu-schedules-v1','jisu-env-v1','jisu-env-log-v1','jisu-gemini-key'];
