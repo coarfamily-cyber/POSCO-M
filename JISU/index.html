@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611171035">
+  <meta name="jisu-build" content="202611171040">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -4580,6 +4580,12 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
 
         document.querySelectorAll('[data-zone-btn="'+k+'"] .cmd-notice-count').forEach(z=>z.remove());
       });
+      try{
+        const wz=new URLSearchParams(location.search).get('zone');
+        const pending=all.filter(x=>x.kind!=='notice'&&!x.completed&&x.id!=='demo_dispatch_1'&&(!wz||x.target===wz||(wz==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(wz==='inbound'&&x.target&&x.target.startsWith('inbound:')))).length;
+        if(pending>0 && typeof navigator.setAppBadge==='function') navigator.setAppBadge(pending).catch(()=>{});
+        else if(pending===0 && typeof navigator.clearAppBadge==='function') navigator.clearAppBadge().catch(()=>{});
+      }catch(_){}
     }
     let modalKey=null;
     function fillModal(k){
