@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611170855">
+  <meta name="jisu-build" content="202611170905">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -2853,13 +2853,19 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     }
 
     /* 4번: 워크플로 버튼 (피치와 완벽 통일) */
-    .inbound-workflow { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
-    .inbound-work-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .inbound-workflow { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; width: 100%; }
+    .inbound-work-actions {
+      display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 10px !important; width: 100% !important; box-sizing: border-box !important;
+    }
     .inbound-work-btn {
+      width: 100% !important; min-width: 0 !important; max-width: 100% !important;
+      box-sizing: border-box !important; margin: 0 !important; padding: 0 8px !important;
       height: 38px; border-radius: 10px; border: 1px solid rgba(15,23,42,.15);
       background: rgba(255,255,255,.48); color: #0f172a; font-size: 12px; font-weight: 800;
       backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
       cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center;
+      white-space: nowrap;
     }
     .inbound-work-btn:hover { background: rgba(255,255,255,.72); color: #0f172a; }
     .inbound-work-btn.is-active-work {
@@ -6968,6 +6974,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     if (newBagInp) newBagInp.value = "";
     if (newKgInp) newKgInp.value = "";
     if (newLocInp) newLocInp.value = "";
+    if (newWorkerInp) newWorkerInp.value = "";
     if (newLotInp) newLotInp.focus();
   }
 
