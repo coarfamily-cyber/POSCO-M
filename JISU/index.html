@@ -4569,7 +4569,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         if(!box){ box=document.createElement('div'); box.className='cmd-in-card'; if(slot) slot.appendChild(box); else content.insertBefore(box,content.firstChild); }
         const ns=items.filter(x=>x.kind==='notice'), ws=items.filter(x=>x.kind!=='notice');
         const doneCnt=ws.filter(x=>x.completed).length;
-        const badgeText=doneCnt>0?(doneCnt+'/'+ws.length+(ns.length?' · 공지 '+ns.length:'')):(items.length+'건');
+        const badgeText=doneCnt>0?(doneCnt+'/'+ws.length):(ws.length+'건');
         const canAdminDelCompleted = !document.documentElement.classList.contains('worker-zone-only');
         box.innerHTML='<div class="cmd-in-card-h">금일작업 · 공지 <span>'+badgeText+'</span></div>'+ns.map(x=>{const nImg=x.img?(window.JisuCore?window.JisuCore.safeImgSrc(x.img):''):'';return '<div class="cmd-notice-banner'+(nImg?' has-img':'')+'"><b>공지</b><span>'+(x.text&&x.text!=='첨부 이미지'?esc(x.text):'')+(nImg?'<button type="button" class="cmd-card-img-btn" data-cmd-img-open="'+esc(x.id)+'"><img src="'+nImg+'" alt="공지 이미지"></button>':'')+'</span><time>'+esc(x.at)+'</time></div>';}).join('')+(items.length?ws.map(x=>itemHtml(x, canAdminDelCompleted && !!x.completed && x.id!=='demo_dispatch_1')).join(''):'<div class="cmd-empty">등록된 금일작업·공지가 없습니다. 왼쪽에서 등록하세요.</div>');
       });
@@ -4598,7 +4598,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const items=load().filter(x=>!x.closed&&(x.kind==='notice'||x.target===k)).reverse();
       const ns=items.filter(x=>x.kind==='notice'), ws=items.filter(x=>x.kind!=='notice');
       const doneCnt=ws.filter(x=>x.completed).length;
-      const badgeText=doneCnt>0?(doneCnt+'/'+ws.length+(ns.length?' · 공지 '+ns.length:'')):(items.length+'건');
+      const badgeText=doneCnt>0?(doneCnt+'/'+ws.length):(ws.length+'건');
       const canAdminDelCompleted = !document.documentElement.classList.contains('worker-zone-only');
       box.innerHTML=items.length?'<div class="cmd-in-card-h">금일작업 · 공지 <span>'+badgeText+'</span></div>'+items.map(x=>itemHtml(x, canAdminDelCompleted && !!x.completed && x.id!=='demo_dispatch_1')).join(''):'';
     }
