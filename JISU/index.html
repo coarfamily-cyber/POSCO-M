@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611172105">
+  <meta name="jisu-build" content="202611172120">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -356,11 +356,8 @@
       opacity: 0;
       overflow: hidden;
       pointer-events: none;
-      transform: translate(-50%, -6px) scale(0.96);
-      transition: max-height 0.42s cubic-bezier(0.22, 1, 0.36, 1),
-                  opacity 0.3s ease,
-                  transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-                  margin-top 0.3s ease;
+      transform: translate(-50%, 0);
+      transition: opacity 0.15s ease;
       background: var(--glass-bg);
       backdrop-filter: blur(24px) saturate(160%);
       -webkit-backdrop-filter: blur(24px) saturate(160%);
@@ -829,7 +826,7 @@
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y !important;
       overscroll-behavior: contain !important;
-      transition: max-height .45s cubic-bezier(.2,.9,.2,1), opacity .28s ease, transform .45s cubic-bezier(.2,.9,.2,1.15), margin-top .3s ease !important;
+      transition: opacity 0.15s ease !important;
     }
 
     /* Enscape Brand Header: Square Gradient Logo Badge + Category Eyebrow + Bold Title */
@@ -5200,17 +5197,18 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       if(up){ card.style.setProperty('top','auto','important'); card.style.setProperty('bottom','100%','important'); card.style.marginTop='0'; card.style.marginBottom='8px'; card.classList.add('opens-up'); }
     else { card.style.setProperty('top','100%','important'); card.style.setProperty('bottom','auto','important'); card.style.marginTop='8px'; card.style.marginBottom='0'; card.classList.remove('opens-up'); }
     maxH=Math.max(120,Math.min(maxH,cap,vh-2*VM)); card.style.setProperty('max-height',Math.max(120,Math.floor(maxH/z))+'px','important');
-    card.style.setProperty('transform','translate(-50%, 0px)','important');
-    const cr=card.getBoundingClientRect();
-    const minL=Math.max(VM,Math.min(sr.left+M,vw-VM-cr.width)), maxR=Math.min(vw-VM,Math.max(sr.right-M,VM+cr.width));
-    let dx=0; if(cr.left<minL) dx=minL-cr.left; else if(cr.right>maxR) dx=maxR-cr.right;
-    const minT=Math.max(VM,Math.min(sr.top+M,vh-VM-cr.height)), maxB=Math.min(vh-VM,Math.max(sr.bottom-M,VM+cr.height));
-    let dy=0; if(cr.bottom>maxB) dy=maxB-cr.bottom; if(cr.top+dy<minT) dy=minT-cr.top;
-    card.style.setProperty('transform','translate(calc(-50% + '+Math.round(dx/z)+'px), '+Math.round(dy/z)+'px)','important');
+    const w = card.offsetWidth * z, h = card.offsetHeight * z;
+      const cx = br.left + br.width / 2, cLeft = cx - w / 2, cRight = cx + w / 2;
+      const cTop = up ? (br.top - 8 * z - h) : (br.bottom + 8 * z), cBottom = cTop + h;
+      const minL = Math.max(VM, Math.min(sr.left + M, vw - VM - w)), maxR = Math.min(vw - VM, Math.max(sr.right - M, VM + w));
+      let dx = 0; if (cLeft < minL) dx = minL - cLeft; else if (cRight > maxR) dx = maxR - cRight;
+      const minT = Math.max(VM, Math.min(sr.top + M, vh - VM - h)), maxB = Math.min(vh - VM, Math.max(sr.bottom - M, VM + h));
+      let dy = 0; if (cBottom > maxB) dy = maxB - cBottom; if (cTop + dy < minT) dy = minT - cTop;
+      card.style.setProperty('transform', 'translate(calc(-50% + ' + Math.round(dx / z) + 'px), ' + Math.round(dy / z) + 'px)', 'important');
     }
     const fitOpen=()=>document.querySelectorAll('.hotspot-wrapper.is-open').forEach(fitCard);
     const wraps=[...document.querySelectorAll('.hotspot-wrapper')];
-    const mo=new MutationObserver(list=>{ list.forEach(m=>{ const w=m.target; if(m.type==='attributes'){ fitCard(w); requestAnimationFrame(()=>fitCard(w)); setTimeout(()=>fitCard(w),450); } }); });
+    const mo=new MutationObserver(list=>{ list.forEach(m=>{ const w=m.target; if(m.type==='attributes'){ fitCard(w); requestAnimationFrame(()=>fitCard(w)); } }); });
     wraps.forEach(w=>mo.observe(w,{attributes:true,attributeFilter:['class']}));
     const mo2=new MutationObserver(()=>requestAnimationFrame(fitOpen));
     document.querySelectorAll('.hotspot-wrapper > .expand-card').forEach(c=>mo2.observe(c,{childList:true,subtree:true}));
