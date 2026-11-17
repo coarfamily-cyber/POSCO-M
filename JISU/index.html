@@ -6820,15 +6820,40 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     try { localStorage.setItem(KEY, JSON.stringify(data)); return true; } catch(e) { return false; }
   }
 
+  function currentShiftKey() {
+    const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false }).formatToParts(new Date()).map(x => [x.type, x.value]));
+    let day = p.year + '-' + p.month + '-' + p.day;
+    const h = +(p.hour === '24' ? 0 : p.hour);
+    if (h >= 18) return day + '-pm';
+    if (h >= 8) return day + '-am';
+    const t = new Date(Date.parse(day + 'T00:00:00Z') - 86400000);
+    return t.toISOString().slice(0, 10) + '-pm';
+  }
+
   function getTodayRecord() {
     const all = loadAllRecords();
+    const sk = currentShiftKey();
     if (!all[activeDay]) {
       all[activeDay] = {
         day: activeDay,
+        shiftKey: sk,
         workState: "idle",
         rows: []
       };
       saveAllRecords(all);
+    } else {
+      const rec = all[activeDay];
+      if (rec.shiftKey !== sk) {
+        if (Array.isArray(rec.rows) && rec.rows.length) {
+          rec.archivedRows = [...(rec.archivedRows || []), ...rec.rows];
+          rec.rows = [];
+          rec.workState = "idle";
+          delete rec.startedAt;
+          delete rec.completedAt;
+        }
+        rec.shiftKey = sk;
+        saveAllRecords(all);
+      }
     }
     return all[activeDay];
   }
