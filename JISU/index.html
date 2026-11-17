@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611180730">
+  <meta name="jisu-build" content="202611180700">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
@@ -3357,7 +3357,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         <option value="outbound">출고</option>
         <option value="inbound">입고</option>
         <option value="packaging">포장</option>
-        <option value="packaging-d">포장(D동)</option>
+        <option value="packaging-d">포장(3동)</option>
         <option value="pitch">피치</option>
         <option value="environment">환경</option>
         <option value="1">1동</option>
@@ -3762,11 +3762,11 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         </button>
         <div class="expand-card p-3.5">
           <div class="enscape-header">
-            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);box-shadow:0 4px 14px rgba(217,119,6,0.40) !important;" title="포장 C동">
+            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);box-shadow:0 4px 14px rgba(217,119,6,0.40) !important;" title="포장 2동">
               <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
             </div>
             <div class="enscape-title-group min-w-0 flex-1">
-              <h3 class="enscape-title">PACKAGING · C</h3>
+              <h3 class="enscape-title">PACKAGING · 2</h3>
             </div>
           </div>
           <div class="cmd-slot" data-cmd-slot="packaging"></div>
@@ -3782,11 +3782,11 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         </button>
         <div class="expand-card p-3.5">
           <div class="enscape-header">
-            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);box-shadow:0 4px 14px rgba(217,119,6,0.40) !important;" title="포장 D동">
+            <div class="enscape-logo-badge" style="background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%);box-shadow:0 4px 14px rgba(217,119,6,0.40) !important;" title="포장 3동">
               <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
             </div>
             <div class="enscape-title-group min-w-0 flex-1">
-              <h3 class="enscape-title">PACKAGING · D</h3>
+              <h3 class="enscape-title">PACKAGING · 3</h3>
             </div>
           </div>
           <div class="cmd-slot" data-cmd-slot="packaging-d"></div>
@@ -3880,7 +3880,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
             <option value="*">전체 공지</option>
             <option value="outbound">출고</option>
             <option value="packaging">포장</option>
-            <option value="packaging-d">포장(D동)</option>
+            <option value="packaging-d">포장(3동)</option>
             <option value="pitch">피치</option>
             <option value="environment">환경</option>
             <option value="production-a">생산A</option>
@@ -3996,8 +3996,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       },
       inbound: {
         category: 'INBOUND RECEIVING · 입고 구역',
-        title: '원자재 입고 및 품질 검수 구역 (B동~D동 하단)',
-        subtitle: '외부 반입 원자재 하차 후 B동 및 D동 공정 투입 전 샘플링 검수를 수행합니다.',
+        title: '원자재 입고 및 품질 검수 구역 (1동~3동 하단)',
+        subtitle: '외부 반입 원자재 하차 후 1동~3동 공정 투입 전 샘플링 검수를 수행합니다.',
         metrics: [
           { label: '금일 누적 입고', value: '512 Ton', color: 'text-emerald-300' },
           { label: '입고 검수 합격률', value: '98.7%', color: 'text-sky-300' },
@@ -4006,7 +4006,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         logs: [
           '19:18:01 - BAY #A 원자재 코일/분말 하차 완료 (중량 센서 정상)',
           '19:15:29 - 입고 품질 스펙트럼 자동 판독 적합 판정',
-          '19:12:48 - D동 원료 저장 사일로 이송 밸브 오픈'
+          '19:12:48 - 3동 원료 저장 사일로 이송 밸브 오픈'
         ]
       },
       packaging: {
@@ -4051,7 +4051,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       'production-f': '생산F 상세 관제',
       'production-g': '생산G 상세 관제',
       'production-h': '생산H 상세 관제',
-      'packaging-d': 'D동 포장 라인',
+      'packaging-d': '3동 포장 라인',
       'environment': '환경'
     };
 
@@ -4276,7 +4276,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
   <script>
   (function(){
     const KEY='jisu-commands-v1';
-    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(D동)","pitch":"피치","environment":"환경","A":"1동","B":"B동","C":"2동","D":"3동","1":"1동","2":"2동","3":"3동","4":"4동","W":"창고",
+    const NAMES={"warehouse":"창고","production-a":"생산A","production-b":"생산B","production-c":"생산C","production-d":"생산D","production-e":"생산E","production-f":"생산F","production-g":"생산G","production-h":"생산H","outbound":"출고","inbound":"입고","packaging":"포장","packaging-d":"포장(3동)","pitch":"피치","environment":"환경","A":"1동","B":"B동","C":"2동","D":"3동","1":"1동","2":"2동","3":"3동","4":"4동","W":"창고",
       "outbound:RAS-2":"출고 · RAS-2","outbound:L1":"출고 · L1","outbound:CP3K":"출고 · CP3K","outbound:C3B":"출고 · C3B","outbound:연구요청":"출고 · 연구요청","outbound:분진상차":"출고 · 분진상차","outbound:내화물상차":"출고 · 내화물상차","outbound:폐파레트":"출고 · 폐파레트","outbound:2공장→1공장":"출고 · 공장간이송(2공장→1공장)","outbound:1공장→2공장":"출고 · 공장간이송(1공장→2공장)","inbound:SH":"입고 · SH","inbound:HH":"입고 · HH","inbound:16kg 파렛트":"입고 · 16kg 파렛트","inbound:알루미늄 파우치백":"입고 · 알루미늄 파우치백","inbound:사각박스":"입고 · 사각박스","inbound:분진상차":"입고 · 분진상차","inbound:내화물상차":"입고 · 내화물상차","inbound:폐파레트":"입고 · 폐파레트","inbound:2공장→1공장":"입고 · 공장간이송(2공장→1공장)","inbound:1공장→2공장":"입고 · 공장간이송(1공장→2공장)"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     let kind='instruction';
     const sel=document.getElementById('cmdTarget'), text=document.getElementById('cmdText'), submit=document.getElementById('cmdSubmit'), list=document.getElementById('cmdList'), label=document.getElementById('cmdTargetLabel');
@@ -4517,8 +4517,10 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         const ns=items.filter(x=>x.kind==='notice'), ws=items.filter(x=>x.kind!=='notice');
         const doneCnt=ws.filter(x=>x.completed).length;
         const badgeText=doneCnt>0?(doneCnt+'/'+ws.length):(ws.length+'건');
-        const canAdminDelCompleted = !document.documentElement.classList.contains('worker-zone-only');
-        box.innerHTML='<div class="cmd-in-card-h">금일작업 · 공지 <span>'+badgeText+'</span></div>'+ns.map(x=>{const nImg=x.img?(window.JisuCore?window.JisuCore.safeImgSrc(x.img):''):'';return '<div class="cmd-notice-banner'+(nImg?' has-img':'')+'"><b>공지</b><span>'+(x.text&&x.text!=='첨부 이미지'?esc(x.text):'')+(nImg?'<button type="button" class="cmd-card-img-btn" data-cmd-img-open="'+esc(x.id)+'"><img src="'+nImg+'" alt="공지 이미지"></button>':'')+'</span><time>'+esc(x.at)+'</time></div>';}).join('')+(items.length?ws.map(x=>itemHtml(x, canAdminDelCompleted && !!x.completed && x.id!=='demo_dispatch_1')).join(''):'<div class="cmd-empty">등록된 금일작업·공지가 없습니다. 왼쪽에서 등록하세요.</div>');
+        const isWorkerView = document.documentElement.classList.contains('worker-zone-only');
+        const canAdminDelCompleted = !isWorkerView;
+        const emptyCmdMsg = isWorkerView ? '등록된 금일작업·공지가 없습니다.' : '등록된 금일작업·공지가 없습니다. 왼쪽에서 등록하세요.';
+        box.innerHTML='<div class="cmd-in-card-h">금일작업 · 공지 <span>'+badgeText+'</span></div>'+ns.map(x=>{const nImg=x.img?(window.JisuCore?window.JisuCore.safeImgSrc(x.img):''):'';return '<div class="cmd-notice-banner'+(nImg?' has-img':'')+'"><b>공지</b><span>'+(x.text&&x.text!=='첨부 이미지'?esc(x.text):'')+(nImg?'<button type="button" class="cmd-card-img-btn" data-cmd-img-open="'+esc(x.id)+'"><img src="'+nImg+'" alt="공지 이미지"></button>':'')+'</span><time>'+esc(x.at)+'</time></div>';}).join('')+(items.length?ws.map(x=>itemHtml(x, canAdminDelCompleted && !!x.completed && x.id!=='demo_dispatch_1')).join(''):'<div class="cmd-empty">'+emptyCmdMsg+'</div>');
       });
       document.querySelectorAll('[data-toggle-zone],[data-bldg]').forEach(b=>{
         const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg');
@@ -7347,8 +7349,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     { key:'production-h', title:'생산H (PRODUCTION H)', sub:'생산라인 H · 금일작업 및 특이사항', kw:'생산h production h' },
     { key:'outbound', title:'출고 (OUTBOUND)', sub:'출고 상황실 · 출고 사진 · 지수가 확인', kw:'출고 outbound 지게차 사진' },
     { key:'inbound', title:'입고 (INBOUND)', sub:'입고원료 중량 기록일지 · LOT · Bag', kw:'입고 inbound 중량 일지 lot bag' },
-    { key:'packaging', title:'포장 C동 (PACKAGING · C)', sub:'포장 C동 · 금일작업 및 특이사항', kw:'포장 c동 packaging' },
-    { key:'packaging-d', title:'포장 D동 (PACKAGING · D)', sub:'포장 D동 · 금일작업 및 특이사항', kw:'포장 d동 packaging' },
+    { key:'packaging', title:'포장 2동 (PACKAGING · 2)', sub:'포장 2동 · 금일작업 및 특이사항', kw:'포장 2동 포장 c동 c동 packaging' },
+    { key:'packaging-d', title:'포장 3동 (PACKAGING · 3)', sub:'포장 3동 · 금일작업 및 특이사항', kw:'포장 3동 포장 d동 d동 packaging' },
     { key:'pitch', title:'피치 (PITCH)', sub:'부원료 투입 · 분쇄 현황 · 원료 이동', kw:'피치 pitch 부원료 분쇄 원료이동' },
     { key:'environment', title:'환경 (ENVIRONMENT)', sub:'1~14호기 환경 호기 현황', kw:'환경 environment 호기 집진기' },
     { key:'outbound:RAS-2', title:'출고 · RAS-2', sub:'출하 품목 · 출고 상황실로 이동', kw:'출고 ras-2 ras2' },
@@ -7371,10 +7373,9 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     { key:'inbound:폐파레트', title:'입고 · 폐파레트', sub:'입고 품목 · 입고 상황실로 이동', kw:'입고 폐파레트' },
     { key:'inbound:2공장→1공장', title:'입고 · 2공장→1공장 이송', sub:'공장간 이송 · 입고 상황실로 이동', kw:'입고 이송 2공장 1공장' },
     { key:'inbound:1공장→2공장', title:'입고 · 1공장→2공장 이송', sub:'공장간 이송 · 입고 상황실로 이동', kw:'입고 이송 1공장 2공장' },
-    { key:'A', bldg:true, title:'A동 건물 상세', sub:'A동 창고/설비 상세 관제 창 열기', kw:'a동 창고 건물' },
-    { key:'B', bldg:true, title:'B동 건물 상세', sub:'B동 설비 상세 관제 창 열기', kw:'b동 건물' },
-    { key:'C', bldg:true, title:'C동 건물 상세', sub:'C동 포장/설비 상세 관제 창 열기', kw:'c동 건물' },
-    { key:'D', bldg:true, title:'D동 건물 상세', sub:'D동 설비 상세 관제 창 열기', kw:'d동 건물' }
+    { key:'A', bldg:true, title:'1동 건물 상세', sub:'1동 창고/설비 상세 관제 창 열기', kw:'1동 a동 창고 건물' },
+    { key:'C', bldg:true, title:'2동 건물 상세', sub:'2동 포장/설비 상세 관제 창 열기', kw:'2동 c동 건물' },
+    { key:'D', bldg:true, title:'3동 건물 상세', sub:'3동 설비 상세 관제 창 열기', kw:'3동 d동 건물' }
   ];
 
   function buildIndex(){
@@ -7874,7 +7875,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>{});
   }
-  const ZONE_LABEL={outbound:'출고',inbound:'입고',pitch:'피치',environment:'환경',packaging:'포장 C동','packaging-d':'포장 D동','production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H','*':'전체'};
+  const ZONE_LABEL={outbound:'출고',inbound:'입고',pitch:'피치',environment:'환경',packaging:'포장 2동','packaging-d':'포장 3동','production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H','*':'전체'};
   function zoneName(t){
     if(!t) return '현장';
     if(t.startsWith('outbound:')) return '출고 · '+t.slice(9);
@@ -8088,7 +8089,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   let qImg=null;
   const ZONES=[
     ['outbound','출고'],['inbound','입고'],['pitch','피치'],
-    ['packaging','포장 C동'],['packaging-d','포장 D동'],
+    ['packaging','포장 2동'],['packaging-d','포장 3동'],
     ['production-a','생산 A'],['production-b','생산 B'],['production-c','생산 C'],
     ['production-d','생산 D'],['production-e','생산 E'],['production-f','생산 F'],
     ['production-g','생산 G'],['production-h','생산 H'],['environment','환경']
