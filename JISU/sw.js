@@ -19,15 +19,20 @@ self.addEventListener('push', (event) => {
     if (event.data) payload.body = event.data.text();
   }
   event.waitUntil(
-    self.registration.showNotification(payload.title, {
-      body: payload.body,
-      icon: './icon-192.png?v=202611151130',
-      badge: './icon-192.png?v=202611151130',
-      vibrate: [150, 70, 150, 70, 260],
-      data: { url: payload.url || '/POSCO-M/JISU/' },
-      tag: payload.tag || 'jisu-work-alert',
-      renotify: true
-    })
+    Promise.all([
+      self.registration.showNotification(payload.title, {
+        body: payload.body,
+        icon: './icon-192.png?v=202611151130',
+        badge: './icon-192.png?v=202611151130',
+        vibrate: [150, 70, 150, 70, 260],
+        data: { url: payload.url || '/POSCO-M/JISU/' },
+        tag: payload.tag || 'jisu-work-alert',
+        renotify: true
+      }),
+      (typeof navigator !== 'undefined' && typeof navigator.setAppBadge === 'function')
+        ? navigator.setAppBadge(typeof payload.badge === 'number' && payload.badge > 0 ? payload.badge : 1).catch(() => {})
+        : Promise.resolve()
+    ])
   );
 });
 self.addEventListener('notificationclick', (event) => {

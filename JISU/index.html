@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611171250">
+  <meta name="jisu-build" content="202611171255">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -575,9 +575,9 @@
       background:linear-gradient(135deg,#38bdf8,#6366f1) !important;box-shadow:0 6px 16px rgba(99,102,241,.45);}
     .work-complete.is-done::before{content:'✓';display:inline-flex;align-items:center;justify-content:center;background:#fff;border:none;color:#4f46e5;font-size:10px;font-weight:900;}
     .cmd-text{flex:1 1 90px !important;min-width:90px;word-break:keep-all;}
-    /* 출고: green light while work is in progress, blue otherwise */
-    [data-toggle-zone="outbound"].has-active-work .pulse-ring{background:#22c55e !important;color:#4ade80 !important;}
-    [data-zone-btn="outbound"].has-active-work > span.rounded-full{background:#22c55e !important;color:#4ade80 !important;}
+    /* 작업중: 모든 구역 버튼 앞 상태 점 녹색불 유지 */
+    [data-toggle-zone].has-active-work .pulse-ring{background:#22c55e !important;color:#4ade80 !important;}
+    [data-zone-btn].has-active-work > span.rounded-full{background:#22c55e !important;color:#4ade80 !important;}
     .work-complete::before{content:none !important;display:none !important;}
     .work-complete{padding:6px 12px !important;}
     .work-progress.is-working{color:#fff !important;border-color:transparent !important;background:linear-gradient(135deg,#f59e0b,#f97316) !important;box-shadow:0 6px 16px rgba(249,115,22,.45);animation:workPulse 1.6s ease-in-out infinite;}
@@ -2155,6 +2155,9 @@
     [data-toggle-zone]:not([data-production-btn="C"]).st-wait .pulse-ring{background:#64748b !important;color:#94a3b8 !important;}
     [data-toggle-zone]:not([data-production-btn="C"]).st-wait .pulse-ring::after{animation:none !important;opacity:0 !important;}
     [data-toggle-zone]:not([data-production-btn="C"]).st-work .pulse-ring{background:#22c55e !important;color:#4ade80 !important;}
+    [data-zone-btn].st-work > span.rounded-full{background:#22c55e !important;color:#4ade80 !important;box-shadow:0 0 8px rgba(34,197,94,0.65);}
+    [data-zone-btn].st-done > span.rounded-full{background:#3b82f6 !important;color:#60a5fa !important;}
+    [data-zone-btn].st-wait > span.rounded-full,[data-zone-btn].st-none > span.rounded-full{background:#64748b !important;color:#94a3b8 !important;}
     [data-toggle-zone]:not([data-production-btn="C"]).st-done .pulse-ring{background:#3b82f6 !important;color:#60a5fa !important;}
     [data-toggle-zone]:not([data-production-btn="C"]).st-carry .pulse-ring{background:#ec4899 !important;color:#f472b6 !important;}
     .state-legend{position:absolute;left:12px;bottom:12px;z-index:30;display:flex;flex-wrap:wrap;gap:10px;padding:6px 12px;border-radius:9999px;background:rgba(12,18,28,.55);backdrop-filter:blur(4px);font-size:11.5px;font-weight:700;color:#e5e7eb;pointer-events:none;zoom:var(--ui-z,1);}
@@ -2734,28 +2737,38 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     @media (min-width: 769px) {
       body:not(#z1#z2#z3#z4#z5):not(.worker-zone-only) #hotspot-inbound > .expand-card {
         width: min(480px, 94vw) !important;
+        max-height: min(76vh, calc(100dvh - 84px)) !important;
         display: block !important;
-        padding: 14px !important;
+        padding: 14px 14px 32px !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
-        -webkit-overflow-scrolling: touch;
+        -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
       }
     }
-    #hotspot-inbound .inbound-scroll-body {
-      flex: 1 1 auto;
-      min-height: 0;
-      width: 100%;
-      overflow-y: auto;
-      overflow-x: hidden;
-      overscroll-behavior: contain;
-      border-radius: 14px;
-      padding-right: 4px;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(255,255,255,.28) transparent;
+    @media (max-height: 620px) {
+      body:not(#z1#z2#z3#z4#z5):not(.worker-zone-only) .hotspot-wrapper.is-open > .expand-card {
+        position: fixed !important;
+        top: 56px !important;
+        bottom: 10px !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        width: min(500px, 92vw) !important;
+        max-height: calc(100dvh - 66px) !important;
+        padding-bottom: 32px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        z-index: 9999 !important;
+      }
     }
-    #hotspot-inbound .inbound-scroll-body::-webkit-scrollbar { width: 6px; }
-    #hotspot-inbound .inbound-scroll-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.28); border-radius: 3px; }
+    #hotspot-inbound .inbound-scroll-body {
+      flex: none;
+      width: 100%;
+      overflow: visible;
+    }
 
     .inbound-log { margin-top: 8px; padding: 12px; border-radius: 16px; background: rgba(255,255,255,.08); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); color: #f1f5f9; display: flex; flex-direction: column; gap: 10px; }
     .inbound-head { display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid rgba(255,255,255,.12); padding-bottom: 8px; }
@@ -6443,7 +6456,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       document.querySelectorAll('[data-toggle-zone]').forEach(b=>{ const k=b.getAttribute('data-toggle-zone'), w=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(k==='inbound'&&x.target&&x.target.startsWith('inbound:')));
         let st=!w.length?'st-none':(w.some(x=>x.working&&!x.completed)?'st-work':(w.every(x=>x.completed)?'st-done':'st-wait') /* 이월은 점 색이 아니라 분홍 -N 배지로만 표시 */);
         if(k==='pitch'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done'&&(!w.length||w.every(x=>x.completed)))st='st-done';}catch(e){}}
-        if(k==='inbound'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done'&&(!w.length||w.every(x=>x.completed)))st='st-done';}catch(e){}}ST.forEach(c=>b.classList.toggle(c,c===st));
+        if(k==='inbound'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done'&&(!w.length||w.every(x=>x.completed)))st='st-done';}catch(e){}}ST.forEach(c=>b.classList.toggle(c,c===st));b.classList.toggle('has-active-work',st==='st-work');
+        const sb=document.querySelector('[data-zone-btn="'+k+'"]');if(sb){ST.forEach(c=>sb.classList.toggle(c,c===st));sb.classList.toggle('has-active-work',st==='st-work');}
         const urg=w.some(x=>x.urgent&&!x.completed); let um=b.querySelector('.urgent-mark'); if(urg&&!um){ um=document.createElement('span'); um.className='urgent-mark'; um.textContent='!'; um.title='긴급 작업'; b.appendChild(um); } else if(!urg&&um) um.remove(); }); }
     window.jisuStateRefresh=refresh; refresh(); window.addEventListener('storage',e=>{ if(e.key===KEY) refresh(); });
     const stage=document.getElementById('mapStage'); if(stage){ const lg=document.createElement('div'); lg.className='state-legend'; lg.innerHTML='<span><i class="n"></i>작업 없음</span><span><i class="r"></i>작업중</span><span><i class="d"></i>완료</span><span><i class="c"></i>이월</span>'; stage.appendChild(lg); }
@@ -7999,12 +8013,50 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     showToast(title,body,item.target);
     showSystemNotification(title,body,item.target);
   };
+  /* 무료 Web Push (Vercel 서버 + Service Worker · 대시보드 앱 단독 꺼짐 푸시 & 배지) */
+  const VAPID_PUBLIC='BElg9bAEJiJ-CpMWdwAkvumW4-JeSsXY3y1l_1_BpZiXm4eCV1TQwbgKUSGuFuJLXHxXHYMz9FcoosUXFH-3QJc';
+  const VERCEL_PUSH_URL='https://posco-m.vercel.app/api/push';
+  const FB_PUSH_BASE='https://posco-m-jisu-default-rtdb.asia-southeast1.firebasedatabase.app/jisu/push_subs';
+  function b64ToU8(s){
+    const pad='='.repeat((4-s.length%4)%4);
+    const b64=(s+pad).replace(/-/g,'+').replace(/_/g,'/');
+    const raw=atob(b64), out=new Uint8Array(raw.length);
+    for(let i=0;i<raw.length;i++) out[i]=raw.charCodeAt(i);
+    return out;
+  }
+  function hashSubKey(str){
+    let h=0; for(let i=0;i<str.length;i++) h=((h<<5)-h+str.charCodeAt(i))|0;
+    return 'sub_'+Math.abs(h).toString(36);
+  }
+  window.jisuEnsureWebPushSub=async function(){
+    try{
+      if(!('Notification' in window) || Notification.permission!=='granted') return null;
+      if(!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+      const reg=await navigator.serviceWorker.ready;
+      let sub=await reg.pushManager.getSubscription();
+      if(!sub){
+        sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToU8(VAPID_PUBLIC)});
+      }
+      if(!sub) return null;
+      const json=sub.toJSON();
+      const wz=new URLSearchParams(location.search).get('zone')||'*';
+      const key=hashSubKey(json.endpoint||'');
+      await fetch(FB_PUSH_BASE+'/'+encodeURIComponent(key)+'.json',{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({sub:json,zone:wz,ua:(navigator.userAgent||'').slice(0,80),at:Date.now()})
+      }).catch(()=>{});
+      return json;
+    }catch(_){return null;}
+  };
+  if('Notification' in window && Notification.permission==='granted'){
+    setTimeout(()=>{window.jisuEnsureWebPushSub();},800);
+  }
   if('Notification' in window && Notification.permission==='default'){
     const pill=document.createElement('button');
     pill.id='jisuNotifAsk';
     pill.type='button';
     pill.textContent='🔔 알림 켜기';
-    const isWorker=document.body.classList.contains('worker-zone-only');
     const hasBanner=Boolean(document.getElementById('jisuPwaBanner'));
     pill.style.cssText='position:fixed;right:14px;bottom:'+(hasBanner?'78px':'16px')+';z-index:2147482500;padding:7px 12px;border-radius:9999px;border:1px solid rgba(255,255,255,0.28);background:rgba(15,23,42,0.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#f8fafc;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.35);';
     pill.addEventListener('click',async()=>{
@@ -8013,7 +8065,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
         playAlertTone(false);
         try{if(navigator.vibrate)navigator.vibrate(100);}catch(_){}
         if(perm==='granted'){
-          showToast('알림이 켜졌어요','이제 새 작업·공지가 오면 알람과 진동으로 알려드려요.','');
+          await window.jisuEnsureWebPushSub();
+          showToast('알림이 켜졌어요','이제 앱이 꺼져 있어도 새 작업·공지 알림이 바로 울립니다.','');
           pill.remove();
         }else if(perm==='denied'){
           pill.remove();
@@ -8022,13 +8075,12 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     });
     document.body.appendChild(pill);
   }
-  /* 무료 ntfy 백그라운드 푸시 (브라우저·앱 꺼짐 상태에서도 폰 알림 수신) */
+  /* 무료 Web Push (Vercel) + ntfy 백업 발송 */
   const NTFY_PREFIX='posco-jisu-9m4k2p';
   window.JISU_NTFY_PREFIX=NTFY_PREFIX;
   window.jisuSendNtfy=function(rec){
     if(!rec) return;
     const base=(rec.target||'*').split(':')[0]||'*';
-    const isUrgent=Boolean(rec.urgent||rec.kind==='notice');
     const kindLabel=rec.kind==='notice'?'공지사항':(rec.urgent?'긴급 작업':'새 작업지시');
     const title=zoneName(rec.target)+' · '+kindLabel;
     const message=rec.text||'새 지시가 등록되었습니다.';
@@ -8045,38 +8097,26 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
         }).catch(()=>{});
       }catch(_){}
     });
+    try{
+      fetch(FB_PUSH_BASE+'.json').then(r=>r.ok?r.json():null).then(rows=>{
+        if(!rows || typeof rows!=='object') return;
+        const subs=[];
+        Object.values(rows).forEach(v=>{
+          if(!v||!v.sub||!v.sub.endpoint) return;
+          if(base==='*' || v.zone==='*' || v.zone===base) subs.push(v.sub);
+        });
+        if(!subs.length) return;
+        fetch(VERCEL_PUSH_URL,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            subscriptions:subs,
+            payload:{title,body:message,url:clickUrl,tag:'jisu-'+(rec.id||Date.now()),badge:1}
+          })
+        }).catch(()=>{});
+      }).catch(()=>{});
+    }catch(_){}
   };
-  (function initNtfyBtn(){
-    const wz=new URLSearchParams(location.search).get('zone');
-    const ntfyBtn=document.createElement('button');
-    ntfyBtn.id='jisuNtfyBtn';
-    ntfyBtn.type='button';
-    ntfyBtn.textContent='📲 꺼짐 푸시';
-    const hasAsk=Boolean(document.getElementById('jisuNotifAsk'));
-    const hasBanner=Boolean(document.getElementById('jisuPwaBanner'));
-    const bottomPx=(hasBanner?78:16)+(hasAsk?38:0);
-    ntfyBtn.style.cssText='position:fixed;right:14px;bottom:'+bottomPx+'px;z-index:2147482499;padding:6px 11px;border-radius:9999px;border:1px solid rgba(56,189,248,0.42);background:rgba(15,23,42,0.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#bae6fd;font-size:11.5px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.35);';
-    ntfyBtn.addEventListener('click',e=>{
-      e.stopPropagation();
-      const old=document.getElementById('jisuNtfyPop'); if(old){old.remove();return;}
-      const pop=document.createElement('div');
-      pop.id='jisuNtfyPop';
-      pop.style.cssText='position:fixed;right:14px;bottom:'+(bottomPx+40)+'px;z-index:2147482600;width:min(320px,calc(100vw - 28px));padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,0.22);background:rgba(15,23,42,0.96);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#f8fafc;font-size:12.5px;line-height:1.5;box-shadow:0 16px 40px rgba(0,0,0,0.55);';
-      const topicMain=wz?(NTFY_PREFIX+'-'+wz):(NTFY_PREFIX+'-master');
-      const topicAll=NTFY_PREFIX+'-all';
-      const labelMain=wz?(zoneName(wz)+' 전용 채널'):'전체 구역 통합 채널(관리자)';
-      pop.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><b style="font-size:13.5px;color:#38bdf8;">📲 브라우저 꺼짐 상태 푸시</b><button type="button" id="jisuNtfyClose" style="background:none;border:none;color:#94a3b8;font-size:15px;cursor:pointer;">✕</button></div>'
-        +'<div style="font-size:11.5px;color:#cbd5e1;margin-bottom:10px;">무료 <b>ntfy</b> 앱을 깔고 아래 채널을 구독하면 브라우저가 완전히 꺼져 있어도 1초 만에 폰 알림이 울립니다.</div>'
-        +'<div style="display:flex;flex-direction:column;gap:6px;">'
-        +'<a href="ntfy://ntfy.sh/'+topicMain+'" style="display:block;text-align:center;padding:8px 10px;border-radius:9px;background:#0284c7;color:#fff;font-weight:800;text-decoration:none;">1. '+labelMain+' 구독하기</a>'
-        +(wz?'<a href="ntfy://ntfy.sh/'+topicAll+'" style="display:block;text-align:center;padding:8px 10px;border-radius:9px;background:rgba(245,158,11,0.22);border:1px solid rgba(245,158,11,0.5);color:#fde68a;font-weight:800;text-decoration:none;">2. 전체 공지 채널 구독하기</a>':'')
-        +'<a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener" style="display:block;text-align:center;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:11px;text-decoration:none;">Android ntfy 무료 앱 설치 (Google Play)</a>'
-        +'</div>';
-      pop.querySelector('#jisuNtfyClose').addEventListener('click',()=>pop.remove());
-      document.body.appendChild(pop);
-    });
-    document.body.appendChild(ntfyBtn);
-  })();
 })();
 </script>
 <script>
