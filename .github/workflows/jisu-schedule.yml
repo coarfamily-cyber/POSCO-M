@@ -1,0 +1,24 @@
+name: JISU 달력 예약 자동 반영
+
+on:
+  schedule:
+    # 매일 08:00 KST = 전날 23:00 UTC
+    - cron: '0 23 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  apply-schedule:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 예약 반영 실행
+        env:
+          JISU_APPLY_BY: gh-actions-0800
+        run: python3 .github/scripts/jisu_apply_schedule.py

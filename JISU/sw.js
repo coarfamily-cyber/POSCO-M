@@ -4,10 +4,6 @@ self.addEventListener('install', () => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-  event.respondWith(fetch(event.request));
-});
 self.addEventListener('push', (event) => {
   let payload = { title: '지수 통합 관제 알림', body: '새로운 작업지시 또는 공지사항이 도착했습니다.', url: '/POSCO-M/JISU/' };
   try {
@@ -38,7 +34,9 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const rawUrl = (event.notification.data && event.notification.data.url) || '/POSCO-M/JISU/';
-  const targetUrl = new URL(rawUrl, self.location.origin).href;
+  let targetUrl = new URL(rawUrl, self.location.origin).href;
+  // 다른 사이트로 가는 알림 클릭은 막고 기본 페이지로 연다
+  if (new URL(targetUrl).origin !== self.location.origin) targetUrl = new URL('/POSCO-M/JISU/', self.location.origin).href;
   const targetZone = new URL(targetUrl).searchParams.get('zone');
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {

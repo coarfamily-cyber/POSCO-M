@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611172120">
+  <meta name="jisu-build" content="202611172240">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -4914,7 +4914,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       let items=[];try{items=(await all())||[];}catch(e){msg('이 브라우저에서는 사진 저장소를 열 수 없습니다.');}
       items.sort((a,b)=>a.id<b.id?1:-1);
       if($('obCount'))$('obCount').textContent=items.length+'장';
-      const esc=window.JisuCore?window.JisuCore.esc:(s=>String(s??''));const safeSrc=window.JisuCore?window.JisuCore.safeImgSrc:(u=>String(u||''));
+      const esc=window.JisuCore?window.JisuCore.esc:(s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));const safeSrc=window.JisuCore?window.JisuCore.safeImgSrc:(u=>/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u||''))?String(u):'');
       $('obGrid').innerHTML=items.map(p=>{const src=safeSrc(p.data);if(!src)return '';return '<div class="ob-item" data-ob-id="'+esc(p.id)+'" title="'+esc(p.name)+'"><img src="'+src+'" alt="출고 사진"><time>'+esc(p.at)+'</time><span class="ob-del" data-ob-del="'+esc(p.id)+'" title="삭제">✕</span></div>';}).join('');
       const st=$('obStackBtn');
       if(st){
@@ -6744,7 +6744,7 @@ document.getElementById('pitchDownloadAgain').addEventListener('click',async()=>
 root.addEventListener('input',e=>{if(e.target.matches('[data-pitch-list-field],[data-pitch-field]')){if(e.target.matches('.pitch-num'))e.target.value=e.target.value.replace(/\D/g,'');save();updateWork();document.getElementById('pitchSaveStatus').textContent='입력값은 이 기기 브라우저에만 저장됩니다.';}});root.addEventListener('click',e=>{const b=e.target.closest('[data-pitch-add]');if(!b)return;const k=b.dataset.pitchAdd;save();const row=records()[active]||{},vals=listValues(row,k);vals.push('');drawList(k,vals);save();updateWork();[...root.querySelectorAll('[data-pitch-list="'+k+'"] input')].at(-1)?.focus()});setInterval(()=>{const d=kstDate();if(d!==active&&!busy){save();active=d;paint()}},15000);
 async function migrateLegacy(){const all=records();for(const day of Object.keys(all)){const row=all[day];if(row&&row.workState==='done'&&!row.completionId){const snap=await makeSnapshot(row,'legacy-'+day+'-'+String(row.completedAt||'done').replace(/[^0-9]/g,''),day);await window.jisuPitchArchive.put(snap);const fresh=records(),current=fresh[day];if(current&&current.workState==='done'&&!current.completionId&&current.completedAt===row.completedAt){current.completionId=snap.id;localStorage.setItem(KEY,JSON.stringify(fresh));}}}}
 window.jisuPitchMigration=migrateLegacy().then(()=>{updateWork();}).catch(e=>console.error('피치 이전 완료기록 보관 실패',e));
-async function loadPhotos(){try{const db=await dbOpen();const rows=await new Promise((res,rej)=>{const q=db.transaction(STORE,'readonly').objectStore(STORE).getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error)});db.close();const list=rows.filter(p=>p.day===active).sort((a,b)=>a.id.localeCompare(b.id));const safeSrc=window.JisuCore?window.JisuCore.safeImgSrc:(u=>String(u||''));document.getElementById('pitchPhotoThumbs').innerHTML=list.map(p=>{const s=safeSrc(p.data);return s?'<img src="'+s+'" alt="피치 사진">':'';}).join('');const sb=document.getElementById('pitchStackBtn');if(sb){const c1=sb.querySelector('.c1'),c2=sb.querySelector('.c2'),c3=sb.querySelector('.c3'),rev=[...list].reverse(),s0=rev[0]?safeSrc(rev[0].data):'',s1=rev[1]?safeSrc(rev[1].data):'',s2=rev[2]?safeSrc(rev[2].data):'';if(c1)c1.innerHTML=s0?'<img src="'+s0+'" alt="최근 피치 사진">':'<svg class="ob-stack-empty-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';if(c2)c2.innerHTML=s1?'<img src="'+s1+'" alt="이전 피치 사진">':'';if(c3)c3.innerHTML=s2?'<img src="'+s2+'" alt="이전 피치 사진">':'';sb._items=rev;}}catch(e){console.error(e)}}document.getElementById('pitchPhotoBtn').addEventListener('click',()=>document.getElementById('pitchPhotoInput').click());if(document.getElementById('pitchTopPhotoBtn'))document.getElementById('pitchTopPhotoBtn').addEventListener('click',e=>{e.stopPropagation();if(window.jisuOpenCam){window.jisuOpenCam(async data=>{const db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close();await loadPhotos();},()=>document.getElementById('pitchPhotoInput').click());}else{document.getElementById('pitchPhotoInput').click();}});if(document.getElementById('pitchStackBtn'))document.getElementById('pitchStackBtn').addEventListener('click',e=>{e.stopPropagation();const sb=e.currentTarget;const items=(sb._items||[]).map(p=>({id:p.id,at:p.at||p.day,name:p.name||'피치 사진',data:p.data}));if(!items.length){document.getElementById('pitchPhotoInput').click();return;}if(window.jisuOpenGallery)window.jisuOpenGallery(items,0,async cur=>{const db=await dbOpen();await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).delete(cur.id);t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close();await loadPhotos();return (sb._items||[]).map(p=>({id:p.id,at:p.at||p.day,name:p.name||'피치 사진',data:p.data}));});});document.getElementById('pitchPhotoInput').addEventListener('change',async e=>{for(const f of [...e.target.files])await new Promise(resolve=>{const im=new Image();im.onload=async()=>{try{const sc=Math.min(1,2048/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*sc);c.height=Math.round(im.naturalHeight*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);const data=c.toDataURL('image/jpeg',.90),db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close()}catch(err){console.error(err)}URL.revokeObjectURL(im.src);resolve()};im.onerror=()=>{URL.revokeObjectURL(im.src);resolve();};im.src=URL.createObjectURL(f)});e.target.value='';loadPhotos()});paint()})();</script>
+async function loadPhotos(){try{const db=await dbOpen();const rows=await new Promise((res,rej)=>{const q=db.transaction(STORE,'readonly').objectStore(STORE).getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error)});db.close();const list=rows.filter(p=>p.day===active).sort((a,b)=>a.id.localeCompare(b.id));const safeSrc=window.JisuCore?window.JisuCore.safeImgSrc:(u=>/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u||''))?String(u):'');document.getElementById('pitchPhotoThumbs').innerHTML=list.map(p=>{const s=safeSrc(p.data);return s?'<img src="'+s+'" alt="피치 사진">':'';}).join('');const sb=document.getElementById('pitchStackBtn');if(sb){const c1=sb.querySelector('.c1'),c2=sb.querySelector('.c2'),c3=sb.querySelector('.c3'),rev=[...list].reverse(),s0=rev[0]?safeSrc(rev[0].data):'',s1=rev[1]?safeSrc(rev[1].data):'',s2=rev[2]?safeSrc(rev[2].data):'';if(c1)c1.innerHTML=s0?'<img src="'+s0+'" alt="최근 피치 사진">':'<svg class="ob-stack-empty-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';if(c2)c2.innerHTML=s1?'<img src="'+s1+'" alt="이전 피치 사진">':'';if(c3)c3.innerHTML=s2?'<img src="'+s2+'" alt="이전 피치 사진">':'';sb._items=rev;}}catch(e){console.error(e)}}document.getElementById('pitchPhotoBtn').addEventListener('click',()=>document.getElementById('pitchPhotoInput').click());if(document.getElementById('pitchTopPhotoBtn'))document.getElementById('pitchTopPhotoBtn').addEventListener('click',e=>{e.stopPropagation();if(window.jisuOpenCam){window.jisuOpenCam(async data=>{const db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close();await loadPhotos();},()=>document.getElementById('pitchPhotoInput').click());}else{document.getElementById('pitchPhotoInput').click();}});if(document.getElementById('pitchStackBtn'))document.getElementById('pitchStackBtn').addEventListener('click',e=>{e.stopPropagation();const sb=e.currentTarget;const items=(sb._items||[]).map(p=>({id:p.id,at:p.at||p.day,name:p.name||'피치 사진',data:p.data}));if(!items.length){document.getElementById('pitchPhotoInput').click();return;}if(window.jisuOpenGallery)window.jisuOpenGallery(items,0,async cur=>{const db=await dbOpen();await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).delete(cur.id);t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close();await loadPhotos();return (sb._items||[]).map(p=>({id:p.id,at:p.at||p.day,name:p.name||'피치 사진',data:p.data}));});});document.getElementById('pitchPhotoInput').addEventListener('change',async e=>{for(const f of [...e.target.files])await new Promise(resolve=>{const im=new Image();im.onload=async()=>{try{const sc=Math.min(1,2048/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*sc);c.height=Math.round(im.naturalHeight*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);const data=c.toDataURL('image/jpeg',.90),db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close()}catch(err){console.error(err)}URL.revokeObjectURL(im.src);resolve()};im.onerror=()=>{URL.revokeObjectURL(im.src);resolve();};im.src=URL.createObjectURL(f)});e.target.value='';loadPhotos()});paint()})();</script>
 <script>
 /* ==========================================================================
    입고(INBOUND) 전용 모듈: 입고원료 중량 기록일지, 사진 증적, 달력 목표 연동, 엑셀
@@ -7142,7 +7142,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   async function renderPhotos() {
     const list = await getPhotos(activeDay);
     list.sort((a,b)=>String(b.id).localeCompare(String(a.id)));
-    const safeSrc = window.JisuCore ? window.JisuCore.safeImgSrc : (u => String(u || ""));
+    const safeSrc = window.JisuCore ? window.JisuCore.safeImgSrc : (u=>/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u||''))?String(u):'');
     if (ibStackBtn) {
       const c1 = ibStackBtn.querySelector('.c1'), c2 = ibStackBtn.querySelector('.c2'), c3 = ibStackBtn.querySelector('.c3');
       const emptyIco = '<svg class="ob-stack-empty-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
@@ -7154,7 +7154,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     }
     if (!photoThumbs) return;
     if (!list.length) { photoThumbs.innerHTML = ""; return; }
-    const esc = window.JisuCore ? window.JisuCore.esc : (s => String(s ?? ""));
+    const esc = window.JisuCore ? window.JisuCore.esc : (s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
     photoThumbs.innerHTML = list.map(p => {
       const src = safeSrc(p.data);
       if (!src) return "";
@@ -7207,7 +7207,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       const wrap = e.target.closest(".inbound-photo-thumb-wrap");
       if (!wrap) return;
       e.stopPropagation();
-      const safeSrc = window.JisuCore ? window.JisuCore.safeImgSrc : (u => String(u || ""));
+      const safeSrc = window.JisuCore ? window.JisuCore.safeImgSrc : (u=>/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u||''))?String(u):'');
       const list = await getPhotos(activeDay);
       const item = list.find(p => p.id === wrap.dataset.pid);
       const src = item ? safeSrc(item.data) : "";
@@ -8169,23 +8169,15 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
         }).catch(()=>{});
       }catch(_){}
     });
+    /* 구독 목록은 서버(api/push.js)가 DB에서 직접 읽는다. 클라이언트는 구독 정보를 내려받지 않는다. */
     try{
-      fetch(FB_PUSH_BASE+'.json').then(r=>r.ok?r.json():null).then(rows=>{
-        if(!rows || typeof rows!=='object') return;
-        const subs=[];
-        Object.values(rows).forEach(v=>{
-          if(!v||!v.sub||!v.sub.endpoint) return;
-          if(base==='*' || v.zone==='*' || v.zone===base) subs.push(v.sub);
-        });
-        if(!subs.length) return;
-        fetch(VERCEL_PUSH_URL,{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            subscriptions:subs,
-            payload:{title,body:message,url:clickUrl,tag:'jisu-'+(rec.id||Date.now()),badge:1}
-          })
-        }).catch(()=>{});
+      fetch(VERCEL_PUSH_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          target:base,
+          payload:{title,body:message,url:clickUrl,tag:'jisu-'+(rec.id||Date.now()),badge:1}
+        })
       }).catch(()=>{});
     }catch(_){}
   };
@@ -8239,7 +8231,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       const dateVal=m.querySelector('#qdDate').value;
       const tonVal=(m.querySelector('#qdTon').value||'').trim();
       const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-      const nowStr=()=>{ const d=new Date(); return String(d.getMonth()+1).padStart(2,'0')+'. '+String(d.getDate()).padStart(2,'0')+'. '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
+      const nowStr=()=>{ const q=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()).map(x=>[x.type,x.value])); return q.month+'. '+q.day+'. '+(q.hour==='24'?'00':q.hour)+':'+q.minute; };
       let u=''; try{u=localStorage.getItem('jisu-user')||'';}catch(_){}
       if(!dateVal || dateVal<=today){
         let all=[]; try{all=JSON.parse(localStorage.getItem('jisu-commands-v1')||'[]');}catch(_){}
@@ -8749,11 +8741,10 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   var timer = null;
   async function refresh() {
     if (window.innerWidth <= 768 || document.documentElement.classList.contains('worker-zone-only')) return;
-    var now = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Seoul'}));
-    var cut = new Date(now.getTime()); cut.setHours(18,0,0,0);
-    if (now < cut) cut.setDate(cut.getDate() - 1);
-    cut.setDate(cut.getDate() - 1);
-    var cutoffMs = cut.getTime();
+    var DAY_MS = 24*60*60*1000;
+    var kst = new Date(Date.now() + 9*3600*1000);
+    var today18 = Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate(), 18, 0, 0, 0) - 9*3600*1000;
+    var cutoffMs = (Date.now() >= today18) ? today18 : (today18 - DAY_MS);
     var valid = function(p){ return p && isSafeImg(p.data) && (!p.ts || p.ts >= cutoffMs); };
 
     var map = {};
