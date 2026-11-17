@@ -5272,23 +5272,28 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           if (window.jisuInboundArchive) {
             const inb = window.jisuInboundArchive.getToday();
             const irows = inb && inb.rows ? inb.rows : [];
+            let tKg = 0;
+            const sInb = [
+              ["입고원료 중량 기록일지"],
+              ["입고일자: " + (inb && inb.day ? inb.day : todayIso), "", "확인자: 출하/파트장"],
+              [],
+              ["번호", "입고일자", "LOT 번호", "Bag No.", "실측 중량(kg)", "작업자", "차량번호"]
+            ];
             if (irows.length) {
-              let tKg = 0;
-              const sInb = [
-                ["입고원료 중량 기록일지"],
-                ["입고일자: " + (inb.day || ""), "", "확인자: 출하/파트장"],
-                [],
-                ["번호", "입고일자", "LOT 번호", "Bag No.", "실측 중량(kg)", "작업자", "차량번호"]
-              ];
               irows.forEach((r, i) => {
                 const kg = parseFloat(r.kg) || 0;
                 tKg += kg;
-                sInb.push([i + 1, inb.day || "", r.lot || "", r.bag || "", kg, r.worker || "", r.loc || ""]);
+                sInb.push([i + 1, inb.day || todayIso, r.lot || "", r.bag || "", kg, r.worker || "", r.car || ""]);
               });
               sInb.push([]);
-              sInb.push(["합계", "", "", irows.length + " BAG", tKg, "", (tKg / 1000).toFixed(2) + " TON"]);
+              sInb.push(["합계", "", "", irows.length + " BAG", Number(tKg.toFixed(1)), "", (tKg / 1000).toFixed(2) + " TON"]);
               const wsInb = XLSX.utils.aoa_to_sheet(sInb);
-              wsInb["!cols"] = [{wch:6},{wch:12},{wch:16},{wch:10},{wch:14},{wch:12},{wch:16}];
+              wsInb['!cols'] = [{wch:6},{wch:12},{wch:16},{wch:10},{wch:14},{wch:10},{wch:14}];
+              XLSX.utils.book_append_sheet(wb, wsInb, "입고원료 중량 기록일지");
+            } else {
+              sInb.push(["-", todayIso, "기록 없음", "-", 0, "-", "-"]);
+              const wsInb = XLSX.utils.aoa_to_sheet(sInb);
+              wsInb['!cols'] = [{wch:6},{wch:12},{wch:16},{wch:10},{wch:14},{wch:10},{wch:14}];
               XLSX.utils.book_append_sheet(wb, wsInb, "입고원료 중량 기록일지");
             }
           }
@@ -6974,6 +6979,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     const rec = all[activeDay] || getTodayRecord();
     all[activeDay] = rec;
     rec.rows.splice(idx, 1);
+    window.__jisuAllowEmptyInboundPush = true;
+    setTimeout(() => { window.__jisuAllowEmptyInboundPush = false; }, 1200);
     saveAllRecords(all);
     renderRows();
   });
@@ -8375,6 +8382,18 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   function pushKey(k){
     var json=payloadOf(k); if(json==null) return;
     if(lastSent[k]===json) return;
+    if(k==='jisu-inbound-records-v1' && lastSent[k] && !window.__jisuAllowEmptyInboundPush){
+      try{
+        var prev=JSON.parse(lastSent[k]), next=JSON.parse(json), lost=false;
+        Object.keys(prev||{}).forEach(function(d){
+          var pr=prev[d], nr=next&&next[d];
+          if(pr&&Array.isArray(pr.rows)&&pr.rows.length>0 && (!nr||!Array.isArray(nr.rows)||nr.rows.length===0) && (!nr||nr.workState==='idle')){
+            lost=true;
+          }
+        });
+        if(lost){ console.warn('[jisu-db] 빈 입고 중량 기록 덮어쓰기 차단'); return; }
+      }catch(_){}
+    }
     lastSent[k]=json;
     try{
       db.ref(ROOT+'/state/'+k).set({v:json,t:firebase.database.ServerValue.TIMESTAMP,by:userName()})
