@@ -3365,9 +3365,9 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       <button type="button" id="jisuSysInfoClose" style="background:none;border:none;color:#94a3b8;font-size:13px;cursor:pointer;padding:0 2px;">✕</button>
     </div>
     <div style="margin-bottom:4px;">• <b>실시간 동기화</b>: PC 관리자 ↔ 모바일 작업자 1초 이내 자동 반영</div>
+    <div style="margin-bottom:4px;">• <b>매일 08:00 · 18:00 최종 확정 및 초기화</b>: 마감 전엔 언제든 수정·취소 가능하며, 정각에 최종 완료 내역을 DB 확정 → 주간·월간 실적 및 자동 엑셀 반영 → 화면 초기화</div>
     <div style="margin-bottom:4px;">• <b>매일 08:00 달력 스케줄 자동 적용</b>: 예약된 오늘 작업·공지를 각 구역 버튼에 자동 반영</div>
-    <div style="margin-bottom:4px;">• <b>매일 17:30 자동 엑셀 다운로드</b>: 데스크탑에서 전 구역 작업·오늘 사진 <code>.xlsx</code> 자동 저장 (1일 1회)</div>
-    <div>• <b>DB 사진 18시 기준 24시간 자동 삭제</b>: 오늘 찍은 사진은 내일 18:00에 DB에서 자동 정리</div>
+    <div>• <b>특이사항 · 사진 정리</b>: 특이사항은 <code>확인</code> 시 숨김 처리(실적·엑셀 유지), 사진은 18:00 정각에 이전 사진 자동 정리</div>
   </div>
   <div id="hdrSearchPanel" class="hdr-search-panel" hidden role="listbox" aria-label="대시보드 검색 결과"></div>
   <script>(function(){var e=document.getElementById('liveClock');if(!e)return;var d=new Date(),p=function(n){return String(n).padStart(2,'0');};e.textContent=d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());})();</script>
