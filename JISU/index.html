@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611170905">
+  <meta name="jisu-build" content="202611170915">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -2882,6 +2882,27 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       background: transparent; border: 0; color: #60a5fa; font-size: 11px; text-decoration: underline;
       cursor: pointer; text-align: center; margin-top: -2px;
     }
+
+    /* 전체 관리자 대시보드 조감도 버튼 왼쪽 위 겹친 사진 썸네일 배지 */
+    .hotspot-pill { overflow: visible !important; }
+    .jisu-zone-photo-stack {
+      position: absolute; top: -18px; left: -12px; width: 32px; height: 26px;
+      pointer-events: none; z-index: 6;
+    }
+    .jisu-zone-photo-stack .jisu-zps-card {
+      position: absolute; left: 0; top: 0; width: 24px; height: 22px;
+      border-radius: 7px; border: 1.5px solid rgba(255,255,255,0.72);
+      background: rgba(30,41,59,0.72); object-fit: cover;
+      box-shadow: 0 3px 9px rgba(0,0,0,0.45);
+    }
+    .jisu-zone-photo-stack.n1 .jisu-zps-card.i0 { z-index: 3; transform: rotate(-4deg); }
+    .jisu-zone-photo-stack.n2 .jisu-zps-card.i1 { z-index: 2; transform: translate(6px, -3px) rotate(8deg); opacity: 0.85; }
+    .jisu-zone-photo-stack.n2 .jisu-zps-card.i0 { z-index: 3; transform: rotate(-5deg); }
+    .jisu-zone-photo-stack.n3 .jisu-zps-card.i2 { z-index: 1; transform: translate(11px, -6px) rotate(13deg); opacity: 0.72; }
+    .jisu-zone-photo-stack.n3 .jisu-zps-card.i1 { z-index: 2; transform: translate(6px, -3px) rotate(6deg); opacity: 0.88; }
+    .jisu-zone-photo-stack.n3 .jisu-zps-card.i0 { z-index: 3; transform: rotate(-6deg); }
+    html.worker-zone-only .jisu-zone-photo-stack { display: none !important; }
+    @media (max-width: 768px) { .jisu-zone-photo-stack { display: none !important; } }
   </style>
   <style>
     /* ==========================================================================
@@ -8497,6 +8518,95 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
 
   window.jisuDb={ root:ROOT, ref:function(p){ return db.ref(ROOT+'/'+p); }, push:pushKey, pull:pullPhotos, purge:purgeExpired, status:paint };
   console.log('[jisu-db] 실시간 동기화 시작 · /'+ROOT);
+})();
+</script>
+<script>
+/* 전체 관리자 대시보드 조감도 버튼 왼쪽 위 사진 썸네일 스택 표시 */
+(function initZonePhotoBadges(){
+  if (document.documentElement.classList.contains('worker-zone-only')) return;
+  function readAll(dbName, storeName) {
+    return new Promise(function(res){
+      try {
+        var r = indexedDB.open(dbName, 1);
+        r.onupgradeneeded = function(){ try{ if (!r.result.objectStoreNames.contains(storeName)) r.result.createObjectStore(storeName, {keyPath:'id'}); }catch(_){} };
+        r.onsuccess = function(){
+          try {
+            var q = r.result.transaction(storeName, 'readonly').objectStore(storeName).getAll();
+            q.onsuccess = function(){ try{ r.result.close(); }catch(_){} res(q.result || []); };
+            q.onerror = function(){ try{ r.result.close(); }catch(_){} res([]); };
+          } catch(_) { try{ r.result.close(); }catch(_){} res([]); }
+        };
+        r.onerror = function(){ res([]); };
+      } catch(_) { res([]); }
+    });
+  }
+  function isSafeImg(src) {
+    return /^data:image\/(png|jpe?g|webp|gif);base64,/i.test(String(src || ''));
+  }
+  var timer = null;
+  async function refresh() {
+    if (window.innerWidth <= 768 || document.documentElement.classList.contains('worker-zone-only')) return;
+    var now = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Seoul'}));
+    var cut = new Date(now.getTime()); cut.setHours(18,0,0,0);
+    if (now < cut) cut.setDate(cut.getDate() - 1);
+    cut.setDate(cut.getDate() - 1);
+    var cutoffMs = cut.getTime();
+    var valid = function(p){ return p && isSafeImg(p.data) && (!p.ts || p.ts >= cutoffMs); };
+
+    var map = {};
+    var addList = function(z, arr){
+      if (!z || !arr || !arr.length) return;
+      var ok = arr.filter(valid).sort(function(a,b){ return (b.ts||0)-(a.ts||0) || String(b.id||'').localeCompare(String(a.id||'')); });
+      if (ok.length) map[z] = (map[z] || []).concat(ok);
+    };
+    try {
+      var results = await Promise.all([
+        readAll('jisu-photos', 'outbound'),
+        readAll('jisu-inbound-photos', 'inbound'),
+        readAll('jisu-pitch-photos', 'pitch'),
+        readAll('jisu-zone-photos-v1', 'photos')
+      ]);
+      addList('outbound', results[0]);
+      addList('inbound', results[1]);
+      addList('pitch', results[2]);
+      (results[3] || []).forEach(function(p){
+        if (!p || !p.zone) return;
+        addList(p.zone, [p]);
+      });
+    } catch(_) { return; }
+
+    document.querySelectorAll('.hotspot-pill[data-toggle-zone]').forEach(function(btn){
+      var zone = btn.getAttribute('data-toggle-zone');
+      var list = (map[zone] || []).slice(0, 3);
+      var old = btn.querySelector('.jisu-zone-photo-stack');
+      if (!list.length) { if (old) old.remove(); return; }
+      var sig = list.map(function(p){ return p.id; }).join('|');
+      if (old && old.getAttribute('data-sig') === sig) return;
+      if (old) old.remove();
+      var box = document.createElement('span');
+      box.className = 'jisu-zone-photo-stack n' + list.length;
+      box.setAttribute('data-sig', sig);
+      box.setAttribute('aria-hidden', 'true');
+      /* 뒤(i2/i1)부터 추가하고 맨 앞(i0)이 마지막 */
+      for (var i = list.length - 1; i >= 0; i--) {
+        var img = document.createElement('img');
+        img.className = 'jisu-zps-card i' + i;
+        img.src = list[i].data;
+        img.alt = '';
+        box.appendChild(img);
+      }
+      btn.appendChild(box);
+    });
+  }
+  function schedule() {
+    clearTimeout(timer);
+    timer = setTimeout(refresh, 180);
+  }
+  window.jisuRefreshZonePhotoBadges = schedule;
+  window.addEventListener('jisu:photo-sync', schedule);
+  window.addEventListener('resize', schedule);
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(refresh, 400); setTimeout(refresh, 1800); });
+  setInterval(refresh, 4500);
 })();
 </script>
 </body>
