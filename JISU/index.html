@@ -3478,8 +3478,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         </div>
         <div>• <b>실시간 동기화</b>: PC ↔ 모바일 1초 이내 반영</div>
         <div>• <b>08:00 자동 적용</b>: 달력 작업·공지 각 구역 반영</div>
-        <div>• <b>17:30 자동 엑셀</b>: 데스크탑 <code>.xlsx</code> 자동 저장</div>
-        <div>• <b>18:00 사진 정리</b>: 18시 기준 24시간 후 DB 삭제</div>
+        <div>• <b>08:00 · 18:00 자동 확정 · 엑셀</b>: 정각에 확정·실적 반영·자동 <code>.xlsx</code> 저장 후 초기화</div>
+        <div>• <b>18:00 사진 화면 정리</b>: 화면만 비우고 당일 엑셀에는 포함(다음날 정리)</div>
       </div>
       <!-- 사이드바 맨 아래: 키오스크 -->
       <div class="side-tools-row side-tools-bottom" id="sideToolsBottom">
@@ -5395,7 +5395,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       }finally{ btn.disabled=false; btn.innerHTML=label; }
     }
     window.jisuExportWork=exportWork;btn.addEventListener('click',()=>exportWork());
-    /* 매일 오후 5시 30분(17:30 KST) 데스크탑 관리자 화면에서만 엑셀 자동 다운로드 (1일 1회) */
+    /* 매일 08:00 · 18:00(KST) 데스크탑 관리자 화면에서만 엑셀 자동 다운로드 (교대당 1회) */
     (function autoExcelScheduler(){
       if(document.documentElement.classList.contains('worker-zone-only') || document.body.classList.contains('worker-zone-only')) return;
       function isDesktopView(){
@@ -5405,18 +5405,18 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         return true;
       }
       if(!isDesktopView()) return;
-      const AUTO_KEY='jisu-auto-excel-day';
+      const AUTO_KEY='jisu-auto-excel-shift';
       async function checkAutoExcel(){
         try{
           if(!isDesktopView()) return;
           const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()).map(x=>[x.type,x.value]));
-          const hh=Number(parts.hour==='24'?0:parts.hour), mm=Number(parts.minute);
+          const hh=Number(parts.hour==='24'?0:parts.hour);
           const todayKey=parts.year+'-'+parts.month+'-'+parts.day;
-          if((hh===17 && mm>=30) || hh>=18){
-            if(localStorage.getItem(AUTO_KEY)===todayKey) return;
-            localStorage.setItem(AUTO_KEY, todayKey);
-            await exportWork({auto:true, skipPrompt:true});
-          }
+          const shiftTag=hh>=18?(todayKey+'-pm'):(hh>=8?(todayKey+'-am'):'');
+          if(!shiftTag) return;
+          if(localStorage.getItem(AUTO_KEY)===shiftTag) return;
+          localStorage.setItem(AUTO_KEY, shiftTag);
+          await exportWork({auto:true, skipPrompt:true, filename:'금일작업완료_'+parts.year+parts.month+parts.day+(hh>=18?'_18시':'_08시')});
         }catch(e){ console.warn('[autoExcel]', e); }
       }
       setTimeout(checkAutoExcel, 4000);
