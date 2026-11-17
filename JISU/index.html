@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611171255">
+  <meta name="jisu-build" content="202611172105">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -2725,8 +2725,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
 #pitchLog .pitch-work-status{margin-top:8px;font-size:10px;font-weight:800;color:#94a3b8;line-height:1.6;overflow-wrap:anywhere;}#pitchLog .pitch-work-status[data-state="work"]{color:#4ade80;}#pitchLog .pitch-work-status[data-state="done"]{color:#93c5fd;}#pitchLog .pitch-save-status{display:block;margin-top:3px;text-align:left;font-size:10px;color:#94a3b8;}#pitchLog .pitch-photo{margin-top:6px;padding-top:0;}
 </style><style>#pitchLog #pitchStartBtn.is-active{background:rgba(34,197,94,.62);color:#fff;opacity:1;}#pitchLog #pitchCompleteBtn.is-active{background:rgba(59,130,246,.62);color:#fff;opacity:1;}#pitchLog .pitch-download-again{margin-top:4px;padding:3px 0;background:transparent;color:#93c5fd;font-size:10px;text-decoration:underline;border:0;}#pitchLog .pitch-download-again[hidden]{display:none;}@media(max-width:600px){#pitchLog .pitch-input{font-size:16px;}#pitchLog .pitch-work-btn{height:42px;}}</style><style>body:not(#zz) .hotspot-pill[data-toggle-zone="pitch"].st-work{background:rgba(34,197,94,.62)!important;color:#fff!important;}body:not(#zz) .hotspot-pill[data-toggle-zone="pitch"].st-done{background:rgba(59,130,246,.62)!important;color:#fff!important;}</style><style>
 /* 피치 상세: 바깥 유리 여백은 고정, 내용만 내부 스크롤 */
-#hotspot-pitch > .expand-card{display:flex;flex-direction:column;padding:14px!important;overflow:hidden!important;}
-#hotspot-pitch > .expand-card > .pitch-scroll-body{flex:1 1 auto;min-height:0;width:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;border-radius:14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.28) transparent;scrollbar-gutter:stable;}
+#hotspot-pitch > .expand-card{display: block !important; padding: 14px 14px 32px !important; overflow-y: auto !important; overflow-x: hidden !important;}
+#hotspot-pitch > .expand-card > .pitch-scroll-body{flex:none;width:100%;overflow: visible !important; height: auto !important;overscroll-behavior:contain;border-radius:14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.28) transparent;scrollbar-gutter:stable;}
 #hotspot-pitch .pitch-scroll-body::-webkit-scrollbar{width:6px;}
 #hotspot-pitch .pitch-scroll-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28);border-radius:9px;}
 </style>
@@ -2749,7 +2749,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     #hotspot-inbound .inbound-scroll-body {
       flex: none;
       width: 100%;
-      overflow: visible;
+      overflow: visible !important; height: auto !important;
     }
 
     .inbound-log { margin-top: 8px; padding: 12px; border-radius: 16px; background: rgba(255,255,255,.08); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); color: #f1f5f9; display: flex; flex-direction: column; gap: 10px; }
@@ -5185,20 +5185,28 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       // width: never wider than the map
       const z=parseFloat(getComputedStyle(card).zoom)||1;
       const vw=window.innerWidth||document.documentElement.clientWidth, vh=window.innerHeight||document.documentElement.clientHeight, VM=16, maxW=Math.min(sr.width-2*M,vw-2*VM); card.style.width = card.offsetWidth*z>maxW ? (maxW/z)+'px' : '';
-      if(sr.height<360){ /* phone: map too small, let the card open below normally (page scroll), only keep it inside horizontally */
-        card.style.top='100%'; card.style.bottom='auto'; card.style.maxHeight=Math.max(120,Math.floor((vh-2*VM)/z))+'px'; card.classList.remove('opens-up');
-        const w0=card.offsetWidth*z, h0=Math.min(card.scrollHeight*z,vh-2*VM), cx0=br.left+br.width/2; let l0=cx0-w0/2; let d0=0, dy0=0; if(l0<VM) d0=VM-l0; else if(l0+w0>vw-VM) d0=(vw-VM)-(l0+w0); const t0=br.bottom+8; if(t0+h0>vh-VM) dy0=(vh-VM)-(t0+h0); if(t0+dy0<VM) dy0=VM-t0; card.style.transform='translate(calc(-50% + '+Math.round(d0/z)+'px), '+Math.round(dy0/z)+'px)'; return; }
+      if(sr.height<360){
+      card.style.setProperty('top','100%','important'); card.style.setProperty('bottom','auto','important'); card.style.setProperty('max-height',Math.max(120,Math.floor((vh-2*VM)/z))+'px','important'); card.classList.remove('opens-up');
+      card.style.setProperty('transform','translate(-50%, 0px)','important');
+      const cr0=card.getBoundingClientRect(); let d0=0, dy0=0;
+      if(cr0.left<VM) d0=VM-cr0.left; else if(cr0.right>vw-VM) d0=(vw-VM)-cr0.right;
+      if(cr0.bottom>vh-VM) dy0=(vh-VM)-cr0.bottom; if(cr0.top+dy0<VM) dy0=VM-cr0.top;
+      card.style.setProperty('transform','translate(calc(-50% + '+Math.round(d0/z)+'px), '+Math.round(dy0/z)+'px)','important'); return;
+    }
       const scrollBody=wrap.id==='hotspot-pitch'?card.querySelector('.pitch-scroll-body'):(wrap.id==='hotspot-inbound'?card.querySelector('.inbound-scroll-body'):null),cardCss=getComputedStyle(card),natural=(scrollBody?scrollBody.scrollHeight+80+parseFloat(cardCss.paddingTop)+parseFloat(cardCss.paddingBottom):card.scrollHeight)*z, capRatio=wrap.id==='hotspot-environment'?0.98:((wrap.id==='hotspot-inbound'||wrap.id==='hotspot-pitch')?0.92:0.46), cap=Math.max(260,sr.height*capRatio); /* 환경 카드는 호기 버튼·특이사항이 다 보이게 높이 제한 완화 */
       const vTop=Math.max(VM,sr.top+M), vBottom=Math.min(vh-VM,sr.bottom-M), below=Math.max(0,vBottom-br.bottom-8), above=Math.max(0,br.top-vTop-8);
       let up=false, maxH;
       if(natural<=below){ maxH=below; } else if(natural<=above){ up=true; maxH=above; } else { up=above>below; maxH=Math.max(above,below); }
-      if(up){ card.style.top='auto'; card.style.bottom='100%'; card.style.marginTop='0'; card.style.marginBottom='8px'; card.classList.add('opens-up'); }
-      else { card.style.top='100%'; card.style.bottom='auto'; card.style.marginTop='8px'; card.style.marginBottom='0'; card.classList.remove('opens-up'); }
-      maxH=Math.max(120,Math.min(maxH,cap,vh-2*VM)); card.style.maxHeight=Math.max(120,Math.floor(maxH/z))+'px';
-      // horizontal clamp
-      const w=card.offsetWidth*z, cx=br.left+br.width/2; let left=cx-w/2, dx=0;
-      const minL=Math.max(VM,Math.min(sr.left+M,vw-VM-w)), maxR=Math.min(vw-VM,Math.max(sr.right-M,VM+w)); if(left<minL) dx=minL-left; else if(left+w>maxR) dx=maxR-(left+w); if(left+dx<VM) dx=VM-left; if(left+dx+w>vw-VM) dx=(vw-VM)-(left+w);
-      const cardH=Math.min(natural,maxH), cardTop=up?(br.top-8-cardH):(br.bottom+8); let dy=0; if(cardTop+cardH>vh-VM) dy=(vh-VM)-(cardTop+cardH); if(cardTop+dy<VM) dy=VM-cardTop; card.style.transform='translate(calc(-50% + '+Math.round(dx/z)+'px), '+Math.round(dy/z)+'px)';
+      if(up){ card.style.setProperty('top','auto','important'); card.style.setProperty('bottom','100%','important'); card.style.marginTop='0'; card.style.marginBottom='8px'; card.classList.add('opens-up'); }
+    else { card.style.setProperty('top','100%','important'); card.style.setProperty('bottom','auto','important'); card.style.marginTop='8px'; card.style.marginBottom='0'; card.classList.remove('opens-up'); }
+    maxH=Math.max(120,Math.min(maxH,cap,vh-2*VM)); card.style.setProperty('max-height',Math.max(120,Math.floor(maxH/z))+'px','important');
+    card.style.setProperty('transform','translate(-50%, 0px)','important');
+    const cr=card.getBoundingClientRect();
+    const minL=Math.max(VM,Math.min(sr.left+M,vw-VM-cr.width)), maxR=Math.min(vw-VM,Math.max(sr.right-M,VM+cr.width));
+    let dx=0; if(cr.left<minL) dx=minL-cr.left; else if(cr.right>maxR) dx=maxR-cr.right;
+    const minT=Math.max(VM,Math.min(sr.top+M,vh-VM-cr.height)), maxB=Math.min(vh-VM,Math.max(sr.bottom-M,VM+cr.height));
+    let dy=0; if(cr.bottom>maxB) dy=maxB-cr.bottom; if(cr.top+dy<minT) dy=minT-cr.top;
+    card.style.setProperty('transform','translate(calc(-50% + '+Math.round(dx/z)+'px), '+Math.round(dy/z)+'px)','important');
     }
     const fitOpen=()=>document.querySelectorAll('.hotspot-wrapper.is-open').forEach(fitCard);
     const wraps=[...document.querySelectorAll('.hotspot-wrapper')];
@@ -8341,7 +8349,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     return (Date.now()>=today18Utc)?today18Utc:(today18Utc-DAY);
   }
   function isPhotoExpired(ts){ return Boolean(ts&&ts<photoCutoffMs()); }
-  var STATE_KEYS=['jisu-commands-v1','jisu-memos-v1','jisu-pitch-records-v1','jisu-inbound-records-v1','jisu-schedule-v1','jisu-schedules-v1','jisu-env-v1','jisu-env-log-v1','jisu-gemini-key'];
+  var STATE_KEYS=['jisu-commands-v1','jisu-memos-v1','jisu-pitch-records-v1','jisu-inbound-records-v1','jisu-schedule-v1','jisu-schedules-v1','jisu-env-v1','jisu-env-log-v1'];
   var PHOTO_DB={outbound:{db:'jisu-photos',store:'outbound'},inbound:{db:'jisu-inbound-photos',store:'inbound'},pitch:{db:'jisu-pitch-photos',store:'pitch'}};
   var ZONE_STORE={db:'jisu-zone-photos-v1',store:'photos'};
   var ALL_ZONES=['outbound','inbound','pitch','packaging','packaging-d','environment','warehouse','production-a','production-b','production-c','production-d','production-e','production-f','production-g','production-h'];
