@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611171040">
+  <meta name="jisu-build" content="202611171225">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -4313,11 +4313,6 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       }
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
-      setInterval(() => {
-        const pitchTemp = 741 + Math.floor(Math.random() * 3);
-        const pitchEl = document.getElementById('metric-pitch');
-        if (pitchEl) pitchEl.textContent = `${pitchTemp} °C`;
-      }, 1500);
     });
   </script>
 
@@ -5820,7 +5815,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           +'1) 물류/배차 지시서 표라면 "세종2공장" 또는 "2공장" 행만 골라내고("세종1공장"·"1공장" 제외), 각 행을 반드시 "YYYY-MM-DD | 차량번호 · 수량(PLT)" 형식 한 줄씩 출력하세요. 예: 2026-11-11 | 부산96아2809 · 660KG / 16P\n'
           +'2) 일반 카톡/안내 공지 이미지라면 날짜 머리글(예: 11월15일) 아래 작업 내용을 한 줄씩 정리하세요.\n'
           +'설명이나 마크다운 기호 없이 결과 줄만 출력하세요.';
-        const models=['gemini-3.8-flash','gemini-3.1-flash-lite-preview','gemini-2.5-flash-lite','gemini-2.5-flash'];
+        const models=['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-3.1-flash-lite-preview'];
         let lastErr='';
         for(const md of models){
           try{
@@ -6279,6 +6274,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         add.push(rec);
         x.closed=true; x.carried=true; x.carriedTo=rec.id; x.carriedQty=rem; x.carriedDay=today; x.working=false; if(x.review==='pending') x.review='superseded';
       });
+      all.forEach(x=>{ if(x&&x.closed&&x.img&&x.id!=='demo_dispatch_1'){ delete x.img; changed=true; } });
       if(changed){ save(CKEY,all.concat(add)); redraw(); }
     }
     const queue=()=>load(CKEY).filter(x=>x.kind!=='notice' && x.review==='pending' && x.short);
@@ -7035,7 +7031,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       if (window.jisuOpenCam) {
         window.jisuOpenCam(async dataUrl => {
           const photoId = "inb-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6);
-          await savePhoto({ id: photoId, day: activeDay, data: dataUrl, at: new Date().toISOString() });
+          const kstStamp = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+          await savePhoto({ id: photoId, day: activeDay, data: dataUrl, at: kstStamp, ts: Date.now(), name: `입고_${activeDay}_${photoId.slice(-4)}.jpg` });
           await renderPhotos();
         }, () => photoInput.click());
       } else {
@@ -7051,7 +7048,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
         try {
           const dataUrl = await resizeImage(file, 2048, 2048, 0.90);
           const photoId = "inb-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6);
-          await savePhoto({ id: photoId, day: activeDay, data: dataUrl, at: new Date().toISOString() });
+          const kstStamp = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+          await savePhoto({ id: photoId, day: activeDay, data: dataUrl, at: kstStamp, ts: Date.now(), name: `입고_${activeDay}_${photoId.slice(-4)}.jpg` });
         } catch(err) { console.error("Photo save err:", err); }
       }
       photoInput.value = "";
@@ -8152,11 +8150,11 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     r.onload=()=>{
       const im=new Image();
       im.onload=()=>{
-        const max=2048; let w=im.width,h=im.height;
+        const max=1280; let w=im.width,h=im.height;
         if(w>max||h>max){ if(w>=h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;} }
         const c=document.createElement('canvas'); c.width=w; c.height=h;
         c.getContext('2d').drawImage(im,0,0,w,h);
-        qImg=c.toDataURL('image/jpeg',0.90);
+        qImg=c.toDataURL('image/jpeg',0.78);
         const m=ensureModal();
         m.querySelector('#qdPreview').src=qImg;
         m.querySelector('#qdDate').value=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
@@ -8488,7 +8486,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     var ex=null; try{ ex=await idbGet(t.db,t.store,id); }catch(_){ ex=null; }
     if(ex&&ex.data===p.data) return;
     var rec={id:id,day:p.day||'',at:p.at||'',name:p.name||'',data:p.data};
-    if(zone!=='outbound'&&zone!=='pitch') rec.zone=zone;
+    if(zone!=='outbound'&&zone!=='inbound'&&zone!=='pitch') rec.zone=zone;
     photoMuted++; pulled[id]=p.data;
     try{ await idbPut(t.db,t.store,rec); }
     catch(e){ console.warn('[jisu-db] 사진 반영 실패:',e&&e.message); }
@@ -8529,7 +8527,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     var today=todayKST(), sent=0;
     /* ① 구역 전용 저장소: 오늘 사진 중 DB에 없는 것만 올린다 (기기당 최대 15장/구역) */
     for(var zone in ALL_ZONES){
-      var z=ALL_ZONES[zone]; if(z!=='outbound'&&z!=='pitch') continue;
+      var z=ALL_ZONES[zone]; if(z!=='outbound'&&z!=='inbound'&&z!=='pitch') continue;
       var t=zoneStore(z); var local=[];
       try{ local=await idbAll(t.db,t.store); }catch(_){ continue; }
       var todays=local.filter(function(p){ return p&&p.day===today&&typeof p.data==='string'; }).slice(-15);
