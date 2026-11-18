@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -143,6 +144,78 @@ def dump_v(value) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
 
 
+# ------------------------------------------------- 오전/오후 분리 (index.html 과 같은 규칙)
+AMPM_RE = re.compile(r"(오전|오후)")
+_BOUNDARY_RE = re.compile(r"[\s,·;:/|、()\[\]{}<>~\-]")
+_TIME_ONLY_RE = re.compile(r"\d{0,2}(?:시|:\d{1,2})(?:[~\-–]\d{0,2}(?:시|:\d{1,2})?)?(?:부터|까지|이후|이전|경|분)?")
+
+
+def _time_only(body: str) -> bool:
+    t = re.sub(r"\s+", "", body or "")
+    if not t:
+        return True
+    return bool(_TIME_ONLY_RE.fullmatch(t))
+
+
+def _split_once(s: str):
+    """한 항목 안에 오전 … 과 오후 … 가 함께 있으면 두 토막으로 나눈다."""
+    marks = []
+    for m in AMPM_RE.finditer(s):
+        i = m.start()
+        before = s[i - 1] if i > 0 else ""
+        after = s[i + 2:]
+        if before and not _BOUNDARY_RE.match(before):
+            continue
+        if not after[:1].isspace():      # '오전에' 처럼 붙은 말은 라벨이 아니다
+            continue
+        marks.append((i, m.group(1)))
+    if not marks:
+        return None
+    am_pos = [i for i, l in marks if l == "오전"]
+    pm_pos = [i for i, l in marks if l == "오후"]
+    if not am_pos or not pm_pos:
+        return None
+    cut = next((i for i in pm_pos if i > am_pos[0]), None)
+    if cut is None:
+        return None
+    head = re.sub(r"[\s,·;:/|、\-]+$", "", s[:cut]).strip()
+    tail = re.sub(r"^[\s,·;:/|、\-]+", "", s[cut:]).strip()
+    if not head or not tail:
+        return None
+    am_i = head.find("오전")
+    if am_i < 0:
+        return None
+    prefix = re.sub(r"[\s,·;:/|、\-]+$", "", head[:am_i]).strip()
+    if prefix and (len(prefix) > 14 or re.search(r"\d", prefix)):
+        return None
+    head_body, tail_body = head[am_i + 2:].strip(), tail[2:].strip()
+    if len(head_body) < 2 or len(tail_body) < 2:
+        return None
+    if _time_only(head_body) or _time_only(tail_body):
+        return None
+    return [head, tail]
+
+
+def split_am_pm(text, kind=None):
+    raw = "" if text is None else str(text)
+    if kind == "notice" or not raw:
+        return [raw]
+    parts = [raw]
+    for _ in range(4):
+        nxt, changed = [], False
+        for p in parts:
+            r = _split_once(p)
+            if r:
+                nxt.extend(r)
+                changed = True
+            else:
+                nxt.append(p)
+        parts = nxt
+        if not changed:
+            break
+    return parts
+
+
 # ---------------------------------------------------------------- 반영 규칙
 def apply_schedules(sch: list, cmds: list, today: str, now_s: str):
     """달력 예약을 금일작업으로 옮긴다. (추가된 카드 수, 마킹 수)"""
@@ -162,35 +235,39 @@ def apply_schedules(sch: list, cmds: list, today: str, now_s: str):
         else:
             at, closed = now_s, False
 
-        rec = {
-            "id": "s" + str(s.get("id")),
-            "target": s.get("target"),
-            "kind": s.get("kind") or "instruction",
-            "text": s.get("text"),
-            "at": at,
-            "day": date,
-            "sched": date,
-            "origDay": date,
-        }
-        if closed:
-            rec["closed"] = True
-        if s.get("img"):
-            rec["img"] = s["img"]
-        if s.get("tonText"):
-            rec["tonText"] = s["tonText"]
-        if s.get("urgent"):
-            rec["urgent"] = True
-        if s.get("by"):
-            rec["by"] = s["by"]
+        texts = split_am_pm(s.get("text"), s.get("kind"))
+        for idx, txt in enumerate(texts):
+            rid = "s" + str(s.get("id")) + (("-" + str(idx)) if idx else "")
+            if rid in have:
+                print(f"  = 이미 등록됨 {rid} (마킹만)")
+                continue
+            rec = {
+                "id": rid,
+                "target": s.get("target"),
+                "kind": s.get("kind") or "instruction",
+                "text": txt,
+                "at": at,
+                "day": date,
+                "sched": date,
+                "origDay": date,
+            }
+            if closed:
+                rec["closed"] = True
+            if idx == 0:
+                if s.get("img"):
+                    rec["img"] = s["img"]
+                if s.get("tonText"):
+                    rec["tonText"] = s["tonText"]
+            if s.get("urgent"):
+                rec["urgent"] = True
+            if s.get("by"):
+                rec["by"] = s["by"]
 
-        if rec["id"] not in have:
             cmds.append(rec)
-            have.add(rec["id"])
+            have.add(rid)
             added += 1
-            print(f"  + 카드 추가 {rec['id']} [{date}] {rec.get('target')} "
+            print(f"  + 카드 추가 {rid} [{date}] {rec.get('target')} "
                   f"{'공지' if rec['kind'] == 'notice' else '지시'} — {rec.get('text')}")
-        else:
-            print(f"  = 이미 등록됨 {rec['id']} (마킹만)")
 
         s["applied"] = True
         s["appliedAt"] = now_s
