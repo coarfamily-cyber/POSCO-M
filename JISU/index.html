@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611182242">
+  <meta name="jisu-build" content="202611182301">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
@@ -5061,13 +5061,17 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       defs=defs.replace('</defs>',MVC.map((c,i)=>'<marker id="mvHead'+i+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="'+c+'"/></marker>').join('')+'</defs>');
       const W=sr.width, H=sr.height, P=(x,y)=>[x/100*W,y/100*H];
       // building footprints (% of map) and road centre-lines (% of map) traced from the background image
-      const BLD={A:[6.0,49.5,23.2,86.7],B:[25.6,10.4,31.3,86.7],C:[57.35,11.4,82.5,45.4],D:[57.35,55.4,82.6,87.9]};
+      const BLD={A:[4.8,45.0,21.8,86.4],B:[25.6,10.4,31.5,86.8],C:[57.3,11.4,82.6,45.4],D:[57.3,55.3,82.6,87.9],'4':[12.2,13.2,22.1,40.6],W:[67.6,0.6,81.0,10.4]};
       const ZONE_BLD={environment:'A',packaging:'C','packaging-d':'D',pitch:'C','production-a':'C','production-b':'C','production-c':'C','production-d':'C','production-e':'D','production-f':'D','production-g':'D','production-h':'D'};
-      const ROADS=[['v',43.8,16.9,91.4],['h',16.9,43.8,57.35],['h',44.2,43.8,57.35],['h',59.8,43.8,57.35],['h',84.7,43.8,57.35],['h',91.4,22.2,43.8],['v',22.2,86.4,91.4],['v',28.45,86.7,91.4]] /* 사용자가 그려준 동선: 가운데 세로 통로 + C·D동 입출고(왼쪽 벽 위·아래) + 아래 통로로 A동 입출고(오른쪽 아래) */
+      const BLD_ALIAS={'1':'A','2':'C','3':'D',warehouse:'W'};   /* 예전 기록·다른 표기(1동/2동/3동)도 같은 건물로 취급 */
+      const bldOf=k=>BLD[k]?k:(ZONE_BLD[k]||BLD_ALIAS[k]||'');
+      /* 각 동 창고 입구 = 조감도에 빨간색으로 칠한 지점(사용자 지정) — 좌표는 지도 대비 % */
+      const DOCKS={A:[[20.11,82.35]],B:[[28.45,86.70]],C:[[58.26,38.97]],D:[[58.37,55.43]],'4':[[16.07,37.10]],W:[[79.01,9.64]]};
+      const ROADS=[['v',43.8,11.4,91.4],['v',34.3,11.4,88.0],['v',8.0,11.4,41.8],['v',3.4,41.8,88.0],['h',11.4,3.4,82.0],['h',41.8,3.4,24.2],['v',16.07,37.10,41.8],['h',38.97,43.8,58.26],['h',55.43,43.8,58.37],['h',88.0,3.4,43.8],['v',20.11,82.35,88.0],['v',28.45,86.7,88.0],['v',79.01,9.64,11.4]] /* 사용자 지정 동선: 가운데 세로 통로 + 위·아래·서쪽 도로로 각 동 빨간 점(창고 입구)까지 */
         .map(([o,c,a,b])=>o==='v'?{o,x:c/100*W,a:a/100*H,b:b/100*H}:{o,y:c/100*H,a:a/100*W,b:b/100*W});
       function exitsOf(k){
-        const bk=BLD[k]?k:ZONE_BLD[k];
-        if(bk){const DOCKS={A:[[22.2,86.4]],B:[[28.45,86.7]],C:[[57.35,16.9],[57.35,44.2]],D:[[57.35,59.8],[57.35,84.7]]}; return (DOCKS[bk]||[]).map(p=>P(p[0],p[1]));} /* 입출고 지점 (사용자 지정) */
+        const bk=bldOf(k);
+        if(bk) return (DOCKS[bk]||[]).map(p=>P(p[0],p[1])); /* 건물별 창고 입구(빨간 점) 지점 */
         const el=anchorEl(k); if(!el) return [];
         const r=el.getBoundingClientRect(); return [[r.left+r.width/2-sr.left,r.top+r.height/2-sr.top]];
       }
@@ -5087,7 +5091,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           if(v.x>=hh.a-1&&v.x<=hh.b+1&&hh.y>=v.a-1&&hh.y<=v.b+1){const n=node([v.x,hh.y]);onRoad[i].push(n);onRoad[j].push(n);}}));
         ROADS.forEach((rd,i)=>{onRoad[i].push(node(rd.o==='v'?[rd.x,rd.a]:[rd.a,rd.y]));onRoad[i].push(node(rd.o==='v'?[rd.x,rd.b]:[rd.b,rd.y]));});
         const S=nodes.length; nodes.push(null); adj.push([]); const T=nodes.length; nodes.push(null); adj.push([]);
-        const attach=(k,virt)=>{const isPt=!(BLD[k]||ZONE_BLD[k]); exitsOf(k).forEach(c=>{const ci=node(c); adj[virt].push([ci,0]); adj[ci].push([virt,0]);
+        const attach=(k,virt)=>{const isPt=!bldOf(k); exitsOf(k).forEach(c=>{const ci=node(c); adj[virt].push([ci,0]); adj[ci].push([virt,0]);
           projections(c,isPt).forEach(p=>{const pi=node(p.q); link(ci,pi); onRoad[p.ri].push(pi);});});};
         attach(fromK,S); attach(toK,T);
         ROADS.forEach((rd,i)=>{const ns=[...new Set(onRoad[i])].sort((a,b)=>rd.o==='v'?nodes[a][1]-nodes[b][1]:nodes[a][0]-nodes[b][0]);for(let t=1;t<ns.length;t++)link(ns[t-1],ns[t]);});
@@ -5099,7 +5103,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       }
       moves.forEach((o,idx)=>{
         const pts=route(o.m.from,o.m.to); if(!pts||pts.length<2) return;
-        const off=(idx%3)*4-4; const pp=pts.map(p=>[p[0]+off,p[1]+off]);
+        const off=(idx%3)*4-4; const pp=pts.map((p,i)=>(i===0||i===pts.length-1)?p:[p[0]+off,p[1]+off]); /* 출발·도착(입구)은 정확히 그 지점에 */
         const d='M'+pp.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
         const working=!!o.x.working; const cls='move-path'+(working?' is-working':''); const ci=idx%MVC.length, wi=working?(wIdx++)%MVW.length:0, mvs=' style="--mv:'+MVC[ci]+';--mvw:'+MVW[wi]+'"';
         paths+='<path class="move-glow" d="'+d+'"'+mvs+'/><path class="move-path-outer" d="'+d+'"'+mvs+'/><path class="move-path-inner" d="'+d+'"/><path class="'+cls+'"'+mvs+' d="'+d+'" marker-end="url(#'+(working?'mvHeadW'+wi:'mvHead'+ci)+')"/>'
