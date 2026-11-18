@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611182301">
+  <meta name="jisu-build" content="202611182316">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
@@ -989,11 +989,21 @@
       text-shadow: none !important;
       padding: 20px 20px 18px !important;
     }
+    /* [11-18] 전 구역 자세히보기 크기 통일: '입고' 카드 기준 폭(480px)·높이(76vh)으로 모든 구역이 같은 크기로 열린다 */
+    body:not(#z1#z2#z3#z4#z5):not(.worker-zone-only) .expand-card{
+      box-sizing:border-box !important;
+      width:min(480px, calc(100vw - 24px)) !important;
+      max-width:calc(100vw - 16px) !important;
+    }
+    body:not(#z1#z2#z3#z4#z5):not(.worker-zone-only) .hotspot-wrapper.is-open .expand-card{
+      height:min(76vh, calc(100dvh - 84px)) !important;
+    }
     .expand-card::before {
       content: none !important;
     }
     body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-open .expand-card {
-      max-height: min(72vh, calc(100dvh - 100px)) !important;
+      /* [11-18] 높이 상한도 '입고' 기준(76vh / 100dvh-84px)으로 전 구역 동일 */
+      max-height: min(76vh, calc(100dvh - 84px)) !important;
       overflow-y: auto !important;
       overflow-x: hidden !important;
       -webkit-overflow-scrolling: touch;
@@ -1398,6 +1408,35 @@
       body:not(#z1#z2#z3#z4#z5) #inboundTbody .inb-kg-cancel{
         height:23px !important;
         font-size:9.5px !important;
+      }
+    }
+    /* [11-18] 관리자 전체 대시보드: 폰 폭에서 카드를 뷰포트 좌우 8px 안으로 정확히 맞춘다(오른쪽 잘림 방지) */
+    @media (max-width: 768px){
+      body:not(#z1#z2#z3#z4#z5):not(.worker-zone-only) .hotspot-wrapper.is-open .expand-card{
+        left:8px !important;right:auto !important;
+        width:calc(100vw - 16px) !important;
+        height:calc(100dvh - 24px) !important;
+        max-height:calc(100dvh - 24px) !important;
+      }
+    }
+    /* [11-18] 관리자 전체 대시보드 769~900px(지도가 사이드바 아래로 쌓이는 구간)도
+       폰과 같은 방식으로 카드를 뷰포트 안에 고정 배치해 화면 밖·지도 밑으로 내려가지 않게 한다 */
+    @media (min-width: 769px) and (max-width: 900px){
+      body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-open::before{
+        content:"";position:fixed;inset:0;background:rgba(2,6,23,0.62);
+        backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:210;
+      }
+      body:not(#z1#z2#z3#z4#z5):not(.worker-zone-only) .hotspot-wrapper.is-open .expand-card{
+        position:fixed !important;
+        left:8px !important;right:auto !important;top:50% !important;bottom:auto !important;
+        transform:none !important;
+        width:calc(100vw - 16px) !important;max-width:none !important;
+        height:calc(100dvh - 24px) !important;
+        max-height:calc(100dvh - 24px) !important;margin:0 !important;
+        padding:16px 16px 20px !important;border-radius:22px !important;
+        z-index:220 !important;overflow-y:auto !important;-webkit-overflow-scrolling:touch;
+        touch-action:pan-y !important;overscroll-behavior:contain !important;
+        transition:opacity .16s ease !important;
       }
     }
     /* 작업자 모바일 전용 링크(?zone=outbound 등) : 바깥 배경 없이 자세히보기 카드만 화면 100% 꽉 차게 + 자연 스크롤 */
@@ -5635,14 +5674,17 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
   (function(){
     const stage=document.getElementById('mapStage'); if(!stage) return;
     const M=10;
-    function reset(card){ ['top','bottom','left','right','maxHeight','transform','transition','marginTop','marginBottom','width'].forEach(p=>card.style.removeProperty(p)); card.classList.remove('opens-up'); }
+    function reset(card){ ['top','bottom','left','right','height','maxHeight','transform','transition','marginTop','marginBottom','width'].forEach(p=>card.style.removeProperty(p)); card.classList.remove('opens-up'); }
     function fitCard(wrap){
       const card=wrap.querySelector(':scope > .expand-card'); if(!card) return;
       if(!wrap.classList.contains('is-open')){ reset(card); return; } /* keep up/down + sideways position while it fades out (no flash) */
-      if(window.innerWidth<=768){
+      if(window.innerWidth<=900){
         if(document.body.classList.contains('worker-zone-only')){ reset(card); return; }
-        /* 모바일 관리자 모드: .hotspot-wrapper의 transform / #mapStage의 container-type 보정 및 열릴 때 옆에서 튕김 방지 */
+        /* 모바일·태블릿 관리자 모드: .hotspot-wrapper의 transform / #mapStage의 container-type 때문에 fixed 기준이 버튼에 갇히므로 뷰포트 기준 좌표로 역산해 화면 안에 고정한다 */
         card.style.setProperty('transition','opacity 0.16s ease','important');
+        card.style.setProperty('width','calc(100vw - 16px)','important');
+        card.style.setProperty('height','calc(100dvh - 24px)','important');
+        card.style.setProperty('max-height','calc(100dvh - 24px)','important');
         card.style.setProperty('left','0px','important');
         card.style.setProperty('top','0px','important');
         card.style.setProperty('right','auto','important');
@@ -5650,8 +5692,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         card.style.setProperty('transform','none','important');
         card.style.setProperty('margin','0','important');
         const r=card.getBoundingClientRect();
-        const vm=16, vw=window.innerWidth, vh=window.innerHeight, targetLeft=Math.max(vm,Math.min(vw-vm-r.width,Math.round((vw-r.width)/2)));
-        const targetTop=Math.max(vm,Math.min(vh-vm-r.height,Math.round((vh-r.height)/2)));
+        const mx=8, my=12, vw=window.innerWidth, vh=window.innerHeight, targetLeft=Math.max(mx,Math.min(vw-mx-r.width,Math.round((vw-r.width)/2)));
+        const targetTop=Math.max(my,Math.min(vh-my-r.height,Math.round((vh-r.height)/2)));
         card.style.setProperty('left',(targetLeft-r.left)+'px','important');
         card.style.setProperty('top',(targetTop-r.top)+'px','important');
         return;
@@ -5669,14 +5711,16 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       if(cr0.bottom>vh-VM) dy0=(vh-VM)-cr0.bottom; if(cr0.top+dy0<VM) dy0=VM-cr0.top;
       card.style.setProperty('transform','translate(calc(-50% + '+Math.round(d0/z)+'px), '+Math.round(dy0/z)+'px)','important'); return;
     }
-      const scrollBody=wrap.id==='hotspot-pitch'?card.querySelector('.pitch-scroll-body'):(wrap.id==='hotspot-inbound'?card.querySelector('.inbound-scroll-body'):null),cardCss=getComputedStyle(card),natural=(scrollBody?scrollBody.scrollHeight+80+parseFloat(cardCss.paddingTop)+parseFloat(cardCss.paddingBottom):card.scrollHeight)*z, capRatio=wrap.id==='hotspot-environment'?0.98:((wrap.id==='hotspot-inbound'||wrap.id==='hotspot-pitch')?0.92:0.46), cap=Math.max(260,sr.height*capRatio); /* 환경 카드는 호기 버튼·특이사항이 다 보이게 높이 제한 완화 */
+      /* [11-18] 전 구역 자세히보기 크기 통일: 높이를 '입고' 카드 기준 한 값으로 고정하고(내용은 카드 안에서 스크롤),
+         버튼 위치에 따라 위/아래로 열린 뒤 화면·지도 밖으로 나가지 않게 좌표만 밀어 넣는다 */
+      const H=Math.max(240, Math.min(vh*0.76, vh-84)/z);
+      card.style.setProperty('height', Math.round(H)+'px','important');
+      card.style.setProperty('max-height', Math.round(H)+'px','important');
       const vTop=Math.max(VM,sr.top+M), vBottom=Math.min(vh-VM,sr.bottom-M), below=Math.max(0,vBottom-br.bottom-8), above=Math.max(0,br.top-vTop-8);
-      let up=false, maxH;
-      if(natural<=below){ maxH=below; } else if(natural<=above){ up=true; maxH=above; } else { up=above>below; maxH=Math.max(above,below); }
+      const up = H*z>below && above>below;
       if(up){ card.style.setProperty('top','auto','important'); card.style.setProperty('bottom','100%','important'); card.style.marginTop='0'; card.style.marginBottom='8px'; card.classList.add('opens-up'); }
     else { card.style.setProperty('top','100%','important'); card.style.setProperty('bottom','auto','important'); card.style.marginTop='8px'; card.style.marginBottom='0'; card.classList.remove('opens-up'); }
-    maxH=Math.max(120,Math.min(maxH,cap,vh-2*VM)); card.style.setProperty('max-height',Math.max(120,Math.floor(maxH/z))+'px','important');
-    const w = card.offsetWidth * z, h = card.offsetHeight * z;
+    const w = card.offsetWidth * z, h = H * z;
       const cx = br.left + br.width / 2, cLeft = cx - w / 2, cRight = cx + w / 2;
       const cTop = up ? (br.top - 8 * z - h) : (br.bottom + 8 * z), cBottom = cTop + h;
       const minL = Math.max(VM, Math.min(sr.left + M, vw - VM - w)), maxR = Math.min(vw - VM, Math.max(sr.right - M, VM + w));
@@ -5692,6 +5736,9 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     const mo2=new MutationObserver(()=>requestAnimationFrame(fitOpen));
     document.querySelectorAll('.hotspot-wrapper > .expand-card').forEach(c=>mo2.observe(c,{childList:true,subtree:true}));
     window.addEventListener('resize',()=>{ fitOpen(); setTimeout(fitOpen,450); });
+    /* [11-18] 모바일·태블릿에서 페이지를 스크롤해도 카드가 버튼을 따라 화면 밖으로 밀리지 않도록 다시 중앙에 앉힌다 */
+    let scrollTick=false;
+    window.addEventListener('scroll',()=>{ if(window.innerWidth>900) return; if(scrollTick) return; scrollTick=true; requestAnimationFrame(()=>{ scrollTick=false; fitOpen(); }); },{passive:true});
     if(window.ResizeObserver) new ResizeObserver(()=>fitOpen()).observe(stage);
   })();
   </script>
