@@ -1,11 +1,157 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611181335">
+  <meta name="jisu-build" content="202611181400">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
     Object.keys(ob).forEach(function(k){ m['outbound:'+k]='출고 · '+ob[k]; }); Object.keys(ib).forEach(function(k){ m['inbound:'+k]='입고 · '+ib[k]; }); return m; })(); }catch(_){}</script>
+  <script>/* ==========================================================================
+     오전·오후 작업 분리 공용 유틸 (전 구역 공통 · 2026-11-18)
+     한 항목에 "오전 ..." 과 "오후 ..." 가 함께 들어오면 두 개의 독립된 작업으로 나눈다.
+     · 공지(kind==='notice')는 안내 문구라 나누지 않는다.
+     · "오전 10시~" 처럼 시간만 적힌 토막은 작업이 아니므로 나누지 않는다.
+     · 나눈 뒤 첫 항목은 원래 id·진행상태(작업중/완료/이월)를 그대로 두고,
+       두 번째부터는 id 뒤에 -1, -2 … 를 붙여 새 작업으로 만든다. (기기끼리 id가 같아진다)
+     ========================================================================== */
+  window.jisuAmPmSplitText = (function(){
+    function isBoundary(ch){ return !ch || /[\s,·;:/|、()\[\]{}<>~\-]/.test(ch); }
+    function timeOnly(b){
+      var t=String(b||'').replace(/\s+/g,'');
+      if(!t) return true;
+      return /^\d{0,2}(?:시|:\d{1,2})(?:[~\-–]\d{0,2}(?:시|:\d{1,2})?)?(?:부터|까지|이후|이전|경|분)?$/.test(t);
+    }
+    function marks(s){
+      var out=[], re=/(오전|오후)/g, m;
+      while((m=re.exec(s))){
+        var i=m.index;
+        var before=i>0?s.charAt(i-1):'';
+        var after=s.slice(i+2);
+        if(!isBoundary(before)) continue;
+        if(!/^\s/.test(after)) continue;   /* '오전에' 처럼 붙은 말은 라벨이 아니다 */
+        out.push({i:i,label:m[1]});
+      }
+      return out;
+    }
+    function splitOnce(s){
+      var mk=marks(s); if(!mk.length) return null;
+      var hasAm=false, hasPm=false, cut=-1;
+      for(var i=0;i<mk.length;i++){
+        if(mk[i].label==='오전') hasAm=true;
+        else if(hasAm && !hasPm){ cut=mk[i].i; hasPm=true; }
+      }
+      if(!hasAm||!hasPm||cut<0) return null;
+      var head=s.slice(0,cut).replace(/[\s,·;:/|、\-]+$/,'').trim();
+      var tail=s.slice(cut).replace(/^[\s,·;:/|、\-]+/,'').trim();
+      if(!head||!tail) return null;
+      var amI=head.indexOf('오전'); if(amI<0) return null;
+      var prefix=head.slice(0,amI).replace(/[\s,·;:/|、\-]+$/,'').trim();
+      if(prefix){ if(prefix.length>14) return null; if(/\d/.test(prefix)) return null; }
+      var headBody=head.slice(amI+2).trim();
+      var tailBody=tail.slice(2).trim();
+      if(headBody.length<2||tailBody.length<2) return null;
+      if(timeOnly(headBody)||timeOnly(tailBody)) return null;
+      return [head,tail];
+    }
+    return function(text, kind){
+      var raw=(text==null?'':String(text));
+      if(kind==='notice'||!raw) return [raw];
+      var parts=[raw];
+      for(var g=0;g<4;g++){
+        var next=[], changed=false;
+        for(var i=0;i<parts.length;i++){
+          var r=splitOnce(parts[i]);
+          if(r){ next.push(r[0]); next.push(r[1]); changed=true; }
+          else next.push(parts[i]);
+        }
+        parts=next;
+        if(!changed) break;
+      }
+      return parts;
+    };
+  })();
+  /* [{text,kind,...}, ...] 를 오전/오후로 펼친다 (사진·톤수는 첫 항목에만 남김) */
+  window.jisuExpandAmPmItems = function(items){
+    var out=[];
+    (items||[]).forEach(function(it){
+      if(!it||typeof it!=='object'){ return; }
+      var parts=window.jisuAmPmSplitText(it.text,it.kind);
+      if(parts.length<2){ out.push(it); return; }
+      parts.forEach(function(t,i){
+        var c={}; Object.keys(it).forEach(function(k){ c[k]=it[k]; });
+        c.text=t;
+        if(i>0){ delete c.img; delete c.tonText; }
+        out.push(c);
+      });
+    });
+    return out;
+  };
+  /* 이미 저장된 항목(오늘 DB 포함)을 오전/오후 두 박스로 안전하게 나눈다.
+     · 닫힌(closed)·적용된(applied)·공지 항목은 건드리지 않는다 (지난 기록 보존)
+     · 첫 항목의 작업중/시작시각/완료/이월 정보는 그대로 보존한다 */
+  window.jisuNormalizeAmPm = (function(){
+    var CKEY='jisu-commands-v1', SKEY='jisu-schedule-v1', busy=false;
+    function load(k){ try{ var v=JSON.parse(localStorage.getItem(k)||'[]'); return Array.isArray(v)?v:null; }catch(_){ return null; } }
+    function backup(k,arr){ try{ var bk=k+'-backup-20261118'; if(!localStorage.getItem(bk)) localStorage.setItem(bk,JSON.stringify(arr)); }catch(_){} }
+    function goalOf(t){
+      var c=String(t||'').replace(/^\[[^\]]+\]\s*/,'');
+      var m=c.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||c.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)/);
+      return m?Number(m[1].replace(',','.')):null;
+    }
+    function splitRec(x){
+      var parts=window.jisuAmPmSplitText(x.text,x.kind);
+      if(parts.length<2) return null;
+      return parts.map(function(t,i){
+        var c={}; Object.keys(x).forEach(function(k){ c[k]=x[k]; });
+        c.text=t;
+        if(i>0){
+          c.id=x.id+'-'+i;
+          delete c.done; delete c.doneBefore;
+          delete c.startedAt; delete c.completed; delete c.completedAt;
+          delete c.short; delete c.review; delete c.reviewBy; delete c.reviewAt; delete c.reviewNote;
+          delete c.carryFrom; delete c.carryCount; delete c.origGoal; delete c.prevDone; delete c.prevGoal;
+          delete c.tonText; delete c.img; delete c.carried; delete c.carriedTo; delete c.carriedQty; delete c.carriedDay;
+          c.working=false;
+        }else if(x.completed){
+          var g=goalOf(t); if(g!=null) c.done=g;
+        }
+        return c;
+      });
+    }
+    function normalizeKey(k){
+      var arr=load(k); if(!arr||!arr.length) return false;
+      var ids={}, out=[], changed=false;
+      arr.forEach(function(x){ if(x&&x.id) ids[x.id]=true; });
+      arr.forEach(function(x){
+        if(!x||typeof x!=='object'||x.kind==='notice'||x.closed||x.applied){ out.push(x); return; }
+        var parts=splitRec(x);
+        if(!parts){ out.push(x); return; }
+        changed=true;
+        parts.forEach(function(c){ if(c.id!==x.id&&ids[c.id]) return; out.push(c); });
+      });
+      if(!changed) return false;
+      backup(k,arr);
+      try{ localStorage.setItem(k,JSON.stringify(out)); }catch(_){ return false; }
+      return true;
+    }
+    return function(){
+      if(busy) return false;
+      busy=true;
+      var a=false,b=false;
+      try{ a=normalizeKey(CKEY); }catch(_){}
+      try{ b=normalizeKey(SKEY); }catch(_){}
+      busy=false;
+      if(a||b){
+        try{ if(window.jisuCmdRender) window.jisuCmdRender(); }catch(_){}
+        try{ window.dispatchEvent(new CustomEvent('jisu:ampm-split',{detail:{commands:a,schedules:b}})); }catch(_){}
+      }
+      return a||b;
+    };
+  })();
+  try{ window.addEventListener('jisu:remote-sync',function(e){ var k=e&&e.detail&&e.detail.key; if(k==='jisu-commands-v1'||k==='jisu-schedule-v1') setTimeout(function(){ try{ window.jisuNormalizeAmPm(); }catch(_){} },60); }); }catch(_){}
+  try{ window.addEventListener('storage',function(e){ if(!e||!e.key) return; if(e.key==='jisu-commands-v1'||e.key==='jisu-schedule-v1') setTimeout(function(){ try{ window.jisuNormalizeAmPm(); }catch(_){} },60); }); }catch(_){}
+  try{ window.jisuNormalizeAmPm(); }catch(_){}
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0b1120" />
@@ -492,6 +638,15 @@
       opacity:0;transition:opacity .2s ease;
     }
     .ob-cam.is-ready video{opacity:1;}
+    .ob-cam-toast{
+      position:fixed;left:50%;top:max(16px, env(safe-area-inset-top, 16px));transform:translateX(-50%);
+      max-width:calc(100vw - 28px);padding:9px 16px;border-radius:9999px;
+      background:rgba(15,23,42,.88);border:1px solid rgba(255,255,255,.24);
+      color:#f8fafc;font-size:12.5px;font-weight:800;line-height:1.3;letter-spacing:-.2px;
+      text-align:center;z-index:3;box-shadow:0 8px 24px rgba(0,0,0,.5);
+      backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    }
+    .ob-cam-toast[hidden]{display:none !important;}
     .ob-cam .ob-actions{
       position:fixed;left:0;right:0;bottom:max(28px, env(safe-area-inset-bottom, 28px));
       display:flex;align-items:center;justify-content:center;
@@ -1187,7 +1342,7 @@
         font-size:8px !important;
         line-height:1.34 !important;
         margin-top:3px !important;
-        color:#065f46 !important;
+        color:#0f172a !important;
       }
       body:not(#z1#z2#z3#z4#z5) #inboundTbody .inb-kg-btn.is-reweighed .inb-kg-val{
         font-size:11px !important;
@@ -2868,11 +3023,11 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     .inbound-tbl .inb-kg-btn.is-reweighed .inb-kg-edit { color: #065f46; }
     .inbound-tbl .inb-kg-edit { font-size: 8px; line-height: 1; color: rgba(4,120,87,.8); margin-left: 1px; }
     .inbound-tbl .inb-kg-hist {
-      display: block; margin-top: 3px; font-size: 8.5px; font-weight: 800; line-height: 1.3;
-      color: #047857; letter-spacing: -.1px; white-space: normal; word-break: keep-all; overflow-wrap: anywhere;
+      display: block; margin-top: 3px; font-size: 8.5px; font-weight: 900; line-height: 1.3;
+      color: #0f172a; letter-spacing: -.1px; white-space: normal; word-break: keep-all; overflow-wrap: anywhere;
     }
     .inbound-tbl .inb-kg-hist .inb-kg-round { white-space: nowrap; }
-    .inbound-tbl .inb-kg-hist b.inb-kg-round { font-weight: 900; color: #065f46; }
+    .inbound-tbl .inb-kg-hist b.inb-kg-round { font-weight: 900; color: #0f172a; }
     .inbound-tbl .inb-kg-form { display: flex; flex-direction: column; gap: 3px; width: 100%; min-width: 0; }
     .inbound-tbl .inb-kg-form input.inb-kg-input {
       width: 100%; min-width: 0; height: 26px; padding: 2px 3px; font-size: 11px;
@@ -3889,6 +4044,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
   </main>
   <div class="ob-cam" id="obCam" hidden>
     <video id="obVideo" autoplay playsinline muted></video>
+    <div class="ob-cam-toast" id="obCamToast" hidden></div>
     <div class="ob-actions">
       <button type="button" class="ob-shutter" id="obShot" aria-label="사진 촬영"><span class="ob-shutter-inner"></span></button>
       <button type="button" class="ob-cam-cancel" id="obCamClose">닫기</button>
@@ -4824,7 +4980,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         window.jisuOpenGallery([{id:it.id,at:it.at,name:it.text||'첨부 이미지',data:it.img}],0,null);
       }
     },true);
-    submit.addEventListener('click',()=>{const t=getTarget();if(!t&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v&&!pendingCmdImg){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v&&!pendingCmdImg){text.focus();return;}v=v.replace(/[a-z]/g,c=>c.toUpperCase());const all=load();const norm=v?(window.jisuNormUnit?window.jisuNormUnit(v):v).replace(/[a-z]/g,c=>c.toUpperCase()):'첨부 이미지';const rec={id:Date.now().toString(36),target:kind==='notice'?'*':(t||'*'),kind,text:norm,at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(pendingCmdImg){ rec.img=pendingCmdImg; const autoTon=v&&window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(v):''; if(autoTon) rec.tonText=autoTon; }if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}all.push(rec);save(all);if(window.jisuSendNtfy)window.jisuSendNtfy(rec);if(pendingCmdImg&&!rec.tonText&&window.jisuGeminiReadImage){let gk='';try{gk=(localStorage.getItem('jisu-gemini-key')||'').trim();}catch(_){}if(gk){const imgCopy=pendingCmdImg,rid=rec.id;window.jisuGeminiReadImage(gk,imgCopy).then(txt=>{const tt=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(txt):'';if(tt){const a=load();const it=a.find(x=>x.id===rid);if(it){it.tonText=tt;save(a);render();}}}).catch(()=>{});}}text.value='';if(fr)fr.value='';if(to)to.value='';pendingCmdImg=null;const cw=document.getElementById('cmdImgWrap'),ct=document.getElementById('cmdImgThumb');if(cw)cw.style.display='none';if(ct)ct.src='';render();});
+    submit.addEventListener('click',()=>{const t=getTarget();if(!t&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v&&!pendingCmdImg){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v&&!pendingCmdImg){text.focus();return;}v=v.replace(/[a-z]/g,c=>c.toUpperCase());const all=load();const norm=v?(window.jisuNormUnit?window.jisuNormUnit(v):v).replace(/[a-z]/g,c=>c.toUpperCase()):'첨부 이미지';const rec={id:Date.now().toString(36),target:kind==='notice'?'*':(t||'*'),kind,text:norm,at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(pendingCmdImg){ rec.img=pendingCmdImg; const autoTon=v&&window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(v):''; if(autoTon) rec.tonText=autoTon; }if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}const _amPm=(window.jisuAmPmSplitText?window.jisuAmPmSplitText(norm,kind):[norm]);if(_amPm.length>1){rec.text=_amPm[0];all.push(rec);_amPm.slice(1).forEach(function(tx,ix){const c={};Object.keys(rec).forEach(function(k){c[k]=rec[k];});c.id=rec.id+'-'+(ix+1);c.text=tx;delete c.img;delete c.tonText;all.push(c);});}else{all.push(rec);}save(all);if(window.jisuSendNtfy)window.jisuSendNtfy(rec);if(pendingCmdImg&&!rec.tonText&&window.jisuGeminiReadImage){let gk='';try{gk=(localStorage.getItem('jisu-gemini-key')||'').trim();}catch(_){}if(gk){const imgCopy=pendingCmdImg,rid=rec.id;window.jisuGeminiReadImage(gk,imgCopy).then(txt=>{const tt=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(txt):'';if(tt){const a=load();const it=a.find(x=>x.id===rid);if(it){it.tonText=tt;save(a);render();}}}).catch(()=>{});}}text.value='';if(fr)fr.value='';if(to)to.value='';pendingCmdImg=null;const cw=document.getElementById('cmdImgWrap'),ct=document.getElementById('cmdImgThumb');if(cw)cw.style.display='none';if(ct)ct.src='';render();});
     list.addEventListener('click',e=>{const id=e.target.getAttribute('data-cmd-del');if(!id)return;save(load().filter(x=>x.id!==id));render();});
     function goHome(){
       document.querySelectorAll('.hotspot-wrapper.is-open').forEach(w=>w.classList.remove('is-open'));
@@ -4946,7 +5102,14 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     const all=()=>tx('readonly',s=>s.getAll());
     const put=rec=>tx('readwrite',s=>s.put(rec));
     const del=id=>tx('readwrite',s=>s.delete(id));
-    const msg=t=>{$('obMsg').textContent=t;};
+    const msg=t=>{ const m=$('obMsg'); if(m) m.textContent=t; try{ const cam=$('obCam'), ct=$('obCamToast'); if(ct&&cam&&!cam.hidden&&t){ camToast(t,2600); } }catch(_){} };
+    let camToastTimer=null;
+    function camToast(text,ms){
+      const ct=$('obCamToast'); if(!ct) return;
+      ct.textContent=text||''; ct.hidden=!text;
+      if(camToastTimer){ clearTimeout(camToastTimer); camToastTimer=null; }
+      if(text&&ms>0){ camToastTimer=setTimeout(()=>{ ct.hidden=true; camToastTimer=null; },ms); }
+    }
     const stamp=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
     const fileStamp=()=>{const d=new Date(Date.now()+9*3600e3).toISOString();return d.slice(0,19).replace(/[-:T]/g,'');};
     function toJpeg(source,w,h){const max=2048,sc=Math.min(1,max/Math.max(w,h));const c=document.createElement('canvas');c.width=Math.round(w*sc);c.height=Math.round(h*sc);c.getContext('2d').drawImage(source,0,0,c.width,c.height);return c.toDataURL('image/jpeg',0.90);}
@@ -4973,18 +5136,30 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       root._items=items;
     }
     // camera
-    let stream=null;
+    let stream=null, camPushed=false, camPendBack=false, camToken=0, camShotCount=0, camShotBusy=false;
+    /* 검은 화면(영상 프레임 없음) 복구: 같은 스트림을 한 번 다시 물린다 */
+    function retryCamVideo(v){
+      try{ const s=v.srcObject; if(!s) return; v.srcObject=null; setTimeout(()=>{ try{ v.srcObject=s; if(v.play) v.play().catch(()=>{}); }catch(_){} },70); }catch(_){}
+    }
     function pushCamHistory(){
-      try{ if(!(history.state&&history.state.jisuCam)) history.pushState({jisuCam:true},''); }catch(_){}
+      try{
+        if(history.state&&history.state.jisuCam){ camPushed=false; return; }
+        history.pushState({jisuCam:true},''); camPushed=true;
+      }catch(_){ camPushed=false; }
     }
     function stopCam(fromPop){
       const cam=$('obCam');
       const wasOpen=cam&&!cam.hidden;
-      if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
-      const v=$('obVideo'); if(v) v.srcObject=null;
+      camToken++;                                  /* 진행 중인 getUserMedia 결과는 버린다 */
+      if(stream){try{stream.getTracks().forEach(t=>t.stop());}catch(_){} stream=null;}
+      const v=$('obVideo'); if(v){ try{v.pause();}catch(_){} v.srcObject=null; }
       if(cam){ cam.classList.remove('is-open','is-ready'); cam.hidden=true; }
-      if(!fromPop && wasOpen){
-        try{ if(history.state&&history.state.jisuCam) history.back(); }catch(_){}
+      camShotCount=0; camShotBusy=false;
+      try{ const ct=$('obCamToast'); if(ct){ ct.hidden=true; } }catch(_){}
+      if(!fromPop && wasOpen && camPushed){        /* 내가 push한 기록만 되돌린다 */
+        camPushed=false; camPendBack=true;
+        setTimeout(()=>{ camPendBack=false; },900);
+        try{ history.back(); }catch(_){ camPendBack=false; }
       }
     }
     let lbIdx=0, lbItems=null, lbOnDel=null;
@@ -5040,6 +5215,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       }
     }
     window.addEventListener('popstate',()=>{
+      if(camPendBack){ camPendBack=false; return; }   /* 닫으면서 내가 부른 back → 무시 */
       const cam=$('obCam');
       if(cam&&!cam.hidden){ stopCam(true); return; }
       const lb=$('obLightbox');
@@ -5105,27 +5281,50 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     }
     let camSaveCb=null;
     window.jisuOpenCam=async function(onSave,onFallback){
-      camSaveCb=typeof onSave==='function'?onSave:null;
-      if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){if(onFallback)onFallback();else $('obFile').click();return;}
       const cam=$('obCam'), v=$('obVideo');
+      camSaveCb=typeof onSave==='function'?onSave:null;
+      if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){if(onFallback)onFallback();else if($('obFile'))$('obFile').click();return;}
+      /* 이미 카메라가 열려 있으면 새로 켜지 않고 콜백만 바꿔 이어 쓴다 (연속 촬영) */
+      if(cam && !cam.hidden){ cam.classList.add('is-ready'); return; }
+      const token=++camToken;
+      if(stream){try{stream.getTracks().forEach(t=>t.stop());}catch(_){} stream=null;}
       if(cam){ cam.classList.remove('is-ready'); cam.hidden=false; requestAnimationFrame(()=>cam.classList.add('is-open')); pushCamHistory(); }
+      camShotCount=0; camShotBusy=false;
       try{
-        stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
-        if(cam && cam.hidden){ stream.getTracks().forEach(t=>t.stop()); stream=null; return; }
-        v.srcObject=stream;
+        const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
+        if(token!==camToken || (cam && cam.hidden)){ try{s.getTracks().forEach(t=>t.stop());}catch(_){} return; }
+        stream=s;
+        if(v){ v.srcObject=stream; try{ const p=v.play(); if(p&&p.catch)p.catch(()=>{}); }catch(_){} }
         v.onloadedmetadata=()=>{ if(cam) cam.classList.add('is-ready'); };
-        setTimeout(()=>{ if(cam && !cam.hidden) cam.classList.add('is-ready'); }, 350);
-        msg('카메라가 켜졌습니다. 셔터를 누르세요.');
+        setTimeout(()=>{ if(cam && !cam.hidden){ cam.classList.add('is-ready'); if(v&&!v.videoWidth) retryCamVideo(v); } }, 350);
+        camToast('카메라가 켜졌습니다 · 셔터를 누르세요',2200);
       }
       catch(err){
+        if(token!==camToken) return;
         stopCam(false);
-        if(onFallback)onFallback();else{msg('카메라를 쓸 수 없어 사진 선택 창을 엽니다.');$('obFile').click();}
+        if(onFallback)onFallback();else{ msg('카메라를 쓸 수 없어 사진 선택 창을 엽니다.'); if($('obFile'))$('obFile').click(); }
       }
     };
-    $('obShot').addEventListener('click',async e=>{e.stopPropagation();const v=$('obVideo');if(!v.videoWidth){msg('카메라 준비 중입니다. 잠시 후 다시 눌러 주세요.');return;}playShutterFx();const data=toJpeg(v,v.videoWidth,v.videoHeight);if(camSaveCb)await camSaveCb(data);else await savePhoto(data);});
+    $('obShot').addEventListener('click',async e=>{
+      e.stopPropagation();
+      const v=$('obVideo');
+      if(!v||!v.videoWidth){ camToast('카메라 준비 중입니다. 잠시 후 다시 눌러 주세요',2400); return; }
+      if(camShotBusy) return;
+      camShotBusy=true;
+      try{
+        playShutterFx();
+        const data=toJpeg(v,v.videoWidth,v.videoHeight);
+        if(camSaveCb) await camSaveCb(data); else await savePhoto(data);
+        camShotCount++;
+        camToast('✓ '+camShotCount+'장 저장됨 · 계속 찍을 수 있어요',2600);
+      }catch(err){
+        camToast('사진 저장 실패 · 다시 눌러 주세요',2600);
+        console.error('cam save',err);
+      }finally{ camShotBusy=false; }
+    });
     $('obCamClose').addEventListener('click',e=>{e.stopPropagation();stopCam(false);msg('');});
     // file / mobile camera
-    $('obFile').addEventListener('change',async e=>{const files=[...e.target.files];for(const f of files){await new Promise(res=>{const img=new Image();img.onload=async()=>{await savePhoto(toJpeg(img,img.naturalWidth,img.naturalHeight));URL.revokeObjectURL(img.src);res();};img.onerror=()=>{msg('이미지를 읽지 못했습니다: '+f.name);res();};img.src=URL.createObjectURL(f);});}e.target.value='';});
+    $('obFile').addEventListener('change',async e=>{const files=[...e.target.files];e.target.value='';for(const f of files){await new Promise(res=>{const img=new Image();img.onload=async()=>{await savePhoto(toJpeg(img,img.naturalWidth,img.naturalHeight));URL.revokeObjectURL(img.src);res();};img.onerror=()=>{msg('이미지를 읽지 못했습니다: '+f.name);res();};img.src=URL.createObjectURL(f);});}});
     // gallery
     $('obGrid').addEventListener('click',async e=>{e.stopPropagation();const d=e.target.getAttribute('data-ob-del');if(d){if(confirm('이 사진을 삭제할까요?')){await del(d);$('obPreview').hidden=true;await render();msg('삭제했습니다.');}return;}
       const it=e.target.closest('[data-ob-id]');if(!it)return;const p=(root._items||[]).find(x=>x.id===it.getAttribute('data-ob-id'));if(!p)return;$('obPreviewImg').src=p.data;$('obPreviewDl').href=p.data;$('obPreviewDl').download=p.name;$('obPreview').hidden=false;});
@@ -5606,6 +5805,20 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const hm=kstHourMin();
       return (hm.hh > cfg.hour) || (hm.hh === cfg.hour && hm.mm >= cfg.minute);
     }
+    /* 예약 1건을 금일작업으로 옮긴다 — 오전/오후가 함께 있으면 두 작업으로 나눠 등록 */
+    function schToCmds(cmds,s,at,closed){
+      const parts=(window.jisuAmPmSplitText?window.jisuAmPmSplitText(s.text,s.kind):[s.text]);
+      parts.forEach((t,i)=>{
+        const rid='s'+s.id+(i?('-'+i):'');
+        if(cmds.some(c=>c.id===rid)) return;
+        const rec={id:rid,target:s.target,kind:s.kind,text:t,at:at,day:s.date,sched:s.date,origDay:s.date};
+        if(closed) rec.closed=true;
+        if(i===0){ if(s.img) rec.img=s.img; if(s.tonText) rec.tonText=s.tonText; }
+        if(s.urgent) rec.urgent=true; if(s.by) rec.by=s.by;
+        cmds.push(rec);
+      });
+      return parts.length;
+    }
     function apply(today, opts){
       today=today||kstToday(); opts=opts||{};
       const allowToday = !!opts.immediateToday || isScheduleApplyTimeReached();
@@ -5613,18 +5826,10 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       sch.forEach(s=>{
         if(s.applied) return;
         if(s.date < today){
-          if(!cmds.some(c=>c.id==='s'+s.id)){
-            const rec={id:'s'+s.id,target:s.target,kind:s.kind,text:s.text,at:atOf(s.date),day:s.date,sched:s.date,origDay:s.date,closed:true};
-            if(s.img) rec.img=s.img; if(s.tonText) rec.tonText=s.tonText; if(s.urgent) rec.urgent=true; if(s.by) rec.by=s.by;
-            cmds.push(rec);
-          }
+          schToCmds(cmds,s,atOf(s.date),true);
           s.applied=true; s.appliedAt=nowStr(); changed=true;
         } else if(s.date === today && allowToday){
-          if(!cmds.some(c=>c.id==='s'+s.id)){
-            const rec={id:'s'+s.id,target:s.target,kind:s.kind,text:s.text,at:nowStr(),day:s.date,sched:s.date,origDay:s.date};
-            if(s.img) rec.img=s.img; if(s.tonText) rec.tonText=s.tonText; if(s.urgent) rec.urgent=true; if(s.by) rec.by=s.by;
-            cmds.push(rec);
-          }
+          schToCmds(cmds,s,nowStr(),false);
           s.applied=true; s.appliedAt=nowStr(); changed=true;
         }
       });
@@ -5748,6 +5953,18 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       if(clr){ clr.addEventListener('click',()=>{ pendingCzImg=null; if(wrap)wrap.style.display='none'; if(thumb)thumb.src=''; }); }
       if(czt){ czt.addEventListener('paste',e=>{ const items=(e.clipboardData&&e.clipboardData.items)||[]; for(const it of items){ if(it.type&&it.type.startsWith('image/')){ e.preventDefault(); attachCz(it.getAsFile()); break; } } }); }
     })();
+    /* 예약 1건을 오전/오후로 나눠 저장 (사진은 첫 항목에만) */
+    function pushSch(sch,base,img){
+      const parts=(window.jisuAmPmSplitText?window.jisuAmPmSplitText(base.text,base.kind):[base.text]);
+      parts.forEach((t,k)=>{
+        const r={id:(k?base.id+'-'+k:base.id),date:base.date,target:base.target,kind:base.kind,text:t,created:base.created};
+        if(k===0&&img) r.img=img;
+        if(base.tonText) r.tonText=base.tonText;
+        if(base.urgent) r.urgent=true;
+        if(base.by) r.by=base.by;
+        sch.push(r);
+      });
+    }
     function saveNew(){ const msg=$('czMsg'); msg.textContent=''; msg.className='cz-msg'; const v=$('czText').value; if(!v.trim()&&!pendingCzImg){ $('czText').focus(); return; }
       let u=''; try{u=localStorage.getItem('jisu-user')||'';}catch(e){}
       const disp=v.trim()?parseDispatchRows(v,picked):null;
@@ -5757,7 +5974,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         const valid=disp.items.filter(x=>x.date>=today);
         if(!valid.length){ msg.textContent='지난 날짜('+(disp.items[0].date)+')는 예약할 수 없습니다.'; msg.className='cz-msg err'; return; }
         const sch=load(SKEY);
-        valid.forEach((x,i)=>{ const rec={id:Date.now().toString(36)+i,date:x.date,target:x.target,kind:x.kind,text:x.text,created:nowStr()}; if(pendingCzImg) rec.img=pendingCzImg; if(u) rec.by=u; sch.push(rec); });
+        valid.forEach((x,i)=>{ pushSch(sch,{id:Date.now().toString(36)+i,date:x.date,target:x.target,kind:x.kind,text:x.text,created:nowStr(),tonText:x.tonText,by:u},pendingCzImg); });
         if(!save(SKEY,sch)){ msg.textContent='저장 공간이 부족해요. 오래된 사진/기록을 정리한 뒤 다시 시도해 주세요.'; msg.className='cz-msg err'; return; }
         $('czText').value=''; pendingCzImg=null; if($('czImgWrap'))$('czImgWrap').style.display='none'; if($('czImgThumb'))$('czImgThumb').src='';
         msg.textContent='2공장 출고 '+valid.length+'건 저장 완료!'+(disp.skipped1?' (1공장 '+disp.skipped1+'건 제외)':''); msg.className='cz-msg ok';
@@ -5767,7 +5984,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const rawText=v.trim()||'출고 첨부 이미지';
       const lines=rawText.split(/\n/).map(parseLine).filter(Boolean), bad=lines.filter(x=>x.err);
       if(bad.length){ msg.textContent=bad.map(b=>b.err).join(' / '); msg.className='cz-msg err'; return; }
-      const sch=load(SKEY); lines.forEach((x,i)=>{ const rec={id:Date.now().toString(36)+i,date:picked,target:x.target,kind:x.kind,text:x.text,created:nowStr()}; if(pendingCzImg) rec.img=pendingCzImg; if(x.urgent) rec.urgent=true; if(u) rec.by=u; sch.push(rec); });
+      const sch=load(SKEY); lines.forEach((x,i)=>{ pushSch(sch,{id:Date.now().toString(36)+i,date:picked,target:x.target,kind:x.kind,text:x.text,created:nowStr(),urgent:x.urgent,by:u},pendingCzImg); });
       if(!save(SKEY,sch)){ msg.textContent='저장 공간이 부족해요. 사진 크기를 줄이거나 오래된 기록을 정리해 주세요.'; msg.className='cz-msg err'; return; }
       $('czText').value=''; pendingCzImg=null; if($('czImgWrap'))$('czImgWrap').style.display='none'; if($('czImgThumb'))$('czImgThumb').src='';
       msg.textContent=lines.length+'건 저장 · '+lines.map(x=>(NAMES[x.target]||x.target)+(x.kind==='notice'?' 공지':'')).join(', '); msg.className='cz-msg ok'; apply(null,{immediateToday:true}); drawZoom(); draw(); }
@@ -6155,10 +6372,13 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       }else{
         parsedBatchData=parseBatch(text,defTarget,lockTarget);
       }
+      /* 오전/오후가 한 줄에 함께 들어온 항목은 두 개의 독립된 작업으로 나눠 미리보기·저장한다 */
+      if(window.jisuExpandAmPmItems && parsedBatchData && parsedBatchData.length){
+        parsedBatchData=parsedBatchData.map(function(g){ return {date:g.date,items:window.jisuExpandAmPmItems(g.items)}; });
+      }
 
       let totalCount=0;
       parsedBatchData.forEach(g=>{ totalCount+=g.items.length; });
-
       if(batchCountBadge) batchCountBadge.textContent=totalCount+'건';
       if(batchSaveBtn){
         batchSaveBtn.disabled=totalCount===0;
@@ -6864,7 +7084,7 @@ document.getElementById('pitchDownloadAgain').addEventListener('click',async()=>
 root.addEventListener('input',e=>{if(e.target.matches('[data-pitch-list-field],[data-pitch-field]')){if(e.target.matches('.pitch-num'))e.target.value=e.target.value.replace(/\D/g,'');save();updateWork();document.getElementById('pitchSaveStatus').textContent='입력값은 이 기기 브라우저에만 저장됩니다.';}});root.addEventListener('click',e=>{const b=e.target.closest('[data-pitch-add]');if(!b)return;const k=b.dataset.pitchAdd;save();const row=records()[active]||{},vals=listValues(row,k);vals.push('');drawList(k,vals);save();updateWork();[...root.querySelectorAll('[data-pitch-list="'+k+'"] input')].at(-1)?.focus()});setInterval(()=>{const d=kstDate();if(d!==active&&!busy){save();active=d;paint()}},15000);
 async function migrateLegacy(){const all=records();for(const day of Object.keys(all)){const row=all[day];if(row&&row.workState==='done'&&!row.completionId){const snap=await makeSnapshot(row,'legacy-'+day+'-'+String(row.completedAt||'done').replace(/[^0-9]/g,''),day);await window.jisuPitchArchive.put(snap);const fresh=records(),current=fresh[day];if(current&&current.workState==='done'&&!current.completionId&&current.completedAt===row.completedAt){current.completionId=snap.id;localStorage.setItem(KEY,JSON.stringify(fresh));}}}}
 window.jisuPitchMigration=migrateLegacy().then(()=>{updateWork();}).catch(e=>console.error('피치 이전 완료기록 보관 실패',e));
-async function loadPhotos(){try{const db=await dbOpen();const rows=await new Promise((res,rej)=>{const q=db.transaction(STORE,'readonly').objectStore(STORE).getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error)});db.close();const list=rows.filter(p=>p.day===active).sort((a,b)=>a.id.localeCompare(b.id));const safeSrc=window.JisuCore?window.JisuCore.safeImgSrc:(u=>/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u||''))?String(u):'');document.getElementById('pitchPhotoThumbs').innerHTML=list.map(p=>{const s=safeSrc(p.data);return s?'<img src="'+s+'" alt="피치 사진">':'';}).join('');const sb=document.getElementById('pitchStackBtn');if(sb){const c1=sb.querySelector('.c1'),c2=sb.querySelector('.c2'),c3=sb.querySelector('.c3'),rev=[...list].reverse(),s0=rev[0]?safeSrc(rev[0].data):'',s1=rev[1]?safeSrc(rev[1].data):'',s2=rev[2]?safeSrc(rev[2].data):'';if(c1)c1.innerHTML=s0?'<img src="'+s0+'" alt="최근 피치 사진">':'<svg class="ob-stack-empty-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';if(c2)c2.innerHTML=s1?'<img src="'+s1+'" alt="이전 피치 사진">':'';if(c3)c3.innerHTML=s2?'<img src="'+s2+'" alt="이전 피치 사진">':'';sb._items=rev;}}catch(e){console.error(e)}}document.getElementById('pitchPhotoBtn').addEventListener('click',()=>document.getElementById('pitchPhotoInput').click());if(document.getElementById('pitchTopPhotoBtn'))document.getElementById('pitchTopPhotoBtn').addEventListener('click',e=>{e.stopPropagation();if(window.jisuOpenCam){window.jisuOpenCam(async data=>{const db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close();await loadPhotos();},()=>document.getElementById('pitchPhotoInput').click());}else{document.getElementById('pitchPhotoInput').click();}});if(document.getElementById('pitchStackBtn'))document.getElementById('pitchStackBtn').addEventListener('click',e=>{e.stopPropagation();const sb=e.currentTarget;const items=(sb._items||[]).map(p=>({id:p.id,at:p.at||p.day,name:p.name||'피치 사진',data:p.data}));if(!items.length){document.getElementById('pitchPhotoInput').click();return;}if(window.jisuOpenGallery)window.jisuOpenGallery(items,0,async cur=>{const db=await dbOpen();await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).delete(cur.id);t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close();await loadPhotos();return (sb._items||[]).map(p=>({id:p.id,at:p.at||p.day,name:p.name||'피치 사진',data:p.data}));});});document.getElementById('pitchPhotoInput').addEventListener('change',async e=>{for(const f of [...e.target.files])await new Promise(resolve=>{const im=new Image();im.onload=async()=>{try{const sc=Math.min(1,2048/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*sc);c.height=Math.round(im.naturalHeight*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);const data=c.toDataURL('image/jpeg',.90),db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close()}catch(err){console.error(err)}URL.revokeObjectURL(im.src);resolve()};im.onerror=()=>{URL.revokeObjectURL(im.src);resolve();};im.src=URL.createObjectURL(f)});e.target.value='';loadPhotos()});paint()})();</script>
+async function loadPhotos(){try{const db=await dbOpen();const rows=await new Promise((res,rej)=>{const q=db.transaction(STORE,'readonly').objectStore(STORE).getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error)});db.close();const list=rows.filter(p=>p.day===active).sort((a,b)=>a.id.localeCompare(b.id));const safeSrc=window.JisuCore?window.JisuCore.safeImgSrc:(u=>/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u||''))?String(u):'');document.getElementById('pitchPhotoThumbs').innerHTML=list.map(p=>{const s=safeSrc(p.data);return s?'<img src="'+s+'" alt="피치 사진">':'';}).join('');const sb=document.getElementById('pitchStackBtn');if(sb){const c1=sb.querySelector('.c1'),c2=sb.querySelector('.c2'),c3=sb.querySelector('.c3'),rev=[...list].reverse(),s0=rev[0]?safeSrc(rev[0].data):'',s1=rev[1]?safeSrc(rev[1].data):'',s2=rev[2]?safeSrc(rev[2].data):'';if(c1)c1.innerHTML=s0?'<img src="'+s0+'" alt="최근 피치 사진">':'<svg class="ob-stack-empty-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';if(c2)c2.innerHTML=s1?'<img src="'+s1+'" alt="이전 피치 사진">':'';if(c3)c3.innerHTML=s2?'<img src="'+s2+'" alt="이전 피치 사진">':'';sb._items=rev;}}catch(e){console.error(e)}}document.getElementById('pitchPhotoBtn').addEventListener('click',()=>document.getElementById('pitchPhotoInput').click());if(document.getElementById('pitchTopPhotoBtn'))document.getElementById('pitchTopPhotoBtn').addEventListener('click',e=>{e.stopPropagation();if(window.jisuOpenCam){window.jisuOpenCam(async data=>{const db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close();await loadPhotos();},()=>document.getElementById('pitchPhotoInput').click());}else{document.getElementById('pitchPhotoInput').click();}});if(document.getElementById('pitchStackBtn'))document.getElementById('pitchStackBtn').addEventListener('click',e=>{e.stopPropagation();const sb=e.currentTarget;const items=(sb._items||[]).map(p=>({id:p.id,at:p.at||p.day,name:p.name||'피치 사진',data:p.data}));if(!items.length){document.getElementById('pitchPhotoInput').click();return;}if(window.jisuOpenGallery)window.jisuOpenGallery(items,0,async cur=>{const db=await dbOpen();await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).delete(cur.id);t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close();await loadPhotos();return (sb._items||[]).map(p=>({id:p.id,at:p.at||p.day,name:p.name||'피치 사진',data:p.data}));});});document.getElementById('pitchPhotoInput').addEventListener('change',async e=>{const _pf=[...e.target.files];e.target.value='';for(const f of _pf)await new Promise(resolve=>{const im=new Image();im.onload=async()=>{try{const sc=Math.min(1,2048/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*sc);c.height=Math.round(im.naturalHeight*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);const data=c.toDataURL('image/jpeg',.90),db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close()}catch(err){console.error(err)}URL.revokeObjectURL(im.src);resolve()};im.onerror=()=>{URL.revokeObjectURL(im.src);resolve();};im.src=URL.createObjectURL(f)});loadPhotos()});paint()})();</script>
 <script>
 /* ==========================================================================
    입고(INBOUND) 전용 모듈: 입고원료 중량 기록일지, 사진 증적, 달력 목표 연동, 엑셀
@@ -7295,20 +7515,23 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     });
     photoInput.addEventListener("change", async e => {
       const files = Array.from(e.target.files || []);
+      e.target.value = "";   /* 같은 사진을 다시 골라도 항상 change가 오도록 먼저 비운다 */
       if (!files.length) return;
       photoBtn.disabled = true;
       photoBtn.textContent = "저장중…";
-      for (const file of files) {
-        try {
-          const dataUrl = await resizeImage(file, 2048, 2048, 0.90);
-          const photoId = "inb-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6);
-          const kstStamp = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
-          await savePhoto({ id: photoId, day: activeDay, data: dataUrl, at: kstStamp, ts: Date.now(), name: `입고_${activeDay}_${photoId.slice(-4)}.jpg` });
-        } catch(err) { console.error("Photo save err:", err); }
+      try {
+        for (const file of files) {
+          try {
+            const dataUrl = await resizeImage(file, 2048, 2048, 0.90);
+            const photoId = "inb-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6);
+            const kstStamp = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+            await savePhoto({ id: photoId, day: activeDay, data: dataUrl, at: kstStamp, ts: Date.now(), name: `입고_${activeDay}_${photoId.slice(-4)}.jpg` });
+          } catch(err) { console.error("Photo save err:", err); }
+        }
+      } finally {
+        photoBtn.disabled = false;
+        photoBtn.textContent = "PHOTO";
       }
-      photoInput.value = "";
-      photoBtn.disabled = false;
-      photoBtn.textContent = "PHOTO";
       await renderPhotos();
     });
   }
