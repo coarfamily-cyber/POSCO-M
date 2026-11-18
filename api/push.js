@@ -1,5 +1,15 @@
 const webpush = require('web-push');
-const { verifyIdToken } = require('../lib/jisu-auth');
+const { verifyIdToken, dbAccessToken } = require('../lib/jisu-auth');
+
+// 구독 목록 읽기: 서비스 계정 토큰이 있으면 붙이고, 없거나 거부되면 기존처럼 인증 없이 다시 시도
+async function readDb(url, tok) {
+  if (tok) {
+    const r = await fetch(url + '?access_token=' + encodeURIComponent(tok));
+    if (r.ok) return (await r.json()) || {};
+  }
+  const r2 = await fetch(url);
+  return (await r2.json()) || {};
+}
 
 const RTDB_SUBS = 'https://posco-m-jisu-default-rtdb.asia-southeast1.firebasedatabase.app/jisu/pushSubs';
 const RTDB_FLAT = 'https://posco-m-jisu-default-rtdb.asia-southeast1.firebasedatabase.app/jisu/push_subs';
@@ -64,12 +74,11 @@ module.exports = async function handler(req, res) {
 
   try {
     // 구독 목록은 항상 DB에서 직접 읽는다. 요청 본문의 subscriptions 는 무시한다.
-    const [r1, r2] = await Promise.all([
-      fetch(`${RTDB_SUBS}.json`),
-      fetch(`${RTDB_FLAT}.json`)
+    const tok = await dbAccessToken();
+    const [allSubs, flatSubs] = await Promise.all([
+      readDb(`${RTDB_SUBS}.json`, tok),
+      readDb(`${RTDB_FLAT}.json`, tok)
     ]);
-    const allSubs = (await r1.json()) || {};
-    const flatSubs = (await r2.json()) || {};
     const targets = [];
     const seenEndpoints = new Set();
 
@@ -120,7 +129,8 @@ module.exports = async function handler(req, res) {
     }));
 
     if (stale.length) {
-      await Promise.all(stale.map(u => fetch(u, { method: 'DELETE' }).catch(() => {})));
+      const q = tok ? '?access_token=' + encodeURIComponent(tok) : '';
+      await Promise.all(stale.map(u => fetch(u + q, { method: 'DELETE' }).catch(() => {})));
     }
 
     return res.status(200).json({ ok: true, sent, failed, total: targets.length, cleaned: stale.length });

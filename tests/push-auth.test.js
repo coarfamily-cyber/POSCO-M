@@ -16,11 +16,17 @@ process.env.FIREBASE_PROJECT_ID = 'posco-m-jisu';
 process.env.VAPID_PUBLIC_KEY = 'pub';
 process.env.VAPID_PRIVATE_KEY = 'priv';
 
-globalThis.fetch = async (url) => {
-  const json = o => new Response(JSON.stringify(o), { status: 200, headers: { 'content-type': 'application/json', 'cache-control': 'max-age=3600' } });
-  if (String(url).includes('securetoken@system')) return json({ k1: pair.publicKey });
-  if (String(url).endsWith('/jisu/pushSubs.json')) return json({ pitch: { s1: { sub: { endpoint: 'https://push.example/1' } } } });
-  if (String(url).endsWith('/jisu/push_subs.json')) return json({});
+const calls = [];
+let rtdbRejectsToken = false, tokenEndpointFails = false;
+globalThis.fetch = async (url, init) => {
+  url = String(url); calls.push(url);
+  const json = (o, st = 200) => new Response(JSON.stringify(o), { status: st, headers: { 'content-type': 'application/json', 'cache-control': 'max-age=3600' } });
+  if (url.includes('securetoken@system')) return json({ k1: pair.publicKey });
+  if (url === 'https://oauth2.googleapis.com/token') return tokenEndpointFails ? json({ error: 'x' }, 400) : json({ access_token: 'sa-token', expires_in: 3600 });
+  const [path, q] = url.split('?');
+  if (q && q.includes('access_token') && rtdbRejectsToken) return json({ error: 'Permission denied' }, 401);
+  if (path.endsWith('/jisu/pushSubs.json')) return json({ pitch: { s1: { sub: { endpoint: 'https://push.example/1' } } } });
+  if (path.endsWith('/jisu/push_subs.json')) return json({});
   return new Response('x', { status: 404 });
 };
 
@@ -58,4 +64,23 @@ test('PUSH_REQUIRE_AUTH=1: 토큰 없으면 401, 승인 전 사용자 403, 승�
   assert.equal((await call({ authorization: 'Bearer ' + token({ role: 'admin', approved: true }) })).statusCode, 200);
   assert.equal(sentCount, 2);
   delete process.env.PUSH_REQUIRE_AUTH;
+});
+
+test('서비스 계정 설정 시 구독 목록을 토큰으로 읽음', async () => {
+  delete process.env.PUSH_REQUIRE_AUTH; lib.resetCache(); calls.length = 0; sentCount = 0;
+  process.env.FIREBASE_SERVICE_ACCOUNT_JSON = JSON.stringify({ client_email: 'svc@x.iam', private_key: pair.privateKey });
+  const r = await call();
+  assert.equal(r.statusCode, 200); assert.equal(sentCount, 1);
+  assert.ok(calls.some(u => u.includes('/jisu/pushSubs.json?access_token=sa-token')));
+  assert.ok(!calls.some(u => u.endsWith('/jisu/pushSubs.json')), '토큰으로 성공하면 인증 없이 다시 읽지 않음');
+});
+
+test('DB가 토큰을 거부하거나 토큰 발급이 실패하면 기존처럼 인증 없이 읽음', async () => {
+  lib.resetCache(); calls.length = 0; sentCount = 0; rtdbRejectsToken = true;
+  assert.equal((await call()).statusCode, 200); assert.equal(sentCount, 1);
+  assert.ok(calls.some(u => u.endsWith('/jisu/pushSubs.json')));
+  rtdbRejectsToken = false; tokenEndpointFails = true; lib.resetCache(); calls.length = 0; sentCount = 0;
+  assert.equal((await call()).statusCode, 200); assert.equal(sentCount, 1);
+  assert.ok(!calls.some(u => u.includes('access_token')));
+  tokenEndpointFails = false; delete process.env.FIREBASE_SERVICE_ACCOUNT_JSON; lib.resetCache();
 });

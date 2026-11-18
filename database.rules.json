@@ -1,0 +1,34 @@
+{
+  "rules": {
+    "jisu": {
+      ".read": "auth != null && auth.token.role === 'admin'",
+      ".write": "auth != null && auth.token.role === 'admin'",
+      "config": {
+        ".read": "auth != null"
+      },
+      "v2": {
+        "_notice": {
+          ".read": "auth != null && auth.token.approved === true"
+        },
+        "$part": {
+          ".read": "auth != null && auth.token.approved === true && auth.token.zone === $part",
+          ".write": "auth != null && auth.token.approved === true && auth.token.zone === $part",
+          "$key": {
+            ".validate": "newData.hasChildren(['v', 't']) && newData.child('v').isString() && newData.child('t').isNumber()"
+          }
+        }
+      },
+      "photos": {
+        "$zone": {
+          ".read": "auth != null && auth.token.approved === true && auth.token.zone === $zone",
+          ".write": "auth != null && auth.token.approved === true && auth.token.zone === $zone"
+        }
+      },
+      "push_subs": {
+        "$key": {
+          ".write": "auth != null && auth.token.approved === true && ((newData.exists() && newData.child('zone').val() === auth.token.zone) || (!newData.exists() && data.child('zone').val() === auth.token.zone))"
+        }
+      }
+    }
+  }
+}

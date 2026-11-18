@@ -409,8 +409,99 @@ def mirror_zones(cmds: list, rev: int) -> None:
         print(f"[warn] 구역 복사 실패(예약 반영은 완료됨): {type(e).__name__}")
 
 
+# ---------------------------------------------------------------- 알림
+def notify_new(recs: list) -> None:
+    """새 카드 ntfy 알림 (기존 동작 그대로)"""
+    for rec in recs:
+        try:
+            base = str(rec.get("target") or "*").split(":")[0] or "*"
+            kind = "공지사항" if rec.get("kind") == "notice" else ("긴급 작업" if rec.get("urgent") else "새 작업지시")
+            title = f"{'전체' if base == '*' else base} · {kind}"
+            msg = str(rec.get("text") or "새 지시가 등록되었습니다.")
+            prio = 5 if rec.get("urgent") else (4 if rec.get("kind") == "notice" else 3)
+            topics = ["posco-jisu-9m4k2p-all", "posco-jisu-9m4k2p-master"] if base == "*" else [f"posco-jisu-9m4k2p-{base}", "posco-jisu-9m4k2p-master"]
+            for tp in topics:
+                payload = json.dumps({
+                    "topic": tp,
+                    "title": title,
+                    "message": msg,
+                    "priority": prio,
+                    "tags": ["rotating_light"] if rec.get("urgent") else ["bell"],
+                    "click": "https://coarfamily-cyber.github.io/POSCO-M/JISU/" + (f"?zone={base}" if base != "*" else "")
+                }, ensure_ascii=False).encode("utf-8")
+                _request("https://ntfy.sh/", "POST", payload, {"Content-Type": "application/json"})
+        except Exception as e:
+            print(f"[warn] ntfy 발송 실패: {e}")
+
+
+# ---------------------------------------------------------------- v2(구역 묶음) — index.html SYNC-V2 와 같은 규칙
+V2_ZONES = ZONE_MIRROR_KEYS
+V2_PARTS = V2_ZONES + ["_admin", "_notice"]
+
+
+def v2_bucket_of(x) -> str:
+    if isinstance(x, dict) and (x.get("target") == "*" or x.get("kind") == "notice"):
+        return "_notice"
+    z = str((x.get("target") if isinstance(x, dict) else "") or "").split(":")[0]
+    return z if z in V2_ZONES else "_admin"
+
+
+def read_sync_mode() -> str:
+    """DB config/syncMode 가 'v2' 이면 v2, 없거나 다른 값이면 기존 방식(state). 읽기 실패는 db_get 처럼 재시도 후 중단"""
+    val, _ = db_get(f"{ROOT}/config/syncMode")
+    return "v2" if val == "v2" else "state"
+
+
+def run_v2(dry: bool = False) -> int:
+    """v2: 예약은 v2/_admin, 작업지시는 v2/{묶음}. 새 카드는 해당 묶음에만 조건부로 쓴다."""
+    now = kst_now()
+    today, now_s = kst_today(now), now_str(now)
+    print(f"[jisu] (v2) KST now = {now.isoformat(timespec='seconds')}  today={today}")
+    for attempt in range(1, 4):
+        sch_path = f"{ROOT}/v2/_admin/{SKEY}"
+        sch_node, sch_etag = db_get(sch_path)
+        sch = parse_v(sch_node)
+        parts = {}
+        for pt in V2_PARTS:
+            node, etag = db_get(f"{ROOT}/v2/{pt}/{CKEY}")
+            parts[pt] = (parse_v(node), etag, node is not None)
+        cmds = [x for pt in V2_PARTS for x in parts[pt][0]]
+        before_len = len(cmds)
+        sch_before = json.dumps(sch, ensure_ascii=False, sort_keys=True)
+        print(f"[jisu] (v2) 시도 {attempt}: 예약 {len(sch)}건 · 금일작업 {before_len}건")
+
+        added, marked = apply_schedules(sch, cmds, today, now_s)
+        new_recs = cmds[before_len:]
+        sch_changed = json.dumps(sch, ensure_ascii=False, sort_keys=True) != sch_before
+        if not new_recs and not sch_changed:
+            print("[jisu] 반영할 예약이 없습니다 — DB에 쓰지 않고 종료")
+            return 0
+
+        t = int(time.time() * 1000)
+        by_part: dict = {}
+        for rec in new_recs:
+            by_part.setdefault(v2_bucket_of(rec), []).append(rec)
+        ok = True
+        for pt, recs in by_part.items():   # 카드 → 먼저(묶음별 조건부), 예약 마킹 → 나중
+            cur, etag, _exists = parts[pt]
+            ok = db_put(f"{ROOT}/v2/{pt}/{CKEY}", {"by": BY, "t": t, "v": dump_v(cur + recs)}, etag, dry)
+            if not ok:
+                break
+        if ok and sch_changed:
+            ok = db_put(sch_path, {"by": BY, "t": t, "v": dump_v(sch)}, sch_etag, dry)
+        if ok:
+            print(f"[jisu] (v2) 완료 — 카드 {added}건 추가 · 예약 {marked}건 applied 마킹")
+            if not dry and added > 0:
+                notify_new(cmds[-added:])
+            return 0
+        time.sleep(1)
+    raise SystemExit("[error] 3회 재시도에도 다른 기기 저장과 겹쳐 반영하지 못했습니다.")
+
+
 # ---------------------------------------------------------------- main
 def run(dry: bool = False) -> int:
+    if read_sync_mode() == "v2":
+        return run_v2(dry)
     now = kst_now()
     today, now_s = kst_today(now), now_str(now)
     print(f"[jisu] KST now = {now.isoformat(timespec='seconds')}  today={today}  nowStr='{now_s}'")
@@ -446,26 +537,7 @@ def run(dry: bool = False) -> int:
             if cmds_changed and not dry:
                 mirror_zones(cmds, t)
             if not dry and added > 0:
-                for rec in cmds[-added:]:
-                    try:
-                        base = str(rec.get("target") or "*").split(":")[0] or "*"
-                        kind = "공지사항" if rec.get("kind") == "notice" else ("긴급 작업" if rec.get("urgent") else "새 작업지시")
-                        title = f"{'전체' if base == '*' else base} · {kind}"
-                        msg = str(rec.get("text") or "새 지시가 등록되었습니다.")
-                        prio = 5 if rec.get("urgent") else (4 if rec.get("kind") == "notice" else 3)
-                        topics = ["posco-jisu-9m4k2p-all", "posco-jisu-9m4k2p-master"] if base == "*" else [f"posco-jisu-9m4k2p-{base}", "posco-jisu-9m4k2p-master"]
-                        for tp in topics:
-                            payload = json.dumps({
-                                "topic": tp,
-                                "title": title,
-                                "message": msg,
-                                "priority": prio,
-                                "tags": ["rotating_light"] if rec.get("urgent") else ["bell"],
-                                "click": "https://coarfamily-cyber.github.io/POSCO-M/JISU/" + (f"?zone={base}" if base != "*" else "")
-                            }, ensure_ascii=False).encode("utf-8")
-                            _request("https://ntfy.sh/", "POST", payload, {"Content-Type": "application/json"})
-                    except Exception as e:
-                        print(f"[warn] ntfy 발송 실패: {e}")
+                notify_new(cmds[-added:])
             return 0
         time.sleep(1)   # 다른 기기 저장과 겹침 → 다시 읽고 재계산
 
