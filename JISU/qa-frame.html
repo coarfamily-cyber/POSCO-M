@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>QA frame</title>
+<style>html,body{margin:0;background:#0b1220;display:flex;gap:12px;padding:8px;align-items:flex-start}iframe{border:0;background:#fff;display:block}</style>
+</head>
+<body>
+<iframe id="f" src="qa-text-autofit.html?zone=inbound" width="390" height="844"></iframe>
+<script>
+(function(){
+  var p=new URLSearchParams(location.search);
+  var f=document.getElementById('f');
+  var w=p.get('w')||'390', h=p.get('h')||'844', q=p.get('q')||'zone%3Dinbound';
+  f.setAttribute('width',w); f.setAttribute('height',h);
+  f.src='qa-text-autofit.html?'+decodeURIComponent(q);
+})();
+</script>
+</body>
+</html>
