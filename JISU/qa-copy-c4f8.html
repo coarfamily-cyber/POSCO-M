@@ -25,7 +25,7 @@ window.addEventListener('unhandledrejection',function(e){ var r=e.reason; __qaRe
   try{ window.firebase=undefined; }catch(_){}
 })();</script>
 
-  <meta name="jisu-build" content="202611190003">
+  <meta name="jisu-build" content="202611190758">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -6172,6 +6172,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     }
     const DOW=['일','월','화','수','목','금','토'];
     function drawZoom(){
+      if(!picked) return;   /* 날짜를 고르기 전에 그리라고 하면 예외 대신 건너뛴다 */
       const [y,m,d]=picked.split('-').map(Number), today=kstToday(), past=picked<today;
       $('czTitle').textContent=m+'월 '+d+'일 ('+DOW[new Date(y,m-1,d).getDay()]+') '+(past?'기록':'스케줄');
       $('czBadge').textContent=picked===today?'오늘':(past?'지난 날짜':''); $('czBadge').className='cz-badge'+(picked===today?' today':(past?' past':''));
@@ -9044,7 +9045,7 @@ paint()})();</script>
           });
         }
       };
-      /* 로그인 게이트가 켜져 있으면 로그인 뒤에 구독한다 (로그인 전 구독은 401로 실패해 잘못된 경고가 뜼다) */
+      /* 로그인 게이트가 켜져 있으면 로그인 뒤에 구독한다 (로그인 전 구독은 401로 실패해 잘못된 경고가 뜬다) */
       let subTried=false;
       if(window.JISU_AUTH_GATE===true && window.firebase && firebase.auth){
         firebase.auth().onAuthStateChanged(u=>{ if(u&&u.uid&&!subTried){ subTried=true; runSub(); } });

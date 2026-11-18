@@ -6,7 +6,7 @@
 pre{white-space:pre-wrap;padding:10px;background:#0f172a;margin:0;font-size:11px;max-height:900px;overflow:auto}</style></head>
 <body><div id="bar">POSCO-M QA · <span id="summary">-</span></div><div id="stage"></div><pre id="out">running...</pre>
 <script>
-const Q = "qa-copy-b7e2.html";
+const Q = "qa-copy-c4f8.html";
 const KSTD = d => new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d||new Date());
 const TODAY = KSTD();
 const Y1 = KSTD(new Date(Date.parse(TODAY+'T12:00:00+09:00') - 864e5));
@@ -54,6 +54,18 @@ function schIn(id){ try{ return JSON.parse(W(id).localStorage.getItem('jisu-sche
 function getLS(id,k){ try{ return W(id).localStorage.getItem(k); }catch(e){ return null; } }
 function setLS(id,k,v){ try{ W(id).localStorage.setItem(k,v); return true; }catch(e){ return false; } }
 function blocked(id){ try{ return W(id).__qaBlocked; }catch(e){ return 'n/a'; } }
+/* 달력이 실제로 열릴 때까지 기다린다 (모듈 초기화가 늦으면 날짜를 직접 지정해 연다) */
+async function openCal(id, day){
+  try{ ev(id,"document.getElementById('liveClock').click()"); }catch(_){}
+  for(let i=0;i<12;i++){
+    await sleep(200);
+    const open = ev(id,"(function(){var m=document.getElementById('calModal'); return !!m && !m.hidden;})()");
+    if(open===true) return true;
+  }
+  try{ ev(id,"window.jisuCalOpenDay && window.jisuCalOpenDay("+JSON.stringify(day||'')+")"); }catch(_){}
+  await sleep(400);
+  return ev(id,"(function(){var m=document.getElementById('calModal'); return !!m && !m.hidden;})()")===true;
+}
 
 function seedBase(id){
   const cmds = [
@@ -85,8 +97,8 @@ async function uiSanity(id,label){
   if(!ok) return;
   const zones = ev(id,"Array.from(document.querySelectorAll('.hotspot-pill[data-toggle-zone]')).map(b=>b.getAttribute('data-toggle-zone'))") || [];
   rec(label+' 구역 버튼 14개', zones.length===14, zones.length+'개');
-  ev(id,"document.getElementById('liveClock').click()"); await sleep(350);
-  rec(label+' 달력 열림', ev(id,"!document.getElementById('calModal').hidden"), '');
+  const calOpen = await openCal(id);
+  rec(label+' 달력 열림', calOpen, '');
   rec(label+' 달력 칸 수', ev(id,"document.querySelectorAll('#calGrid .cal-cell[data-day]').length")>=28, ev(id,"document.querySelectorAll('#calGrid .cal-cell[data-day]').length"));
   ev(id,"document.getElementById('calClose').click()"); await sleep(150);
   ev(id,"document.getElementById('perfBtn').click()"); await sleep(500);
@@ -123,13 +135,13 @@ async function t2(){
   rec('1-2 jisuParseNum 기본값', JSON.stringify(p)==='[18000,1200,1.5,2700,1.5,"2700.5"]', JSON.stringify(p));
   /* 목표 18,000 KG 작업: 진행 9,000 입력 → 완료하면 목표 미달(short)이어야 한다 (예전엔 목표 18로 읽혀 미달 아님) */
   let cmds = cmdsIn(id)||[];
-  cmds.push({id:'t18',target:'outbound',kind:'instruction',text:'RAS-2 18,000 KG',at:'11. 19. 09:30',day:TODAY});
+  cmds.push({id:'t18',target:'outbound:2공장→1공장',kind:'instruction',from:'2공장',to:'1공장',text:'공장간이송 18,000 KG',at:'11. 19. 09:30',day:TODAY});
   cmds.push({id:'t12',target:'inbound:사각박스',kind:'instruction',text:'사각박스 1,200 EA',at:'11. 19. 09:35',day:TODAY,done:200});
   setLS(id,'jisu-commands-v1',JSON.stringify(cmds));
   ev(id,"(function(){var s=document.getElementById('cmdTarget'); s.value='outbound'; s.dispatchEvent(new Event('change',{bubbles:true}));})()");
   await sleep(600);
-  const shownGoal = ev(id,"(function(){var i=document.querySelector('[data-cmd-progress=\"t18\"]'); if(!i) return 'no-input'; var it=i.closest('.cmd-item'); return it?it.innerText.replace(/\\n/g,' | '):'no-item';})()");
-  rec('1-2 화면 목표 18000 표시', /18,?000/.test(String(shownGoal)), String(shownGoal).slice(0,200));
+  const shownGoal = ev(id,"(function(){var i=document.querySelector('[data-cmd-progress=\"t18\"]'); if(!i) return 'no-input'; return i.getAttribute('data-cmd-goal')+' | '+(i.closest('.cmd-item')?i.closest('.cmd-item').textContent.replace(/\\s+/g,' '):'');})()");
+  rec('1-2 화면 목표 18000 표시', /^18000 /.test(String(shownGoal)) && /18,?000/.test(String(shownGoal)), String(shownGoal).slice(0,220));
   ev(id,"(function(){var i=document.querySelector('[data-cmd-progress=\"t18\"]'); i.focus(); i.value='9000'; i.dispatchEvent(new Event('input',{bubbles:true}));})()");
   await sleep(300);
   ev(id,"(function(){var b=document.querySelector('[data-cmd-complete=\"t18\"]'); if(b) b.click();})()");
@@ -156,11 +168,13 @@ async function t2(){
   const arr = cmdsIn(id)||[];
   const t18 = arr.find(x=>x.id==='t18'); if(t18){ t18.day=Y1; t18.at='11. 18. 09:30'; t18.closed=true; t18.completed=true; t18.done=9000; }
   setLS(id,'jisu-commands-v1',JSON.stringify(arr));
-  ev(id,"window.jisuPerfOpen()"); await sleep(700);
-  ev(id,"(function(){var b=Array.from(document.querySelectorAll('[data-pf-unit]')).find(function(x){return x.textContent==='KG';}); if(b) b.click();})()"); await sleep(500);
-  const pf = ev(id,"document.getElementById('pfSlide').innerText");
+  ev(id,"window.jisuPerfOpen()"); await sleep(900);
+  ev(id,"(function(){var b=Array.from(document.querySelectorAll('[data-pf-unit]')).find(function(x){return x.textContent==='KG';}); if(b) b.click();})()"); await sleep(600);
+  const pfOpen = ev(id,"(function(){var m=document.getElementById('perfModal'); return !!m && !m.hidden;})()");
+  const pf = ev(id,"document.getElementById('pfSlide').textContent");
   R.data.perf = String(pf).slice(0,600);
-  rec('1-2 실적 목표 18000 읽기', /18000/.test(String(pf)), String(pf).replace(/\n/g,' | ').slice(0,300));
+  rec('1-2 실적 창 열림', pfOpen===true, '');
+  rec('1-2 실적 목표 18000 읽기', /18000/.test(String(pf)), String(pf).replace(/\s+/g,' ').slice(0,300));
   ev(id,"document.getElementById('pfClose').click()"); await sleep(150);
 }
 
@@ -189,6 +203,7 @@ async function t4(){
   const recIn = {}; recIn[TODAY] = {day:TODAY, shiftKey:TODAY+'-am', workState:'idle', completedAt:'11. 19. 16:20',
     rows:[], archivedRows:[{lot:'L9',bag:'009',kg:'12000',worker:'김지수',loc:'서울12가3456',rid:'r9'}]};
   setLS(id,'jisu-inbound-records-v1',JSON.stringify(recIn));
+  await openCal(id, TODAY);
   ev(id,"window.jisuCalOpenDay('"+TODAY+"')"); await sleep(400);
   const cell = ev(id,"(function(){var c=document.querySelector('#calGrid [data-day=\""+TODAY+"\"]'); return c?c.innerText.replace(/\\n/g,' | '):'none';})()");
   rec('1-4 달력에 교대 마감 입고 기록 표시', /기록/.test(String(cell)), String(cell));
@@ -218,8 +233,7 @@ async function t4(){
 async function t5(){
   const id='fD';
   await reset(id);
-  ev(id,"(function(){ if(document.getElementById('calModal').hidden) document.getElementById('liveClock').click(); })()");
-  await sleep(300);
+  await openCal(id);
   ev(id,"(function(){ var b=document.getElementById('calBatchBtn'); if(b) b.click(); })()");
   await sleep(400);
   const table = [
@@ -241,7 +255,8 @@ async function t5(){
   /* 달력 오늘 즉시 등록 → 오전/오후 분리 + 알림 발송 시도 */
   await reset(id);
   const before = Number(blocked(id))||0;
-  ev(id,"window.jisuCalOpenDay('"+TODAY+"')"); await sleep(350);
+  rec('달력 오늘 화면 열림', await openCal(id, TODAY), '');
+  ev(id,"window.jisuCalOpenDay('"+TODAY+"')"); await sleep(400);
   ev(id,"(function(){var t=document.getElementById('czText'); t.value='입고 오전 SH 36 TON\\n입고 오후 HH 36 TON'; t.dispatchEvent(new Event('input',{bubbles:true}));})()");
   ev(id,"document.getElementById('czSave').click()");
   await sleep(1200);

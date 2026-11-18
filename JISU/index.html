@@ -6148,6 +6148,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     }
     const DOW=['일','월','화','수','목','금','토'];
     function drawZoom(){
+      if(!picked) return;   /* 날짜를 고르기 전에 그리라고 하면 예외 대신 건너뛴다 */
       const [y,m,d]=picked.split('-').map(Number), today=kstToday(), past=picked<today;
       $('czTitle').textContent=m+'월 '+d+'일 ('+DOW[new Date(y,m-1,d).getDay()]+') '+(past?'기록':'스케줄');
       $('czBadge').textContent=picked===today?'오늘':(past?'지난 날짜':''); $('czBadge').className='cz-badge'+(picked===today?' today':(past?' past':''));
