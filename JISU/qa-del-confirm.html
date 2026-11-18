@@ -5780,7 +5780,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const t=e.target; if(!(t instanceof Element)) return;
       if(document.body.classList.contains('worker-zone-only')) return;
       if(window.__jisuBlockCloseUntil && Date.now() < window.__jisuBlockCloseUntil) return;
-      if(t.matches('input[type="file"]') || t.closest('.hotspot-wrapper, .cmd-side, #detailModal, #loginModal, #obLightbox, #obCam, #jisuQuickDropModal, #calModal, #perfModal, #carryModal, .hdr-tools, .bldg-badge, #hdrSearchBox, #hdrSearchPanel')) return;
+      if(t.matches('input[type="file"]') || t.closest('.hotspot-wrapper, .cmd-side, #detailModal, #loginModal, #obLightbox, #obCam, #jisuQuickDropModal, #inbDeleteConfirm, #calModal, #perfModal, #carryModal, .hdr-tools, .bldg-badge, #hdrSearchBox, #hdrSearchPanel')) return;
       const open=document.querySelectorAll('.hotspot-wrapper.is-open'); if(!open.length) return;
       open.forEach(w=>w.classList.remove('is-open'));
       document.querySelectorAll('[data-production-btn],[data-warehouse-btn]').forEach(b=>{b.classList.remove('is-selected');b.setAttribute('aria-pressed','false');});
@@ -7549,7 +7549,13 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       closeDeleteConfirm();
       if (p) deleteInboundRow(p.rid, p.idx);
     });
-    ov.addEventListener("click", e => { if (e.target === ov) closeDeleteConfirm(); });   // 바깥 클릭 = 취소
+    ov.addEventListener("click", e => {
+      e.stopPropagation();                       // 확인 창 클릭이 상세 카드를 닫지 않도록
+      if (e.target === ov) closeDeleteConfirm(); // 바깥 클릭 = 취소
+    });
+    ov.addEventListener("keydown", e => {
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeDeleteConfirm(); }
+    });
     document.addEventListener("keydown", e => {
       if (!delPending) return;
       if (e.key === "Escape") { e.preventDefault(); closeDeleteConfirm(); }
