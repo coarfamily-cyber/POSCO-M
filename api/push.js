@@ -1,4 +1,5 @@
 const webpush = require('web-push');
+const { verifyIdToken } = require('../lib/jisu-auth');
 
 const RTDB_SUBS = 'https://posco-m-jisu-default-rtdb.asia-southeast1.firebasedatabase.app/jisu/pushSubs';
 const RTDB_FLAT = 'https://posco-m-jisu-default-rtdb.asia-southeast1.firebasedatabase.app/jisu/push_subs';
@@ -14,7 +15,7 @@ function setCors(req, res) {
     res.setHeader('Vary', 'Origin');
   }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
 // 알림 클릭 시 열리는 주소는 이 저장소의 페이지로만 허용한다 (피싱 링크 차단)
@@ -40,6 +41,16 @@ module.exports = async function handler(req, res) {
     try { body = JSON.parse(body); } catch (_) { body = {}; }
   }
   body = body || {};
+
+  // 5단계 준비: Vercel 환경변수 PUSH_REQUIRE_AUTH=1 이면 승인된 로그인 사용자만 발송 가능.
+  // 설정하지 않으면 지금과 같이 동작한다 (로그인 게이트를 켜기 전에는 설정하지 말 것).
+  if (String(process.env.PUSH_REQUIRE_AUTH || '') === '1') {
+    const m = String((req.headers && req.headers.authorization) || '').match(/^Bearer (.+)$/);
+    if (!m) return res.status(401).json({ ok: false, error: '로그인이 필요합니다' });
+    let caller;
+    try { caller = await verifyIdToken(m[1]); } catch (e) { return res.status(e.status || 401).json({ ok: false, error: '인증 실패' }); }
+    if (!(caller.role === 'admin' || caller.approved === true)) return res.status(403).json({ ok: false, error: '승인된 사용자만 가능합니다' });
+  }
   // 클라이언트는 { target, payload:{title,body,url,tag,badge} } 형식으로 보낸다.
   // 구형 평면 형식({ target, title, body, ... })도 함께 받는다.
   const p = (body.payload && typeof body.payload === 'object') ? body.payload : body;

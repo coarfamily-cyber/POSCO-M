@@ -30,6 +30,7 @@ async function approve(req, body) {
   const claims = Object.assign({ role: 'staff', zone: '', approved: false }, target.claims);
   const extra = {};
   if (action === 'approve') {
+    if (!ZONES.includes(claims.zone)) throw httpErr(400, '구역이 지정되지 않았습니다. 먼저 구역을 변경하세요');
     claims.approved = true;
   } else if (action === 'move') {
     const zone = String(body.zone || '');
@@ -42,8 +43,9 @@ async function approve(req, body) {
   } else {
     throw httpErr(400, '알 수 없는 작업입니다');
   }
-  // 기존 로그인 토큰을 무효화해 다음 로그인부터 새 권한이 적용되게 함
-  extra.validSince = String(Math.floor(Date.now() / 1000));
+  // 권한을 줄이는 작업(구역 변경, 사용 중지)만 기존 로그인을 무효화한다.
+  // 승인·사용 재개는 로그아웃 없이 다음 토큰 갱신(새로고침)부터 적용된다.
+  if (action === 'move' || action === 'disable') extra.validSince = String(Math.floor(Date.now() / 1000));
   await setAccount(target.localId, claims, extra);
   return { ok: true, sabun, action };
 }
