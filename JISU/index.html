@@ -9343,6 +9343,40 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     }catch(e){ console.warn('[jisu-db] 구역 복사 예외:',e); }
   }
   /* ZONE-MIRROR-END */
+  /* ZONE-VERIFY-BEGIN (4b 준비: 구역 복사본을 원본과 비교하는 읽기 전용 점검. 자동 실행 없음, 화면 동작 변화 없음. 콘솔에서 jisuVerifyZoneCopy() 로 실행) */
+  function compareZoneCopy(stateArr, zonesVal, noticesVal){
+    var copy={};
+    if(zonesVal&&typeof zonesVal==='object'){
+      Object.keys(zonesVal).forEach(function(z){
+        var c=zonesVal[z]&&zonesVal[z].commands;
+        if(c&&typeof c==='object') Object.keys(c).forEach(function(id){ copy[id]=c[id]; });
+      });
+    }
+    if(noticesVal&&typeof noticesVal==='object') Object.keys(noticesVal).forEach(function(id){ copy[id]=noticesVal[id]; });
+    var orig={}; stateArr.forEach(function(x){ if(x&&x.id!=null) orig[String(x.id)]=x; });
+    var missing=[], changed=[], extra=[];
+    Object.keys(orig).forEach(function(id){
+      if(!Object.prototype.hasOwnProperty.call(copy,id)) missing.push(id);
+      else if(JSON.stringify(copy[id])!==JSON.stringify(orig[id])) changed.push(id);
+    });
+    Object.keys(copy).forEach(function(id){ if(!Object.prototype.hasOwnProperty.call(orig,id)) extra.push(id); });
+    return {originalCount:Object.keys(orig).length, copyCount:Object.keys(copy).length, missing:missing, changed:changed, extra:extra, same:(!missing.length && !changed.length && !extra.length)};
+  }
+  window.jisuVerifyZoneCopy=function(){
+    return Promise.all([
+      db.ref(ROOT+'/state/jisu-commands-v1').once('value'),
+      db.ref(ROOT+'/zones').once('value'),
+      db.ref(ROOT+'/notices').once('value')
+    ]).then(function(r){
+      var d=r[0].val(), st=(d&&typeof d.v==='string')?d.v:null;
+      var arr=[]; try{ arr=JSON.parse(st||'[]'); }catch(_){ arr=[]; }
+      if(!Array.isArray(arr)) arr=[];
+      var res=compareZoneCopy(arr, r[1].val(), r[2].val());
+      console.info('[jisu-db] 구역 복사 점검:', res);
+      return res;
+    });
+  };
+  /* ZONE-VERIFY-END */
   function pushKey(k, opts){
     var json=payloadOf(k); if(json==null) return;
     var force=!!(opts&&opts.force);
