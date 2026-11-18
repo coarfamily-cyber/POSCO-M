@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta name="robots" content="noindex,nofollow">
-<script>/* QA 전용(임시): 실제 Firebase DB 쓰기·푸시 네트워크 차단 + JS 오류 수집 */
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.sheetjs.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self'; object-src 'none'"><script>/* QA 전용(임시): 실제 Firebase DB 쓰기·푸시 네트워크 차단 + JS 오류 수집 */
 window.__qaErrors=[];
 function __qaRec(k,v){ try{ window.__qaErrors.push(k+': '+String(v).slice(0,300)); }catch(_){} }
 window.addEventListener('error',function(e){ __qaRec('error',(e.message||'')+' @'+(e.filename||'')+':'+(e.lineno||0)); });
@@ -10,7 +10,8 @@ window.addEventListener('unhandledrejection',function(e){ var r=e.reason; __qaRe
 (function(){
   var PAT=/(firebaseio|firebasedatabase|identitytoolkit|securetoken|googleapis\.com\/robot|ntfy\.sh|api\/push|api\/enroll|api\/approve|vercel\.app)/i;
   var net=function(u){ return PAT.test(String((u&&u.url)||u||'')); };
-  window.__qaBlocked=0;
+  window.__qaBlocked=0; window.__qaCspBlocked=0;
+  try{ document.addEventListener('securitypolicyviolation',function(e){ window.__qaCspBlocked++; try{ window.__qaErrors.push('csp-blocked: '+String(e.blockedURI||'').slice(0,120)); }catch(_){} }); }catch(_){}
   try{
     var of=window.fetch;
     if(of){ window.fetch=function(u,o){ if(net(u)){ window.__qaBlocked++; return Promise.reject(new Error('qa-network-blocked')); } return of.apply(this,arguments); }; }
