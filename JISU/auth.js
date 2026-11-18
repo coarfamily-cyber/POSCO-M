@@ -36,7 +36,8 @@
       '#' + GATE_ID + ' .jag-btn{width:100%;height:44px;margin-top:16px;border:0;border-radius:12px;background:linear-gradient(135deg,#f3d478,#d4af37);color:#0f172a;font-size:14px;font-weight:900;cursor:pointer;}' +
       '#' + GATE_ID + ' .jag-btn:disabled{opacity:.6;cursor:default;}' +
       '#' + GATE_ID + ' .jag-err{min-height:18px;margin:10px 0 0;font-size:12px;font-weight:700;color:#fca5a5;}' +
-      '#jisuAuthLogout{position:fixed;right:12px;bottom:12px;z-index:2147483000;display:none;padding:6px 10px;border-radius:9999px;border:1px solid rgba(255,255,255,.25);background:rgba(15,23,42,.85);color:#e2e8f0;font-size:11px;font-weight:800;cursor:pointer;}';
+      /* 알림 버튼(#jisuNotifAsk, 우하단)과 겹치지 않도록 로그아웃은 좌하단에 둔다 */
+      '#jisuAuthLogout{position:fixed;left:12px;bottom:12px;z-index:2147483000;display:none;padding:6px 10px;border-radius:9999px;border:1px solid rgba(255,255,255,.25);background:rgba(15,23,42,.85);color:#e2e8f0;font-size:11px;font-weight:800;cursor:pointer;}';
     document.head.appendChild(st);
   }
 

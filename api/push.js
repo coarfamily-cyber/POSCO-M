@@ -8,6 +8,10 @@ async function readDb(url, tok) {
     if (r.ok) return (await r.json()) || {};
   }
   const r2 = await fetch(url);
+  // 권한 오류(401/403)를 { ok:true, sent:0 } 으로 숨기지 않는다 — 구독 목록을 못 읽었으면 실패로 알린다
+  if (!r2.ok) {
+    throw new Error(`RTDB read failed (${r2.status})`);
+  }
   return (await r2.json()) || {};
 }
 

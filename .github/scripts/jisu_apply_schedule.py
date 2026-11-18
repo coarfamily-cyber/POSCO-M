@@ -492,7 +492,8 @@ def run_v2(dry: bool = False) -> int:
         if ok:
             print(f"[jisu] (v2) 완료 — 카드 {added}건 추가 · 예약 {marked}건 applied 마킹")
             if not dry and added > 0:
-                notify_new(cmds[-added:])
+                # 지난 날짜 예약을 소급 마킹한 closed 카드는 알리지 않는다 (오늘 실제로 열린 작업만)
+                notify_new([r for r in cmds[-added:] if not r.get("closed")])
             return 0
         time.sleep(1)
     raise SystemExit("[error] 3회 재시도에도 다른 기기 저장과 겹쳐 반영하지 못했습니다.")
@@ -537,7 +538,8 @@ def run(dry: bool = False) -> int:
             if cmds_changed and not dry:
                 mirror_zones(cmds, t)
             if not dry and added > 0:
-                notify_new(cmds[-added:])
+                # 지난 날짜 예약을 소급 마킹한 closed 카드는 알리지 않는다 (오늘 실제로 열린 작업만)
+                notify_new([r for r in cmds[-added:] if not r.get("closed")])
             return 0
         time.sleep(1)   # 다른 기기 저장과 겹침 → 다시 읽고 재계산
 

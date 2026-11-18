@@ -26,11 +26,11 @@
 <div class="card" id="loginCard">
   <h1>작업자 승인 · 관리자 로그인</h1>
   <p class="sub">관리자 계정으로만 들어올 수 있습니다.</p>
-  <div class="row">
+  <form class="row" id="loginForm">
     <input id="lid" placeholder="관리자 사번" style="max-width:220px" autocomplete="username">
     <input id="lpw" type="password" placeholder="비밀번호" style="max-width:220px" autocomplete="current-password">
-    <button id="loginBtn">로그인</button>
-  </div>
+    <button id="loginBtn" type="submit">로그인</button>
+  </form>
   <div class="err" id="loginErr"></div>
 </div>
 
@@ -133,18 +133,27 @@
     }).catch(function () { setErr('err', '네트워크 오류입니다.'); });
   }
 
+  var acting = false;
+  function lockBtns(on) {
+    var bs = document.querySelectorAll('#adminCard button');
+    for (var i = 0; i < bs.length; i++) bs[i].disabled = !!on;
+  }
   function act(body) {
+    if (acting) return;                 // 두 번 눌러도 한 번만 처리
+    acting = true; lockBtns(true);
     setErr('err', '');
     callApi(body).then(function (res) {
       if (!res.ok) { setErr('err', res.j.error || '처리하지 못했습니다.'); return; }
       load();
-    }).catch(function () { setErr('err', '네트워크 오류입니다.'); });
+    }).catch(function () { setErr('err', '네트워크 오류입니다.'); })
+      .then(function () { acting = false; lockBtns(false); });
   }
 
   auth.onAuthStateChanged(function (user) {
     if (!user) {
       $('loginCard').classList.remove('hide');
       $('adminCard').classList.add('hide');
+      $('loginBtn').disabled = false;
       return;
     }
     user.getIdTokenResult(true).then(function (r) {
@@ -162,14 +171,21 @@
     });
   });
 
-  $('loginBtn').onclick = function () {
+  var signingIn = false;
+  function doLogin() {
+    if (signingIn) return;
     setErr('loginErr', '');
     var id = $('lid').value.trim(), pw = $('lpw').value;
     if (!id || !pw) { setErr('loginErr', '사번과 비밀번호를 입력하세요.'); return; }
+    signingIn = true; $('loginBtn').disabled = true;
     auth.signInWithEmailAndPassword(id + '@jisu.local', pw).catch(function () {
       setErr('loginErr', '로그인에 실패했습니다.');
+    }).then(function () {
+      signingIn = false; $('loginBtn').disabled = false;
     });
-  };
+  }
+  $('loginForm').addEventListener('submit', function (e) { e.preventDefault(); doLogin(); });
+  $('loginBtn').onclick = function (e) { e.preventDefault(); doLogin(); };
   $('reloadBtn').onclick = load;
   $('logoutBtn').onclick = function () { auth.signOut(); };
 })();

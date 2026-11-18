@@ -26,7 +26,7 @@
       },
       "push_subs": {
         "$key": {
-          ".write": "auth != null && auth.token.approved === true && ((newData.exists() && newData.child('zone').val() === auth.token.zone) || (!newData.exists() && data.child('zone').val() === auth.token.zone))"
+          ".write": "auth != null && auth.token.approved === true && ((newData.exists() && (!data.exists() || data.child('zone').val() === auth.token.zone) && newData.child('zone').val() === auth.token.zone) || (!newData.exists() && data.child('zone').val() === auth.token.zone))"
         }
       }
     }

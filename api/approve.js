@@ -10,6 +10,11 @@ async function approve(req, body) {
   if (!m) throw httpErr(401, '로그인이 필요합니다');
   const caller = await verifyIdToken(m[1]);
   if (caller.role !== 'admin') throw httpErr(403, '관리자만 가능합니다');
+  // 토큰은 서명·만료만 검증하므로, 사용 중지된 계정의 기존 토큰(최대 1시간)도 즉시 막는다
+  if (caller.email) {
+    const me = await lookupByEmail(String(caller.email)).catch(() => null);
+    if (me && me.disabled) throw httpErr(403, '사용이 중지된 계정입니다');
+  }
 
   const action = String(body.action || '');
   if (action === 'list') {

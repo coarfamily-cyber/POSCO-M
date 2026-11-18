@@ -50,6 +50,15 @@
   var err = document.getElementById('err');
   var btn = document.getElementById('submitBtn');
 
+  // 구역 키 → 화면에 보여 줄 한글 이름 (실제 구역 확인은 서버가 합니다)
+  var ZONE_LABEL = {
+    outbound: '출고', inbound: '입고', pitch: '피치', packaging: '포장', 'packaging-d': '포장(3동)',
+    environment: '환경', 'production-a': '생산 A', 'production-b': '생산 B', 'production-c': '생산 C',
+    'production-d': '생산 D', 'production-e': '생산 E', 'production-f': '생산 F',
+    'production-g': '생산 G', 'production-h': '생산 H'
+  };
+  function labelOf(zone) { return ZONE_LABEL[zone] || zone || ''; }
+
   // 표시용으로만 구역 이름을 읽습니다. 실제 구역 확인은 서버가 합니다.
   function zoneForDisplay(token) {
     try {
@@ -64,7 +73,7 @@
     return;
   }
   var zone = zoneForDisplay(qr);
-  document.getElementById('zoneLabel').textContent = '구역: ' + (zone || '확인 불가') + ' · 본인 사번과 비밀번호를 입력하세요.';
+  document.getElementById('zoneLabel').textContent = '구역: ' + (zone ? labelOf(zone) : '확인 불가') + ' · 본인 사번과 비밀번호를 입력하세요.';
   form.classList.remove('hide');
 
   form.addEventListener('submit', function (ev) {
