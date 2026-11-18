@@ -56,11 +56,17 @@ async function uiCheck(id, label){
   rec(label+' 구역 버튼 수', zones.length === 14, zones.length + '개: ' + zones.join(','));
   const rows = [];
   for(const z of zones){
-    const r = ev(id, "(function(){var b=document.querySelector('.hotspot-pill[data-toggle-zone=\""+z+"\"]'); if(!b) return JSON.stringify({miss:1}); b.click(); var wr=b.closest('.hotspot-wrapper'); var card=wr&&wr.querySelector(':scope > .expand-card'); if(!card) return JSON.stringify({nocard:1}); var r=card.getBoundingClientRect(); var inside=(r.left>=-1&&r.top>=-1&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1); var glass=getComputedStyle(card).backgroundColor; var x=wr.querySelector('.mobile-card-close'); var open=wr.classList.contains('is-open'); if(x) x.click(); else b.click(); wr.classList.remove('is-open'); return JSON.stringify({w:Math.round(r.width),h:Math.round(r.height),l:Math.round(r.left),t:Math.round(r.top),inside:inside,open:open,glass:glass});})()");
+    ev(id, "(function(){var b=document.querySelector('.hotspot-pill[data-toggle-zone=\""+z+"\"]'); if(b) b.click();})()");
+    await sleep(340);
+    const r = ev(id, "(function(){var b=document.querySelector('.hotspot-pill[data-toggle-zone=\""+z+"\"]'); if(!b) return JSON.stringify({miss:1}); var wr=b.closest('.hotspot-wrapper'); var card=wr&&wr.querySelector(':scope > .expand-card'); if(!card) return JSON.stringify({nocard:1}); var r=card.getBoundingClientRect(); var inside=(r.left>=-1&&r.top>=-1&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1); var glass=getComputedStyle(card).backgroundColor; var open=wr.classList.contains('is-open'); return JSON.stringify({w:Math.round(r.width),h:Math.round(r.height),l:Math.round(r.left),t:Math.round(r.top),inside:inside,open:open,glass:glass});})()");
     let o={}; try{ o=JSON.parse(r); }catch(e){ o={raw:r}; }
-    rows.push(z+' '+(o.w||'?')+'x'+(o.h||'?')+' inside='+o.inside+' open='+o.open+' bg='+o.glass);
-    if(!o.inside || o.miss || o.nocard) rec(label+' 카드 '+z+' 화면 안', false, JSON.stringify(o));
-    await sleep(120);
+    rows.push(z+' '+(o.w||'?')+'x'+(o.h||'?')+' @'+o.l+','+o.t+' inside='+o.inside+' open='+o.open);
+    if(!o.inside || o.miss || o.nocard || o.open===false) rec(label+' 카드 '+z+' 화면 안', false, JSON.stringify(o));
+    else rec(label+' 카드 '+z+' 화면 안', true, (o.w+'x'+o.h));
+    const bg = o.glass||'';
+    if(/rgba\(255, 255, 255/.test(bg)===false) rec(label+' 카드 '+z+' 밝은 유리 배경', false, bg);
+    ev(id, "(function(){var b=document.querySelector('.hotspot-pill[data-toggle-zone=\""+z+"\"]'); var wr=b&&b.closest('.hotspot-wrapper'); var x=wr&&wr.querySelector('.mobile-card-close'); if(x) x.click(); else if(b) b.click(); if(wr) wr.classList.remove('is-open');})()");
+    await sleep(160);
   }
   rec(label+' 카드 14개 열기/닫기', rows.length===14, rows.join(' | '));
   const leftOpen = ev(id, "document.querySelectorAll('.hotspot-wrapper.is-open').length");
@@ -283,6 +289,11 @@ async function runFunctional(){
     addFrame('fI', 390, 844, Q+'?zone=inbound&cb='+Date.now(), 1, 410, 640);
     addFrame('fO', 390, 844, Q+'?zone=outbound&cb='+Date.now(), 1, 812, 640);
     addFrame('fE', 390, 844, Q+'?zone=environment&cb='+Date.now(), 1, 1214, 640);
+    note('phase 0: 이전 QA 잔여 상태(localStorage) 초기화');
+    await Promise.all(['fD','fM','fI','fO','fE'].map(async id=>{ await ready(id); }));
+    ev('fD', "(function(){Object.keys(localStorage).filter(k=>/^jisu-/.test(k)).forEach(k=>localStorage.removeItem(k));})()");
+    for(const id of ['fD','fM','fI','fO','fE']){ ev(id, "location.reload()"); }
+    await sleep(2500);
     note('phase 1: 빈 상태 화면 검사');
     await uiCheck('fD', '데스크탑(1919x992)');
     await uiCheck('fM', '모바일 전체(390x844)');
