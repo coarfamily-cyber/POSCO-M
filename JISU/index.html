@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611181235">
+  <meta name="jisu-build" content="202611181335">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
@@ -1195,6 +1195,16 @@
         font-size:8px !important;
         line-height:1.34 !important;
         margin-top:3px !important;
+        color:#065f46 !important;
+      }
+      body:not(#z1#z2#z3#z4#z5) #inboundTbody .inb-kg-btn.is-reweighed .inb-kg-val{
+        font-size:11px !important;
+        padding:1px 4px !important;
+        border-radius:5px !important;
+      }
+      body:not(#z1#z2#z3#z4#z5) #inboundTbody .inb-kg-btn.is-reweighed .inb-kg-edit{
+        font-size:7px !important;
+        margin-left:0 !important;
       }
       body:not(#z1#z2#z3#z4#z5) .inbound-tbl th:nth-child(1),
       body:not(#z1#z2#z3#z4#z5) #inboundTbody td:nth-child(1){width:22% !important;}
@@ -2855,6 +2865,15 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     .inbound-tbl .inb-kg-val { border-bottom: 1px dashed rgba(16,185,129,.75); padding-bottom: 1px; }
     .inbound-tbl .inb-kg-btn:hover .inb-kg-val { border-bottom-color: #047857; color: #047857; }
     .inbound-tbl .inb-kg-btn:active .inb-kg-val { background: rgba(16,185,129,.14); border-radius: 4px; }
+    /* 2차 이상 재계량된 중량 — 저장 버튼과 같은 민트 배지 */
+    .inbound-tbl .inb-kg-btn.is-reweighed .inb-kg-val {
+      background: rgba(110, 231, 183, 0.85); color: #0f172a;
+      border: 1px solid rgba(16, 185, 129, 0.65); border-bottom-color: rgba(16, 185, 129, 0.65);
+      border-radius: 6px; padding: 2px 7px; font-weight: 800; letter-spacing: -.2px;
+    }
+    .inbound-tbl .inb-kg-btn.is-reweighed:hover .inb-kg-val { background: rgba(52, 211, 153, 0.95); color: #0f172a; border-color: rgba(5, 150, 105, .8); }
+    .inbound-tbl .inb-kg-btn.is-reweighed:active .inb-kg-val { background: rgba(52, 211, 153, 1); color: #0f172a; }
+    .inbound-tbl .inb-kg-btn.is-reweighed .inb-kg-edit { color: #065f46; }
     .inbound-tbl .inb-kg-edit { font-size: 8px; line-height: 1; color: rgba(4,120,87,.8); margin-left: 1px; }
     .inbound-tbl .inb-kg-hist {
       display: block; margin-top: 3px; font-size: 8.5px; font-weight: 800; line-height: 1.3;
@@ -7056,7 +7075,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     const hist = kgHistOf(r);
     const has = parseFloat(r.kg) > 0;
     const histHtml = hist.length ? `<span class="inb-kg-hist"><b class="inb-kg-round">${hist.length + 1}차&nbsp;</b>(${kgHistLabelHtml(r)})</span>` : "";
-    return `<button type="button" class="inb-kg-btn" data-kg="${idx}" title="${has ? "눌러서 중량 수정" : "눌러서 중량 입력"}" aria-label="중량 수정">
+    const reweighed = hist.length > 0;
+    return `<button type="button" class="inb-kg-btn${reweighed ? " is-reweighed" : ""}" data-kg="${idx}" title="${has ? "눌러서 중량 수정" : "눌러서 중량 입력"}${reweighed ? ` · ${hist.length + 1}차 재계량` : ""}" aria-label="중량 수정">
           <span class="inb-kg-val">${has ? escHtml(fmtKgNum(r.kg)) : "-"}</span><span class="inb-kg-edit" aria-hidden="true">✎</span>
         </button>${histHtml}`;
   }
