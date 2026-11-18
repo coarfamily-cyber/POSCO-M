@@ -9372,11 +9372,53 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     }catch(e){ pushing[k]=false; console.warn('[jisu-db] 저장 예외('+k+'):',e); }
   }
   /* 다른 기기가 먼저 저장한 경우: 서버 값을 버리지 않고 내 변경분을 얹어 다시 올린다 */
+  /* KEEP-LOCAL-BEGIN (4c: 서버 값으로 덮기 직전, 서버에 없는 로컬 수정만 IndexedDB에 보관. 기존 동작은 그대로 두고 데이터만 남김. 저장 실패는 조용히 무시) */
+  var KEEP_DB='jisu-local-backup', KEEP_STORE='items', KEEP_MAX=20;
+  function keepOpen(){
+    return new Promise(function(res,rej){
+      var r=indexedDB.open(KEEP_DB,1);
+      r.onupgradeneeded=function(){ if(!r.result.objectStoreNames.contains(KEEP_STORE)) r.result.createObjectStore(KEEP_STORE,{autoIncrement:true}); };
+      r.onsuccess=function(){ res(r.result); };
+      r.onerror=function(){ rej(r.error); };
+    });
+  }
+  /* 목록이면 서버에 없거나 내용이 다른 항목만 고른다. 목록이 아니면 전체. 보관할 것이 없으면 null */
+  function unsyncedPart(k, mine){
+    var loc; try{ loc=JSON.parse(mine); }catch(_){ return mine; }
+    var rem=null; try{ rem=JSON.parse(lastRemote[k]||'null'); }catch(_){ rem=null; }
+    if(!Array.isArray(loc) || !Array.isArray(rem)) return mine;
+    var byId={};
+    rem.forEach(function(x){ if(x&&x.id!=null) byId[String(x.id)]=JSON.stringify(x); });
+    var out=loc.filter(function(x){ return x&&x.id!=null && byId[String(x.id)]!==JSON.stringify(x); });
+    return out.length? JSON.stringify(out) : null;
+  }
+  function keepLocalBackup(k){
+    try{
+      var mine=payloadOf(k);
+      if(mine==null || mine===lastRemote[k]) return;   /* 바뀐 내용이 없으면 보관할 것 없음 */
+      var part=unsyncedPart(k, mine);
+      if(part==null) return;
+      var rec={k:k, json:part, at:new Date().toISOString()};
+      keepOpen().then(function(d){
+        return new Promise(function(res,rej){
+          var t=d.transaction(KEEP_STORE,'readwrite'), st=t.objectStore(KEEP_STORE);
+          st.put(rec);
+          var q=st.getAllKeys();
+          q.onsuccess=function(){ var ks=q.result||[]; ks.slice(0, Math.max(0, ks.length-KEEP_MAX)).forEach(function(key){ st.delete(key); }); };
+          t.oncomplete=function(){ d.close(); res(); };
+          t.onerror=function(){ d.close(); rej(t.error); };
+          t.onabort=function(){ d.close(); rej(t.error); };
+        });
+      }).then(function(){ console.warn('[jisu-db] 덮어쓰기 전 로컬 수정 보관('+k+')'); })
+        .catch(function(e){ console.warn('[jisu-db] 보관 실패(무시):', e&&e.name||e); });
+    }catch(_){}
+  }
+  /* KEEP-LOCAL-END */
   function reconcile(k, remote, sent){
     var n=(conflicts[k]||0)+1; conflicts[k]=n;
     if(remote==null || n>3){
       conflicts[k]=0;
-      if(remote!=null){ lastRemote[k]=remote; lastSent[k]=remote; applyRemote(k,remote,true); }
+      if(remote!=null){ keepLocalBackup(k); lastRemote[k]=remote; lastSent[k]=remote; applyRemote(k,remote,true); }
       else { lastSent[k]=null; }
       return;
     }
@@ -9392,7 +9434,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       setTimeout(function(){ pushKey(k,{force:true}); },0);
     }else{
       lastSent[k]=remote; lastRemote[k]=remote;
-      if(payloadOf(k)!==remote) applyRemote(k,remote,true);
+      if(payloadOf(k)!==remote){ keepLocalBackup(k); applyRemote(k,remote,true); }
     }
   }
   function schedulePush(){
