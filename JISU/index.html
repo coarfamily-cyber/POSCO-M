@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611181830">
+  <meta name="jisu-build" content="202611181900">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
@@ -4861,16 +4861,18 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       try{ if(window.jisuFitCmdTexts) window.jisuFitCmdTexts(); }catch(_){}
     }
     /* ===== 작업 카드 텍스트 Auto-fit (2026-11-18) =====
-       카드/박스 크기(높이·너비·패딩·버튼)는 건드리지 않고, 긴 텍스트만 글자 크기를 줄여
+       카드/박스 크기(높이·너비·패딩·버튼)는 절대 건드리지 않고, 긴 텍스트만 글자 크기를 줄여
        최대 2줄 안에 들어오게 한다. 기본 크기보다 크게 키우지는 않는다.
        1) 기본 크기로 1줄이면 그대로 둔다.
        2) 넘치면 white-space:nowrap 으로 0.5px 단위로 10px까지 내려가며 1줄을 먼저 시도한다.
        3) 10px에서도 1줄이 안 되면 줄바꿈을 허용하고 2줄에 들어가는 가장 큰 크기를 쓴다. 3줄 금지.
-       · .expand-card .cmd-text 의 font-size!important 를 이기려면 setProperty(...,'important') 필수. */
+       · .expand-card .cmd-text 의 font-size!important 를 이기려면 setProperty(...,'important') 필수.
+       · 카드에 스크롤바가 생기면 글자 칸 너비가 줄어 다시 넘칠 수 있으므로,
+         너비 변화를 감시해 수렴할 때까지(최대 3회) 다시 맞추고 마지막에 2줄 안전 검사를 한다. */
     (function(){
       if(window.__jisuCmdFit) return; window.__jisuCmdFit=1;
       var MIN_FS=10, STEP=0.5, MAX_LINES=2, SEL='.cmd-text';
-      var _rg=null;
+      var _rg=null, ro=null, pending=false, lastRun=0, autoTimer=0;
       function rng(){ if(!_rg) _rg=document.createRange(); return _rg; }
       function rectsOf(el){ var r=rng(); try{ r.selectNodeContents(el); return r.getClientRects(); }catch(_){ return []; } }
       function lineTops(el){
@@ -4900,6 +4902,34 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       function setFs(el,fs){ el.style.setProperty('font-size',fs+'px','important'); }
       function setWs(el,ws){ el.style.setProperty('white-space',ws==='nowrap'?'nowrap':'normal','important'); }
       function fitsOne(el){ return lines(el)<=1 && !overflows(el); }
+      /* 기본 크기에서 시작해 1) 1줄 → 2) 2줄 순서로 가장 큰 크기를 찾아 적용한다 */
+      function applyBest(el, base){
+        if(fitsOne(el)) return;                                   /* 기본 크기 그대로 1줄 */
+        var c1=[], v, m, l, h, f;
+        for(v=r05(base-STEP); v>=MIN_FS-1e-6; v=r05(v-STEP)) c1.push(v);
+        l=0; h=c1.length-1; f=-1;
+        while(l<=h){ m=(l+h)>>1; setFs(el,c1[m]); setWs(el,'nowrap'); if(fitsOne(el)){ f=m; h=m-1; } else { l=m+1; } }
+        if(f>=0){ setFs(el,c1[f]); setWs(el,'nowrap'); return; }
+        var c2=[], u, l2, h2, f2;
+        for(u=base; u>=MIN_FS-1e-6; u=r05(u-STEP)) c2.push(u);
+        setWs(el,'normal');
+        l2=0; h2=c2.length-1; f2=-1;
+        while(l2<=h2){ m=(l2+h2)>>1; setFs(el,c2[m]); if(lines(el)<=MAX_LINES){ f2=m; h2=m-1; } else { l2=m+1; } }
+        if(f2>=0){ setFs(el,c2[f2]); setWs(el,'normal'); }
+        else { el.style.removeProperty('font-size'); el.style.removeProperty('white-space'); }
+      }
+      /* 마지막 안전 검사: 지금 너비에서 2줄을 넘거나 가로로 넘치면 0.5px씩 더 줄인다 (하한 10px) */
+      function hardGuard(el){
+        for(var i=0;i<40;i++){
+          var ws=el.style.getPropertyValue('white-space');
+          if(ws==='nowrap'){ if(!overflows(el)) return; } else if(lines(el)<=MAX_LINES) return;
+          var cur=r05(parseFloat(getComputedStyle(el).fontSize)||0);
+          if(!(cur>MIN_FS)){ if(ws==='nowrap'){ setWs(el,'normal'); continue; } return; }
+          var next=Math.max(MIN_FS, r05(cur-STEP));
+          setFs(el,next);
+          if(next<=MIN_FS && ws==='nowrap') setWs(el,'normal');
+        }
+      }
       function fitOne(el){
         if(!el || !el.isConnected) return;
         el.style.removeProperty('font-size'); el.style.removeProperty('white-space');
@@ -4907,48 +4937,36 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         var cs=getComputedStyle(el), base=r05(parseFloat(cs.fontSize)||0);
         if(!(base>MIN_FS)) return;
         if(!(el.clientWidth>4)) return;                 /* 화면에 없는 카드(다른 뷰)는 다음 기회에 */
-        if(fitsOne(el)) return;                        /* 1) 기본 크기 그대로 1줄 */
-        /* 2) 1줄 시도: base-0.5 → 10px (작은 글씨일수록 잘 들어가므로 이진 탐색) */
-        var c1=[]; for(var v=r05(base-STEP); v>=MIN_FS-1e-6; v=r05(v-STEP)) c1.push(v);
-        var l=0,h=c1.length-1,f=-1;
-        while(l<=h){ var m=(l+h)>>1; setFs(el,c1[m]); setWs(el,'nowrap'); if(fitsOne(el)){ f=m; h=m-1; } else { l=m+1; } }
-        if(f>=0){ setFs(el,c1[f]); setWs(el,'nowrap'); }
-        else {
-          /* 3) 2줄 허용: 2줄에 들어가는 가장 큰 크기 (3줄로 넘어가지 않게) */
-          var c2=[]; for(var u=base; u>=MIN_FS-1e-6; u=r05(u-STEP)) c2.push(u);
-          setWs(el,'normal');
-          var l2=0,h2=c2.length-1,f2=-1;
-          while(l2<=h2){ var m2=(l2+h2)>>1; setFs(el,c2[m2]); if(lines(el)<=MAX_LINES){ f2=m2; h2=m2-1; } else { l2=m2+1; } }
-          if(f2>=0){ setFs(el,c2[f2]); setWs(el,'normal'); }
-          else { el.style.removeProperty('font-size'); el.style.removeProperty('white-space'); }
+        for(var pass=0; pass<3; pass++){
+          var w0=el.clientWidth;
+          applyBest(el, base);
+          if(Math.abs(el.clientWidth-w0)<1) break;      /* 너비가 그대로면 더 맞출 필요 없음 */
         }
-        /* 실제 렌더에서 한 번 더 확인: nowrap 이 실제로 넘치면 0.5px씩 더 줄이거나 2줄로 전환 */
-        if(el.style.getPropertyValue('white-space')==='nowrap' && overflows(el)){
-          var cur=r05(parseFloat(getComputedStyle(el).fontSize)||0);
-          var done=false;
-          for(var t=r05(cur-STEP); t>=MIN_FS-1e-6; t=r05(t-STEP)){
-            setFs(el,t); if(fitsOne(el)){ done=true; break; }
-          }
-          if(!done){
-            setWs(el,'normal');
-            var best=-1, c3=[]; for(var q=base; q>=MIN_FS-1e-6; q=r05(q-STEP)) c3.push(q);
-            for(var k=0;k<c3.length;k++){ setFs(el,c3[k]); if(lines(el)<=MAX_LINES){ best=k; break; } }
-            if(best>=0){ setFs(el,c3[best]); } else { el.style.removeProperty('font-size'); el.style.removeProperty('white-space'); }
-          }
-        }
+        hardGuard(el);
+        el.__fitW=el.clientWidth;
+        if(ro && !el.__fitObs){ el.__fitObs=1; try{ ro.observe(el); }catch(_){} }
         el.setAttribute('data-fit-fs', el.style.getPropertyValue('font-size')||'default');
         el.setAttribute('data-fit-ws', el.style.getPropertyValue('white-space')||'default');
         el.setAttribute('data-fit-lines', String(lines(el)));
       }
-      var pending=false;
       function fitAll(){
         if(pending) return; pending=true;
         requestAnimationFrame(function(){
-          pending=false;
+          pending=false; lastRun=Date.now();
           try{
             var els=document.querySelectorAll(SEL);
             for(var i=0;i<els.length;i++) fitOne(els[i]);
           }catch(_){}
+        });
+      }
+      /* 글자 칸 너비가 바뀌면(카드 스크롤바 생성·창 크기 변경 등) 자동으로 다시 맞춘다 */
+      function scheduleFit(ms){ clearTimeout(autoTimer); autoTimer=setTimeout(function(){ if(Date.now()-lastRun>250) fitAll(); }, ms||150); }
+      if(window.ResizeObserver){
+        ro=new ResizeObserver(function(entries){
+          for(var i=0;i<entries.length;i++){
+            var el=entries[i].target, w=el.clientWidth;
+            if(el.__fitW==null || Math.abs(w-el.__fitW)>1){ scheduleFit(150); return; }
+          }
         });
       }
       window.jisuFitCmdTexts=fitAll;
@@ -4959,7 +4977,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       try{ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ fitAll(); setTimeout(fitAll,350); }); }catch(_){}
       document.addEventListener('click',function(e){
         var t=e.target;
-        if(t&&t.closest&&t.closest('[data-toggle-zone],[data-bldg],[data-zone-btn],.hotspot-pill,[data-cmd-goto],#closeModalX,#closeModalBtn')) setTimeout(fitAll,80);
+        if(t&&t.closest&&t.closest('[data-toggle-zone],[data-bldg],[data-zone-btn],.hotspot-pill,[data-cmd-goto],#closeModalX,#closeModalBtn')) setTimeout(fitAll,90);
       },true);
     })();
     let modalKey=null;
