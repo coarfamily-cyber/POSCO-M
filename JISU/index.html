@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611181233">
+  <meta name="jisu-build" content="202611181235">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
@@ -1196,12 +1196,18 @@
         line-height:1.34 !important;
         margin-top:3px !important;
       }
-      body:not(#z1#z2#z3#z4#z5) .inbound-tbl th:nth-child(1){width:23% !important;}
-      body:not(#z1#z2#z3#z4#z5) .inbound-tbl th:nth-child(2){width:10% !important;}
-      body:not(#z1#z2#z3#z4#z5) .inbound-tbl th:nth-child(3){width:31% !important;}
-      body:not(#z1#z2#z3#z4#z5) .inbound-tbl th:nth-child(4){width:16% !important;}
-      body:not(#z1#z2#z3#z4#z5) .inbound-tbl th:nth-child(5){width:12% !important;}
-      body:not(#z1#z2#z3#z4#z5) .inbound-tbl th:nth-child(6){width:8% !important;}
+      body:not(#z1#z2#z3#z4#z5) .inbound-tbl th:nth-child(1),
+      body:not(#z1#z2#z3#z4#z5) #inboundTbody td:nth-child(1){width:22% !important;}
+      body:not(#z1#z2#z3#z4#z5) .inbound-tbl th:nth-child(2),
+      body:not(#z1#z2#z3#z4#z5) #inboundTbody td:nth-child(2){width:9% !important;}
+      body:not(#z1#z2#z3#z4#z5) .inbound-tbl th:nth-child(3),
+      body:not(#z1#z2#z3#z4#z5) #inboundTbody td:nth-child(3){width:34% !important;}
+      body:not(#z1#z2#z3#z4#z5) .inbound-tbl th:nth-child(4),
+      body:not(#z1#z2#z3#z4#z5) #inboundTbody td:nth-child(4){width:15% !important;}
+      body:not(#z1#z2#z3#z4#z5) .inbound-tbl th:nth-child(5),
+      body:not(#z1#z2#z3#z4#z5) #inboundTbody td:nth-child(5){width:12% !important;}
+      body:not(#z1#z2#z3#z4#z5) .inbound-tbl th:nth-child(6),
+      body:not(#z1#z2#z3#z4#z5) #inboundTbody td:nth-child(6){width:8% !important;}
       body:not(#z1#z2#z3#z4#z5) #inboundTbody .inb-kg-form input.inb-kg-input{
         height:28px !important;
         font-size:12.5px !important;
