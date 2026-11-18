@@ -128,7 +128,8 @@
       }
       // 승인 여부는 토큰의 custom claim(approved) 으로 확인한다 (토큰을 새로 받아서 최신 값 사용)
       user.getIdTokenResult(true).then(function(res){
-        var approved = !!(res && res.claims && res.claims.approved === true);
+        var c = (res && res.claims) || {};
+        var approved = c.approved === true || c.role === 'admin';   // 관리자 계정은 승인 표시가 없어도 통과
         if (approved) {
           setGate(false, {});
           showLogout(true);

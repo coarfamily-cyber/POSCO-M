@@ -40,8 +40,8 @@ function makeEnv(localValue, remoteValue) {
   const idb = fakeIndexedDB();
   const lastRemote = { 'jisu-commands-v1': remoteValue };
   const warn = [];
-  const fn = new Function('payloadOf', 'lastRemote', 'indexedDB', 'console', block + '\nreturn keepLocalBackup;');
-  const keep = fn(() => localValue, lastRemote, idb, { warn: m => warn.push(m) });
+  const fn = new Function('payloadOf', 'lastRemote', 'indexedDB', 'console', 'window', 'lsSet', 'localStorage', block + '\nreturn keepLocalBackup;');
+  const keep = fn(() => localValue, lastRemote, idb, { warn: m => warn.push(m) }, {}, () => {}, { getItem: () => null, removeItem() {} });
   const rows = () => { const db = idb.dbs['jisu-local-backup']; return db ? [...db.stores.items.rows.values()] : []; };
   return { keep, rows, idb, warn };
 }
@@ -82,7 +82,7 @@ test('최근 20건만 남긴다', async () => {
 });
 
 test('IndexedDB가 없어도 예외 없이 넘어간다', () => {
-  const fn = new Function('payloadOf', 'lastRemote', 'indexedDB', 'console', block + '\nreturn keepLocalBackup;');
-  const keep = fn(() => '[{"id":"q"}]', { 'jisu-commands-v1': '[]' }, undefined, { warn() {} });
+  const fn = new Function('payloadOf', 'lastRemote', 'indexedDB', 'console', 'window', 'lsSet', 'localStorage', block + '\nreturn keepLocalBackup;');
+  const keep = fn(() => '[{"id":"q"}]', { 'jisu-commands-v1': '[]' }, undefined, { warn() {} }, {}, () => {}, { getItem: () => null, removeItem() {} });
   assert.doesNotThrow(() => keep('jisu-commands-v1'));
 });

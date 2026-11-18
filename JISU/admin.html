@@ -156,6 +156,9 @@
       $('adminCard').classList.remove('hide');
       $('who').textContent = '관리자 로그인: ' + (user.displayName || user.email);
       load();
+    }).catch(function () {
+      setErr('loginErr', '권한을 확인하지 못했습니다. 다시 로그인하세요.');
+      auth.signOut();
     });
   });
 
