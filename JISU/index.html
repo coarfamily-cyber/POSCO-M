@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611182330">
+  <meta name="jisu-build" content="202611182343">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
@@ -8543,8 +8543,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       return;
     }
     if(act.type === 'bldg'){
-      const b = document.querySelector('[data-bldg="' + act.target + '"]');
-      if(b) b.click();
+      /* [11-18] 지도 위 동 표시는 버튼이 아니라 라벨이므로 클릭 대신 상세 창을 바로 연다 */
+      if(typeof openBuildingModal === 'function') openBuildingModal(act.target);
       return;
     }
     if(act.type === 'inbound'){
