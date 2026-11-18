@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<script>window.__QA_ERRS=[];(function(){var e=window.__QA_ERRS;
+window.addEventListener('error',function(ev){e.push('error: '+(ev.message||'')+' @'+(ev.filename||'')+':'+(ev.lineno||0));});
+window.addEventListener('unhandledrejection',function(ev){e.push('rejection: '+((ev.reason&&ev.reason.message)||ev.reason));});
+var ce=console.error;console.error=function(){e.push('console.error: '+Array.prototype.slice.call(arguments).map(String).join(' '));ce.apply(console,arguments);};
+var cw=console.warn;console.warn=function(){e.push('console.warn: '+Array.prototype.slice.call(arguments).map(String).join(' '));cw.apply(console,arguments);};})();</script>
   <meta name="jisu-build" content="202611181416-qa">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
