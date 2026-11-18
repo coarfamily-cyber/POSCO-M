@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611182301">
+  <meta name="jisu-build" content="202611182325">
   <meta name="robots" content="noindex,nofollow">
   <script>/* QA 전용: 실제 Firebase DB·푸시 API 접근을 막고(쓰기 금지), 검증용 예시 데이터만 로컬에 심는다. 확인 후 삭제 */
   (function(){
@@ -5766,9 +5766,9 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     const mo2=new MutationObserver(()=>requestAnimationFrame(fitOpen));
     document.querySelectorAll('.hotspot-wrapper > .expand-card').forEach(c=>mo2.observe(c,{childList:true,subtree:true}));
     window.addEventListener('resize',()=>{ fitOpen(); setTimeout(fitOpen,450); });
-    /* [11-18] 모바일·태블릿에서 페이지를 스크롤해도 카드가 버튼을 따라 화면 밖으로 밀리지 않도록 다시 중앙에 앉힌다 */
-    let scrollTick=false;
-    window.addEventListener('scroll',()=>{ if(window.innerWidth>900) return; if(scrollTick) return; scrollTick=true; requestAnimationFrame(()=>{ scrollTick=false; fitOpen(); }); },{passive:true});
+    /* [11-18] 모바일·태블릿에서 페이지를 스크롤해도 카드가 버튼을 따라 화면 밖으로 밀리지 않도록 다시 중앙에 앉힌다 (rAF 지연을 타지 않게 즉시 보정) */
+    let lastScrollFit=0;
+    window.addEventListener('scroll',()=>{ if(window.innerWidth>900) return; const t=Date.now(); if(t-lastScrollFit<60) return; lastScrollFit=t; fitOpen(); },{passive:true});
     if(window.ResizeObserver) new ResizeObserver(()=>fitOpen()).observe(stage);
   })();
   </script>
