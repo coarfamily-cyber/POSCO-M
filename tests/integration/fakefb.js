@@ -92,6 +92,12 @@ function makeFakeFirebase(opts) {
   }
   const db = { ref };
   const firebase = { apps: [], initializeApp(cfg) { this.apps.push(cfg); return {}; }, database() { return db; } };
-  return { firebase, state, setServer: (p, v) => setAt(p, v), getServer: p => read(getAt(p)) };
+  // 기기마다 따로 쓰는 firebase 객체 (같은 DB 공유, 로그인 정보는 기기별)
+  function forDevice(claims) {
+    const user = claims ? { email: 'u@jisu.local', getIdToken: () => Promise.resolve('tok'), getIdTokenResult: () => Promise.resolve({ claims }) } : null;
+    const auth = { currentUser: user, onAuthStateChanged(cb) { setTimeout(() => cb(user), 0); return () => {}; }, signOut() { return Promise.resolve(); } };
+    return { apps: [], initializeApp(cfg) { this.apps.push(cfg); return {}; }, database() { return db; }, auth: () => auth };
+  }
+  return { firebase, forDevice, state, setServer: (p, v) => setAt(p, v), getServer: p => read(getAt(p)) };
 }
 module.exports = { makeFakeFirebase };

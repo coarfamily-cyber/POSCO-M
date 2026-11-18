@@ -9180,6 +9180,108 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
 
   var lsSet=localStorage.setItem.bind(localStorage);
   var lsGet=localStorage.getItem.bind(localStorage);
+  /* SYNC-V2-BEGIN (구역 묶음 동기화) ------------------------------------------------------------
+     · 기본은 기존 방식('state'): jisu/state/{키} 를 그대로 쓰고, 아래 함수들은 키 이름을 그대로 돌려준다.
+     · DB 의 config/syncMode 가 'v2' 이면 모든 화면이 새로고침되어 jisu/v2/{묶음}/{키} 로 동기화한다.
+       값 형식({v,t,by})·버전 가드 트랜잭션·reconcile·입고 병합은 기존 코드를 묶음 단위로 그대로 쓴다.
+     · 묶음: 작업자 구역 14개 + _admin(1~4동·달력 예약 등 관리자 전용) + _notice(공지, 승인된 모두 읽기)
+       작업지시·특이사항은 항목의 대상(target)으로 나누고, 피치·입고·환경·예약은 키 전체를 한 묶음에 둔다.
+     · 로그인 게이트가 켜져 있으면 관리자는 전체, 작업자는 자기 구역 + 공지 묶음만 받는다(쓰기는 자기 구역만). */
+  var V2_ZONES=['outbound','inbound','pitch','packaging','packaging-d','environment','production-a','production-b','production-c','production-d','production-e','production-f','production-g','production-h'];
+  var V2_PARTS=V2_ZONES.concat(['_admin','_notice']);
+  var V2_SPLIT={'jisu-commands-v1':1,'jisu-memos-v1':1};
+  var V2_WHOLE={'jisu-pitch-records-v1':'pitch','jisu-inbound-records-v1':'inbound','jisu-env-v1':'environment','jisu-env-log-v1':'environment','jisu-schedule-v1':'_admin','jisu-schedules-v1':'_admin'};
+  var SYNC_MODE=(function(){ try{ return lsGet('jisu-sync-mode')==='v2'?'v2':'state'; }catch(_){ return 'state'; } })();
+  var ROLE={all:true,zone:''};
+  var UNITS=[];
+  function keyOf(u){ u=String(u); var i=u.indexOf('@'); return i<0?u:u.slice(0,i); }
+  function partOf(u){ u=String(u); var i=u.indexOf('@'); return i<0?'':u.slice(i+1); }
+  function pathOf(u){ var pt=partOf(u); return pt ? ROOT+'/v2/'+pt+'/'+keyOf(u) : ROOT+'/state/'+u; }
+  function v2BucketOf(x){
+    if(x&&(x.target==='*'||x.kind==='notice')) return '_notice';
+    var z=String((x&&x.target)||'').split(':')[0];
+    return V2_ZONES.indexOf(z)>=0?z:'_admin';
+  }
+  function partVisible(pt){ return ROLE.all || pt===ROLE.zone || pt==='_notice'; }
+  function unitWritable(u){ var pt=partOf(u); return !pt || ROLE.all || pt===ROLE.zone; }
+  function unitsOfKey(k){ return UNITS.filter(function(u){ return keyOf(u)===k; }); }
+  function buildUnits(){
+    var us=[];
+    STATE_KEYS.forEach(function(k){
+      if(V2_SPLIT[k]) V2_PARTS.forEach(function(pt){ if(partVisible(pt)) us.push(k+'@'+pt); });
+      else if(V2_WHOLE[k] && partVisible(V2_WHOLE[k])) us.push(k+'@'+V2_WHOLE[k]);
+    });
+    return us;
+  }
+  /* 묶음 하나의 서버 값(json)을 로컬 키 전체 목록에 합친다: 이 묶음 항목 자리만 서버 값으로 바꾸고 나머지는 그대로 */
+  function mergeUnitIntoLocal(u,json){
+    var k=keyOf(u), pt=partOf(u);
+    if(!V2_SPLIT[k]) return json;
+    var inc; try{ inc=JSON.parse(json); }catch(_){ return null; }
+    if(!Array.isArray(inc)) return null;
+    var cur=[]; try{ cur=JSON.parse(lsGet(k)||'[]'); }catch(_){ cur=[]; }
+    if(!Array.isArray(cur)) cur=[];
+    var ids={}; inc.forEach(function(x){ if(x&&x.id!=null) ids[String(x.id)]=1; });
+    var out=[], qi=0;
+    cur.forEach(function(x){
+      if(x&&x.id==='demo_dispatch_1'){ out.push(x); return; }
+      var isObj=!!(x&&typeof x==='object');
+      if(isObj&&(v2BucketOf(x)===pt||(x.id!=null&&ids[String(x.id)]))){ if(qi<inc.length) out.push(inc[qi++]); return; }
+      if(isObj&&!partVisible(v2BucketOf(x))) return;   /* 이 기기 권한 밖 구역 항목은 남기지 않음 */
+      out.push(x);
+    });
+    while(qi<inc.length) out.push(inc[qi++]);
+    return JSON.stringify(out);
+  }
+  function switchSyncMode(m){
+    m=(m==='v2')?'v2':'state';
+    try{ lsSet('jisu-sync-mode',m); }catch(_){}
+    if(m!==SYNC_MODE){ console.warn('[jisu-db] 동기화 방식 전환 → '+m+' (새로고침)'); try{ location.reload(); }catch(_){} }
+  }
+  var cfgWatching=false;
+  function watchSyncConfig(){
+    if(cfgWatching) return; cfgWatching=true;
+    try{
+      db.ref(ROOT+'/config/syncMode').on('value',function(snap){
+        var m=(snap&&snap.val()==='v2')?'v2':'state';
+        if(m!==SYNC_MODE) switchSyncMode(m);
+      },function(){ cfgWatching=false; });
+    }catch(_){ cfgWatching=false; }
+  }
+  /* v2 시작: 로그인 게이트가 꺼져 있으면 전체, 켜져 있으면 로그인 권한(관리자/구역)을 확인한 뒤 시작 */
+  function startV2(){
+    if(window.JISU_AUTH_GATE!==true){ ROLE={all:true,zone:''}; UNITS=buildUnits(); startSyncAll(); return; }
+    if(!window.firebase||!firebase.auth){ paint('none'); console.warn('[jisu-db] 로그인 모듈이 없어 동기화를 시작하지 않습니다.'); return; }
+    var started=false;
+    firebase.auth().onAuthStateChanged(function(user){
+      if(!user){ if(started){ try{ location.reload(); }catch(_){} } return; }
+      watchSyncConfig();
+      user.getIdTokenResult(true).then(function(r){
+        var c=(r&&r.claims)||{};
+        if(c.role==='admin') ROLE={all:true,zone:''};
+        else if(c.approved===true && V2_ZONES.indexOf(c.zone)>=0) ROLE={all:false,zone:c.zone};
+        else { paint('none'); return; }                 /* 승인 전 계정: 동기화하지 않음 */
+        if(started) return; started=true;
+        if(!ROLE.all){   /* 작업자: 권한 밖 기록(예약·다른 구역 기록)이 예전 캐시로 남아 있으면 이 기기에서 지움 */
+          STATE_KEYS.forEach(function(k){
+            if(V2_SPLIT[k]){   /* 작업지시·특이사항: 다른 구역 항목만 빼고 남김 */
+              try{
+                var raw=lsGet(k); if(raw==null) return;
+                var arr=JSON.parse(raw); if(!Array.isArray(arr)) return;
+                var kept=arr.filter(function(x){ return !(x&&typeof x==='object'&&x.id!=='demo_dispatch_1'&&!partVisible(v2BucketOf(x))); });
+                if(kept.length!==arr.length){ var j=JSON.stringify(kept); lsSet(k,j); fireStorage(k,j); }
+              }catch(_){}
+              return;
+            }
+            if(V2_WHOLE[k]&&partVisible(V2_WHOLE[k])) return;
+            try{ if(lsGet(k)!=null){ localStorage.removeItem(k); fireStorage(k,null); } }catch(_){}
+          });
+        }
+        UNITS=buildUnits(); startSyncAll();
+      }).catch(function(e){ console.warn('[jisu-db] 권한 확인 실패:',e&&e.code||e); });
+    });
+  }
+  /* SYNC-V2-END */
   var readyKey={}, dirtyKey={}, lastSent={}, suppressDepth=0, pushTimer=null, suppressTimer=null;
 
   function userName(){ try{ return lsGet('jisu-user')||''; }catch(_){ return ''; } }
@@ -9311,7 +9413,17 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   }
 
   /* ---------- 1) localStorage → DB ---------- */
-  function payloadOf(k){
+  /* 묶음 단위 값: 기존 방식(state)에서는 키 전체 값과 같다 */
+  function payloadOf(u){
+    var k=keyOf(u), pt=partOf(u);
+    if(!pt||!V2_SPLIT[k]) return payloadOfKey(k);
+    var raw; try{ raw=lsGet(k); }catch(_){ return null; }
+    if(raw==null) return null;
+    var v; try{ v=JSON.parse(raw); }catch(_){ return null; }
+    if(!Array.isArray(v)) return null;
+    try{ return JSON.stringify(v.filter(function(x){ return x&&typeof x==='object'&&x.id!=='demo_dispatch_1'&&v2BucketOf(x)===pt; })); }catch(_){ return null; }
+  }
+  function payloadOfKey(k){
     var raw; try{ raw=lsGet(k); }catch(_){ return null; }
     if(raw==null) return null;
     if(k==='jisu-gemini-key'){ try{ return JSON.stringify(String(raw).trim()); }catch(_){ return null; } }
@@ -9421,10 +9533,11 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   };
   /* ZONE-VERIFY-END */
   function pushKey(k, opts){
+    if(!unitWritable(k)) return;                  // v2: 이 기기 권한으로 쓸 수 없는 묶음(공지 등)은 올리지 않음
     var json=payloadOf(k); if(json==null) return;
     var force=!!(opts&&opts.force);
     if(!force && lastSent[k]===json) return;
-    if(k==='jisu-inbound-records-v1' && lastSent[k] && !window.__jisuAllowEmptyInboundPush){
+    if(keyOf(k)==='jisu-inbound-records-v1' && lastSent[k] && !window.__jisuAllowEmptyInboundPush){
       try{
         var prev=JSON.parse(lastSent[k]), next=JSON.parse(json), lost=false;
         Object.keys(prev||{}).forEach(function(d){
@@ -9444,7 +9557,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     pushing[k]=true;
     var sent=json, rev=baseRev[k]||0;
     try{
-      db.ref(ROOT+'/state/'+k).transaction(function(cur){
+      db.ref(pathOf(k)).transaction(function(cur){
         /* 서버가 내가 마지막으로 받은 버전보다 새로우면 → 이 기기 스냅샷으로 덮어쓰지 않는다 */
         if(revOf(cur)>rev) return;
         var now=payloadOf(k);                       // 커밋 시점의 최신 로컬 값(오프라인 대기 중 바뀐 내용 포함)
@@ -9525,6 +9638,20 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   /* 미전송 표시(페이지를 닫아도 남음): 로컬 수정 후 아직 서버에 못 올린 키 */
   function unsyncedMark(k,on){ try{ if(on) lsSet('jisu-unsynced:'+k,'1'); else localStorage.removeItem('jisu-unsynced:'+k); }catch(_){} }
   function unsyncedOf(k){ try{ return localStorage.getItem('jisu-unsynced:'+k)==='1'; }catch(_){ return false; } }
+  /* 방식이 바뀐 직후에도 지난 방식의 미전송 표시를 알아본다 (state: 키 이름, v2: 키@묶음) */
+  function unsyncedAnyFor(u){
+    if(unsyncedOf(u)) return true;
+    var k=keyOf(u);
+    if(k!==u) return unsyncedOf(k);
+    try{ for(var i=0;i<localStorage.length;i++){ var n=localStorage.key(i); if(n&&n.indexOf('jisu-unsynced:'+k+'@')===0&&localStorage.getItem(n)==='1') return true; } }catch(_){}
+    return false;
+  }
+  function clearUnsyncedFor(u){
+    unsyncedMark(u,false);
+    var k=keyOf(u);
+    if(k!==u){ if(unitsOfKey(k).every(function(x){ return readyKey[x]; })) unsyncedMark(k,false); return; }
+    try{ var del=[]; for(var i=0;i<localStorage.length;i++){ var n=localStorage.key(i); if(n&&n.indexOf('jisu-unsynced:'+k+'@')===0) del.push(n); } del.forEach(function(n){ localStorage.removeItem(n); }); }catch(_){}
+  }
   /* 콘솔에서 보관본 확인: jisuListLocalBackups().then(console.table) */
   window.jisuListLocalBackups=function(){ return keepOpen().then(function(d){ return new Promise(function(res,rej){ var q=d.transaction(KEEP_STORE,'readonly').objectStore(KEEP_STORE).getAll(); q.onsuccess=function(){ d.close(); res(q.result||[]); }; q.onerror=function(){ d.close(); rej(q.error); }; }); }); };
   /* KEEP-LOCAL-END */
@@ -9539,7 +9666,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     var mineNow=payloadOf(k); if(mineNow==null) mineNow=sent;
     var merged=remote;
     try{
-      if(k==='jisu-inbound-records-v1') merged=mergeInboundJson(lastRemote[k]||'{}', mineNow, remote);
+      if(keyOf(k)==='jisu-inbound-records-v1') merged=mergeInboundJson(lastRemote[k]||'{}', mineNow, remote);
     }catch(e){ merged=remote; }
     if(merged!==remote){
       console.warn('[jisu-db] 동시 수정 감지 → 병합 반영('+k+')');
@@ -9565,8 +9692,14 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       lsSet(k,v);                                   // 기존 동작은 항상 먼저 보장
       try{
         if(STATE_KEYS.indexOf(k)<0) return;
-        if(!readyKey[k]) return;                    // 페이지 초기화 쓰기는 원격과 충돌 방지를 위해 보류
-        dirtyKey[k]=true; unsyncedMark(k,true); schedulePush();
+        var any=false;
+        unitsOfKey(k).forEach(function(u){
+          if(!readyKey[u]) return;                  // 페이지 초기화 쓰기는 원격과 충돌 방지를 위해 보류
+          if(!unitWritable(u)) return;
+          if(payloadOf(u)===lastSent[u]) return;    // 이 묶음은 바뀐 것이 없음
+          dirtyKey[u]=true; unsyncedMark(u,true); any=true;
+        });
+        if(any) schedulePush();
       }catch(_){}
     };
   }catch(_){}
@@ -9584,6 +9717,11 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   function applyRemote(k,json,suppressAlert){
     lastSent[k]=json;                       // 비교 기준은 DB 원본 값
     lastRemote[k]=json;
+    if(keyOf(k)!==k){                       // v2 묶음: 로컬 키 전체 목록에 이 묶음만 합쳐서 반영
+      var mergedLocal=mergeUnitIntoLocal(k,json);
+      if(mergedLocal==null) return;
+      k=keyOf(k); json=mergedLocal;
+    }
     if(k==='jisu-gemini-key'){
       try{ json=String(JSON.parse(json)||'').trim(); }catch(_){ json=String(json||'').trim(); }
     }
@@ -9613,11 +9751,12 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     }
   }
 
-  STATE_KEYS.forEach(function(k){
+  function startUnit(k){
     var seen=false;
     try{
-      db.ref(ROOT+'/state/'+k).on('value',function(snap){
+      db.ref(pathOf(k)).on('value',function(snap){
         var d=snap.val();
+        if(SYNC_MODE==='state' && d && d.mode==='v2'){ switchSyncMode('v2'); return; }   // 전환 표시를 보면 v2로 새로고침
         var remote=(d&&typeof d.v==='string')?d.v:null;
         var rev=revOf(d);
         if(!seen){
@@ -9627,9 +9766,9 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
           if(remote==null){ lastRemote[k]=''; pushKey(k); return; }   // 최초 시드: 이 기기 기록을 DB로
           lastRemote[k]=remote;
           /* 페이지 로드: 서버에 값이 있으면 서버가 우선(로컬 캐시로 덮어쓰지 않는다) */
-          if(payloadOf(k)!==remote){ if(unsyncedOf(k)) keepLocalBackup(k); applyRemote(k,remote,true); }
+          if(payloadOf(k)!==remote){ if(unsyncedAnyFor(k)) keepLocalBackup(k); applyRemote(k,remote,true); }
           else { lastSent[k]=remote; }
-          unsyncedMark(k,false);   /* 지난번 미전송 내용은 위에서 보관했으므로 표시 해제 */
+          clearUnsyncedFor(k);   /* 지난번 미전송 내용은 위에서 보관했으므로 표시 해제 */
           return;
         }
         if(rev>(baseRev[k]||0)) baseRev[k]=rev;
@@ -9641,7 +9780,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
           /* 아직 서버에 못 올린 내 변경이 있음 → 서버 값으로 덮지 않고 행 단위로 병합한 뒤 다시 올린다 */
           var localNow=payloadOf(k);
           if(localNow==null){ lastSent[k]=remote; return; }
-          if(localNow!==remote && k==='jisu-inbound-records-v1'){
+          if(localNow!==remote && keyOf(k)==='jisu-inbound-records-v1'){
             var mergedNow=remote;
             try{ mergedNow=mergeInboundJson(base, localNow, remote); }catch(_){ mergedNow=remote; }
             if(mergedNow!==localNow) applyRemote(k,mergedNow,true);
@@ -9656,15 +9795,21 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
         applyRemote(k,remote,false);
       },function(err){ console.warn('[jisu-db] 구독 실패('+k+'):',err&&err.code); paint('off'); });
     }catch(e){ console.warn('[jisu-db] 구독 예외('+k+'):',e); }
-  });
+  }
+  var syncStarted=false;
+  function startSyncAll(){ if(syncStarted) return; syncStarted=true; UNITS.forEach(startUnit); }
+  if(SYNC_MODE==='v2'){ startV2(); }
+  else { UNITS=STATE_KEYS.slice(); startSyncAll(); }
+  watchSyncConfig();   /* 전환 신호(config/syncMode) 감시. 거부되면(보안 규칙) 로그인 뒤 다시 시도 */
+  try{ if(window.JISU_AUTH_GATE===true&&window.firebase&&firebase.auth) firebase.auth().onAuthStateChanged(function(u){ if(u) watchSyncConfig(); }); }catch(_){}
 
   /* ---------- 2-1) 잠들었다 깬 기기: 최신 서버 상태로 즉시 맞춘 뒤 조작을 받는다 ---------- */
   var recheckTimer=null;
   function recheckServer(){
-    STATE_KEYS.forEach(function(k){
+    UNITS.forEach(function(k){
       if(!readyKey[k]||pushing[k]||dirtyKey[k]) return;
       try{
-        db.ref(ROOT+'/state/'+k).once('value').then(function(snap){
+        db.ref(pathOf(k)).once('value').then(function(snap){
           var d=snap.val(), remote=(d&&typeof d.v==='string')?d.v:null, rev=revOf(d);
           if(remote==null) return;
           if(rev>(baseRev[k]||0)) baseRev[k]=rev;
@@ -9904,7 +10049,115 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     setInterval(purgeExpired,10*60*1000);
   },1500);
 
-  window.jisuDb={ root:ROOT, ref:function(p){ return db.ref(ROOT+'/'+p); }, push:pushKey, pull:pullPhotos, purge:purgeExpired, status:paint };
+  /* SYNC-V2-TOOLS-BEGIN (관리자 콘솔 도구) ----------------------------------------------------
+     jisuMigrateToV2()     : 지금 방식(state) → v2. 서버의 현재 값을 묶음으로 나눠 쓰고, 모든 화면이 새로고침되어 v2로 바뀜
+     jisuRollbackToState() : v2 → 지금 방식. 묶음들을 합쳐 state 에 쓰고 모든 화면을 되돌림
+     jisuCheckV2()         : 묶음 점검(잘못 들어간 항목, 중복 id, 빠진 묶음). 읽기만 함 */
+  function pushAny(k,opts){
+    if(keyOf(k)!==k) return pushKey(k,opts);
+    var us=unitsOfKey(k);
+    if(us.length) us.forEach(function(u){ pushKey(u,opts); }); else pushKey(k,opts);
+  }
+  function splitForV2(k,json){
+    var out={};
+    if(V2_SPLIT[k]){
+      var arr; try{ arr=JSON.parse(json==null?'[]':json); }catch(_){ return null; }
+      if(!Array.isArray(arr)) return null;
+      V2_PARTS.forEach(function(pt){
+        out[pt]=JSON.stringify(arr.filter(function(x){ return x&&typeof x==='object'&&x.id!=='demo_dispatch_1'&&v2BucketOf(x)===pt; }));
+      });
+    }else if(V2_WHOLE[k]){
+      if(json!=null) out[V2_WHOLE[k]]=json;
+    }
+    return out;
+  }
+  window.jisuMigrateToV2=function(){
+    if(SYNC_MODE!=='state') return Promise.reject(new Error('이미 v2 방식입니다'));
+    if(!ROLE.all) return Promise.reject(new Error('관리자만 실행할 수 있습니다'));
+    var t=nowStamp(), upd={}, revs={};
+    return Promise.all(STATE_KEYS.map(function(k){ return db.ref(ROOT+'/state/'+k).once('value'); })).then(function(snaps){
+      snaps.forEach(function(sn,i){
+        var k=STATE_KEYS[i], d=sn.val(), v=(d&&typeof d.v==='string')?d.v:null;
+        revs[k]=revOf(d);
+        var parts=splitForV2(k,v);
+        if(!parts) throw new Error(k+' 값 형식이 올바르지 않아 전환을 중단합니다 (아무것도 쓰지 않음)');
+        Object.keys(parts).forEach(function(pt){ upd['v2/'+pt+'/'+k]={v:parts[pt],t:t,by:'migrate'}; });
+        if(d) upd['state/'+k+'/mode']='v2';
+      });
+      upd['config/syncMode']='v2';
+      upd['config/syncModeAt']=t;
+      return db.ref(ROOT).update(upd);
+    }).then(function(){
+      return Promise.all(STATE_KEYS.map(function(k){ return db.ref(ROOT+'/state/'+k).once('value'); }));
+    }).then(function(snaps){
+      var moved=[];
+      snaps.forEach(function(sn,i){ var k=STATE_KEYS[i]; if(revOf(sn.val())!==revs[k]) moved.push(k); });
+      if(moved.length) console.warn('[jisu-db] 전환 도중 다른 기기가 저장한 키:',moved,'→ jisuRollbackToState() 후 다시 전환하세요');
+      return {ok:!moved.length, at:t, changedDuringMigration:moved};
+    });
+  };
+  window.jisuRollbackToState=function(){
+    if(SYNC_MODE!=='v2') return Promise.reject(new Error('v2 방식이 아닙니다'));
+    if(!ROLE.all) return Promise.reject(new Error('관리자만 실행할 수 있습니다'));
+    var t=nowStamp();
+    return db.ref(ROOT+'/v2').once('value').then(function(snap){
+      var all=snap.val()||{}, upd={};
+      STATE_KEYS.forEach(function(k){
+        var v=null;
+        if(V2_SPLIT[k]){
+          var order={};
+          try{ var loc=JSON.parse(lsGet(k)||'[]'); if(Array.isArray(loc)) loc.forEach(function(x,i){ if(x&&x.id!=null&&order[String(x.id)]==null) order[String(x.id)]=i; }); }catch(_){}
+          var items=[], seen={};
+          V2_PARTS.forEach(function(pt){
+            var d=all[pt]&&all[pt][k], arr=[];
+            try{ arr=JSON.parse((d&&typeof d.v==='string')?d.v:'[]'); }catch(_){ arr=[]; }
+            (Array.isArray(arr)?arr:[]).forEach(function(x){ if(!x||typeof x!=='object') return; var id=String(x.id); if(seen[id]) return; seen[id]=1; items.push({x:x,i:items.length}); });
+          });
+          items.sort(function(a,b){ var oa=order[String(a.x.id)], ob=order[String(b.x.id)];
+            if(oa!=null&&ob!=null) return oa-ob; if(oa!=null) return -1; if(ob!=null) return 1; return a.i-b.i; });
+          v=JSON.stringify(items.map(function(o){ return o.x; }));
+        }else if(V2_WHOLE[k]){
+          var d2=all[V2_WHOLE[k]]&&all[V2_WHOLE[k]][k];
+          if(d2&&typeof d2.v==='string') v=d2.v;
+        }
+        if(v!=null) upd['state/'+k]={v:v,t:t,by:'rollback'};
+      });
+      upd['config/syncMode']='state';
+      upd['config/syncModeAt']=t;
+      return db.ref(ROOT).update(upd).then(function(){ return {ok:true,at:t}; });
+    });
+  };
+  window.jisuCheckV2=function(){
+    return db.ref(ROOT+'/v2').once('value').then(function(snap){
+      var all=snap.val()||{}, rep={mode:SYNC_MODE, counts:{}, wrongBucket:[], duplicateIds:[], missingUnits:[]}, seen={};
+      STATE_KEYS.forEach(function(k){
+        if(V2_SPLIT[k]){
+          V2_PARTS.forEach(function(pt){
+            var d=all[pt]&&all[pt][k];
+            if(!d){ rep.missingUnits.push(k+'@'+pt); return; }
+            var arr=[]; try{ arr=JSON.parse(d.v||'[]'); }catch(_){ rep.wrongBucket.push(k+'@'+pt+' (형식 오류)'); return; }
+            if(!Array.isArray(arr)){ rep.wrongBucket.push(k+'@'+pt+' (목록 아님)'); return; }
+            rep.counts[k+'@'+pt]=arr.length;
+            arr.forEach(function(x){
+              if(!x||typeof x!=='object') return;
+              if(v2BucketOf(x)!==pt) rep.wrongBucket.push(k+'@'+pt+':'+x.id);
+              var key=k+':'+x.id; if(seen[key]) rep.duplicateIds.push(key); seen[key]=1;
+            });
+          });
+        }else if(V2_WHOLE[k]){
+          var d=all[V2_WHOLE[k]]&&all[V2_WHOLE[k]][k];
+          if(!d) rep.missingUnits.push(k+'@'+V2_WHOLE[k]); else rep.counts[k+'@'+V2_WHOLE[k]]='전체';
+        }
+      });
+      rep.ok=!rep.wrongBucket.length&&!rep.duplicateIds.length;
+      console.info('[jisu-db] v2 점검:',rep);
+      return rep;
+    });
+  };
+  /* SYNC-V2-TOOLS-END */
+  window.jisuDb={ root:ROOT, ref:function(p){ return db.ref(ROOT+'/'+p); }, push:pushAny, pull:pullPhotos, purge:purgeExpired, status:paint,
+    sync:{ mode:function(){ return SYNC_MODE; }, units:function(){ return UNITS.slice(); }, role:function(){ return {all:ROLE.all, zone:ROLE.zone}; },
+      debug:function(){ var f=function(o){ return Object.keys(o).filter(function(k){ return o[k]; }); }; return {ready:f(readyKey).length, pushing:f(pushing), dirty:f(dirtyKey), again:f(again)}; } } };
   console.log('[jisu-db] 실시간 동기화 시작 · /'+ROOT);
 })();
 </script>
