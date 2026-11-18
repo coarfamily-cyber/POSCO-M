@@ -9313,6 +9313,36 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     if(k==='jisu-commands-v1'&&Array.isArray(v)) v=v.filter(function(x){ return x&&x.id!=='demo_dispatch_1'; });
     try{ return JSON.stringify(v); }catch(_){ return null; }
   }
+  /* ZONE-MIRROR-BEGIN (4a 이중 쓰기: 기본 꺼짐, window.JISU_ZONE_MIRROR === true 일 때만 동작. 읽기는 바꾸지 않음) */
+  var ZONE_MIRROR_KEYS=['outbound','inbound','pitch','packaging','packaging-d','environment','production-a','production-b','production-c','production-d','production-e','production-f','production-g','production-h'];
+  var BAD_FB_KEY=/[.#$\[\]\/]/;
+  function buildZoneMirror(json){
+    var arr; try{ arr=JSON.parse(json); }catch(_){ return null; }
+    if(!Array.isArray(arr)) return null;
+    var zones={}, notices={};
+    arr.forEach(function(x){
+      if(!x||typeof x.id!=='string'||BAD_FB_KEY.test(x.id)) return;
+      if(x.target==='*'||x.kind==='notice'){ notices[x.id]=x; return; }
+      var z=String(x.target||'').split(':')[0];
+      if(!z||BAD_FB_KEY.test(z)) return;
+      (zones[z]=zones[z]||{})[x.id]=x;
+    });
+    return {zones:zones, notices:notices};
+  }
+  function mirrorZones(k, json){
+    if(window.JISU_ZONE_MIRROR!==true || k!=='jisu-commands-v1' || json==null) return;
+    try{
+      var m=buildZoneMirror(json); if(!m) return;
+      var upd={};
+      ZONE_MIRROR_KEYS.forEach(function(z){
+        var o=m.zones[z];
+        upd['zones/'+z+'/commands']=(o&&Object.keys(o).length)?o:null;   /* 없는 구역은 삭제 */
+      });
+      upd['notices']=Object.keys(m.notices).length?m.notices:null;
+      db.ref(ROOT).update(upd).catch(function(e){ console.warn('[jisu-db] 구역 복사 실패:',e&&e.code||e); });
+    }catch(e){ console.warn('[jisu-db] 구역 복사 예외:',e); }
+  }
+  /* ZONE-MIRROR-END */
   function pushKey(k, opts){
     var json=payloadOf(k); if(json==null) return;
     var force=!!(opts&&opts.force);
@@ -9359,6 +9389,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
           var written=(cur&&typeof cur.v==='string')?cur.v:null;
           baseRev[k]=revOf(cur); conflicts[k]=0;
           if(written!=null){ lastSent[k]=written; lastRemote[k]=written; }
+          if(written!=null) mirrorZones(k, written);   /* 4a: 커밋 성공 후 구역 경로에도 복사 (실패해도 기존 흐름에 영향 없음) */
         }else{
           var remote=(cur&&typeof cur.v==='string')?cur.v:null;
           if(revOf(cur)>(baseRev[k]||0)) baseRev[k]=revOf(cur);
