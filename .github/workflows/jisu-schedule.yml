@@ -18,7 +18,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: 인증 라이브러리 설치 (실패해도 계속, 없으면 인증 없이 동작)
+        run: |
+          python3 -m pip install --quiet google-auth requests || echo "google-auth 설치 실패 - 인증 없이 진행"
       - name: 예약 반영 실행
         env:
           JISU_APPLY_BY: gh-actions-0800
+          # 선택: 저장소 Settings > Secrets 에 등록하면 서비스 계정으로 인증해 씀. 없으면 기존과 동일
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
         run: python3 .github/scripts/jisu_apply_schedule.py

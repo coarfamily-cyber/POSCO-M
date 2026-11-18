@@ -66,6 +66,35 @@ def at_of_midnight(day: str) -> str:
     return ""
 
 
+# ---------------------------------------------------------------- 선택적 인증 (5단계 준비)
+# GitHub Secret FIREBASE_SERVICE_ACCOUNT_JSON 이 있으면 서비스 계정으로 인증해 쓴다.
+# 없거나 인증에 실패하면 지금과 같이 인증 없이 동작한다 (보안 규칙을 닫기 전까지는 그대로 동작).
+_AUTH_CACHE: dict = {}
+
+
+def _auth_suffix() -> str:
+    raw = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON", "").strip()
+    if not raw:
+        return ""
+    if _AUTH_CACHE.get("token") and _AUTH_CACHE.get("exp", 0) > time.time() + 60:
+        return "?access_token=" + _AUTH_CACHE["token"]
+    try:
+        from google.oauth2 import service_account  # type: ignore
+        import google.auth.transport.requests  # type: ignore
+        creds = service_account.Credentials.from_service_account_info(
+            json.loads(raw),
+            scopes=["https://www.googleapis.com/auth/firebase.database",
+                    "https://www.googleapis.com/auth/userinfo.email"])
+        creds.refresh(google.auth.transport.requests.Request())
+        _AUTH_CACHE["token"] = creds.token
+        _AUTH_CACHE["exp"] = time.time() + 3000
+        print("[jisu] 서비스 계정 인증 사용")
+        return "?access_token=" + creds.token
+    except Exception as e:  # 라이브러리 없음·키 오류 등 → 인증 없이 진행
+        print(f"[warn] 서비스 계정 인증 실패, 인증 없이 진행: {type(e).__name__}")
+        return ""
+
+
 # ---------------------------------------------------------------- DB I/O
 def _request(url: str, method: str = "GET", body: bytes | None = None, headers: dict | None = None):
     req = urllib.request.Request(url, data=body, method=method, headers=headers or {})
@@ -75,7 +104,7 @@ def _request(url: str, method: str = "GET", body: bytes | None = None, headers: 
 
 def db_get(path: str):
     """(parsed_json_or_None, etag_or_None) 를 돌려준다."""
-    url = f"{DB_URL}/{path}.json"
+    url = f"{DB_URL}/{path}.json" + _auth_suffix()
     last = None
     for attempt in range(1, MAX_TRIES + 1):
         try:
@@ -98,7 +127,7 @@ def db_put(path: str, value: dict, etag: str | None, dry: bool = False):
     headers = {"Content-Type": "application/json; charset=utf-8"}
     if etag:
         headers["if-match"] = etag
-    url = f"{DB_URL}/{path}.json"
+    url = f"{DB_URL}/{path}.json" + _auth_suffix()
     last = None
     for attempt in range(1, MAX_TRIES + 1):
         try:
@@ -324,6 +353,62 @@ def apply_schedules(sch: list, cmds: list, today: str, now_s: str):
     return added, marked
 
 
+# ---------------------------------------------------------------- 구역 복사본 (index.html ZONE-MIRROR 와 같은 규칙)
+ZONE_MIRROR_KEYS = ["outbound", "inbound", "pitch", "packaging", "packaging-d", "environment",
+                    "production-a", "production-b", "production-c", "production-d",
+                    "production-e", "production-f", "production-g", "production-h"]
+ZONE_ADMIN_BUCKET = "_admin"
+BAD_FB_KEY = re.compile(r"[.#$\[\]/]")
+
+
+def build_zone_mirror(cmds: list) -> dict:
+    zones: dict = {}
+    notices: dict = {}
+    for x in cmds:
+        if not isinstance(x, dict):
+            continue
+        xid = x.get("id")
+        if not isinstance(xid, str) or not xid or BAD_FB_KEY.search(xid):
+            continue
+        if x.get("target") == "*" or x.get("kind") == "notice":
+            notices[xid] = x
+            continue
+        z = str(x.get("target") or "").split(":")[0]
+        if z not in ZONE_MIRROR_KEYS:
+            z = ZONE_ADMIN_BUCKET
+        zones.setdefault(z, {})[xid] = x
+    return {"zones": zones, "notices": notices}
+
+
+def mirror_updates(cmds: list, rev: int) -> dict:
+    m = build_zone_mirror(cmds)
+    upd: dict = {}
+    for z in ZONE_MIRROR_KEYS + [ZONE_ADMIN_BUCKET]:
+        o = m["zones"].get(z)
+        upd[f"zones/{z}/commands"] = o if o else None
+    upd["notices"] = m["notices"] if m["notices"] else None
+    upd["zonesRev"] = rev
+    return upd
+
+
+def mirror_zones(cmds: list, rev: int) -> None:
+    """작업 목록 저장 성공 후 구역 복사본 갱신. 실패해도 예약 반영 결과에는 영향 없음."""
+    if os.environ.get("JISU_ZONE_MIRROR", "1") != "1":
+        return
+    try:
+        _, _, text = _request(f"{DB_URL}/{ROOT}/zonesRev.json" + _auth_suffix(), "GET")
+        cur = json.loads(text) if text and text.strip() else None
+        if isinstance(cur, (int, float)) and cur > rev:
+            print("[jisu] 구역 복사: 더 새 버전이 이미 있어 건너뜀")
+            return
+        body = json.dumps(mirror_updates(cmds, rev), ensure_ascii=False).encode("utf-8")
+        status, _, _ = _request(f"{DB_URL}/{ROOT}.json" + _auth_suffix(), "PATCH", body,
+                                {"Content-Type": "application/json; charset=utf-8"})
+        print(f"[ok] 구역 복사 갱신 -> HTTP {status}")
+    except Exception as e:
+        print(f"[warn] 구역 복사 실패(예약 반영은 완료됨): {type(e).__name__}")
+
+
 # ---------------------------------------------------------------- main
 def run(dry: bool = False) -> int:
     now = kst_now()
@@ -358,6 +443,8 @@ def run(dry: bool = False) -> int:
                         {"by": BY, "t": t, "v": dump_v(sch)}, sch_etag, dry)
         if ok:
             print(f"[jisu] 완료 — 카드 {added}건 추가 · 예약 {marked}건 applied 마킹")
+            if cmds_changed and not dry:
+                mirror_zones(cmds, t)
             if not dry and added > 0:
                 for rec in cmds[-added:]:
                     try:
