@@ -11,6 +11,10 @@
 </style>
 </head>
 <body>
-<iframe id="fr" src="./index.html?zone=inbound&cb=p390a"></iframe>
+<iframe id="fr" src="about:blank"></iframe>
+<script>
+  var t = new URLSearchParams(location.search).get('t') || String(Date.now());
+  document.getElementById('fr').src = './index.html?zone=inbound&cb=p' + encodeURIComponent(t);
+</script>
 </body>
 </html>
