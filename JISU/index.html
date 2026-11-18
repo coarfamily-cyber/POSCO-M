@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611181510">
+  <meta name="jisu-build" content="202611181645">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
@@ -3014,6 +3014,42 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     }
     .inbound-tbl .inb-del-btn:hover { background: rgba(239,68,68,.2); }
 
+    /* × 삭제 확인 창 — 실수로 눌러도 한 번 더 물어본다 */
+    .inb-confirm-overlay {
+      position: fixed; inset: 0; z-index: 2147483000; display: none;
+      align-items: center; justify-content: center; padding: 16px;
+      background: rgba(2,6,23,.62);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .inb-confirm-overlay.is-open { display: flex; }
+    .inb-confirm-card {
+      width: 100%; max-width: 360px; box-sizing: border-box; padding: 18px 16px 14px;
+      border-radius: 18px; border: 1px solid rgba(148,163,184,.32);
+      background: linear-gradient(160deg, rgba(30,41,59,.97), rgba(15,23,42,.97));
+      box-shadow: 0 24px 60px rgba(0,0,0,.60), inset 0 1px 0 rgba(255,255,255,.08);
+      color: #f8fafc; font-family: inherit; text-align: center;
+    }
+    .inb-confirm-ico { font-size: 22px; line-height: 1; margin-bottom: 6px; }
+    .inb-confirm-title { font-size: 15px; font-weight: 900; letter-spacing: -.2px; }
+    .inb-confirm-desc { margin-top: 5px; font-size: 11.5px; font-weight: 700; color: #94a3b8; line-height: 1.55; }
+    .inb-confirm-row {
+      margin-top: 12px; padding: 10px 12px; border-radius: 12px; text-align: left;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(148,163,184,.22);
+    }
+    .inb-confirm-lot { font-size: 13px; font-weight: 900; color: #f1f5f9; word-break: break-all; }
+    .inb-confirm-meta { margin-top: 4px; font-size: 11.5px; font-weight: 800; color: #cbd5e1; word-break: break-all; }
+    .inb-confirm-meta b { color: #6ee7b7; font-weight: 900; }
+    .inb-confirm-hist { margin-top: 4px; font-size: 11px; font-weight: 800; color: #94a3b8; word-break: break-all; }
+    .inb-confirm-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .inb-confirm-actions button {
+      flex: 1 1 0; min-width: 0; height: 44px; border-radius: 12px; border: 1px solid transparent;
+      font-family: inherit; font-size: 13.5px; font-weight: 900; cursor: pointer;
+    }
+    .inb-confirm-cancel { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.18); color: #e2e8f0; }
+    .inb-confirm-cancel:active { background: rgba(255,255,255,.17); }
+    .inb-confirm-del { background: linear-gradient(160deg, #ef4444, #dc2626); color: #fff; box-shadow: 0 8px 20px rgba(220,38,38,.35); }
+    .inb-confirm-del:active { background: linear-gradient(160deg, #dc2626, #b91c1c); }
+
     /* 중량(kg) 셀 — 눌러서 재계량 수정 + 1차/2차 이력 */
     .inbound-tbl td.inb-kg-td { padding: 4px 2px; }
     .inbound-tbl .inb-kg-btn {
@@ -5703,7 +5739,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const t=e.target; if(!(t instanceof Element)) return;
       if(document.body.classList.contains('worker-zone-only')) return;
       if(window.__jisuBlockCloseUntil && Date.now() < window.__jisuBlockCloseUntil) return;
-      if(t.matches('input[type="file"]') || t.closest('.hotspot-wrapper, .cmd-side, #detailModal, #loginModal, #obLightbox, #obCam, #jisuQuickDropModal, #calModal, #perfModal, #carryModal, .hdr-tools, .bldg-badge, #hdrSearchBox, #hdrSearchPanel')) return;
+      if(t.matches('input[type="file"]') || t.closest('.hotspot-wrapper, .cmd-side, #detailModal, #loginModal, #obLightbox, #obCam, #jisuQuickDropModal, #inbDeleteConfirm, #calModal, #perfModal, #carryModal, .hdr-tools, .bldg-badge, #hdrSearchBox, #hdrSearchPanel')) return;
       const open=document.querySelectorAll('.hotspot-wrapper.is-open'); if(!open.length) return;
       open.forEach(w=>w.classList.remove('is-open'));
       document.querySelectorAll('[data-production-btn],[data-warehouse-btn]').forEach(b=>{b.classList.remove('is-selected');b.setAttribute('aria-pressed','false');});
@@ -7436,6 +7472,112 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     if (typeof updateWorkflowUI === "function") updateWorkflowUI();
   }
 
+  /* ---- × 삭제 확인 창 ----
+     ×를 눌러도 바로 지우지 않고, 지울 행 정보를 보여주며 한 번 더 확인받는다.
+     [취소]는 아무 변경 없이 닫히고, [삭제]에서만 기존 삭제 로직(톰스톤+저장/동기화)이 돈다. */
+  let delPending = null;   // { rid, idx }
+
+  function ensureDeleteConfirm() {
+    let ov = document.getElementById("inbDeleteConfirm");
+    if (ov) return ov;
+    ov = document.createElement("div");
+    ov.id = "inbDeleteConfirm";
+    ov.className = "inb-confirm-overlay";
+    ov.setAttribute("role", "dialog");
+    ov.setAttribute("aria-modal", "true");
+    ov.setAttribute("aria-labelledby", "inbDeleteConfirmTitle");
+    ov.innerHTML = `
+      <div class="inb-confirm-card">
+        <div class="inb-confirm-ico" aria-hidden="true">🗑️</div>
+        <div class="inb-confirm-title" id="inbDeleteConfirmTitle">입고 기록 삭제</div>
+        <div class="inb-confirm-desc">이 행을 삭제할까요?<br>삭제하면 목록에서 사라지고 저장·동기화됩니다.</div>
+        <div class="inb-confirm-row">
+          <div class="inb-confirm-lot" id="inbDeleteConfirmLot">-</div>
+          <div class="inb-confirm-meta" id="inbDeleteConfirmMeta"></div>
+          <div class="inb-confirm-hist" id="inbDeleteConfirmHist" hidden></div>
+        </div>
+        <div class="inb-confirm-actions">
+          <button type="button" class="inb-confirm-cancel" id="inbDeleteCancel">취소</button>
+          <button type="button" class="inb-confirm-del" id="inbDeleteOk">삭제</button>
+        </div>
+      </div>`;
+    document.body.appendChild(ov);
+    ov.querySelector("#inbDeleteCancel").addEventListener("click", closeDeleteConfirm);
+    ov.querySelector("#inbDeleteOk").addEventListener("click", () => {
+      const p = delPending;
+      closeDeleteConfirm();
+      if (p) deleteInboundRow(p.rid, p.idx);
+    });
+    ov.addEventListener("click", e => {
+      e.stopPropagation();                       // 확인 창 클릭이 상세 카드를 닫지 않도록
+      if (e.target === ov) closeDeleteConfirm(); // 바깥 클릭 = 취소
+    });
+    ov.addEventListener("keydown", e => {
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeDeleteConfirm(); }
+    });
+    document.addEventListener("keydown", e => {
+      if (!delPending) return;
+      if (e.key === "Escape") { e.preventDefault(); closeDeleteConfirm(); }
+    });
+    return ov;
+  }
+
+  function openDeleteConfirm(idx) {
+    if (!Number.isInteger(idx) || idx < 0) return;
+    const rec = getTodayRecord();
+    const r = (rec.rows || [])[idx];
+    if (!r) return;
+    try { ensureRowIds(loadAllRecords()); } catch (_) {}
+    const ov = ensureDeleteConfirm();
+    const bag = String(r.bag == null ? "" : r.bag).trim();
+    const kg = parseFloat(r.kg) > 0 ? fmtKgNum(r.kg) + " kg" : "중량 -";
+    const hist = kgHistOf(r);
+    ov.querySelector("#inbDeleteConfirmLot").textContent = (r.lot ? String(r.lot) : "LOT 번호 없음");
+    ov.querySelector("#inbDeleteConfirmMeta").innerHTML = [
+      bag ? "Bag " + escHtml(bag) : "",
+      "<b>" + escHtml(kg) + "</b>",
+      r.loc ? escHtml(r.loc) : "",
+      r.worker ? escHtml(r.worker) : ""
+    ].filter(Boolean).join(" · ");
+    const histEl = ov.querySelector("#inbDeleteConfirmHist");
+    histEl.hidden = !hist.length;
+    histEl.textContent = hist.length ? `${hist.length + 1}차 재계량 (${kgHistLabel(r)})` : "";
+    delPending = { rid: r.rid || "", idx };
+    ov.classList.add("is-open");
+    setTimeout(() => {
+      try { ov.querySelector("#inbDeleteCancel").focus({ preventScroll: true }); } catch (_) {}
+    }, 30);
+  }
+
+  function closeDeleteConfirm() {
+    delPending = null;
+    const ov = document.getElementById("inbDeleteConfirm");
+    if (ov) ov.classList.remove("is-open");
+  }
+
+  function deleteInboundRow(rid, fallbackIdx) {
+    const all = loadAllRecords();
+    const rec = all[activeDay] || getTodayRecord();
+    all[activeDay] = rec;
+    rec.rows = Array.isArray(rec.rows) ? rec.rows : [];
+    let idx = rid ? rec.rows.findIndex(x => x && x.rid === rid) : -1;   // 그 사이 다른 기기에서 바뀌어도 같은 행을 지운다
+    if (idx < 0) {
+      const cand = rec.rows[fallbackIdx];
+      if (cand && (!rid || !cand.rid)) idx = fallbackIdx;
+    }
+    if (idx < 0) { renderRows(); return false; }   // 이미 지워진 행이면 아무것도 하지 않는다
+    const goneRow = rec.rows[idx];
+    try { ensureRowIds(all); } catch (_) {}
+    if (goneRow && goneRow.rid) { rec.gone = rec.gone || {}; rec.gone[goneRow.rid] = Date.now(); }   // 지운 행은 다시 살아나지 않도록 표시
+    rec.rows.splice(idx, 1);
+    kgEditIdx = null; kgDraft = null;
+    window.__jisuAllowEmptyInboundPush = true;
+    setTimeout(() => { window.__jisuAllowEmptyInboundPush = false; }, 1200);
+    saveAllRecords(all);
+    renderRows();
+    return true;
+  }
+
   tbody.addEventListener("click", e => {
     const cancel = e.target.closest(".inb-kg-cancel");
     if (cancel) { e.preventDefault(); e.stopPropagation(); closeKgEditor(); return; }
@@ -7449,23 +7591,11 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
 
     const btn = e.target.closest(".inb-del-btn");
     if (!btn) return;
+    e.preventDefault();
     e.stopPropagation();
     const idx = parseInt(btn.dataset.del, 10);
     if (isNaN(idx)) return;
-    const all = loadAllRecords();
-    const rec = all[activeDay] || getTodayRecord();
-    all[activeDay] = rec;
-    const goneRow = (rec.rows || [])[idx];
-    if (goneRow) {
-      try { ensureRowIds(all); } catch (_) {}
-      if (goneRow.rid) { rec.gone = rec.gone || {}; rec.gone[goneRow.rid] = Date.now(); }   // 지운 행은 다시 살아나지 않도록 표시
-    }
-    rec.rows.splice(idx, 1);
-    kgEditIdx = null; kgDraft = null;
-    window.__jisuAllowEmptyInboundPush = true;
-    setTimeout(() => { window.__jisuAllowEmptyInboundPush = false; }, 1200);
-    saveAllRecords(all);
-    renderRows();
+    openDeleteConfirm(idx);   // 바로 지우지 않고 확인 창을 한 번 거친다
   });
 
   tbody.addEventListener("submit", e => {
