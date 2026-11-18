@@ -9314,39 +9314,66 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     if(k==='jisu-commands-v1'&&Array.isArray(v)) v=v.filter(function(x){ return x&&x.id!=='demo_dispatch_1'; });
     try{ return JSON.stringify(v); }catch(_){ return null; }
   }
-  /* ZONE-MIRROR-BEGIN (4a 이중 쓰기: 기본 꺼짐, window.JISU_ZONE_MIRROR === true 일 때만 동작. 읽기는 바꾸지 않음) */
+  /* ZONE-MIRROR-BEGIN (4a 이중 쓰기: window.JISU_ZONE_MIRROR === true 일 때만 동작. 읽기는 바꾸지 않음)
+     · 작업자 구역 14개는 zones/{구역}/commands, 그 밖의 대상(1~4동 등)은 zones/_admin/commands, 공지는 notices
+     · zonesRev: 복사한 원본의 버전. 더 새 버전이 이미 복사돼 있으면 덮지 않음(기기 간 순서 뒤바뀜 방지) */
   var ZONE_MIRROR_KEYS=['outbound','inbound','pitch','packaging','packaging-d','environment','production-a','production-b','production-c','production-d','production-e','production-f','production-g','production-h'];
+  var ZONE_ADMIN_BUCKET='_admin';
   var BAD_FB_KEY=/[.#$\[\]\/]/;
+  function mirrorableId(x){ return !!(x&&typeof x.id==='string'&&x.id&&!BAD_FB_KEY.test(x.id)); }
+  function zoneBucketOf(x){
+    var z=String((x&&x.target)||'').split(':')[0];
+    return ZONE_MIRROR_KEYS.indexOf(z)>=0 ? z : ZONE_ADMIN_BUCKET;
+  }
   function buildZoneMirror(json){
     var arr; try{ arr=JSON.parse(json); }catch(_){ return null; }
     if(!Array.isArray(arr)) return null;
     var zones={}, notices={};
     arr.forEach(function(x){
-      if(!x||typeof x.id!=='string'||BAD_FB_KEY.test(x.id)) return;
+      if(!mirrorableId(x)) return;
       if(x.target==='*'||x.kind==='notice'){ notices[x.id]=x; return; }
-      var z=String(x.target||'').split(':')[0];
-      if(!z||BAD_FB_KEY.test(z)) return;
+      var z=zoneBucketOf(x);
       (zones[z]=zones[z]||{})[x.id]=x;
     });
     return {zones:zones, notices:notices};
   }
-  function mirrorZones(k, json){
+  function mirrorZones(k, json, rev){
     if(window.JISU_ZONE_MIRROR!==true || k!=='jisu-commands-v1' || json==null) return;
     try{
       var m=buildZoneMirror(json); if(!m) return;
+      var r=(typeof rev==='number'&&isFinite(rev))?rev:0;
       var upd={};
-      ZONE_MIRROR_KEYS.forEach(function(z){
+      ZONE_MIRROR_KEYS.concat([ZONE_ADMIN_BUCKET]).forEach(function(z){
         var o=m.zones[z];
         upd['zones/'+z+'/commands']=(o&&Object.keys(o).length)?o:null;   /* 없는 구역은 삭제 */
       });
       upd['notices']=Object.keys(m.notices).length?m.notices:null;
-      db.ref(ROOT).update(upd).catch(function(e){ console.warn('[jisu-db] 구역 복사 실패:',e&&e.code||e); });
+      upd['zonesRev']=r;
+      db.ref(ROOT+'/zonesRev').once('value').then(function(snap){
+        var cur=snap.val();
+        if(typeof cur==='number' && cur>r) return;   /* 더 새 버전이 이미 복사됨 → 덮지 않음 */
+        return db.ref(ROOT).update(upd);
+      }).catch(function(e){ console.warn('[jisu-db] 구역 복사 실패:',e&&e.code||e); });
     }catch(e){ console.warn('[jisu-db] 구역 복사 예외:',e); }
   }
-  /* 콘솔에서 한 번 실행: 켜기 전 기존 작업 목록을 구역 경로로 한꺼번에 복사 (쓰기 1회, 실패 시 경고만) */
-  window.jisuSeedZoneCopy=function(){ var v=payloadOf('jisu-commands-v1'); if(v==null) return false; mirrorZones('jisu-commands-v1', v); return true; };
+  /* 콘솔에서 한 번 실행: 서버에 있는 현재 작업 목록을 구역 경로로 한꺼번에 복사 (쓰기 1회, 실패 시 경고만) */
+  window.jisuSeedZoneCopy=function(){
+    var v=lastRemote['jisu-commands-v1'];
+    if(typeof v!=='string'||!v) return false;
+    mirrorZones('jisu-commands-v1', v, baseRev['jisu-commands-v1']||0);
+    return true;
+  };
   /* ZONE-MIRROR-END */
-  /* ZONE-VERIFY-BEGIN (4b 준비: 구역 복사본을 원본과 비교하는 읽기 전용 점검. 자동 실행 없음, 화면 동작 변화 없음. 콘솔에서 jisuVerifyZoneCopy() 로 실행) */
+  /* ZONE-VERIFY-BEGIN (4b 준비: 구역 복사본을 원본과 비교하는 읽기 전용 점검. 자동 실행 없음. 콘솔에서 jisuVerifyZoneCopy() 로 실행)
+     Firebase는 필드 순서를 정렬하고 null·빈 배열·빈 객체를 저장하지 않으므로, 같은 규칙으로 정규화한 뒤 비교한다. */
+  function canonFb(v){
+    if(v===null||v===undefined) return undefined;
+    if(typeof v!=='object') return v;
+    var src=v, out={}, keys=Object.keys(src).sort(), n=0;
+    keys.forEach(function(key){ var c=canonFb(src[key]); if(c!==undefined){ out[key]=c; n++; } });
+    return n? out : undefined;
+  }
+  function sameFb(a,b){ return JSON.stringify(canonFb(a))===JSON.stringify(canonFb(b)); }
   function compareZoneCopy(stateArr, zonesVal, noticesVal){
     var copy={};
     if(zonesVal&&typeof zonesVal==='object'){
@@ -9356,25 +9383,33 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       });
     }
     if(noticesVal&&typeof noticesVal==='object') Object.keys(noticesVal).forEach(function(id){ copy[id]=noticesVal[id]; });
-    var orig={}; stateArr.forEach(function(x){ if(x&&x.id!=null) orig[String(x.id)]=x; });
+    var orig={}, skipped=[];
+    stateArr.forEach(function(x){
+      if(!x||x.id==null) return;
+      if(!mirrorableId(x)){ skipped.push(String(x.id)); return; }   /* 복사 대상이 아닌 id(형식 오류) */
+      orig[x.id]=x;
+    });
     var missing=[], changed=[], extra=[];
     Object.keys(orig).forEach(function(id){
       if(!Object.prototype.hasOwnProperty.call(copy,id)) missing.push(id);
-      else if(JSON.stringify(copy[id])!==JSON.stringify(orig[id])) changed.push(id);
+      else if(!sameFb(copy[id],orig[id])) changed.push(id);
     });
     Object.keys(copy).forEach(function(id){ if(!Object.prototype.hasOwnProperty.call(orig,id)) extra.push(id); });
-    return {originalCount:Object.keys(orig).length, copyCount:Object.keys(copy).length, missing:missing, changed:changed, extra:extra, same:(!missing.length && !changed.length && !extra.length)};
+    return {originalCount:Object.keys(orig).length, copyCount:Object.keys(copy).length, missing:missing, changed:changed, extra:extra, skipped:skipped,
+      same:(!missing.length && !changed.length && !extra.length)};
   }
   window.jisuVerifyZoneCopy=function(){
     return Promise.all([
       db.ref(ROOT+'/state/jisu-commands-v1').once('value'),
       db.ref(ROOT+'/zones').once('value'),
-      db.ref(ROOT+'/notices').once('value')
+      db.ref(ROOT+'/notices').once('value'),
+      db.ref(ROOT+'/zonesRev').once('value')
     ]).then(function(r){
       var d=r[0].val(), st=(d&&typeof d.v==='string')?d.v:null;
       var arr=[]; try{ arr=JSON.parse(st||'[]'); }catch(_){ arr=[]; }
       if(!Array.isArray(arr)) arr=[];
       var res=compareZoneCopy(arr, r[1].val(), r[2].val());
+      res.stateRev=revOf(d); res.copyRev=r[3].val();
       console.info('[jisu-db] 구역 복사 점검:', res);
       return res;
     });
@@ -9426,7 +9461,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
           var written=(cur&&typeof cur.v==='string')?cur.v:null;
           baseRev[k]=revOf(cur); conflicts[k]=0;
           if(written!=null){ lastSent[k]=written; lastRemote[k]=written; }
-          if(written!=null) mirrorZones(k, written);   /* 4a: 커밋 성공 후 구역 경로에도 복사 (실패해도 기존 흐름에 영향 없음) */
+          if(written!=null) mirrorZones(k, written, revOf(cur));   /* 4a: 커밋 성공 후 구역 경로에도 복사 (실패해도 기존 흐름에 영향 없음) */
+          if(written!=null && payloadOf(k)===written) unsyncedMark(k,false);   /* 서버에 올라감 → 미전송 표시 해제 */
         }else{
           var remote=(cur&&typeof cur.v==='string')?cur.v:null;
           if(revOf(cur)>(baseRev[k]||0)) baseRev[k]=revOf(cur);
@@ -9481,6 +9517,11 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
         .catch(function(e){ console.warn('[jisu-db] 보관 실패(무시):', e&&e.name||e); });
     }catch(_){}
   }
+  /* 미전송 표시(페이지를 닫아도 남음): 로컬 수정 후 아직 서버에 못 올린 키 */
+  function unsyncedMark(k,on){ try{ if(on) lsSet('jisu-unsynced:'+k,'1'); else localStorage.removeItem('jisu-unsynced:'+k); }catch(_){} }
+  function unsyncedOf(k){ try{ return localStorage.getItem('jisu-unsynced:'+k)==='1'; }catch(_){ return false; } }
+  /* 콘솔에서 보관본 확인: jisuListLocalBackups().then(console.table) */
+  window.jisuListLocalBackups=function(){ return keepOpen().then(function(d){ return new Promise(function(res,rej){ var q=d.transaction(KEEP_STORE,'readonly').objectStore(KEEP_STORE).getAll(); q.onsuccess=function(){ d.close(); res(q.result||[]); }; q.onerror=function(){ d.close(); rej(q.error); }; }); }); };
   /* KEEP-LOCAL-END */
   function reconcile(k, remote, sent){
     var n=(conflicts[k]||0)+1; conflicts[k]=n;
@@ -9520,7 +9561,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       try{
         if(STATE_KEYS.indexOf(k)<0) return;
         if(!readyKey[k]) return;                    // 페이지 초기화 쓰기는 원격과 충돌 방지를 위해 보류
-        dirtyKey[k]=true; schedulePush();
+        dirtyKey[k]=true; unsyncedMark(k,true); schedulePush();
       }catch(_){}
     };
   }catch(_){}
@@ -9581,8 +9622,9 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
           if(remote==null){ lastRemote[k]=''; pushKey(k); return; }   // 최초 시드: 이 기기 기록을 DB로
           lastRemote[k]=remote;
           /* 페이지 로드: 서버에 값이 있으면 서버가 우선(로컬 캐시로 덮어쓰지 않는다) */
-          if(payloadOf(k)!==remote){ applyRemote(k,remote,true); }
+          if(payloadOf(k)!==remote){ if(unsyncedOf(k)) keepLocalBackup(k); applyRemote(k,remote,true); }
           else { lastSent[k]=remote; }
+          unsyncedMark(k,false);   /* 지난번 미전송 내용은 위에서 보관했으므로 표시 해제 */
           return;
         }
         if(rev>(baseRev[k]||0)) baseRev[k]=rev;
