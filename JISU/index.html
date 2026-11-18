@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611181645">
+  <meta name="jisu-build" content="202611181735">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
@@ -94,7 +94,7 @@
     function load(k){ try{ var v=JSON.parse(localStorage.getItem(k)||'[]'); return Array.isArray(v)?v:null; }catch(_){ return null; } }
     function backup(k,arr){ try{ var bk=k+'-backup-20261118'; if(!localStorage.getItem(bk)) localStorage.setItem(bk,JSON.stringify(arr)); }catch(_){} }
     function goalOf(t){
-      var c=String(t||'').replace(/^\[[^\]]+\]\s*/,'');
+      var c=(window.jisuNormUnit?window.jisuNormUnit(t):String(t||'')).replace(/^\[[^\]]+\]\s*/,'');
       var m=c.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||c.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)/);
       return m?Number(m[1].replace(',','.')):null;
     }
@@ -2635,14 +2635,46 @@
     .move-runner.fl:not(.is-working){filter:drop-shadow(0 0 4px var(--mv,#fbbf24)) drop-shadow(0 1px 2px rgba(0,0,0,.7));}
   </style>
   <script>
-  /* 단위 표시 통일: "50톤" → "50 TON", "576EA"/"576ea" → "576 EA", "16kg" → "16 KG" (등록·달력·이월·표시 모두) */
+  /* 단위 표시 통일: "50톤" → "50 TON", "576EA"/"576ea" → "576 EA", "16kg" → "16 KG" (등록·달력·이월·표시 모두)
+     + 파렛트 환산: 파렛트·팔레트 품목의 EA/개 수량은 288개 = 1대로 적는다.
+       (16 KG 파렛트 576 EA → 16 KG 파렛트 2대, 파렛트 288개 → 파렛트 1대, 432 EA → 1.5대)
+       파렛트가 아닌 품목(알루미늄 파우치백 600 EA, 사각박스 640 SET, 공장간이송 30 EA)은 그대로 둔다. */
   (function(){
-    const norm=t=>String(t==null?'':t)
+    const PER=288;                                   /* 파렛트 1대 = 288 EA */
+    const PAL=/(?:파렛트|팔레트)/;
+    const numOf=s=>{ s=String(s); if(/^\d{1,3}(?:,\d{3})+(?:\.\d+)?$/.test(s)) return Number(s.replace(/,/g,'')); return Number(s.replace(',','.')); };
+    const toDae=n=>{ const v=String(Math.round(n/PER*100)/100); return Number(v)>0?v:''; };   /* 2 · 1.5 · 1.33 (끝 0 없이) */
+    /* 품목명과 수량이 한 문구에 있을 때: "16 KG 파렛트 576 EA" → "16 KG 파렛트 2대" */
+    function palInline(t){
+      let cnt=0;
+      const out=String(t).replace(/(파렛트|팔레트)([\s\]\)】:：]{0,4})(\d+(?:[.,]\d+)?)\s*(?:EA|PCS|개)(?![A-Za-z0-9가-힣])/gi,(m,w,gap,n)=>{
+        const d=toDae(numOf(n)); if(!d) return m; cnt++; return w+gap+d+'대';
+      });
+      return {text:out,cnt:cnt};
+    }
+    /* 대상(품목)이 파렛트라 수량만 적은 경우: "576 EA" → "2대" (첫 수량 하나만) */
+    function palHead(t){
+      let cnt=0;
+      const out=String(t).replace(/(\d+(?:[.,]\d+)?)\s*(?:EA|PCS|개)(?![A-Za-z0-9가-힣])/i,(m,n)=>{
+        const d=toDae(numOf(n)); if(!d) return m; cnt++; return d+'대';
+      });
+      return {text:out,cnt:cnt};
+    }
+    const base=t=>String(t==null?'':t)
       .replace(/(\d+(?:[.,]\d+)?)\s*톤(?![가-힣])/g,'$1 TON')
       .replace(/(\d+(?:[.,]\d+)?)\s*개(?![가-힣])/g,'$1 EA')
       .replace(/(\d+(?:[.,]\d+)?)\s*(ton|ea|set|kg|bag|pcs|ml|mm|cm|g|l)(?![A-Za-z0-9가-힣])/gi,(_,n,u)=>n+' '+u.toUpperCase());
+    /* ctx = 대상 값(예: inbound:16kg 파렛트). 대상 자체가 파렛트 품목이면 수량만 적어도 대로 환산한다. */
+    function conv(t,ctx){
+      const b=base(t); let text=b, cnt=0;
+      if(PAL.test(b)){ const r=palInline(b); text=r.text; cnt+=r.cnt; }
+      else if(ctx&&PAL.test(String(ctx))){ const r=palHead(b); text=r.text; cnt+=r.cnt; }
+      return {text:text,cnt:cnt};
+    }
+    const norm=t=>conv(t,'').text;
     window.jisuNormUnit=norm;
-    ['jisu-commands-v1','jisu-schedule-v1'].forEach(k=>{ try{ const a=JSON.parse(localStorage.getItem(k)||'null'); if(!Array.isArray(a)) return; let ch=false; a.forEach(x=>{ if(x&&typeof x.text==='string'){ const n=norm(x.text); if(n!==x.text){ x.text=n; ch=true; } } }); if(ch) localStorage.setItem(k,JSON.stringify(a)); }catch(e){} });
+    window.jisuNormUnitFor=(t,ctx)=>conv(t,ctx).text;
+    ['jisu-commands-v1','jisu-schedule-v1'].forEach(k=>{ try{ const a=JSON.parse(localStorage.getItem(k)||'null'); if(!Array.isArray(a)) return; let ch=false; a.forEach(x=>{ if(!x||typeof x.text!=='string') return; const r=conv(x.text,x.target); if(r.cnt>0){ ['done','doneBefore','origGoal','prevGoal','prevDone','carriedQty'].forEach(f=>{ if(x[f]==null||x[f]==='') return; const v=Number(x[f]); if(isFinite(v)) x[f]=Math.round(v/PER*100)/100; }); } if(r.text!==x.text){ x.text=r.text; ch=true; } }); if(ch) localStorage.setItem(k,JSON.stringify(a)); }catch(e){} });
   })();
   </script>
   <style>
@@ -4640,7 +4672,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     };
     const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     function goalOf(t){
-      const clean=String(t||'').replace(/^\[[^\]]+\]\s*/,'');
+      const clean=(window.jisuNormUnit?window.jisuNormUnit(t):String(t||'')).replace(/^\[[^\]]+\]\s*/,'');
       const m=clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)/);
       return m?{n:m[1].replace(',','.'),u:({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()}:null;
     }
@@ -5029,7 +5061,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         window.jisuOpenGallery([{id:it.id,at:it.at,name:it.text||'첨부 이미지',data:it.img}],0,null);
       }
     },true);
-    submit.addEventListener('click',()=>{const t=getTarget();if(!t&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v&&!pendingCmdImg){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v&&!pendingCmdImg){text.focus();return;}v=v.replace(/[a-z]/g,c=>c.toUpperCase());const all=load();const norm=v?(window.jisuNormUnit?window.jisuNormUnit(v):v).replace(/[a-z]/g,c=>c.toUpperCase()):'첨부 이미지';const rec={id:Date.now().toString(36),target:kind==='notice'?'*':(t||'*'),kind,text:norm,at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(pendingCmdImg){ rec.img=pendingCmdImg; const autoTon=v&&window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(v):''; if(autoTon) rec.tonText=autoTon; }if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}const _amPm=(window.jisuAmPmSplitText?window.jisuAmPmSplitText(norm,kind):[norm]);if(_amPm.length>1){rec.text=_amPm[0];all.push(rec);_amPm.slice(1).forEach(function(tx,ix){const c={};Object.keys(rec).forEach(function(k){c[k]=rec[k];});c.id=rec.id+'-'+(ix+1);c.text=tx;delete c.img;delete c.tonText;all.push(c);});}else{all.push(rec);}save(all);if(window.jisuSendNtfy)window.jisuSendNtfy(rec);if(pendingCmdImg&&!rec.tonText&&window.jisuGeminiReadImage){let gk='';try{gk=(localStorage.getItem('jisu-gemini-key')||'').trim();}catch(_){}if(gk){const imgCopy=pendingCmdImg,rid=rec.id;window.jisuGeminiReadImage(gk,imgCopy).then(txt=>{const tt=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(txt):'';if(tt){const a=load();const it=a.find(x=>x.id===rid);if(it){it.tonText=tt;save(a);render();}}}).catch(()=>{});}}text.value='';if(fr)fr.value='';if(to)to.value='';pendingCmdImg=null;const cw=document.getElementById('cmdImgWrap'),ct=document.getElementById('cmdImgThumb');if(cw)cw.style.display='none';if(ct)ct.src='';render();});
+    submit.addEventListener('click',()=>{const t=getTarget();if(!t&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v&&!pendingCmdImg){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v&&!pendingCmdImg){text.focus();return;}v=v.replace(/[a-z]/g,c=>c.toUpperCase());const all=load();const norm=v?(window.jisuNormUnitFor?window.jisuNormUnitFor(v,t):(window.jisuNormUnit?window.jisuNormUnit(v):v)).replace(/[a-z]/g,c=>c.toUpperCase()):'첨부 이미지';const rec={id:Date.now().toString(36),target:kind==='notice'?'*':(t||'*'),kind,text:norm,at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(pendingCmdImg){ rec.img=pendingCmdImg; const autoTon=v&&window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(v):''; if(autoTon) rec.tonText=autoTon; }if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}const _amPm=(window.jisuAmPmSplitText?window.jisuAmPmSplitText(norm,kind):[norm]);if(_amPm.length>1){rec.text=_amPm[0];all.push(rec);_amPm.slice(1).forEach(function(tx,ix){const c={};Object.keys(rec).forEach(function(k){c[k]=rec[k];});c.id=rec.id+'-'+(ix+1);c.text=tx;delete c.img;delete c.tonText;all.push(c);});}else{all.push(rec);}save(all);if(window.jisuSendNtfy)window.jisuSendNtfy(rec);if(pendingCmdImg&&!rec.tonText&&window.jisuGeminiReadImage){let gk='';try{gk=(localStorage.getItem('jisu-gemini-key')||'').trim();}catch(_){}if(gk){const imgCopy=pendingCmdImg,rid=rec.id;window.jisuGeminiReadImage(gk,imgCopy).then(txt=>{const tt=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(txt):'';if(tt){const a=load();const it=a.find(x=>x.id===rid);if(it){it.tonText=tt;save(a);render();}}}).catch(()=>{});}}text.value='';if(fr)fr.value='';if(to)to.value='';pendingCmdImg=null;const cw=document.getElementById('cmdImgWrap'),ct=document.getElementById('cmdImgThumb');if(cw)cw.style.display='none';if(ct)ct.src='';render();});
     list.addEventListener('click',e=>{const id=e.target.getAttribute('data-cmd-del');if(!id)return;save(load().filter(x=>x.id!==id));render();});
     function goHome(){
       document.querySelectorAll('.hotspot-wrapper.is-open').forEach(w=>w.classList.remove('is-open'));
@@ -5524,7 +5556,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       "outbound:RAS-2":"출고 · RAS-2","outbound:L1":"출고 · L1","outbound:CP3K":"출고 · CP3K","outbound:C3B":"출고 · C3B","outbound:연구요청":"출고 · 연구요청","outbound:분진상차":"출고 · 분진상차","outbound:내화물상차":"출고 · 내화물상차","outbound:폐파레트":"출고 · 폐파레트","outbound:2공장→1공장":"출고 · 공장간이송(2공장→1공장)","outbound:1공장→2공장":"출고 · 공장간이송(1공장→2공장)","inbound:SH":"입고 · SH","inbound:HH":"입고 · HH","inbound:16kg 파렛트":"입고 · 16kg 파렛트","inbound:알루미늄 파우치백":"입고 · 알루미늄 파우치백","inbound:사각박스":"입고 · 사각박스","inbound:분진상차":"입고 · 분진상차","inbound:내화물상차":"입고 · 내화물상차","inbound:폐파레트":"입고 · 폐파레트","inbound:2공장→1공장":"입고 · 공장간이송(2공장→1공장)","inbound:1공장→2공장":"입고 · 공장간이송(1공장→2공장)"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     const kstParts=()=>{const p=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const g=t=>p.find(x=>x.type===t).value;return {y:g('year'),m:g('month'),d:g('day')};};
     function loadLib(){ if(window.XLSX) return Promise.resolve(window.XLSX); return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';s.onload=()=>res(window.XLSX);s.onerror=()=>rej(new Error('lib'));document.head.appendChild(s);}); }
-    function goal(t){const clean=String(t||'').replace(/^\[[^\]]+\]\s*/,'');const m=clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/);return m?{n:Number(m[1].replace(',','.')),u:({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()}:{n:'',u:''};}
+    function goal(t){const clean=(window.jisuNormUnit?window.jisuNormUnit(t):String(t||'')).replace(/^\[[^\]]+\]\s*/,'');const m=clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/);return m?{n:Number(m[1].replace(',','.')),u:({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()}:{n:'',u:''};}
     async function exportWork(options={}){
       let all=[]; try{all=JSON.parse(localStorage.getItem('jisu-commands-v1')||'[]')}catch(e){}
       const {y,m,d}=kstParts(); const today=m+'. '+d+'.'; const todayIso=y+'-'+m+'-'+d;
@@ -5769,7 +5801,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       for(const [a,k] of ALIAS){ const ac=a.replace(/\s+/g,'').toUpperCase(); if(compact.startsWith(ac)){
           let i=0,j=0; while(i<s.length && j<ac.length){ if(/\s/.test(s[i])){i++;continue;} i++; j++; }
           let rest=s.slice(i).trim().replace(/^[:：\-]\s*/,''); if(/^공지(\s|[:：]|$)/.test(rest)){ kind='notice'; rest=rest.replace(/^공지\s*[:：]?\s*/,''); }
-          if(!rest) return {err:'"'+line.trim()+'" - 내용이 없어요'}; if(/^[!！]/.test(rest)){ urgent=true; rest=rest.replace(/^[!！]+\s*/,''); } if(!rest) return {err:'"'+line.trim()+'" - 내용이 없어요'}; return {target:kind==='notice'?'*':k,kind,text:(window.jisuNormUnit?window.jisuNormUnit(rest):rest),urgent}; } }
+          if(!rest) return {err:'"'+line.trim()+'" - 내용이 없어요'}; if(/^[!！]/.test(rest)){ urgent=true; rest=rest.replace(/^[!！]+\s*/,''); } if(!rest) return {err:'"'+line.trim()+'" - 내용이 없어요'}; return {target:kind==='notice'?'*':k,kind,text:(window.jisuNormUnitFor?window.jisuNormUnitFor(rest,k):(window.jisuNormUnit?window.jisuNormUnit(rest):rest)),urgent}; } }
       return {err:'"'+line.trim()+'" - 맨 앞에 버튼 이름(출고, 입고, 생산A…)을 써주세요'};
     }
     const lineOf=s=>(s.urgent?'!':'')+(s.kind==='notice'?'공지 ':'')+(NAMES[s.target]||s.target)+' '+s.text;
@@ -6189,6 +6221,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           '',
           '■ 공통: 표기',
           '11) 숫자와 단위는 한 칸 띄우고 단위는 대문자로 씁니다. (18,000 KG, 30 EA, 4 PLT) 표 머리글의 단위를 값에 정확히 붙입니다. (중량(KG) 3,000, 백수(EA) 5 → 3,000 KG · 5 EA)',
+          '11-1) 파렛트·팔레트 품목의 수량은 288 EA를 1대로 환산해 "대"로 씁니다. (16kg 파렛트 576 EA → 16 KG 파렛트 2대, 288 EA → 1대, 432 EA → 1.5대) 파렛트가 아닌 품목의 EA는 그대로 EA로 씁니다. (알루미늄 파우치백 600 EA)',
           '12) 인사말·요청 문구·설명·마크다운 기호(###, **, -)·표 머리글·빈 줄은 출력하지 않습니다. ("안녕하십니까", "감사합니다", "배차정보 나오면 공유드립니다" 제외)'
         ].join('\n');
       }
@@ -6367,10 +6400,11 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           if(!clean) return;
           /* 배차 지시서 한 줄(차량번호 포함)은 기본 대상과 상관없이 출고로 보낸다 (표 붙여넣기 경로와 같은 규칙) */
           const carHit=!lockTarget && kind!=='notice' && /[가-힣]{2}\s*\d{2,3}\s*[가-힣]\s*\d{4}/.test(clean);
+          const tgt=(kind==='notice'?'*':(carHit?'outbound':tgtDefault));
           groups.get(d).push({
-            target:(kind==='notice'?'*':(carHit?'outbound':tgtDefault)),
+            target:tgt,
             kind,
-            text:(window.jisuNormUnit?window.jisuNormUnit(clean):clean),
+            text:(window.jisuNormUnitFor?window.jisuNormUnitFor(clean,tgt):(window.jisuNormUnit?window.jisuNormUnit(clean):clean)),
             urgent
           });
         }
@@ -6905,7 +6939,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const kst=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
     const today=()=>kst(new Date()), D=k=>new Date(k+'T12:00:00+09:00'), add=(k,n)=>kst(new Date(D(k).getTime()+n*864e5));
     function dayOf(r){ if(r.day) return r.day; const m=String(r.at||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); if(!m) return r.sched||''; const t=today(), y=+t.slice(0,4); let k=y+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); if(k>t) k=(y-1)+k.slice(4); return k; }
-    function goal(t){ const s=String(t||'').replace(/^\[[^\]]+\]\s*/,''), m=s.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||s.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/); if(!m) return null; let u=(m[2]||'').toUpperCase(); if(u==='톤') u='TON'; if(u==='개') u='EA'; return {n:Number(m[1].replace(',','.')),u:u||'건'}; }
+    function goal(t){ const s=(window.jisuNormUnit?window.jisuNormUnit(t):String(t||'')).replace(/^\[[^\]]+\]\s*/,''), m=s.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||s.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/); if(!m) return null; let u=(m[2]||'').toUpperCase(); if(u==='톤') u='TON'; if(u==='개') u='EA'; return {n:Number(m[1].replace(',','.')),u:u||'건'}; }
     const doneAmt=(x,g)=>{ const d=(x.completed&&!x.short&&(x.done==null||x.done===''))?g.n:(Number(x.done)||0); return Math.max(0,Math.min(d,g.n)); };
     const r1=v=>String(Math.round(v*10)/10), DOW=['일','월','화','수','목','금','토'], md=k=>(+k.slice(5,7))+'/'+(+k.slice(8,10));
     const CLOSE_KEY='jisu-perf-daily-close-v1';

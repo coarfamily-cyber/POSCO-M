@@ -216,6 +216,54 @@ def split_am_pm(text, kind=None):
     return parts
 
 
+# ---------------------------------------------------------------- 표기 규칙
+PALLET_PER = 288          # 파렛트 1대 = 288 EA
+_PALLET_WORD = re.compile(r"(?:파렛트|팔레트)")
+_PALLET_INLINE = re.compile(
+    r"(파렛트|팔레트)([\s\]\)】:：]{0,4})(\d+(?:[.,]\d+)?)\s*(?:ea|pcs|개)(?![A-Za-z0-9가-힣])",
+    re.IGNORECASE)
+_PALLET_HEAD = re.compile(r"(\d+(?:[.,]\d+)?)\s*(?:ea|pcs|개)(?![A-Za-z0-9가-힣])", re.IGNORECASE)
+
+
+def _qty_num(s: str) -> float:
+    s = str(s)
+    if re.fullmatch(r"\d{1,3}(?:,\d{3})+(?:\.\d+)?", s):
+        return float(s.replace(",", ""))
+    return float(s.replace(",", "."))
+
+
+def _dae_text(n: float) -> str:
+    v = round(n / PALLET_PER, 2)      # 2 · 1.5 · 1.33 (끝 0 없이)
+    return "" if v <= 0 else ("%g" % v)
+
+
+def normalize_pallet(text, target=None) -> str:
+    """파렛트·팔레트 품목의 EA/개 수량을 288 EA = 1대로 환산한다.
+
+    - 문구 안에 파렛트/팔레트가 있으면 그 바로 뒤 수량을 환산한다. (16 KG 파렛트 576 EA → 16 KG 파렛트 2대)
+    - 대상(target)이 파렛트 품목이라 수량만 적힌 경우에는 첫 수량 하나만 환산한다. (576 EA → 2대)
+    - 파렛트가 아닌 품목(알루미늄 파우치백 600 EA, 사각박스 640 SET, 공장간이송 30 EA)은 그대로 둔다.
+    """
+    raw = "" if text is None else str(text)
+    if not raw:
+        return raw
+
+    def _inline(m):
+        d = _dae_text(_qty_num(m.group(3)))
+        return m.group(0) if not d else f"{m.group(1)}{m.group(2)}{d}대"
+
+    if _PALLET_WORD.search(raw):
+        return _PALLET_INLINE.sub(_inline, raw)
+    if target and _PALLET_WORD.search(str(target)):
+        return _PALLET_HEAD.sub(_inline_head, raw, count=1)
+    return raw
+
+
+def _inline_head(m):
+    d = _dae_text(_qty_num(m.group(1)))
+    return m.group(0) if not d else f"{d}대"
+
+
 # ---------------------------------------------------------------- 반영 규칙
 def apply_schedules(sch: list, cmds: list, today: str, now_s: str):
     """달력 예약을 금일작업으로 옮긴다. (추가된 카드 수, 마킹 수)"""
@@ -237,6 +285,7 @@ def apply_schedules(sch: list, cmds: list, today: str, now_s: str):
 
         texts = split_am_pm(s.get("text"), s.get("kind"))
         for idx, txt in enumerate(texts):
+            txt = normalize_pallet(txt, s.get("target"))
             rid = "s" + str(s.get("id")) + (("-" + str(idx)) if idx else "")
             if rid in have:
                 print(f"  = 이미 등록됨 {rid} (마킹만)")
