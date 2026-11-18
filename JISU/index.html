@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611181025">
+  <meta name="jisu-build" content="202611181052">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
@@ -5836,6 +5836,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           '4) 요약에는 작업자가 알아야 할 조건을 모두 넣습니다: 배차 시간(오전 10시~), 차량 톤수·대수(14톤 차량, 차량 2대), 출발→도착(2공장 → 1공장), 수량·중량과 단위(EA, PLT, TON, KG), 품목명(피치 등), 주요 LOT·원료번호, 창고·납품처.',
           '5) 배차 시간·차량 조건은 그 작업 줄에 함께 적고, 조건만 따로 한 줄로 만들지 않습니다.',
           '6) 표 안의 행이 같은 조건(구간·중량·품목)이면 한 줄로 묶습니다. 연속된 번호는 첫 행부터 마지막 행까지 "시작~끝"으로 쓰고 앞자리 0을 지우지 않습니다. (예: 원료 RPB20250908-015~018 4건) 묶더라도 합계는 반드시 넣습니다. (예: 총 18,000 KG · 30 EA, 합계 4,748 KG)',
+          '6-1) 단, LOT NO. 열의 번호가 서로 떨어져 있으면 "~"로 묶어 끝 번호를 추측하지 말고 첫 번호와 건수만 씁니다. (예: LOT NO. ET00126100029B09 외 5건) 원료번호(RPB…)는 6) 규칙대로 "시작~끝"으로 씁니다.',
           '',
           '■ 공통: 날짜',
           '7) "금일/오늘"은 '+T+', "명일/내일"은 '+N1+', "모레"는 '+N2+'입니다. 이 기준일로 계산해 YYYY-MM-DD로 씁니다.',
@@ -6021,10 +6022,11 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         } else {
           let urgent=false, kind=(tgtDefault==='*'?'notice':'instruction');
           if(/^[!！]/.test(clean)){ urgent=true; clean=clean.replace(/^[!！]+\s*/,''); }
-          if(/^공지\s*[:：]?\s*/.test(clean)){ kind='notice'; clean=clean.replace(/^공지\s*[:：]?\s*/,''); }
+          /* '공지'/'공지사항'은 어느 버튼을 골라도 전체(*) 공지로 등록한다 (단일 등록·사이드바 공지와 같은 규칙) */
+          if(/^공지(?:사항)?(?:\s*[:：]\s*|\s+|$)/.test(clean)){ kind='notice'; clean=clean.replace(/^공지(?:사항)?(?:\s*[:：]\s*|\s+|$)/,''); }
           if(!clean) return;
           groups.get(d).push({
-            target:tgtDefault,
+            target:(kind==='notice'?'*':tgtDefault),
             kind,
             text:(window.jisuNormUnit?window.jisuNormUnit(clean):clean),
             urgent
