@@ -1,5 +1,5 @@
 // 작업자 가입: 구역 QR 토큰 + 사번/이름/비밀번호 → 계정 생성(승인 대기 상태)
-const { verifyQr, createUser, setAccount, httpErr } = require('../lib/jisu-auth');
+const { verifyQr, createUser, setAccount, lookupByEmail, deleteAccount, httpErr } = require('../lib/jisu-auth');
 
 const SABUN_RE = /^[0-9A-Za-z]{2,20}$/;
 
@@ -17,7 +17,18 @@ async function enroll(body) {
   if (password.length < 6 || password.length > 128) throw httpErr(400, '비밀번호는 6자 이상');
 
   const email = sabun.toLowerCase() + '@jisu.local';
-  const { localId } = await createUser({ email, password, displayName: name });
+  let localId;
+  try {
+    ({ localId } = await createUser({ email, password, displayName: name }));
+  } catch (e) {
+    if (e.status !== 409) throw e;
+    // 같은 사번 계정이 이미 있음. 권한(role)이 없는 계정은 이 서버가 만든 정상 계정이 아니므로
+    // (외부에서 공개 가입으로 선점했거나, 지난 가입이 권한 설정 전에 실패한 경우) 지우고 다시 만든다.
+    const old = await lookupByEmail(email);
+    if (!old || (old.claims && old.claims.role)) throw e;   // 정상 계정(작업자·관리자)은 그대로 둠 → 409
+    await deleteAccount(old.localId);
+    ({ localId } = await createUser({ email, password, displayName: name }));
+  }
   // 가입 직후에는 승인 전: approved=false, 구역은 QR이 정한 값
   await setAccount(localId, { role: 'staff', zone, approved: false }, {});
   return { ok: true, status: 'pending' };

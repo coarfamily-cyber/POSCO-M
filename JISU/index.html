@@ -8962,14 +8962,19 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     });
     /* 구독 목록은 서버(api/push.js)가 DB에서 직접 읽는다. 클라이언트는 구독 정보를 내려받지 않는다. */
     try{
-      fetch(VERCEL_PUSH_URL,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          target:base,
-          payload:{title,body:message,url:clickUrl,tag:'jisu-'+(rec.id||Date.now()),badge:1}
-        })
-      }).catch(()=>{});
+      const pushBody=JSON.stringify({
+        target:base,
+        payload:{title,body:message,url:clickUrl,tag:'jisu-'+(rec.id||Date.now()),badge:1}
+      });
+      const sendPush=(headers)=>{ fetch(VERCEL_PUSH_URL,{method:'POST',headers,body:pushBody}).catch(()=>{}); };
+      /* 로그인 게이트가 켜져 있고 로그인 상태면 토큰을 붙인다. 꺼져 있으면 예전과 똑같이 보낸다 */
+      let authUser=null;
+      try{ if(window.JISU_AUTH_GATE===true&&window.firebase&&firebase.auth) authUser=firebase.auth().currentUser; }catch(_){ authUser=null; }
+      if(authUser){
+        authUser.getIdToken().then(t=>sendPush({'Content-Type':'application/json','Authorization':'Bearer '+t}),()=>sendPush({'Content-Type':'application/json'}));
+      }else{
+        sendPush({'Content-Type':'application/json'});
+      }
     }catch(_){}
   };
 })();

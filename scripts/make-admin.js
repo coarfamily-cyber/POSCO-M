@@ -10,8 +10,8 @@ const { createUser, lookupByEmail, setAccount } = require('../lib/jisu-auth');
   }
   const email = id + '@jisu.local';
   const exists = await lookupByEmail(email);
-  if (exists) { console.error('이미 있는 계정입니다. 권한만 갱신합니다.'); await setAccount(exists.localId, { role: 'admin' }, {}); return console.log('OK admin(updated)'); }
+  if (exists) { console.error('이미 있는 계정입니다. 권한만 갱신합니다.'); await setAccount(exists.localId, { role: 'admin', approved: true }, {}); return console.log('OK admin(updated)'); }
   const { localId } = await createUser({ email, password: pw, displayName: name });
-  await setAccount(localId, { role: 'admin' }, {});
+  await setAccount(localId, { role: 'admin', approved: true }, {});
   console.log('OK admin(created)');
 })().catch(e => { console.error('실패:', e.message); process.exit(1); });

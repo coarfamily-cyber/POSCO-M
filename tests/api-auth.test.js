@@ -43,12 +43,18 @@ globalThis.fetch = async (url, init = {}) => {
     const u = [...users.values()].find(x => x.email === b.email[0]);
     return jsonRes({ users: u ? [{ localId: u.localId, customAttributes: JSON.stringify(u.claims), disabled: u.disabled, displayName: u.displayName }] : [] });
   }
+  if (url.endsWith('/accounts:delete')) {
+    const b = JSON.parse(init.body);
+    users.delete(b.localId);
+    return jsonRes({});
+  }
   if (url.endsWith('/accounts:update')) {
     const b = JSON.parse(init.body);
     const u = users.get(b.localId);
     if (!u) return jsonRes({ error: { message: 'USER_NOT_FOUND' } }, 400);
     if (b.customAttributes !== undefined) u.claims = JSON.parse(b.customAttributes);
     if (b.disableUser !== undefined) u.disabled = b.disableUser;
+    u.lastUpdate = b;
     return jsonRes({ localId: u.localId });
   }
   return new Response('not mocked', { status: 599 });
@@ -186,4 +192,50 @@ test('QR 주소 생성 스크립트 출력값은 서버가 검증 가능', async
   const line = out.split('\n').find(l => l.startsWith('outbound\t'));
   const token = line.split('?qr=')[1];
   assert.equal(lib.verifyQr(token, 'test-enroll-secret-123'), 'outbound');
+});
+
+
+// ---- 검토 반영 ----
+test('가입: 권한 없는 계정(공개 가입 선점·지난 가입 중간 실패)이 같은 사번에 있으면 정리 후 새로 만든다', async () => {
+  reset();
+  users.set('squat', { localId: 'squat', email: '5005@jisu.local', displayName: '모름', claims: {}, disabled: false });
+  const qr = lib.makeQr('pitch', process.env.ENROLL_SECRET);
+  const r = await call(enrollMod, { body: { qr, sabun: '5005', name: '박영희', password: '123456' } });
+  assert.equal(r.statusCode, 201);
+  assert.equal(users.has('squat'), false);
+  const u = [...users.values()].find(x => x.email === '5005@jisu.local');
+  assert.deepEqual(u.claims, { role: 'staff', zone: 'pitch', approved: false });
+  assert.equal(u.displayName, '박영희');
+});
+
+test('가입: 정상 계정(작업자·관리자)이 있는 사번은 지우지 않고 409', async () => {
+  reset();
+  seed('6006', { role: 'staff', zone: 'pitch', approved: true });
+  seed('admin', { role: 'admin', approved: true });
+  const qr = lib.makeQr('pitch', process.env.ENROLL_SECRET);
+  assert.equal((await call(enrollMod, { body: { qr, sabun: '6006', name: 'x', password: '123456' } })).statusCode, 409);
+  assert.equal((await call(enrollMod, { body: { qr, sabun: 'admin', name: 'x', password: '123456' } })).statusCode, 409);
+  assert.ok(users.has('uid-6006') && users.has('uid-admin'));
+});
+
+test('승인: 로그아웃(validSince)하지 않는다', async () => {
+  reset(); seed('1001', { role: 'staff', zone: 'packaging', approved: false });
+  await call(approveMod, { body: { action: 'approve', sabun: '1001' }, headers: adminAuth });
+  assert.equal(users.get('uid-1001').lastUpdate.validSince, undefined);
+});
+
+test('구역 변경·사용 중지는 기존 로그인을 무효화한다', async () => {
+  reset(); seed('1001', { role: 'staff', zone: 'packaging', approved: true });
+  await call(approveMod, { body: { action: 'move', sabun: '1001', zone: 'pitch' }, headers: adminAuth });
+  assert.ok(users.get('uid-1001').lastUpdate.validSince);
+  await call(approveMod, { body: { action: 'enable', sabun: '1001' }, headers: adminAuth });
+  assert.equal(users.get('uid-1001').lastUpdate.validSince, undefined);
+});
+
+test('승인: 구역이 비어 있으면 거부(400), 구역 지정 후 승인 가능', async () => {
+  reset(); seed('7007', {});
+  assert.equal((await call(approveMod, { body: { action: 'approve', sabun: '7007' }, headers: adminAuth })).statusCode, 400);
+  assert.equal((await call(approveMod, { body: { action: 'move', sabun: '7007', zone: 'inbound' }, headers: adminAuth })).statusCode, 200);
+  assert.equal((await call(approveMod, { body: { action: 'approve', sabun: '7007' }, headers: adminAuth })).statusCode, 200);
+  assert.deepEqual(users.get('uid-7007').claims, { role: 'staff', zone: 'inbound', approved: true });
 });
