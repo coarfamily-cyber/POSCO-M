@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611181735">
+  <meta name="jisu-build" content="202611181830">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
@@ -4403,6 +4403,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         });
       }
       wrapper.classList.toggle('is-open', willOpen);
+      setTimeout(function(){ try{ if(window.jisuFitCmdTexts) window.jisuFitCmdTexts(); }catch(_){}} , 90);
       const chevron = wrapper.querySelector('.chevron');
       if (chevron) {
         chevron.style.transform = willOpen ? 'rotate(90deg)' : 'rotate(0deg)';
@@ -4857,7 +4858,110 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         if(pending>0 && typeof navigator.setAppBadge==='function') navigator.setAppBadge(pending).catch(()=>{});
         else if(pending===0 && typeof navigator.clearAppBadge==='function') navigator.clearAppBadge().catch(()=>{});
       }catch(_){}
+      try{ if(window.jisuFitCmdTexts) window.jisuFitCmdTexts(); }catch(_){}
     }
+    /* ===== 작업 카드 텍스트 Auto-fit (2026-11-18) =====
+       카드/박스 크기(높이·너비·패딩·버튼)는 건드리지 않고, 긴 텍스트만 글자 크기를 줄여
+       최대 2줄 안에 들어오게 한다. 기본 크기보다 크게 키우지는 않는다.
+       1) 기본 크기로 1줄이면 그대로 둔다.
+       2) 넘치면 white-space:nowrap 으로 0.5px 단위로 10px까지 내려가며 1줄을 먼저 시도한다.
+       3) 10px에서도 1줄이 안 되면 줄바꿈을 허용하고 2줄에 들어가는 가장 큰 크기를 쓴다. 3줄 금지.
+       · .expand-card .cmd-text 의 font-size!important 를 이기려면 setProperty(...,'important') 필수. */
+    (function(){
+      if(window.__jisuCmdFit) return; window.__jisuCmdFit=1;
+      var MIN_FS=10, STEP=0.5, MAX_LINES=2, SEL='.cmd-text';
+      var _rg=null;
+      function rng(){ if(!_rg) _rg=document.createRange(); return _rg; }
+      function rectsOf(el){ var r=rng(); try{ r.selectNodeContents(el); return r.getClientRects(); }catch(_){ return []; } }
+      function lineTops(el){
+        var rects=rectsOf(el), tops=[];
+        for(var i=0;i<rects.length;i++){
+          var r=rects[i]; if(!(r.width>0||r.height>0)) continue;
+          var t=r.top, dup=false;
+          for(var j=0;j<tops.length;j++){ if(Math.abs(tops[j]-t)<2){ dup=true; break; } }
+          if(!dup) tops.push(t);
+        }
+        return tops;
+      }
+      function lines(el){
+        var n=lineTops(el).length;
+        if(n) return n;
+        var cs=getComputedStyle(el), lh=parseFloat(cs.lineHeight), fs=parseFloat(cs.fontSize)||12;
+        if(!(lh>0)) lh=fs*1.25;
+        return Math.max(1, Math.round(el.scrollHeight/lh));
+      }
+      function overflows(el){
+        var rects=rectsOf(el), box=el.getBoundingClientRect(), maxR=-1e9;
+        for(var i=0;i<rects.length;i++){ var r=rects[i]; if(!(r.width>0||r.height>0)) continue; if(r.right>maxR) maxR=r.right; }
+        if(maxR>-1e8 && maxR>box.right+0.6) return true;
+        return el.scrollWidth>el.clientWidth+1;
+      }
+      function r05(v){ return Math.round(v*2)/2; }
+      function setFs(el,fs){ el.style.setProperty('font-size',fs+'px','important'); }
+      function setWs(el,ws){ el.style.setProperty('white-space',ws==='nowrap'?'nowrap':'normal','important'); }
+      function fitsOne(el){ return lines(el)<=1 && !overflows(el); }
+      function fitOne(el){
+        if(!el || !el.isConnected) return;
+        el.style.removeProperty('font-size'); el.style.removeProperty('white-space');
+        if(!String(el.textContent||'').trim()) return;
+        var cs=getComputedStyle(el), base=r05(parseFloat(cs.fontSize)||0);
+        if(!(base>MIN_FS)) return;
+        if(!(el.clientWidth>4)) return;                 /* 화면에 없는 카드(다른 뷰)는 다음 기회에 */
+        if(fitsOne(el)) return;                        /* 1) 기본 크기 그대로 1줄 */
+        /* 2) 1줄 시도: base-0.5 → 10px (작은 글씨일수록 잘 들어가므로 이진 탐색) */
+        var c1=[]; for(var v=r05(base-STEP); v>=MIN_FS-1e-6; v=r05(v-STEP)) c1.push(v);
+        var l=0,h=c1.length-1,f=-1;
+        while(l<=h){ var m=(l+h)>>1; setFs(el,c1[m]); setWs(el,'nowrap'); if(fitsOne(el)){ f=m; h=m-1; } else { l=m+1; } }
+        if(f>=0){ setFs(el,c1[f]); setWs(el,'nowrap'); }
+        else {
+          /* 3) 2줄 허용: 2줄에 들어가는 가장 큰 크기 (3줄로 넘어가지 않게) */
+          var c2=[]; for(var u=base; u>=MIN_FS-1e-6; u=r05(u-STEP)) c2.push(u);
+          setWs(el,'normal');
+          var l2=0,h2=c2.length-1,f2=-1;
+          while(l2<=h2){ var m2=(l2+h2)>>1; setFs(el,c2[m2]); if(lines(el)<=MAX_LINES){ f2=m2; h2=m2-1; } else { l2=m2+1; } }
+          if(f2>=0){ setFs(el,c2[f2]); setWs(el,'normal'); }
+          else { el.style.removeProperty('font-size'); el.style.removeProperty('white-space'); }
+        }
+        /* 실제 렌더에서 한 번 더 확인: nowrap 이 실제로 넘치면 0.5px씩 더 줄이거나 2줄로 전환 */
+        if(el.style.getPropertyValue('white-space')==='nowrap' && overflows(el)){
+          var cur=r05(parseFloat(getComputedStyle(el).fontSize)||0);
+          var done=false;
+          for(var t=r05(cur-STEP); t>=MIN_FS-1e-6; t=r05(t-STEP)){
+            setFs(el,t); if(fitsOne(el)){ done=true; break; }
+          }
+          if(!done){
+            setWs(el,'normal');
+            var best=-1, c3=[]; for(var q=base; q>=MIN_FS-1e-6; q=r05(q-STEP)) c3.push(q);
+            for(var k=0;k<c3.length;k++){ setFs(el,c3[k]); if(lines(el)<=MAX_LINES){ best=k; break; } }
+            if(best>=0){ setFs(el,c3[best]); } else { el.style.removeProperty('font-size'); el.style.removeProperty('white-space'); }
+          }
+        }
+        el.setAttribute('data-fit-fs', el.style.getPropertyValue('font-size')||'default');
+        el.setAttribute('data-fit-ws', el.style.getPropertyValue('white-space')||'default');
+        el.setAttribute('data-fit-lines', String(lines(el)));
+      }
+      var pending=false;
+      function fitAll(){
+        if(pending) return; pending=true;
+        requestAnimationFrame(function(){
+          pending=false;
+          try{
+            var els=document.querySelectorAll(SEL);
+            for(var i=0;i<els.length;i++) fitOne(els[i]);
+          }catch(_){}
+        });
+      }
+      window.jisuFitCmdTexts=fitAll;
+      if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',fitAll,{once:true}); }
+      else { setTimeout(fitAll,0); }
+      var t1=0;
+      window.addEventListener('resize',function(){ clearTimeout(t1); t1=setTimeout(fitAll,120); });
+      try{ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ fitAll(); setTimeout(fitAll,350); }); }catch(_){}
+      document.addEventListener('click',function(e){
+        var t=e.target;
+        if(t&&t.closest&&t.closest('[data-toggle-zone],[data-bldg],[data-zone-btn],.hotspot-pill,[data-cmd-goto],#closeModalX,#closeModalBtn')) setTimeout(fitAll,80);
+      },true);
+    })();
     let modalKey=null;
     function fillModal(k){
       modalKey=k; const box=document.getElementById('modalCmds'); if(!box) return;
@@ -4867,6 +4971,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const badgeText=doneCnt>0?(doneCnt+'/'+ws.length):(ws.length+'건');
       const canAdminDelCompleted = !document.documentElement.classList.contains('worker-zone-only');
       box.innerHTML=items.length?'<div class="cmd-in-card-h">금일작업 · 공지 <span>'+badgeText+'</span></div>'+items.map(x=>itemHtml(x, canAdminDelCompleted && !!x.completed && x.id!=='demo_dispatch_1')).join(''):'';
+      try{ if(window.jisuFitCmdTexts) window.jisuFitCmdTexts(); }catch(_){}
     }
     function update(id,fn){const all=load();const it=all.find(x=>x.id===id);if(!it)return;fn(it);save(all);render();if(modalKey)fillModal(modalKey);}
     const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
