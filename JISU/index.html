@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611182332">
+  <meta name="jisu-build" content="202611182330">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
@@ -389,17 +389,16 @@
       border-radius: 4px;
       border: 2px solid rgba(17, 24, 39, 0.28);
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
-      cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      /* [11-18] 동 표시 전용 라벨: 버튼 아님 — 클릭·호버·포커스 없음 */
+      cursor: default;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: none;
       z-index: 15;
       display: flex;
       align-items: center;
       gap: 6px;
-    }
-    .bldg-badge:hover {
-      transform: translate(-50%, -54%) scale(1.06);
-      border-color: #d4af37;
-      box-shadow: 0 10px 25px rgba(212, 175, 55, 0.35);
     }
     .bldg-badge .status-dot {
       width: 8px;
@@ -779,7 +778,6 @@
     .bldg-badge{background:rgba(15,23,42,.42) !important;color:#f8fafc !important;border:1px solid rgba(255,255,255,.28) !important;border-radius:10px !important;
       backdrop-filter:blur(10px) saturate(140%);-webkit-backdrop-filter:blur(10px) saturate(140%);
       box-shadow:0 8px 22px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.18) !important;text-shadow:0 1px 2px rgba(0,0,0,.5);padding:.25em .7em !important;}
-    .bldg-badge:hover{background:rgba(30,41,59,.6) !important;border-color:rgba(125,211,252,.7) !important;}
     .bldg-badge .status-dot{display:none !important;}
     .cmd-slot{margin-top:12px;}
     .cmd-slot .cmd-in-card{margin-bottom:0;}
@@ -1410,29 +1408,25 @@
         font-size:9.5px !important;
       }
     }
-    /* [11-18] 관리자 전체 대시보드: 폰 폭에서 카드를 뷰포트 좌우 8px 안으로 정확히 맞춘다(오른쪽 잘림 방지) */
+    /* [11-18] 관리자 전체 대시보드: 폰 폭에서도 화면을 다 덮지 않는 '둥근 유리 팝업'으로(뒤에 지도가 보이게) */
     @media (max-width: 768px){
       body:not(#z1#z2#z3#z4#z5):not(.worker-zone-only) .hotspot-wrapper.is-open .expand-card{
         left:8px !important;right:auto !important;
-        width:calc(100vw - 16px) !important;
-        height:calc(100dvh - 24px) !important;
-        max-height:calc(100dvh - 24px) !important;
+        width:min(340px, 86vw) !important;
+        height:min(580px, 68dvh) !important;
+        max-height:min(580px, 68dvh) !important;
       }
     }
     /* [11-18] 관리자 전체 대시보드 769~900px(지도가 사이드바 아래로 쌓이는 구간)도
-       폰과 같은 방식으로 카드를 뷰포트 안에 고정 배치해 화면 밖·지도 밑으로 내려가지 않게 한다 */
+       폰과 같은 방식의 팝업 카드로 띄운다(화면 전체를 가리는 배경막 없음) */
     @media (min-width: 769px) and (max-width: 900px){
-      body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-open::before{
-        content:"";position:fixed;inset:0;background:rgba(2,6,23,0.62);
-        backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:210;
-      }
       body:not(#z1#z2#z3#z4#z5):not(.worker-zone-only) .hotspot-wrapper.is-open .expand-card{
         position:fixed !important;
-        left:8px !important;right:auto !important;top:50% !important;bottom:auto !important;
-        transform:none !important;
-        width:calc(100vw - 16px) !important;max-width:none !important;
-        height:calc(100dvh - 24px) !important;
-        max-height:calc(100dvh - 24px) !important;margin:0 !important;
+        left:50% !important;right:auto !important;top:50% !important;bottom:auto !important;
+        transform:translate(-50%,-50%) !important;
+        width:min(480px, 86vw) !important;max-width:none !important;
+        height:min(640px, 78dvh) !important;
+        max-height:min(640px, 78dvh) !important;margin:0 !important;
         padding:16px 16px 20px !important;border-radius:22px !important;
         z-index:220 !important;overflow-y:auto !important;-webkit-overflow-scrolling:touch;
         touch-action:pan-y !important;overscroll-behavior:contain !important;
@@ -3009,8 +3003,13 @@
     body:not(#zz) .memo-row .memo-send{width:66px;min-width:66px;flex:0 0 66px;}
   </style>
 <style>.pitch-log{margin-top:8px;padding:11px;border-radius:14px;background:rgba(15,23,42,.58);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:#e2e8f0;font-size:12px}.pitch-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.1)}.pitch-eyebrow{font-size:9px;font-weight:900;letter-spacing:.12em;color:#c4b5fd}.pitch-head h4{margin-top:3px;font-size:14px;font-weight:900;color:#f8fafc}.pitch-head time{font-size:11px;color:#cbd5e1;font-weight:800}.pitch-section{padding-top:9px}.pitch-section-title{font-size:11px;font-weight:900;color:#c4b5fd;margin-bottom:5px}.pitch-row{min-height:32px;display:flex;align-items:center;gap:8px;padding:3px 0;color:#cbd5e1}.pitch-row>span:first-child{width:48px;flex:0 0 48px;color:#e2e8f0;font-weight:800}.pitch-input{box-sizing:border-box;width:100%;min-width:0;height:30px;padding:4px 8px;border:0;border-radius:8px;background:rgba(255,255,255,.1);color:#f8fafc;font-size:12px;font-weight:700;outline:none}.pitch-input:focus{box-shadow:0 0 0 1px rgba(196,181,253,.6)}.pitch-input::placeholder{color:#94a3b8}.pitch-num-wrap{display:flex;align-items:center;gap:7px;flex:1}.pitch-num-wrap .pitch-num{max-width:110px;text-align:right}.pitch-num-wrap b{font-size:11px;color:#cbd5e1}.pitch-photo{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:11px;padding-top:9px;border-top:1px solid rgba(255,255,255,.1)}.pitch-photo-btn{border:0;border-radius:10px;padding:8px 12px;background:#2563eb;color:#fff;font-size:12px;font-weight:900}.pitch-photo-btn:hover{background:#1d4ed8;color:#fff}.pitch-photo>span{font-size:11px;color:#94a3b8}.pitch-photo-thumbs{display:flex;gap:5px;flex-wrap:wrap;width:100%}.pitch-photo-thumbs img{width:48px;height:40px;object-fit:cover;border-radius:6px}</style><style>
-/* 피치 버튼/폼 색은 출고 버튼 계열의 무색 유리 + 하늘색 상태 강조 + 파란 액션 버튼으로 통일 */
-body:not(#zz) .hotspot-pill[data-toggle-zone="pitch"]{background:rgba(255,255,255,.1);color:#f8fafc;}
+/* [11-18] 피치 버튼: 다른 구역 버튼과 같은 '밝은 유리'로 통일.
+   원인 — 버튼 유리가 반투명(rgba(255,255,255,.1))이라 뒤에 비치는 배경색을 그대로 따라가는데,
+   피치 버튼만 2동의 어두운 태양광 지붕 위에 놓여 어두운 남색 + 흰 글씨로 보였다.
+   그래서 피치만 흰 바탕을 고정해 다른 버튼과 같은 밝기로 보이게 한다(작업완료 파랑은 기존 규칙 유지). */
+body:not(#zz) .hotspot-pill[data-toggle-zone="pitch"]:not(.st-done){background:rgba(255,255,255,.60);color:#f8fafc;}
+body:not(#zz) .hotspot-pill[data-toggle-zone="pitch"]:not(.st-done):hover,
+body:not(#zz) .hotspot-wrapper.is-open .hotspot-pill[data-toggle-zone="pitch"]:not(.st-done){background:rgba(255,255,255,.72);color:#f8fafc;}
 body:not(#zz) #hotspot-pitch .pitch-eyebrow,body:not(#zz) #hotspot-pitch .pitch-section-title{color:#7dd3fc;}
 body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,211,252,.72);}
 </style><style>.pitch-repeat{padding:5px 0 2px}.pitch-repeat-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 5px}.pitch-repeat-head>b{font-size:11px;color:#e2e8f0}.pitch-add{border:0;border-radius:8px;padding:4px 9px;background:rgba(255,255,255,.12);color:#f8fafc;font-size:11px;font-weight:900;white-space:nowrap;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}.pitch-add:hover{background:rgba(255,255,255,.22);color:#fff}.pitch-list{display:flex;flex-direction:column;gap:5px}.pitch-list .pitch-row{width:100%;}.pitch-list .pitch-row>span:first-child{width:32px;flex-basis:32px;color:#94a3b8;font-size:10px}.pitch-list .pitch-input{flex:1;min-width:0}.pitch-list .pitch-row .pitch-add{flex:0 0 58px;min-height:30px;padding:4px 6px}</style><style>.pitch-save-btn{border:0;border-radius:10px;min-width:72px;padding:8px 14px;background:#2563eb;color:#fff;font-size:12px;font-weight:900}.pitch-save-btn:hover{background:#1d4ed8}.pitch-save-status{font-size:10px;color:#94a3b8}</style><style>
@@ -3025,7 +3024,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
 #pitchLog .pitch-head{display:block;}#pitchLog .pitch-head-top,#pitchLog .pitch-title-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}#pitchLog .pitch-title-row{margin-top:6px;}#pitchLog .pitch-title-row h4{margin:0;white-space:nowrap;}#pitchLog .pitch-photo-btn{flex:0 0 92px;}
 #pitchLog .pitch-workflow{margin-top:12px;padding-top:10px;}#pitchLog .pitch-work-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;}#pitchLog .pitch-work-btn{box-sizing:border-box;height:36px;min-width:0;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:10px;background:rgba(255,255,255,.12);color:#f8fafc;font-size:12px;font-weight:900;white-space:nowrap;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}#pitchLog .pitch-work-btn:hover{background:rgba(255,255,255,.22);}#pitchLog .pitch-work-btn:disabled{cursor:default;opacity:.4;}#pitchLog #pitchStartBtn.is-active{opacity:1;background:rgba(34,197,94,.24);color:#bbf7d0;}#pitchLog #pitchCompleteBtn.is-active{opacity:1;background:rgba(59,130,246,.24);color:#bfdbfe;}
 #pitchLog .pitch-work-status{margin-top:8px;font-size:10px;font-weight:800;color:#94a3b8;line-height:1.6;overflow-wrap:anywhere;}#pitchLog .pitch-work-status[data-state="work"]{color:#4ade80;}#pitchLog .pitch-work-status[data-state="done"]{color:#93c5fd;}#pitchLog .pitch-save-status{display:block;margin-top:3px;text-align:left;font-size:10px;color:#94a3b8;}#pitchLog .pitch-photo{margin-top:6px;padding-top:0;}
-</style><style>#pitchLog #pitchStartBtn.is-active{background:rgba(34,197,94,.62);color:#fff;opacity:1;}#pitchLog #pitchCompleteBtn.is-active{background:rgba(59,130,246,.62);color:#fff;opacity:1;}#pitchLog .pitch-download-again{margin-top:4px;padding:3px 0;background:transparent;color:#93c5fd;font-size:10px;text-decoration:underline;border:0;}#pitchLog .pitch-download-again[hidden]{display:none;}@media(max-width:600px){#pitchLog .pitch-input{font-size:16px;}#pitchLog .pitch-work-btn{height:42px;}}</style><style>body:not(#zz) .hotspot-pill[data-toggle-zone="pitch"].st-work{background:rgba(34,197,94,.62)!important;color:#fff!important;}body:not(#zz) .hotspot-pill[data-toggle-zone="pitch"].st-done{background:rgba(59,130,246,.62)!important;color:#fff!important;}</style><style>
+</style><style>#pitchLog #pitchStartBtn.is-active{background:rgba(34,197,94,.62);color:#fff;opacity:1;}#pitchLog #pitchCompleteBtn.is-active{background:rgba(59,130,246,.62);color:#fff;opacity:1;}#pitchLog .pitch-download-again{margin-top:4px;padding:3px 0;background:transparent;color:#93c5fd;font-size:10px;text-decoration:underline;border:0;}#pitchLog .pitch-download-again[hidden]{display:none;}@media(max-width:600px){#pitchLog .pitch-input{font-size:16px;}#pitchLog .pitch-work-btn{height:42px;}}</style><style>body:not(#zz) .hotspot-pill[data-toggle-zone="pitch"].st-done{background:rgba(59,130,246,.62)!important;color:#fff!important;}</style><style>
 /* 피치 상세: 바깥 유리 여백은 고정, 내용만 내부 스크롤 */
 #hotspot-pitch > .expand-card{display: block !important; padding: 14px 14px 32px !important; overflow-y: auto !important; overflow-x: hidden !important;}
 #hotspot-pitch > .expand-card > .pitch-scroll-body{flex:none;width:100%;overflow: visible !important; height: auto !important;overscroll-behavior:contain;border-radius:14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.28) transparent;scrollbar-gutter:stable;}
@@ -3826,18 +3825,18 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       <img src="./assets/plant-map.jpg" alt="POSCO M 3D 공장 조감도" class="map-bg" />
 
       <!-- Building Badges: 1동, 2동, 3동, 4동, 창고 -->
-      <button type="button" class="bldg-badge" style="left: 14.6%; top: 68%;" data-bldg="A" title="1동 상태 보기">
+      <span class="bldg-badge" style="left: 14.6%; top: 68%;" data-bldg="A" aria-hidden="true">
         1동
-      </button>
-      <button type="button" class="bldg-badge" style="left: 17.5%; top: 28%;" data-bldg="4" title="4동 상태 보기">
+      </span>
+      <span class="bldg-badge" style="left: 17.5%; top: 28%;" data-bldg="4" aria-hidden="true">
         4동
-      </button>
-      <button type="button" class="bldg-badge" style="left: 74.5%; top: 5.5%;" data-bldg="W" title="창고 상태 보기">
+      </span>
+      <span class="bldg-badge" style="left: 74.5%; top: 5.5%;" data-bldg="W" aria-hidden="true">
         창고
-      </button>
-      <button type="button" class="bldg-badge" style="left: 69.9%; top: 30%;" data-bldg="C" title="2동 상태 보기">
+      </span>
+      <span class="bldg-badge" style="left: 69.9%; top: 30%;" data-bldg="C" aria-hidden="true">
         2동
-      </button>
+      </span>
       <!-- Production buttons placed at their respective factory lines -->
       <div class="hotspot-wrapper production-marker production-hotspot" id="hotspot-production-a" style="left: 66.6%; top: 46%;">
         <button type="button" class="hotspot-pill production-line-button" data-toggle-zone="production-a" data-production-btn="A" aria-pressed="false" aria-label="생산A 선택">
@@ -3967,9 +3966,9 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
           <div class="cmd-slot" data-cmd-slot="production-h"></div>
         </div>
       </div>
-      <button type="button" class="bldg-badge" style="left: 70%; top: 71.5%;" data-bldg="D" title="3동 상태 보기">
+      <span class="bldg-badge" style="left: 70%; top: 71.5%;" data-bldg="D" aria-hidden="true">
         3동
-      </button>
+      </span>
 
       <!-- 환경 (A동 옆) -->
       <div class="hotspot-wrapper" id="hotspot-environment" style="left: 22%; top: 68%;">
@@ -4614,13 +4613,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         });
       });
 
-      // Wire remaining building badges A, B, D-G
-      document.querySelectorAll('[data-bldg]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          openBuildingModal(btn.getAttribute('data-bldg'));
-        });
-      });
+      // [11-18] 동 표시(1·2·3·4동, 창고)는 클릭·호버 없는 순수 라벨로 전환 — 클릭 핸들러 연결하지 않음
 
       // Production buttons select a line without inventing production metrics.
       document.querySelectorAll('[data-production-btn], [data-warehouse-btn]').forEach(btn => {
@@ -5267,7 +5260,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
     sel.addEventListener('change',()=>{obSubTarget='';try{localStorage.setItem('jisu-cmd-target',sel.value)}catch(e){} if(!sel.value) goHome(); render();});
     setTarget('');
     try{const last=localStorage.getItem('jisu-cmd-target');if(last&&(last.startsWith('outbound:')||last.startsWith('inbound:')||[...sel.options].some(o=>o.value===last)))setTarget(last);}catch(e){}
-    document.querySelectorAll('[data-toggle-zone],[data-bldg],[data-zone-btn]').forEach(b=>b.addEventListener('click',()=>{const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-bldg')||b.getAttribute('data-zone-btn');if(NAMES[k]){setTarget(k);render();}if(b.hasAttribute('data-bldg'))fillModal(k);}));
+    document.querySelectorAll('[data-toggle-zone],[data-zone-btn]').forEach(b=>b.addEventListener('click',()=>{const k=b.getAttribute('data-toggle-zone')||b.getAttribute('data-zone-btn');if(NAMES[k]){setTarget(k);render();}}));
     window.addEventListener('storage',e=>{if(e.key===KEY)render();});
     window.jisuCmdRender=()=>render();
     window.jisuSetTarget=(val)=>{ setTarget(val); render(); };
@@ -5682,9 +5675,13 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         if(document.body.classList.contains('worker-zone-only')){ reset(card); return; }
         /* 모바일·태블릿 관리자 모드: .hotspot-wrapper의 transform / #mapStage의 container-type 때문에 fixed 기준이 버튼에 갇히므로 뷰포트 기준 좌표로 역산해 화면 안에 고정한다 */
         card.style.setProperty('transition','opacity 0.16s ease','important');
-        card.style.setProperty('width','calc(100vw - 16px)','important');
-        card.style.setProperty('height','calc(100dvh - 24px)','important');
-        card.style.setProperty('max-height','calc(100dvh - 24px)','important');
+        /* [11-18] 화면 전체를 덮지 않는 '둥근 유리 팝업' — 폰 340×580, 태블릿 480×640 기준으로 화면에 맞게 축소 */
+        const vw=window.innerWidth, vh=window.innerHeight;
+        const cw=Math.round(Math.min(vw>768?480:340, vw*0.86));
+        const ch=Math.round(Math.min(vw>768?640:580, vh*0.68));
+        card.style.setProperty('width',cw+'px','important');
+        card.style.setProperty('height',ch+'px','important');
+        card.style.setProperty('max-height',ch+'px','important');
         card.style.setProperty('left','0px','important');
         card.style.setProperty('top','0px','important');
         card.style.setProperty('right','auto','important');
@@ -5692,8 +5689,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
         card.style.setProperty('transform','none','important');
         card.style.setProperty('margin','0','important');
         const r=card.getBoundingClientRect();
-        const mx=8, my=12, vw=window.innerWidth, vh=window.innerHeight, targetLeft=Math.max(mx,Math.min(vw-mx-r.width,Math.round((vw-r.width)/2)));
-        const targetTop=Math.max(my,Math.min(vh-my-r.height,Math.round((vh-r.height)/2)));
+        const targetLeft=Math.max(8,Math.round((vw-cw)/2));
+        const targetTop=Math.max(12,Math.round((vh-ch)/2));
         card.style.setProperty('left',(targetLeft-r.left)+'px','important');
         card.style.setProperty('top',(targetTop-r.top)+'px','important');
         return;
