@@ -79,6 +79,7 @@ test('QR: 정상 토큰은 구역을 돌려주고, 위조/다른 비밀값/없�
   assert.equal(lib.verifyQr(t, 'other'), null);
   assert.equal(lib.verifyQr(t.slice(0, -2) + 'AA', 'k1'), null);
   assert.equal(lib.verifyQr(lib.makeQr('no-such-zone', 'k1'), 'k1'), null);
+  assert.equal(lib.verifyQr(lib.makeQr('warehouse', 'k1'), 'k1'), null);
   assert.equal(lib.verifyQr('garbage', 'k1'), null);
 });
 
