@@ -23,7 +23,20 @@ async function enroll(body) {
   return { ok: true, status: 'pending' };
 }
 
+const ALLOWED_ORIGIN = 'https://coarfamily-cyber.github.io';
+function setCors(req, res) {
+  const origin = req.headers && req.headers.origin;
+  if (origin === ALLOWED_ORIGIN) {
+    res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+}
+
 module.exports = async function handler(req, res) {
+  setCors(req, res);
+  if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
   let body = req.body;
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch (_) { body = {}; } }

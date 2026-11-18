@@ -177,3 +177,11 @@ test('목록: 관리자만 사번/구역/승인 상태를 받음', async () => {
   assert.equal(r.statusCode, 200);
   assert.deepEqual(r.body.users[0], { sabun: '1001', name: '1001', role: 'staff', zone: 'pitch', approved: false, disabled: false });
 });
+
+test('QR 주소 생성 스크립트 출력값은 서버가 검증 가능', async () => {
+  const { execFileSync } = require('node:child_process');
+  const out = execFileSync(process.execPath, ['scripts/make-qr.js'], { env: Object.assign({}, process.env, { ENROLL_SECRET: 'test-enroll-secret-123' }) }).toString();
+  const line = out.split('\n').find(l => l.startsWith('outbound\t'));
+  const token = line.split('?qr=')[1];
+  assert.equal(lib.verifyQr(token, 'test-enroll-secret-123'), 'outbound');
+});

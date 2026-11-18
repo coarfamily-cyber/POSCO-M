@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>지수 대시보드 · 작업자 가입</title>
+<style>
+  body{font-family:-apple-system,"Malgun Gothic",sans-serif;background:#f3f5f8;margin:0;padding:20px;color:#1d2433}
+  .card{max-width:420px;margin:24px auto;background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+  h1{font-size:20px;margin:0 0 6px} .sub{color:#667;font-size:14px;margin:0 0 18px}
+  label{display:block;font-size:13px;margin:12px 0 4px;color:#445}
+  input{width:100%;box-sizing:border-box;padding:11px;border:1px solid #cdd3dd;border-radius:8px;font-size:16px}
+  button{width:100%;margin-top:18px;padding:13px;border:0;border-radius:8px;background:#1f6feb;color:#fff;font-size:16px;font-weight:600}
+  button:disabled{background:#9db8e6}
+  .err{color:#c62828;font-size:14px;margin-top:12px;min-height:18px}
+  .ok{color:#1b5e20;font-size:15px;line-height:1.6}
+  .hide{display:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>작업자 가입</h1>
+  <p class="sub" id="zoneLabel">구역 QR을 찍어서 들어오세요.</p>
+
+  <form id="signupForm" class="hide" autocomplete="off">
+    <label for="sabun">사번 (영문/숫자 2~20자)</label>
+    <input id="sabun" name="sabun" inputmode="text" maxlength="20" required>
+    <label for="name">이름</label>
+    <input id="name" name="name" maxlength="20" required>
+    <label for="pw">비밀번호 (6자 이상, 로그인 때 사용)</label>
+    <input id="pw" name="pw" type="password" minlength="6" maxlength="128" required>
+    <label for="pw2">비밀번호 확인</label>
+    <input id="pw2" name="pw2" type="password" minlength="6" maxlength="128" required>
+    <button type="submit" id="submitBtn">가입 신청</button>
+    <div class="err" id="err"></div>
+  </form>
+
+  <div id="done" class="hide ok">
+    가입 신청이 완료되었습니다.<br>
+    관리자가 승인하면 사용할 수 있습니다. 승인 후 대시보드에서 사번과 비밀번호로 로그인하세요.
+  </div>
+  <div id="noqr" class="hide err">구역 QR로 접속해야 가입할 수 있습니다.</div>
+</div>
+
+<script>
+(function () {
+  var API = 'https://posco-m.vercel.app/api/enroll';
+  var qr = new URLSearchParams(location.search).get('qr') || '';
+  var form = document.getElementById('signupForm');
+  var err = document.getElementById('err');
+  var btn = document.getElementById('submitBtn');
+
+  // 표시용으로만 구역 이름을 읽습니다. 실제 구역 확인은 서버가 합니다.
+  function zoneForDisplay(token) {
+    try {
+      var part = token.split('.')[0].replace(/-/g, '+').replace(/_/g, '/');
+      while (part.length % 4) part += '=';
+      return decodeURIComponent(escape(atob(part)));
+    } catch (e) { return ''; }
+  }
+
+  if (!qr || qr.split('.').length !== 2) {
+    document.getElementById('noqr').classList.remove('hide');
+    return;
+  }
+  var zone = zoneForDisplay(qr);
+  document.getElementById('zoneLabel').textContent = '구역: ' + (zone || '확인 불가') + ' · 본인 사번과 비밀번호를 입력하세요.';
+  form.classList.remove('hide');
+
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    err.textContent = '';
+    var sabun = document.getElementById('sabun').value.trim();
+    var name = document.getElementById('name').value.trim();
+    var pw = document.getElementById('pw').value;
+    var pw2 = document.getElementById('pw2').value;
+    if (!/^[0-9A-Za-z]{2,20}$/.test(sabun)) { err.textContent = '사번은 영문/숫자 2~20자입니다.'; return; }
+    if (!name) { err.textContent = '이름을 입력하세요.'; return; }
+    if (pw.length < 6) { err.textContent = '비밀번호는 6자 이상이어야 합니다.'; return; }
+    if (pw !== pw2) { err.textContent = '비밀번호가 서로 다릅니다.'; return; }
+
+    btn.disabled = true; btn.textContent = '신청 중…';
+    fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ qr: qr, sabun: sabun, name: name, password: pw })
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, status: r.status, j: j }; });
+    }).then(function (res) {
+      if (res.ok) {
+        form.classList.add('hide');
+        document.getElementById('done').classList.remove('hide');
+        return;
+      }
+      var msg = res.status === 409 ? '이미 가입된 사번입니다. 관리자에게 문의하세요.'
+        : res.status === 403 ? '유효하지 않은 QR입니다. 구역 QR을 다시 찍어 주세요.'
+        : (res.j && res.j.error) || '가입에 실패했습니다. 잠시 후 다시 시도하세요.';
+      err.textContent = msg;
+      btn.disabled = false; btn.textContent = '가입 신청';
+    }).catch(function () {
+      err.textContent = '네트워크 오류입니다. 연결을 확인한 뒤 다시 시도하세요.';
+      btn.disabled = false; btn.textContent = '가입 신청';
+    });
+  });
+})();
+</script>
+</body>
+</html>
