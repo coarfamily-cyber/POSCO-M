@@ -832,6 +832,8 @@
     body > main{padding:6px !important;}
     body > header{padding-top:6px !important;padding-bottom:6px !important;}
     .cmd-layout{gap:0 !important;}
+    /* 데스크탑 상황판: 문서 전체는 스크롤하지 않음 (지도 고정, 사이드바만 자체 스크롤) */
+    @media(min-width:901px){ html:has(.cmd-layout), body:has(.cmd-layout){height:100%;overflow:hidden;} }
     /* Deep Slate Navy situation room surroundings */
     html,body{background-color:#0b0f19 !important;}
     body{background-image:radial-gradient(1200px 700px at 15% 0%,rgba(30,41,59,.45),transparent 65%),radial-gradient(900px 600px at 100% 100%,rgba(15,23,42,.65),transparent 65%) !important;background-attachment:fixed;}
@@ -5264,7 +5266,8 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(125,21
       const avail=window.innerHeight-(h?h.getBoundingClientRect().height:0)-(f?f.getBoundingClientRect().height:0)-pad;
       document.documentElement.style.setProperty('--jisu-fill-h',Math.max(320,avail)+'px');
     }
-    window.addEventListener('resize',fit); fit();
+    window.addEventListener('resize',fit); window.addEventListener('load',fit); fit();
+    if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(fit); }   /* 폰트 로딩 후 헤더 높이가 바뀌어도 맞춤 */
     (function gridify(){
       const stage=document.getElementById('mapStage'); if(!stage) return;
 
