@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611182240">
+  <meta name="jisu-build" content="202611182242">
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
@@ -2063,12 +2063,20 @@
     .cal-hint{font-size:11px;color:#9aa3b2;}
     @media(max-width:720px){.cal-body{grid-template-columns:1fr;}}
     /* calendar: same clear Apple-style glass as the detail cards */
-    .cal-modal{background:rgba(5,8,14,.18) !important;backdrop-filter:none !important;}
-    .cal-box{background:linear-gradient(180deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.03) 40%,rgba(255,255,255,0) 100%),rgba(12,18,28,.46) !important;
-      backdrop-filter:blur(10px) saturate(150%) !important;-webkit-backdrop-filter:blur(10px) saturate(150%) !important;
+    .cal-modal{background:rgba(5,8,14,.32) !important;backdrop-filter:none !important;}
+    .cal-box{background:linear-gradient(180deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.03) 40%,rgba(255,255,255,0) 100%),rgba(12,18,28,.74) !important;
+      backdrop-filter:blur(16px) saturate(160%) !important;-webkit-backdrop-filter:blur(16px) saturate(160%) !important;
       border:1px solid rgba(255,255,255,.28) !important;border-radius:24px !important;
-      box-shadow:0 30px 70px rgba(0,0,0,.38),0 8px 20px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.45) !important;text-shadow:0 1px 2px rgba(0,0,0,.35);}
-    .cal-box .cal-cell{background:rgba(255,255,255,.06) !important;border-color:rgba(255,255,255,.14) !important;}
+      box-shadow:0 30px 70px rgba(0,0,0,.38),0 8px 20px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.45) !important;text-shadow:0 1px 2px rgba(0,0,0,.5);}
+    /* 달력 창 가로 폭 확장 (좁은 화면은 96vw·컨테이너 폭 안에서 자동 축소) */
+    #calModal .cal-box{width:min(1160px,96vw) !important;max-width:100% !important;}
+    .cal-box .cal-cell{background:rgba(255,255,255,.08) !important;border-color:rgba(255,255,255,.14) !important;color:#ffffff !important;}
+    .cal-box .cal-cell.is-past{opacity:.78 !important;}
+    .cal-box .cal-num{color:#ffffff !important;}
+    .cal-box .cal-cell.sun .cal-num{color:#fca5a5 !important;}
+    .cal-box .cal-cell.sat .cal-num{color:#93c5fd !important;}
+    .cal-box .cal-chip.w{background:rgba(74,222,128,.30) !important;color:#dcfce7 !important;}
+    .cal-box .cal-chip.n{background:rgba(251,191,36,.30) !important;color:#fef08a !important;}
     .cal-box .cal-cell.empty{background:transparent !important;border-color:transparent !important;}
     .cal-box .cal-cell:not(.empty):hover{border-color:rgba(165,180,252,.8) !important;background:rgba(255,255,255,.10) !important;}
     .cal-box .cal-cell.is-picked{background:rgba(129,140,248,.26) !important;border-color:rgba(165,180,252,.9) !important;}
@@ -2076,15 +2084,23 @@
     .cal-box .cal-nav,.cal-box .cal-today{background:rgba(255,255,255,.10) !important;border:1px solid rgba(255,255,255,.22) !important;color:#fff !important;}
     .cal-box .cal-nav:hover,.cal-box .cal-today:hover{background:rgba(255,255,255,.18) !important;}
     .cal-box .cal-close:hover{background:rgba(255,255,255,.14) !important;}
-    .cal-box .cal-side{background:rgba(255,255,255,.07) !important;border:1px solid rgba(255,255,255,.18) !important;border-radius:18px !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.14);}
-    .cal-box .cz-add textarea{background:rgba(0,0,0,.30) !important;border-color:rgba(255,255,255,.22) !important;}
-    .cal-box .cz-add textarea::placeholder{color:rgba(255,255,255,.38) !important;}
-    .cal-box .cz-item{background:rgba(255,255,255,.07) !important;border-color:rgba(255,255,255,.16) !important;border-radius:12px !important;}
+    .cal-box .cal-side{background:linear-gradient(180deg,rgba(255,255,255,.07) 0%,rgba(255,255,255,.02) 100%),rgba(15,23,42,.46) !important;border:1px solid rgba(255,255,255,.18) !important;border-radius:18px !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.14);}
+    .cal-box .cz-add label{color:#ffffff !important;}
+    .cal-box .cz-add label small{color:rgba(255,255,255,.86) !important;}
+    .cal-box .cz-add textarea{background:rgba(0,0,0,.30) !important;border-color:rgba(255,255,255,.22) !important;color:#ffffff !important;}
+    .cal-box .cz-add textarea::placeholder{color:rgba(255,255,255,.52) !important;}
+    .cal-box .cz-item{background:rgba(15,23,42,.52) !important;border-color:rgba(255,255,255,.16) !important;border-radius:12px !important;}
+    .cal-box .cz-item b{color:#ffffff !important;}
+    .cal-box .cz-item .cz-t{color:#f1f5f9 !important;}
+    .cal-box .cal-side label{color:rgba(255,255,255,.90) !important;}
+    .cal-box #czBatchOcrStatus,.cal-box #czGemMiniSt{color:rgba(255,255,255,.86) !important;}
+    .cal-box .cmd-attach-hint{color:rgba(255,255,255,.86) !important;}
     .cal-box .cz-item.editing{background:rgba(0,0,0,.30) !important;border-color:rgba(165,180,252,.9) !important;}
     .cal-box .cz-b{background:rgba(255,255,255,.10) !important;border-color:rgba(255,255,255,.22) !important;}
     .cal-box .cz-b.ok,.cal-box .cz-save{background:rgba(99,102,241,.85) !important;border-color:rgba(165,180,252,.6) !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.25);}
     .cal-box .cz-save:disabled{background:rgba(255,255,255,.08) !important;color:rgba(255,255,255,.4) !important;}
-    .cal-box .cal-week,.cal-box .cal-hint,.cal-box .cal-note{color:rgba(255,255,255,.65) !important;}
+    .cal-box .cal-week,.cal-box .cal-hint,.cal-box .cal-note{color:rgba(255,255,255,.88) !important;}
+    .cal-box .cal-more,.cal-box .cz-list-h,.cal-box .cz-empty,.cal-box .cz-state{color:rgba(255,255,255,.88) !important;}
     .cal-box .cal-week span:first-child{color:#fca5a5 !important;}.cal-box .cal-week span:last-child{color:#93c5fd !important;}
     /* calendar day hover: pop-out like the clock */
     .cal-box .cal-cell{position:relative;transition:transform .18s cubic-bezier(.2,.9,.3,1.25),box-shadow .18s,background .18s,border-color .18s !important;}
