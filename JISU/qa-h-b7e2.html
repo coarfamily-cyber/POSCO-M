@@ -1,0 +1,305 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
+<title>POSCO-M QA 하네스(임시)</title>
+<style>html,body{margin:0;background:#0b1220;color:#e2e8f0;font:12px/1.45 -apple-system,system-ui,sans-serif}
+#stage{position:relative;height:1520px}
+#bar{position:sticky;top:0;z-index:5;background:#0f172a;border-bottom:1px solid #334155;padding:6px 10px;font-weight:800}
+pre{white-space:pre-wrap;padding:10px;background:#0f172a;margin:0;font-size:11px;max-height:900px;overflow:auto}</style></head>
+<body><div id="bar">POSCO-M QA · <span id="summary">-</span></div><div id="stage"></div><pre id="out">running...</pre>
+<script>
+const Q = "qa-copy-b7e2.html";
+const KSTD = d => new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d||new Date());
+const TODAY = KSTD();
+const Y1 = KSTD(new Date(Date.parse(TODAY+'T12:00:00+09:00') - 864e5));
+const D1 = KSTD(new Date(Date.parse(TODAY+'T12:00:00+09:00') + 864e5));
+const R = {checks:[], log:[], data:{}};
+function rec(n,pass,d){ R.checks.push({n:n,p:!!pass,d:d===undefined?'':String(d).slice(0,900)}); paint(); }
+function note(s){ R.log.push(String(s).slice(0,600)); paint(); }
+function paint(){
+  const fail = R.checks.filter(c=>!c.p).length;
+  document.getElementById('out').textContent =
+    'TODAY ' + TODAY + '  checks ' + R.checks.length + '  fail ' + fail + '\n' +
+    R.checks.map(c=>(c.p?'PASS ':'FAIL ')+c.n+(c.d?' :: '+c.d:'')).join('\n') + '\n---- notes\n' + R.log.join('\n');
+  document.getElementById('summary').textContent = R.checks.length + ' / fail ' + fail;
+}
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+function W(id){ return document.getElementById(id).contentWindow; }
+function D(id){ return document.getElementById(id).contentDocument; }
+async function ready(id, ms){
+  const limit = ms||25000, t0 = Date.now();
+  while(Date.now()-t0 < limit){
+    const d = D(id);
+    if(d && d.readyState==='complete' && d.querySelector('.hotspot-pill')) { await sleep(500); return true; }
+    await sleep(150);
+  }
+  return false;
+}
+function addFrame(id, w, h, url, scale, x, y){
+  const box = document.createElement('div');
+  box.style.cssText = 'position:absolute;left:'+x+'px;top:'+y+'px;width:'+Math.round(w*scale)+'px;height:'+Math.round(h*scale)+'px;overflow:hidden;outline:1px solid #334155';
+  const f = document.createElement('iframe');
+  f.id=id; f.width=w; f.height=h; f.src=url;
+  f.style.cssText='transform-origin:0 0;transform:scale('+scale+');border:0;display:block';
+  box.appendChild(f); document.getElementById('stage').appendChild(box); return f;
+}
+function ev(id, code){ try{ return W(id).eval(code); }catch(e){ note('eval error '+id+': '+(e&&e.message)); return 'EVALERR:'+(e&&e.message); } }
+function errs(id){
+  try{
+    const a = (W(id).__qaErrors||[]);
+    return a.filter(x=>!/csp-blocked/.test(x)).slice(0,10);
+  }catch(e){ return ['n/a']; }
+}
+function cspCount(id){ try{ return W(id).__qaCspBlocked||0; }catch(e){ return -1; } }
+function cmdsIn(id){ try{ return JSON.parse(W(id).localStorage.getItem('jisu-commands-v1')||'[]'); }catch(e){ return null; } }
+function schIn(id){ try{ return JSON.parse(W(id).localStorage.getItem('jisu-schedule-v1')||'[]'); }catch(e){ return null; } }
+function getLS(id,k){ try{ return W(id).localStorage.getItem(k); }catch(e){ return null; } }
+function setLS(id,k,v){ try{ W(id).localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+function blocked(id){ try{ return W(id).__qaBlocked; }catch(e){ return 'n/a'; } }
+
+function seedBase(id){
+  const cmds = [
+    {id:'c1',target:'outbound',kind:'instruction',text:'RAS-2 33 TON',at:'11. 18. 08:10',day:Y1,completed:true,done:33,completedAt:'11. 18. 15:00',closed:true},
+    {id:'c4',target:'production-a',kind:'instruction',text:'생산A 12 TON',at:'11. 19. 09:00',day:TODAY},
+    {id:'c5',target:'*',kind:'notice',text:'바닥 공사 안내',at:'11. 19. 09:10',day:TODAY}
+  ];
+  setLS(id,'jisu-commands-v1',JSON.stringify(cmds));
+  setLS(id,'jisu-schedule-v1','[]');
+  setLS(id,'jisu-memos-v1',JSON.stringify([{id:'m1',target:'outbound',tag:'issue',text:'파렛트 파손 2건',at:'11. 19. 10:00',by:'김지수'}]));
+  setLS(id,'jisu-pitch-records-v1',JSON.stringify({}));
+  setLS(id,'jisu-inbound-records-v1',JSON.stringify({}));
+  setLS(id,'jisu-user','김지수');
+}
+async function reset(id){
+  seedBase(id);
+  ev(id,"location.reload()");
+  await sleep(900);
+  return ready(id);
+}
+function storageEvent(id,key){
+  ev(id, "(function(){ try{ window.dispatchEvent(new StorageEvent('storage',{key:"+JSON.stringify(key)+",newValue:null,oldValue:null})); }catch(e){ window.dispatchEvent(Object.assign(new Event('storage'),{key:"+JSON.stringify(key)+"})); } })()");
+}
+
+/* ---------- 공통 화면 점검 ---------- */
+async function uiSanity(id,label){
+  const ok = await ready(id);
+  rec(label+' 로드', ok, '');
+  if(!ok) return;
+  const zones = ev(id,"Array.from(document.querySelectorAll('.hotspot-pill[data-toggle-zone]')).map(b=>b.getAttribute('data-toggle-zone'))") || [];
+  rec(label+' 구역 버튼 14개', zones.length===14, zones.length+'개');
+  ev(id,"document.getElementById('liveClock').click()"); await sleep(350);
+  rec(label+' 달력 열림', ev(id,"!document.getElementById('calModal').hidden"), '');
+  rec(label+' 달력 칸 수', ev(id,"document.querySelectorAll('#calGrid .cal-cell[data-day]').length")>=28, ev(id,"document.querySelectorAll('#calGrid .cal-cell[data-day]').length"));
+  ev(id,"document.getElementById('calClose').click()"); await sleep(150);
+  ev(id,"document.getElementById('perfBtn').click()"); await sleep(500);
+  rec(label+' 실적 창 열림', ev(id,"!document.getElementById('perfModal').hidden"), ev(id,"(document.getElementById('pfRange')||{}).textContent"));
+  rec(label+' 실적 렌더', /전체 완료율/.test(ev(id,"document.getElementById('pfSlide').innerText")||''), '');
+  rec(label+' 실적 내부키 노출 없음', !/outbound:|inbound:|production-a/.test(ev(id,"document.getElementById('pfSlide').innerText")||''), '');
+  ev(id,"document.getElementById('pfClose').click()"); await sleep(120);
+  ev(id,"(function(){var i=document.getElementById('hdrSearchInput'); i.value='2동'; i.dispatchEvent(new Event('input',{bubbles:true}));})()");
+  await sleep(600);
+  const hits = ev(id,"document.querySelectorAll('#hdrSearchPanel button').length");
+  rec(label+' 검색 결과', hits>0, hits+'건');
+  ev(id,"(function(){var c=document.getElementById('hdrSearchClear'); if(c) c.click();})()");
+  await sleep(120);
+}
+
+/* ---------- 1-1 대문자 강제 변환 예외 ---------- */
+async function t1(){
+  const id='fD';
+  const gem = ev(id,"(function(){var i=document.getElementById('czGemKeyInput'); i.focus(); i.value='AIzaSyAbCdEf123_x'; i.dispatchEvent(new Event('input',{bubbles:true})); return i.value;})()");
+  rec('1-1 Gemini 키 소문자 유지', gem==='AIzaSyAbCdEf123_x', gem);
+  const worker = ev(id,"(function(){var i=document.getElementById('inbNewWorker'); i.focus(); i.value='kim min seo'; i.dispatchEvent(new Event('input',{bubbles:true})); return i.value;})()");
+  rec('1-1 입고 작업자 이름 유지', worker==='kim min seo', worker);
+  const search = ev(id,"(function(){var i=document.getElementById('hdrSearchInput'); i.focus(); i.value='ras-2'; i.dispatchEvent(new Event('input',{bubbles:true})); return i.value;})()");
+  rec('1-1 검색어 유지', search==='ras-2', search);
+  const ctrl = ev(id,"(function(){var t=document.getElementById('czText'); t.value='abc'; t.dispatchEvent(new Event('input',{bubbles:true})); return t.value;})()");
+  rec('1-1 일반 입력칸은 대문자 유지(기존 동작)', ctrl==='ABC', ctrl);
+  ev(id,"(function(){var t=document.getElementById('czText'); t.value='';})()");
+}
+
+/* ---------- 1-2 천 단위 쉼표 ---------- */
+async function t2(){
+  const id='fD';
+  const p = ev(id,"[window.jisuParseNum('18,000'),window.jisuParseNum('1,200'),window.jisuParseNum('1.5'),window.jisuParseNum('2700'),window.jisuParseNum('1,5'),String(window.jisuParseNum('2,700.5'))]");
+  rec('1-2 jisuParseNum 기본값', JSON.stringify(p)==='[18000,1200,1.5,2700,1.5,"2700.5"]', JSON.stringify(p));
+  /* 목표 18,000 KG 작업: 진행 9,000 입력 → 완료하면 목표 미달(short)이어야 한다 (예전엔 목표 18로 읽혀 미달 아님) */
+  let cmds = cmdsIn(id)||[];
+  cmds.push({id:'t18',target:'outbound',kind:'instruction',text:'RAS-2 18,000 KG',at:'11. 19. 09:30',day:TODAY});
+  cmds.push({id:'t12',target:'inbound:사각박스',kind:'instruction',text:'사각박스 1,200 EA',at:'11. 19. 09:35',day:TODAY,done:200});
+  setLS(id,'jisu-commands-v1',JSON.stringify(cmds));
+  ev(id,"(function(){var s=document.getElementById('cmdTarget'); s.value='outbound'; s.dispatchEvent(new Event('change',{bubbles:true}));})()");
+  await sleep(600);
+  const shownGoal = ev(id,"(function(){var i=document.querySelector('[data-cmd-progress=\"t18\"]'); if(!i) return 'no-input'; var it=i.closest('.cmd-item'); return it?it.innerText.replace(/\\n/g,' | '):'no-item';})()");
+  rec('1-2 화면 목표 18000 표시', /18,?000/.test(String(shownGoal)), String(shownGoal).slice(0,200));
+  ev(id,"(function(){var i=document.querySelector('[data-cmd-progress=\"t18\"]'); i.focus(); i.value='9000'; i.dispatchEvent(new Event('input',{bubbles:true}));})()");
+  await sleep(300);
+  ev(id,"(function(){var b=document.querySelector('[data-cmd-complete=\"t18\"]'); if(b) b.click();})()");
+  await sleep(600);
+  const c18 = (cmdsIn(id)||[]).find(x=>x.id==='t18')||{};
+  rec('1-2 목표 18000 기준 부족완료 판정', c18.done===9000 && c18.completed===true && c18.short===true, JSON.stringify({done:c18.done,completed:c18.completed,short:c18.short}));
+  /* 이월 잔량 = 18000-9000 = 9000 KG */
+  const carryErr = ev(id,"window.jisuCarryAct('t18','carry')");
+  await sleep(400);
+  let all = cmdsIn(id)||[];
+  const carried18 = all.filter(x=>x.carryFrom==='t18');
+  rec('1-2 이월 잔량 9000 KG', carried18.length===1 && /9000 KG/.test(carried18[0].text||'') && carried18[0].origGoal===18000, JSON.stringify(carried18.map(x=>x.text))+' err='+carryErr);
+  rec('1-2 이월 id 결정적(c_원본_날짜)', carried18.length===1 && carried18[0].id==='c_t18_'+TODAY, (carried18[0]||{}).id);
+  ev(id,"window.jisuCarryAct('t18','carry')");
+  await sleep(300);
+  const again = (cmdsIn(id)||[]).filter(x=>x.carryFrom==='t18');
+  rec('1-2 이월 중복 생성 없음', again.length===1, again.length+'건');
+  /* 1,200 EA 진행 200 → 이월 1000 */
+  ev(id,"window.jisuCarryAct('t12','carry')");
+  await sleep(400);
+  const carried12 = (cmdsIn(id)||[]).filter(x=>x.carryFrom==='t12');
+  rec('1-2 1,200 EA 잔량 1000 EA', carried12.length===1 && /1000 EA/.test(carried12[0].text||''), JSON.stringify(carried12.map(x=>x.text)));
+  /* 실적 목표 합계: 지난 날짜에 마감된 18,000 KG 작업 → 주간 실적 goal 18000 */
+  const arr = cmdsIn(id)||[];
+  const t18 = arr.find(x=>x.id==='t18'); if(t18){ t18.day=Y1; t18.at='11. 18. 09:30'; t18.closed=true; t18.completed=true; t18.done=9000; }
+  setLS(id,'jisu-commands-v1',JSON.stringify(arr));
+  ev(id,"window.jisuPerfOpen()"); await sleep(700);
+  ev(id,"(function(){var b=Array.from(document.querySelectorAll('[data-pf-unit]')).find(function(x){return x.textContent==='KG';}); if(b) b.click();})()"); await sleep(500);
+  const pf = ev(id,"document.getElementById('pfSlide').innerText");
+  R.data.perf = String(pf).slice(0,600);
+  rec('1-2 실적 목표 18000 읽기', /18000/.test(String(pf)), String(pf).replace(/\n/g,' | ').slice(0,300));
+  ev(id,"document.getElementById('pfClose').click()"); await sleep(150);
+}
+
+/* ---------- 1-3 피치 실시간 반영 ---------- */
+async function t3(){
+  const rec1 = {}; rec1[TODAY] = {grind1:'',grind2:'',add1s:[''],moves:[],workState:'idle'};
+  setLS('fM','jisu-pitch-records-v1',JSON.stringify(rec1));
+  await sleep(300);
+  /* 모바일에서 작업시작 + 분쇄 입력 (같은 출처 다른 문서 → storage 이벤트) */
+  ev('fM',"(function(){var a=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}'); var k='"+TODAY+"'; var r=a[k]||{}; r.workState='work'; r.startedAt='2026. 11. 19. 10:05:00'; r.grind1='120'; a[k]=r; localStorage.setItem('jisu-pitch-records-v1',JSON.stringify(a)); return r.workState;})()");
+  await sleep(700);
+  const st = ev('fD',"document.getElementById('pitchWorkStatus').textContent");
+  const g1 = ev('fD',"document.querySelector('[data-pitch-field=\\'grind1\\']').value");
+  rec('1-3 피치 작업시작 즉시 반영', /작업중/.test(String(st)) && /10:05/.test(String(st)), String(st));
+  rec('1-3 피치 분쇄량 즉시 반영', String(g1)==='120', String(g1));
+  /* 다시 대기로 */
+  ev('fM',"(function(){var a=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}'); var k='"+TODAY+"'; var r=a[k]||{}; r.workState='idle'; delete r.startedAt; localStorage.setItem('jisu-pitch-records-v1',JSON.stringify(a));})()");
+  await sleep(500);
+  const st2 = ev('fD',"document.getElementById('pitchWorkStatus').textContent");
+  rec('1-3 피치 대기 복귀 반영', /작업 대기/.test(String(st2)), String(st2));
+}
+
+/* ---------- 1-4 입고 교대 후 달력·실적·자동 엑셀 ---------- */
+async function t4(){
+  const id='fD';
+  const recIn = {}; recIn[TODAY] = {day:TODAY, shiftKey:TODAY+'-am', workState:'idle', completedAt:'11. 19. 16:20',
+    rows:[], archivedRows:[{lot:'L9',bag:'009',kg:'12000',worker:'김지수',loc:'서울12가3456',rid:'r9'}]};
+  setLS(id,'jisu-inbound-records-v1',JSON.stringify(recIn));
+  ev(id,"window.jisuCalOpenDay('"+TODAY+"')"); await sleep(400);
+  const cell = ev(id,"(function(){var c=document.querySelector('#calGrid [data-day=\""+TODAY+"\"]'); return c?c.innerText.replace(/\\n/g,' | '):'none';})()");
+  rec('1-4 달력에 교대 마감 입고 기록 표시', /기록/.test(String(cell)), String(cell));
+  /* 실적: 기록(기록 탭)에 12,000 kg */
+  const hist = ev(id,"document.getElementById('czHist').innerText");
+  rec('1-4 달력 상세 기록에 입고 중량', /12,?000|12 TON/.test(String(hist)), String(hist).replace(/\n/g,' | ').slice(0,300));
+  ev(id,"document.getElementById('calClose').click()"); await sleep(150);
+  ev(id,"window.jisuPerfOpen()"); await sleep(700);
+  ev(id,"(function(){var b=document.querySelector('[data-pf-day=\""+TODAY+"\"]'); if(b) b.click();})()"); await sleep(300);
+  const tip = ev(id,"(function(){var t=document.getElementById('pfTip'); return t?t.innerText:'';})()");
+  rec('1-4 실적에 입고 12 TON 반영', /입고 12 TON/.test(String(tip)), String(tip));
+  ev(id,"document.getElementById('pfClose').click()"); await sleep(150);
+  /* 자동 엑셀: 다른 기기(모바일) 완료 소식이 storage 이벤트로 오면 PC가 엑셀을 저장 */
+  ev(id,"(function(){localStorage.removeItem('jisu-inb-auto-xlsx-"+TODAY+"-am'); localStorage.removeItem('jisu-inb-auto-xlsx-"+TODAY+"');})()");
+  const before = Number(blocked(id))||0;
+  storageEvent(id,'jisu-inbound-records-v1');
+  await sleep(1500);
+  const mark = ev(id,"(function(){var out=[]; for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i); if(k&&k.indexOf('jisu-inb-auto-xlsx-')===0) out.push(k+'='+localStorage.getItem(k));} return out.join(' | ');})()");
+  rec('1-4 자동 엑셀 트리거(마커 기록)', /jisu-inb-auto-xlsx-/.test(String(mark)), String(mark));
+  /* 엑셀 내용: archivedRows 12,000 kg 포함 */
+  const ex = await ev(id,"(async function(){ try{ return JSON.stringify(await window.jisuInboundArchive.exportExcel()); }catch(e){ return 'ERR:'+e.message; } })()");
+  rec('1-4 입고 엑셀 생성', String(ex).indexOf('true')>=0, String(ex));
+  R.data.inbExcel = String(ex);
+}
+
+/* ---------- 3-2 일괄등록 kind + 3-3 즉시등록 알림 ---------- */
+async function t5(){
+  const id='fD';
+  await reset(id);
+  ev(id,"(function(){ if(document.getElementById('calModal').hidden) document.getElementById('liveClock').click(); })()");
+  await sleep(300);
+  ev(id,"(function(){ var b=document.getElementById('calBatchBtn'); if(b) b.click(); })()");
+  await sleep(400);
+  const table = [
+    ['상차일','출차시간','공장','품목','중량','파렛트','하차지','차량번호','차종','수량'].join('\t'),
+    [D1,'08:00','2공장','RAS-2','16KG','960P','세종','서울12가3456','윙바디','16 KG / 960 P'].join('\t'),
+    [D1,'13:00','2공장','CP3K','5T','','세종','대구56다7890','카고','5 TON'].join('\t')
+  ].join('\n');
+  ev(id,"(function(){var s=document.getElementById('czBatchTarget'); s.value='inbound'; s.dispatchEvent(new Event('change',{bubbles:true})); var l=document.getElementById('czBatchLockTarget'); l.checked=false; l.dispatchEvent(new Event('change',{bubbles:true})); var t=document.getElementById('czBatchText'); t.value="+JSON.stringify(table)+"; t.dispatchEvent(new Event('input',{bubbles:true}));})()");
+  await sleep(500);
+  ev(id,"document.getElementById('czBatchSaveBtn').click()");
+  await sleep(900);
+  const sch = schIn(id)||[];
+  R.data.batch = sch.map(x=>x.date+'|'+x.target+'|'+x.kind+'|'+x.text).join('\n');
+  rec('3-2 배차 일괄등록 2건 저장', sch.length===2, String(sch.length));
+  rec('3-2 배차 일괄등록 kind=instruction', sch.every(x=>x.kind==='instruction'), JSON.stringify(sch.map(x=>x.kind)));
+  rec('3-2 배차는 출고(outbound)로 저장', sch.every(x=>x.target==='outbound'), JSON.stringify(sch.map(x=>x.target)));
+  ev(id,"document.getElementById('calClose').click()"); await sleep(150);
+
+  /* 달력 오늘 즉시 등록 → 오전/오후 분리 + 알림 발송 시도 */
+  await reset(id);
+  const before = Number(blocked(id))||0;
+  ev(id,"window.jisuCalOpenDay('"+TODAY+"')"); await sleep(350);
+  ev(id,"(function(){var t=document.getElementById('czText'); t.value='입고 오전 SH 36 TON\\n입고 오후 HH 36 TON'; t.dispatchEvent(new Event('input',{bubbles:true}));})()");
+  ev(id,"document.getElementById('czSave').click()");
+  await sleep(1200);
+  const cm = (cmdsIn(id)||[]).filter(x=>x.day===TODAY && /SH 36 TON|HH 36 TON/.test(x.text||''));
+  R.data.calToday = cm.map(x=>x.id+'|'+x.target+'|'+x.text).join('\n');
+  rec('달력 오늘 오전/오후 2건 즉시등록', cm.length===2 && cm.some(x=>/^오전 SH 36 TON$/.test(x.text)) && cm.some(x=>/^오후 HH 36 TON$/.test(x.text)), R.data.calToday);
+  const after = Number(blocked(id))||0;
+  rec('3-3 당일 등록 시 알림 발송 시도', after>before, 'blocked '+before+' → '+after);
+  ev(id,"document.getElementById('calClose').click()"); await sleep(150);
+}
+
+/* ---------- 엑셀(금일작업) ---------- */
+async function t6(){
+  const id='fD';
+  const ex = await ev(id,"(async function(){ try{ return JSON.stringify(await window.jisuExportWork({skipPrompt:true, filename:'QA_금일작업'})); }catch(e){ return 'ERR:'+e.message; } })()");
+  rec('엑셀(금일작업) 생성', /xlsx/.test(String(ex)), String(ex));
+  R.data.workExcel = String(ex);
+}
+
+(async function(){
+  try{
+    addFrame('fD', 1919, 992, Q+'?cb='+Date.now(), 0.62, 8, 8);
+    addFrame('fM', 390, 844, Q+'?cb='+Date.now(), 1, 8, 640);
+    addFrame('fI', 390, 844, Q+'?zone=inbound&cb='+Date.now(), 1, 410, 640);
+    note('phase 0: 잔여 상태 초기화');
+    await Promise.all(['fD','fM','fI'].map(async id=>{ await ready(id); }));
+    ev('fD',"(function(){Object.keys(localStorage).filter(k=>/^jisu-/.test(k)).forEach(k=>localStorage.removeItem(k));})()");
+    ev('fM',"(function(){Object.keys(localStorage).filter(k=>/^jisu-/.test(k)).forEach(k=>localStorage.removeItem(k));})()");
+    for(const id of ['fD','fM','fI']){ ev(id,"location.reload()"); }
+    await sleep(2500);
+
+    note('phase 1: 빈 상태 화면 점검');
+    await uiSanity('fD','데스크탑');
+    await uiSanity('fM','모바일');
+    const info = ev('fI',"(function(){var w=document.querySelector('.hotspot-wrapper.is-worker-zone .expand-card'); if(!w) return 'no-card'; var r=w.getBoundingClientRect(); return Math.round(r.width)+'x'+Math.round(r.height)+' inside='+(r.left>=-1&&r.top>=-1&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1);})()");
+    rec('?zone=inbound 작업자 화면 카드', /inside=true/.test(String(info)), String(info));
+
+    note('phase 2: 패치 검증 (1-1 ~ 1-4)');
+    await reset('fD');
+    await t1();
+    await t2();
+    await t3();
+    await t4();
+
+    note('phase 3: 일괄등록·달력·엑셀');
+    await t5();
+    await t6();
+
+    note('phase 4: JS 오류');
+    rec('JS 오류 0 (데스크탑)', errs('fD').length===0, JSON.stringify(errs('fD')));
+    rec('JS 오류 0 (모바일)', errs('fM').length===0, JSON.stringify(errs('fM')));
+    rec('JS 오류 0 (구역 화면)', errs('fI').length===0, JSON.stringify(errs('fI')));
+    note('차단된 네트워크 요청 fD='+blocked('fD')+' fM='+blocked('fM')+' / CSP 위반 fD='+cspCount('fD'));
+    R.data.finalCmds = JSON.stringify((cmdsIn('fD')||[]).map(x=>x.id+'|'+x.target+'|'+x.text+'|done='+x.done)).slice(0,1500);
+    window.__QA = R; window.__QADONE = true; document.title='QA_DONE'; paint();
+  }catch(e){
+    note('FATAL '+((e&&e.stack)||e));
+    window.__QA = R; window.__QADONE=true; document.title='QA_DONE'; paint();
+  }
+})();
+</script></body></html>
