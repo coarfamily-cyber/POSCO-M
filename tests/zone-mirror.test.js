@@ -10,12 +10,13 @@ const end = html.indexOf('/* ZONE-MIRROR-END */');
 assert.ok(begin > 0 && end > begin, 'mirror block markers not found');
 const block = html.slice(begin, end + '/* ZONE-MIRROR-END */'.length);
 
-function load(flag, updates) {
+function load(flag, updates, storedJson) {
   const db = { ref(p) { return { update(obj) { updates.push({ path: p, obj }); return Promise.resolve(); } }; } };
   const win = { JISU_ZONE_MIRROR: flag };
   const ROOT = 'jisu';
-  const fn = new Function('db', 'window', 'ROOT', block + '\nreturn { buildZoneMirror, mirrorZones };');
-  return fn(db, win, ROOT);
+  const payloadOf = () => (storedJson === undefined ? null : storedJson);
+  const fn = new Function('db', 'window', 'ROOT', 'payloadOf', block + '\nreturn { buildZoneMirror, mirrorZones, win: window };');
+  return fn(db, win, ROOT, payloadOf);
 }
 
 const sample = JSON.stringify([
@@ -60,5 +61,18 @@ test('구역 이름에 금지 문자가 있거나 JSON이 깨졌으면 쓰지 �
   const up = []; const m = load(true, up);
   assert.equal(m.buildZoneMirror('not json'), null);
   m.mirrorZones('jisu-commands-v1', 'not json');
+  assert.equal(up.length, 0);
+});
+
+test('수동 복사 함수: 켜져 있으면 현재 작업 목록을 한 번 복사한다', () => {
+  const up = []; const m = load(true, up, sample);
+  assert.equal(m.win.jisuSeedZoneCopy(), true);
+  assert.equal(up.length, 1);
+  assert.deepEqual(Object.keys(up[0].obj['zones/outbound/commands']).sort(), ['a1', 'a2']);
+});
+
+test('수동 복사 함수: 저장된 값이 없으면 아무 것도 쓰지 않는다', () => {
+  const up = []; const m = load(true, up, undefined);
+  assert.equal(m.win.jisuSeedZoneCopy(), false);
   assert.equal(up.length, 0);
 });

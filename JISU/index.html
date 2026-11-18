@@ -180,6 +180,7 @@
     appId: "1:1036931213595:web:132e909e0435bccce7cbbe"
   };
   window.JISU_DB_ROOT = "jisu";   // Realtime DB 루트 노드 (보안 규칙도 /jisu 기준)
+  window.JISU_ZONE_MIRROR = true;   // 4a: 작업 목록을 구역별 경로(jisu/zones, jisu/notices)에도 복사. 끄려면 false
   </script>
   <link rel="manifest" id="jisuManifestLink" href="./manifest.webmanifest?v=202611151130" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=202611151130" />
@@ -9342,6 +9343,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       db.ref(ROOT).update(upd).catch(function(e){ console.warn('[jisu-db] 구역 복사 실패:',e&&e.code||e); });
     }catch(e){ console.warn('[jisu-db] 구역 복사 예외:',e); }
   }
+  /* 콘솔에서 한 번 실행: 켜기 전 기존 작업 목록을 구역 경로로 한꺼번에 복사 (쓰기 1회, 실패 시 경고만) */
+  window.jisuSeedZoneCopy=function(){ var v=payloadOf('jisu-commands-v1'); if(v==null) return false; mirrorZones('jisu-commands-v1', v); return true; };
   /* ZONE-MIRROR-END */
   /* ZONE-VERIFY-BEGIN (4b 준비: 구역 복사본을 원본과 비교하는 읽기 전용 점검. 자동 실행 없음, 화면 동작 변화 없음. 콘솔에서 jisuVerifyZoneCopy() 로 실행) */
   function compareZoneCopy(stateArr, zonesVal, noticesVal){
