@@ -175,6 +175,7 @@ test('목록: 관리자만 사번/구역/승인 상태를 받음', async () => {
   reset(); seed('1001', { role: 'staff', zone: 'pitch', approved: false });
   const r = await call(approveMod, { body: { action: 'list' }, headers: adminAuth });
   assert.equal(r.statusCode, 200);
+  assert.deepEqual(r.body.zones, lib.ZONES);
   assert.deepEqual(r.body.users[0], { sabun: '1001', name: '1001', role: 'staff', zone: 'pitch', approved: false, disabled: false });
 });
 

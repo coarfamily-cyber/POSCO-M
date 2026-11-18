@@ -52,8 +52,7 @@
 <script>
 (function () {
   var API = 'https://posco-m.vercel.app/api/approve';
-  var ZONES = ['outbound','inbound','pitch','packaging','packaging-d','environment','warehouse',
-    'production-a','production-b','production-c','production-d','production-e','production-f','production-g','production-h'];
+  var zones = []; // 서버(list 응답)에서 받아 채움: 구역 목록은 lib/jisu-auth.js 한 곳에서만 관리
   var cfg = {
     apiKey: 'AIzaSyA8b5Am0NOyZlN3hzlYWFcJN-8J4qkrICc',
     authDomain: 'posco-m-jisu.firebaseapp.com',
@@ -88,7 +87,7 @@
       tr.appendChild(td(u.name));
 
       var sel = document.createElement('select');
-      ZONES.forEach(function (z) {
+      zones.forEach(function (z) {
         var o = document.createElement('option'); o.value = z; o.textContent = z;
         if (z === u.zone) o.selected = true;
         sel.appendChild(o);
@@ -127,6 +126,7 @@
     setErr('err', '');
     callApi({ action: 'list' }).then(function (res) {
       if (!res.ok) { setErr('err', res.j.error || '목록을 불러오지 못했습니다.'); return; }
+      zones = res.j.zones || [];
       render(res.j.users.map(function (u) {
         return { sabun: u.sabun, name: u.name, role: u.role, zone: u.zone, approved: u.approved, disabled: u.disabled };
       }));

@@ -14,7 +14,7 @@ async function approve(req, body) {
   const action = String(body.action || '');
   if (action === 'list') {
     const users = await listAccounts();
-    return { ok: true, users: users.map(u => ({
+    return { ok: true, zones: ZONES, users: users.map(u => ({
       sabun: (u.email || '').replace(/@jisu\.local$/, ''), name: u.displayName,
       role: u.claims.role || '', zone: u.claims.zone || '', approved: u.claims.approved === true, disabled: u.disabled
     })) };
