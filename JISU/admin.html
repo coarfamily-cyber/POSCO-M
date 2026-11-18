@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>지수 대시보드 · 작업자 승인 (관리자)</title>
+<style>
+  body{font-family:-apple-system,"Malgun Gothic",sans-serif;background:#f3f5f8;margin:0;padding:16px;color:#1d2433}
+  .card{max-width:820px;margin:12px auto;background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+  h1{font-size:19px;margin:0 0 4px} .sub{color:#667;font-size:13px;margin:0 0 14px}
+  input,select{padding:9px;border:1px solid #cdd3dd;border-radius:8px;font-size:15px}
+  input{width:100%;box-sizing:border-box}
+  button{padding:8px 12px;border:0;border-radius:7px;background:#1f6feb;color:#fff;font-size:14px;margin:2px}
+  button.warn{background:#c62828} button.ghost{background:#6b7280}
+  button:disabled{opacity:.5}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{border-bottom:1px solid #e5e8ee;padding:8px 6px;text-align:left;vertical-align:middle}
+  .tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px}
+  .pending{background:#fff4e5;color:#8a4b00} .approved{background:#e7f5ea;color:#1b5e20} .off{background:#eee;color:#666}
+  .err{color:#c62828;font-size:14px;margin-top:8px;min-height:18px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .hide{display:none}
+</style>
+</head>
+<body>
+<div class="card" id="loginCard">
+  <h1>작업자 승인 · 관리자 로그인</h1>
+  <p class="sub">관리자 계정으로만 들어올 수 있습니다.</p>
+  <div class="row">
+    <input id="lid" placeholder="관리자 사번" style="max-width:220px" autocomplete="username">
+    <input id="lpw" type="password" placeholder="비밀번호" style="max-width:220px" autocomplete="current-password">
+    <button id="loginBtn">로그인</button>
+  </div>
+  <div class="err" id="loginErr"></div>
+</div>
+
+<div class="card hide" id="adminCard">
+  <div class="row" style="justify-content:space-between">
+    <div><h1>작업자 승인</h1><p class="sub" id="who"></p></div>
+    <div class="row"><button class="ghost" id="reloadBtn">새로고침</button><button class="ghost" id="logoutBtn">로그아웃</button></div>
+  </div>
+  <div class="err" id="err"></div>
+  <table>
+    <thead><tr><th>사번</th><th>이름</th><th>구역</th><th>상태</th><th>작업</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <p class="sub" style="margin-top:10px">구역 목록은 서버 설정과 같아야 합니다. 승인 또는 구역 변경 후에는 해당 작업자가 다시 로그인해야 새 권한이 적용됩니다.</p>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script>
+(function () {
+  var API = 'https://posco-m.vercel.app/api/approve';
+  var zones = []; // 서버(list 응답)에서 받아 채움: 구역 목록은 lib/jisu-auth.js 한 곳에서만 관리
+  var cfg = {
+    apiKey: 'AIzaSyA8b5Am0NOyZlN3hzlYWFcJN-8J4qkrICc',
+    authDomain: 'posco-m-jisu.firebaseapp.com',
+    projectId: 'posco-m-jisu'
+  };
+  if (!firebase.apps.length) firebase.initializeApp(cfg);
+  var auth = firebase.auth();
+
+  var $ = function (id) { return document.getElementById(id); };
+  function setErr(id, msg) { $(id).textContent = msg || ''; }
+
+  function callApi(body) {
+    return auth.currentUser.getIdToken().then(function (t) {
+      return fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t },
+        body: JSON.stringify(body)
+      });
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, status: r.status, j: j }; });
+    });
+  }
+
+  function td(text) { var c = document.createElement('td'); c.textContent = text; return c; }
+
+  function render(users) {
+    var tb = $('rows'); tb.textContent = '';
+    users.forEach(function (u) {
+      if (u.role === 'admin') return;
+      var tr = document.createElement('tr');
+      tr.appendChild(td(u.sabun));
+      tr.appendChild(td(u.name));
+
+      var sel = document.createElement('select');
+      zones.forEach(function (z) {
+        var o = document.createElement('option'); o.value = z; o.textContent = z;
+        if (z === u.zone) o.selected = true;
+        sel.appendChild(o);
+      });
+      var zc = document.createElement('td'); zc.appendChild(sel);
+      var mv = document.createElement('button'); mv.className = 'ghost'; mv.textContent = '구역 변경';
+      mv.onclick = function () { act({ action: 'move', sabun: u.sabun, zone: sel.value }); };
+      zc.appendChild(mv);
+      tr.appendChild(zc);
+
+      var st = document.createElement('td');
+      var tag = document.createElement('span');
+      if (u.disabled) { tag.className = 'tag off'; tag.textContent = '사용 중지'; }
+      else if (u.approved) { tag.className = 'tag approved'; tag.textContent = '승인됨'; }
+      else { tag.className = 'tag pending'; tag.textContent = '승인 대기'; }
+      st.appendChild(tag); tr.appendChild(st);
+
+      var ac = document.createElement('td');
+      if (!u.approved && !u.disabled) {
+        var ok = document.createElement('button'); ok.textContent = '승인';
+        ok.onclick = function () { act({ action: 'approve', sabun: u.sabun }); };
+        ac.appendChild(ok);
+      }
+      var toggle = document.createElement('button');
+      toggle.className = u.disabled ? 'ghost' : 'warn';
+      toggle.textContent = u.disabled ? '사용 재개' : '사용 중지';
+      toggle.onclick = function () { act({ action: u.disabled ? 'enable' : 'disable', sabun: u.sabun }); };
+      ac.appendChild(toggle);
+      tr.appendChild(ac);
+      tb.appendChild(tr);
+    });
+    if (!tb.children.length) setErr('err', '가입한 작업자가 없습니다.');
+  }
+
+  function load() {
+    setErr('err', '');
+    callApi({ action: 'list' }).then(function (res) {
+      if (!res.ok) { setErr('err', res.j.error || '목록을 불러오지 못했습니다.'); return; }
+      zones = res.j.zones || [];
+      render(res.j.users.map(function (u) {
+        return { sabun: u.sabun, name: u.name, role: u.role, zone: u.zone, approved: u.approved, disabled: u.disabled };
+      }));
+    }).catch(function () { setErr('err', '네트워크 오류입니다.'); });
+  }
+
+  function act(body) {
+    setErr('err', '');
+    callApi(body).then(function (res) {
+      if (!res.ok) { setErr('err', res.j.error || '처리하지 못했습니다.'); return; }
+      load();
+    }).catch(function () { setErr('err', '네트워크 오류입니다.'); });
+  }
+
+  auth.onAuthStateChanged(function (user) {
+    if (!user) {
+      $('loginCard').classList.remove('hide');
+      $('adminCard').classList.add('hide');
+      return;
+    }
+    user.getIdTokenResult(true).then(function (r) {
+      if (r.claims.role !== 'admin') {
+        setErr('loginErr', '관리자 계정이 아닙니다.');
+        return auth.signOut();
+      }
+      $('loginCard').classList.add('hide');
+      $('adminCard').classList.remove('hide');
+      $('who').textContent = '관리자 로그인: ' + (user.displayName || user.email);
+      load();
+    });
+  });
+
+  $('loginBtn').onclick = function () {
+    setErr('loginErr', '');
+    var id = $('lid').value.trim(), pw = $('lpw').value;
+    if (!id || !pw) { setErr('loginErr', '사번과 비밀번호를 입력하세요.'); return; }
+    auth.signInWithEmailAndPassword(id + '@jisu.local', pw).catch(function () {
+      setErr('loginErr', '로그인에 실패했습니다.');
+    });
+  };
+  $('reloadBtn').onclick = load;
+  $('logoutBtn').onclick = function () { auth.signOut(); };
+})();
+</script>
+</body>
+</html>
