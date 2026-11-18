@@ -39,6 +39,9 @@ function seedServer(fake) {
   fake.setServer('jisu/state/jisu-schedule-v1', st([{ id: 's9', date: tomorrow, target: 'pitch', kind: 'instruction', text: '내일 예약', created: md(today) + ' 07:00' }], 1000));
   fake.setServer('jisu/state/jisu-env-v1', st({ u: {}, round: 1 }, 1000));
   fake.setServer('jisu/state/jisu-env-log-v1', st([{ unit: '1', round: 1, day: today, ts: '08:00', td: today, by: '' }], 1000));
+  const img = 'data:image/jpeg;base64,/9j/AAAA';
+  fake.setServer('jisu/photos/pitch/ph1', { id: 'ph1', zone: 'pitch', day: today, at: '', name: 'p.jpg', data: img, ts: Date.now() });
+  fake.setServer('jisu/photos/outbound/ph2', { id: 'ph2', zone: 'outbound', day: today, at: '', name: 'o.jpg', data: img, ts: Date.now() });
 }
 
 async function device(fake, { claims = null, gate = false, local = {}, wait = 1600 } = {}) {
@@ -53,7 +56,7 @@ async function device(fake, { claims = null, gate = false, local = {}, wait = 16
     beforeParse(w) {
       w.firebase = fake.forDevice(claims);
       if (gate) w.JISU_AUTH_GATE = true;
-      w.indexedDB = fidb.indexedDB;
+      w.indexedDB = new fidb.IDBFactory();   // 기기마다 따로 쓰는 IndexedDB
       ['IDBKeyRange', 'IDBObjectStore', 'IDBIndex', 'IDBCursor', 'IDBCursorWithValue', 'IDBDatabase', 'IDBTransaction', 'IDBRequest', 'IDBOpenDBRequest', 'IDBFactory', 'IDBVersionChangeEvent'].forEach(n => { if (fidb[n]) w[n] = fidb[n]; });
       w.alert = () => {}; w.confirm = () => true; w.scrollTo = () => {};
       w.fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve({}), text: () => Promise.resolve('') });   // 알림 등 외부 요청 차단
@@ -168,6 +171,15 @@ const srv = (fake, part, key) => { const d = fake.getServer(`jisu/v2/${part}/${k
     const el = JSON.parse(S.ls('jisu-env-log-v1') || '[]'); assert.equal(el.length, 0, '환경 로그(서버 값)');
   });
   ok('작업자: 권한 밖 키는 동기화 묶음에 없음', () => { const us = S.w.jisuDb.sync.units(); assert.ok(us.every(u => /@(pitch|_notice)$/.test(u)), us.join(',')); });
+  const idbIds = (D, dbName, store) => new Promise(res => { const r = D.w.indexedDB.open(dbName, 1); r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains(store)) r.result.createObjectStore(store, { keyPath: 'id' }); }; r.onsuccess = () => { const q = r.result.transaction(store, 'readonly').objectStore(store).getAllKeys(); q.onsuccess = () => { r.result.close(); res(q.result.map(String)); }; q.onerror = () => res([]); }; r.onerror = () => res([]); });
+  await sleep(3000);   // 사진 동기화(시작 1.5초 뒤)가 끝날 시간
+  const sPitch = await idbIds(S, 'jisu-pitch-photos', 'pitch'), sOut = await idbIds(S, 'jisu-photos', 'outbound');
+  const aPitch = await idbIds(A, 'jisu-pitch-photos', 'pitch'), aOut = await idbIds(A, 'jisu-photos', 'outbound');
+  if (!sPitch.includes('ph1')) console.log('DEBUG S photo warns:', S.warns.filter(w => /사진/.test(w)).slice(-5).join(' | '), 'errors:', S.errors.slice(-3).join(' | '));
+  ok('사진: 작업자는 자기 구역 사진만 받음', () => { assert.ok(sPitch.includes('ph1'), 'pitch ' + sPitch); assert.ok(!sOut.includes('ph2'), 'outbound ' + sOut); });
+  ok('사진: 관리자는 모든 구역 사진', () => { assert.ok(aPitch.includes('ph1')); assert.ok(aOut.includes('ph2')); });
+  const sInfo = await S.w.jisuAuthInfo(), aInfo = await A.w.jisuAuthInfo();
+  ok('로그인 정보: 게이트 켠 작업자는 토큰·구역, 게이트 꺼진 기기는 없음', () => { assert.equal(sInfo.token, 'tok-pitch'); assert.equal(sInfo.claims.zone, 'pitch'); assert.equal(aInfo, null); });
   ok('작업자: 피치 기록은 남음', () => assert.ok(JSON.parse(S.ls('jisu-pitch-records-v1'))[today]));
   const tNotice = fake.getServer('jisu/v2/_notice/' + CK).t;
   const ls1 = S.arr(CK); ls1.find(x => x.id === 'p1').done = 3; ls1.find(x => x.id === 'n1').closed = true;

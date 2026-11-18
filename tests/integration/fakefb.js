@@ -94,7 +94,7 @@ function makeFakeFirebase(opts) {
   const firebase = { apps: [], initializeApp(cfg) { this.apps.push(cfg); return {}; }, database() { return db; } };
   // 기기마다 따로 쓰는 firebase 객체 (같은 DB 공유, 로그인 정보는 기기별)
   function forDevice(claims) {
-    const user = claims ? { email: 'u@jisu.local', getIdToken: () => Promise.resolve('tok'), getIdTokenResult: () => Promise.resolve({ claims }) } : null;
+    const user = claims ? { email: 'u@jisu.local', getIdToken: () => Promise.resolve('tok'), getIdTokenResult: () => Promise.resolve({ claims, token: 'tok-' + (claims.zone || claims.role || 'x') }) } : null;
     const auth = { currentUser: user, onAuthStateChanged(cb) { setTimeout(() => cb(user), 0); return () => {}; }, signOut() { return Promise.resolve(); } };
     return { apps: [], initializeApp(cfg) { this.apps.push(cfg); return {}; }, database() { return db; }, auth: () => auth };
   }

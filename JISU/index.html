@@ -180,7 +180,15 @@
     appId: "1:1036931213595:web:132e909e0435bccce7cbbe"
   };
   window.JISU_DB_ROOT = "jisu";   // Realtime DB 루트 노드 (보안 규칙도 /jisu 기준)
-  window.JISU_ZONE_MIRROR = true;   // 4a: 작업 목록을 구역별 경로(jisu/zones, jisu/notices)에도 복사. 끄려면 false
+  window.JISU_ZONE_MIRROR = true;
+  /* 로그인 게이트가 켜져 있고 로그인 상태면 {token, claims}, 아니면 null (DB 직접 요청에 ?auth= 를 붙일 때 사용) */
+  window.jisuAuthInfo = function(){
+    try{
+      if(window.JISU_AUTH_GATE!==true||!window.firebase||!firebase.auth) return Promise.resolve(null);
+      var u=firebase.auth().currentUser; if(!u) return Promise.resolve(null);
+      return u.getIdTokenResult().then(function(r){ return {token:(r&&r.token)||'', claims:(r&&r.claims)||{}}; }).catch(function(){ return null; });
+    }catch(_){ return Promise.resolve(null); }
+  };   // 4a: 작업 목록을 구역별 경로(jisu/zones, jisu/notices)에도 복사. 끄려면 false
   </script>
   <link rel="manifest" id="jisuManifestLink" href="./manifest.webmanifest?v=202611151130" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=202611151130" />
@@ -5766,7 +5774,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         const znRaw=await readStore('jisu-zone-photos-v1','photos');
         let dbTodayPhotos=[];
         try{
-          const r=await fetch('https://posco-m-jisu-default-rtdb.asia-southeast1.firebasedatabase.app/jisu/photos.json');
+          const ai=window.jisuAuthInfo?await window.jisuAuthInfo():null;
+          const r=await fetch('https://posco-m-jisu-default-rtdb.asia-southeast1.firebasedatabase.app/jisu/photos.json'+(ai&&ai.token?('?auth='+encodeURIComponent(ai.token)):''));
           if(r.ok){
             const allP=await r.json()||{};
             const zMap={outbound:'출고',inbound:'입고',pitch:'피치'};
@@ -8866,9 +8875,11 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       }
       if(!sub) return {ok:false,reason:'구독 생성 실패'};
       const json=sub.toJSON();
-      const wz=new URLSearchParams(location.search).get('zone')||'*';
+      let wz=new URLSearchParams(location.search).get('zone')||'*';
+      const ai=window.jisuAuthInfo?await window.jisuAuthInfo():null;   /* 게이트 꺼짐: null → 기존과 같음 */
+      if(ai&&ai.claims&&ai.claims.role!=='admin'&&ai.claims.zone) wz=ai.claims.zone;   /* 작업자는 자기 구역 알림만 */
       const key=hashSubKey(json.endpoint||'');
-      const res=await fetch(FB_PUSH_BASE+'/'+encodeURIComponent(key)+'.json',{
+      const res=await fetch(FB_PUSH_BASE+'/'+encodeURIComponent(key)+'.json'+(ai&&ai.token?('?auth='+encodeURIComponent(ai.token)):''),{
         method:'PUT',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({sub:json,zone:wz,ua:(navigator.userAgent||'').slice(0,80),at:Date.now()})
@@ -9203,6 +9214,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     return V2_ZONES.indexOf(z)>=0?z:'_admin';
   }
   function partVisible(pt){ return ROLE.all || pt===ROLE.zone || pt==='_notice'; }
+  function photoZones(){ return ROLE.all ? ALL_ZONES.slice() : [ROLE.zone]; }   /* 사진 구역: 관리자·지금 방식은 전체 */
   function unitWritable(u){ var pt=partOf(u); return !pt || ROLE.all || pt===ROLE.zone; }
   function unitsOfKey(k){ return UNITS.filter(function(u){ return keyOf(u)===k; }); }
   function buildUnits(){
@@ -9797,7 +9809,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     }catch(e){ console.warn('[jisu-db] 구독 예외('+k+'):',e); }
   }
   var syncStarted=false;
-  function startSyncAll(){ if(syncStarted) return; syncStarted=true; UNITS.forEach(startUnit); }
+  function startSyncAll(){ if(syncStarted) return; syncStarted=true; UNITS.forEach(startUnit); startPhotoSync(); }
   if(SYNC_MODE==='v2'){ startV2(); }
   else { UNITS=STATE_KEYS.slice(); startSyncAll(); }
   watchSyncConfig();   /* 전환 신호(config/syncMode) 감시. 거부되면(보안 규칙) 로그인 뒤 다시 시도 */
@@ -9895,6 +9907,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   }
   function pushPhoto(zone,rec){
     if(!zone||!rec||typeof rec.data!=='string'||rec.data.indexOf('data:image')!==0) return;
+    if(!ROLE.all && zone!==ROLE.zone) return;   /* 작업자: 다른 구역 사진은 올리지 않음 */
     var id=String(rec.id||rec.key||''); if(!id) return;
     var stamp=Date.now();
     shrinkToLimit(rec.data).then(function(data){
@@ -9904,7 +9917,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   function removePhotoRemote(zone,id){
     var upd={};
     if(zone) upd[zone+'/'+id]=null;
-    else ALL_ZONES.forEach(function(z){ upd[z+'/'+id]=null; });
+    else photoZones().forEach(function(z){ upd[z+'/'+id]=null; });
     try{ db.ref(ROOT+'/photos').update(upd).catch(function(){}); }catch(_){}
   }
   function isPhotoStore(store){
@@ -9964,10 +9977,19 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
   async function pullPhotos(){
     pulling=true;
     try{
-      var snap=await db.ref(ROOT+'/photos').once('value');
-      var val=snap.val()||{};
-      for(var zi=0;zi<ALL_ZONES.length;zi++){
-        var zone=ALL_ZONES[zi];
+      var zonesP=photoZones(), val={};
+      if(ROLE.all){ var snap=await db.ref(ROOT+'/photos').once('value'); val=snap.val()||{}; }
+      else{
+        for(var qi=0;qi<zonesP.length;qi++){ var sq=await db.ref(ROOT+'/photos/'+zonesP[qi]).once('value'); val[zonesP[qi]]=sq.val()||{}; }
+        /* 작업자: 예전에 받아 둔 다른 구역 사진은 이 기기에서 지움 */
+        for(var oz=0;oz<ALL_ZONES.length;oz++){
+          var oth=ALL_ZONES[oz]; if(zonesP.indexOf(oth)>=0) continue;
+          var ts0=zoneStore(oth), loc0=[]; try{ loc0=await idbAll(ts0.db,ts0.store); }catch(_){ loc0=[]; }
+          for(var lj=0;lj<loc0.length;lj++){ var lq=loc0[lj]; if(!lq) continue; if(ts0===ZONE_STORE&&lq.zone!==oth) continue; var qid=String(lq.id); if(qid==='demo1'||qid==='demo2') continue; await removePhotoLocal(oth,qid); }
+        }
+      }
+      for(var zi=0;zi<zonesP.length;zi++){
+        var zone=zonesP[zi];
         var recs=val[zone]||{}, ids=Object.keys(recs);
         var t=zoneStore(zone);
         var local=[]; try{ local=await idbAll(t.db,t.store); }catch(_){ local=[]; }
@@ -9997,6 +10019,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     /* ① 구역 전용 저장소: 오늘 사진 중 DB에 없는 것만 올린다 (기기당 최대 15장/구역) */
     for(var zone in ALL_ZONES){
       var z=ALL_ZONES[zone]; if(z!=='outbound'&&z!=='inbound'&&z!=='pitch') continue;
+      if(!ROLE.all && z!==ROLE.zone) continue;
       var t=zoneStore(z); var local=[];
       try{ local=await idbAll(t.db,t.store); }catch(_){ continue; }
       var todays=local.filter(function(p){ return p&&p.day===today&&typeof p.data==='string'; }).slice(-15);
@@ -10014,6 +10037,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
       var todays2=local2.filter(function(r){ return r&&r.zone&&r.day===today&&typeof r.data==='string'; }).slice(-30);
       for(var j=0;j<todays2.length;j++){
         var r2=todays2[j], zs='';
+        if(!ROLE.all && r2.zone!==ROLE.zone) continue;
         try{ var s2=await db.ref(ROOT+'/photos/'+r2.zone+'/'+String(r2.id)).once('value'); zs=s2.exists()?String(r2.id):''; }catch(_){}
         if(zs) continue;
         pushPhoto(r2.zone,r2); sent++;
@@ -10022,6 +10046,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     return sent;
   }
   async function purgeExpired(){
+    if(!ROLE.all) return;   /* 만료 사진 정리는 관리자(전체 권한) 기기만 */
     try{
       var snap=await db.ref(ROOT+'/photos').once('value');
       var val=snap.val()||{}, upd={}, n=0;
@@ -10035,9 +10060,9 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     }catch(_){}
   }
 
-  setTimeout(function(){
+  function startPhotoSync(){ setTimeout(function(){
     try{
-      ALL_ZONES.forEach(function(zone){
+      photoZones().forEach(function(zone){
         var zr=db.ref(ROOT+'/photos/'+zone);
         zr.on('child_added',function(ps){ insertPhoto(zone,ps.val()); });
         zr.on('child_changed',function(ps){ insertPhoto(zone,ps.val()); });
@@ -10047,7 +10072,7 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
     pullPhotos().then(function(){ return seedLocalPhotos(); }).catch(function(e){ console.warn('[jisu-db] 사진 동기화 실패:',e&&e.message); });
     purgeExpired();
     setInterval(purgeExpired,10*60*1000);
-  },1500);
+  },1500); }
 
   /* SYNC-V2-TOOLS-BEGIN (관리자 콘솔 도구) ----------------------------------------------------
      jisuMigrateToV2()     : 지금 방식(state) → v2. 서버의 현재 값을 묶음으로 나눠 쓰고, 모든 화면이 새로고침되어 v2로 바뀜
