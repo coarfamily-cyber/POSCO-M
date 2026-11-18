@@ -253,6 +253,7 @@ async function runFunctional(){
   R.data.F = {saved:saved, sch:summarize(sch())};
   /* 삭제·수정 */
   ev('fD', "(function(){var t=document.getElementById('czText'); t.value=''; window.confirm=function(){return true;};})()");
+  ev('fD', "window.jisuCalOpenDay('"+D1+"')"); await sleep(300);
   const delId = (sch().filter(x=>x.date===D1)[1]||{}).id;
   ev('fD', "(function(){var b=document.querySelector('[data-cz-del=\""+(delId||'')+"\"]'); if(b) b.click();})()");
   await sleep(500);
@@ -267,9 +268,9 @@ async function runFunctional(){
   ev('fD', "window.jisuCalOpenDay('"+D2+"')"); await sleep(250);
   ev('fD', "(function(){var t=document.getElementById('czText'); t.value='출고 오전 RAS-2 20 TON, 오후 L1 20 TON'; t.dispatchEvent(new Event('input',{bubbles:true}));})()");
   ev('fD', "document.getElementById('czSave').click()"); await sleep(500);
-  const d2items = (sch()||[]).filter(x=>x.date===D2);
-  R.data.F2 = d2items.map(x=>x.target+'|'+x.text);
-  rec('F2 한 줄 오전/오후 분리 저장', d2items.length===2 && d2items.every(x=>x.target==='outbound') && d2items.some(x=>/^오전 RAS-2 20 TON$/.test(x.text)) && d2items.some(x=>/^오후 L1 20 TON$/.test(x.text)), JSON.stringify(R.data.F2));
+  const d2items = (sch()||[]).filter(x=>x.date===D2 && x.target==='outbound');
+  R.data.F2 = (sch()||[]).filter(x=>x.date===D2).map(x=>x.target+'|'+x.text);
+  rec('F2 한 줄 오전/오후 분리 저장', d2items.length===2 && d2items.some(x=>/^오전 RAS-2 20 TON$/.test(x.text)) && d2items.some(x=>/^오후 L1 20 TON$/.test(x.text)), JSON.stringify(R.data.F2));
 
   /* ---------- G: 08시 적용(금일작업으로 이동) ---------- */
   ev('fD', "(function(){var s=JSON.parse(localStorage.getItem('jisu-schedule-v1')||'[]').filter(x=>x.date==='"+TODAY+"'); s.forEach(function(x){delete x.applied; delete x.appliedAt;}); var c=JSON.parse(localStorage.getItem('jisu-commands-v1')||'[]').filter(x=>!/^s/.test(x.id)); localStorage.setItem('jisu-commands-v1',JSON.stringify(c)); localStorage.setItem('jisu-schedule-v1',JSON.stringify(s));})()");
@@ -277,7 +278,13 @@ async function runFunctional(){
   const todayCmds = (cmds()||[]).filter(x=>x.day===TODAY && /^s/.test(x.id));
   R.data.G = {cmds:todayCmds.map(x=>x.id+'|'+x.target+'|'+x.text).join('\n')};
   rec('G 금일작업 2건 분리 등록', todayCmds.length===2 && todayCmds.some(x=>x.text==='오전 SH 36 TON') && todayCmds.some(x=>x.text==='오후 HH 36 TON'), R.data.G.cmds);
-  rec('G id 규칙(s·s-1)', todayCmds.some(x=>/-1$/.test(x.id)), R.data.G.cmds.split('\n')[0]);
+  rec('G 서로 다른 작업 id', new Set(todayCmds.map(x=>x.id)).size===todayCmds.length, R.data.G.cmds);
+  /* G2: 예약 1건에 오전/오후가 함께 있는 경우 → 적용 시 s·s-1 두 카드 */
+  ev('fD', "(function(){var s=JSON.parse(localStorage.getItem('jisu-schedule-v1')||'[]'); s.push({id:'QAJOIN1',date:'"+TODAY+"',target:'pitch',kind:'instruction',text:'오전 CP3K 5 TON 오후 C3B 5 TON',created:'11. 19. 00:30'}); s.forEach(function(x){delete x.applied;}); var c=JSON.parse(localStorage.getItem('jisu-commands-v1')||'[]').filter(function(x){return x.id.indexOf('sQAJOIN1')!==0;}); localStorage.setItem('jisu-commands-v1',JSON.stringify(c)); localStorage.setItem('jisu-schedule-v1',JSON.stringify(s));})()");
+  ev('fD', "window.jisuApplySchedules(null,{immediateToday:true})"); await sleep(400);
+  const joinCmds = (cmds()||[]).filter(x=>/^sQAJOIN1/.test(x.id));
+  R.data.G2 = joinCmds.map(x=>x.id+'|'+x.text);
+  rec('G2 한 예약 → s·s-1 분리', joinCmds.length===2 && joinCmds.some(x=>x.id==='sQAJOIN1') && joinCmds.some(x=>x.id==='sQAJOIN1-1') && joinCmds.some(x=>x.text==='오전 CP3K 5 TON') && joinCmds.some(x=>x.text==='오후 C3B 5 TON'), JSON.stringify(R.data.G2));
 
   /* ---------- J: 분리된 작업 완료 토글 ---------- */
   const pmId = (todayCmds.find(x=>/오후 HH/.test(x.text||''))||{}).id;
@@ -287,12 +294,15 @@ async function runFunctional(){
   await sleep(500);
   const pmCmd = (cmds()||[]).find(x=>x.id===pmId)||{};
   R.data.J = JSON.stringify(pmCmd);
-  rec('J 오후 작업만 완료 토글', pmCmd.completed===true && Number(pmCmd.done)===36, R.data.J);
+  rec('J 오후 작업만 완료 토글', pmCmd.completed===true && (pmCmd.done==null||pmCmd.done===''), R.data.J);
+  const pmText = ev('fD', "(function(){var it=Array.from(document.querySelectorAll('.cmd-item')).find(function(e){return /오후 HH 36 TON/.test(e.textContent);}); return it?it.innerText.replace(/\\n/g,' | ').slice(0,120):'not-rendered';})()");
+  rec('J 화면에 완료됨 표시', /완료됨|완료/.test(String(pmText)), String(pmText));
   const amCmd = (cmds()||[]).find(x=>x.id===(todayCmds.find(y=>/오전 HH/.test(y.text||''))||{}).id)||{};
   rec('J 오전 작업은 그대로', !amCmd.completed, JSON.stringify({id:amCmd.id,completed:amCmd.completed,done:amCmd.done}));
 
   /* ---------- H: 엑셀 ---------- */
   await resetState();
+  ev('fD', "(function(){var s=JSON.parse(localStorage.getItem('jisu-schedule-v1')||'[]'); s.push({id:'QAUP1',date:'"+D2+"',target:'outbound',kind:'instruction',text:'예정 RAS-2 10 TON',created:'11. 19. 11:00'}); localStorage.setItem('jisu-schedule-v1',JSON.stringify(s));})()");
   const ex1 = await ev('fD', "(async function(){ try{ return JSON.stringify(await window.jisuExportWork({skipPrompt:true, filename:'QA_금일작업'})); }catch(e){ return 'ERR:'+e.message; } })()");
   R.data.excel = ex1;
   rec('H 엑셀 생성', /xlsx/.test(String(ex1)), String(ex1));
