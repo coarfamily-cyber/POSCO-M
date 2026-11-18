@@ -85,7 +85,7 @@ async function uiCheck(id, label){
   await sleep(700);
   const hits = ev(id, "document.querySelectorAll('#hdrSearchPanel button').length");
   rec(label+' 검색 결과', hits>0, hits+'건');
-  const opened = ev(id, "(function(){var b=Array.from(document.querySelectorAll('#hdrSearchPanel button')).find(x=>/건물|2동/.test(x.textContent)); if(!b) return 'noitem'; b.click(); return 'clicked';})()");
+  const opened = ev(id, "(function(){var all=Array.from(document.querySelectorAll('#hdrSearchPanel button')); var b=all.find(x=>/건물 상세|건물$/.test(x.textContent))||all.find(x=>/건물/.test(x.textContent)); if(!b) return 'noitem'; b.click(); return 'clicked';})()");
   await sleep(500);
   if(opened==='clicked'){
     rec(label+' 검색→상세 창', ev(id, "(function(){var m=document.getElementById('detailModal'); if(!m) return 'n/a'; return !m.hidden && getComputedStyle(m).display!=='none';})()"), '');
@@ -97,12 +97,13 @@ async function uiCheck(id, label){
 }
 
 /* ---------- 시드 ---------- */
+const Y1 = addDay(TODAY,-1);
 function seedAll(){
   const cmds = [
-    {id:'c1',target:'outbound',kind:'instruction',text:'RAS-2 33 TON',at:'11. 19. 08:10',day:TODAY,completed:true,done:33,completedAt:'11. 19. 15:00'},
-    {id:'c2',target:'inbound:SH',kind:'instruction',text:'SH 36 TON',at:'11. 19. 08:20',day:TODAY,working:true},
-    {id:'c3',target:'inbound:16kg 파렛트',kind:'instruction',text:'16 KG 파렛트 2대',at:'11. 19. 08:30',day:TODAY,completed:true,done:2},
-    {id:'c4',target:'production-a',kind:'instruction',text:'생산A 12 TON',at:'11. 19. 09:00',day:TODAY,completed:true,done:10,short:true},
+    {id:'c1',target:'outbound',kind:'instruction',text:'RAS-2 33 TON',at:'11. 18. 08:10',day:Y1,completed:true,done:33,completedAt:'11. 18. 15:00',closed:true},
+    {id:'c2',target:'inbound:SH',kind:'instruction',text:'SH 36 TON',at:'11. 18. 08:20',day:Y1,completed:true,short:true,done:30,completedAt:'11. 18. 16:10',closed:true},
+    {id:'c3',target:'inbound:16kg 파렛트',kind:'instruction',text:'16 KG 파렛트 2대',at:'11. 19. 08:30',day:TODAY,completed:true,done:2,completedAt:'11. 19. 09:00'},
+    {id:'c4',target:'production-a',kind:'instruction',text:'생산A 12 TON',at:'11. 19. 09:00',day:TODAY,working:true},
     {id:'c5',target:'*',kind:'notice',text:'바닥 공사 안내',at:'11. 19. 09:10',day:TODAY}
   ];
   const memos = [{id:'m1',target:'outbound',tag:'issue',text:'파렛트 파손 2건',at:'11. 19. 10:00',by:'김지수'}];
@@ -118,6 +119,20 @@ function seedAll(){
   ls.setItem('jisu-schedule-v1','[]');
   ls.setItem('jisu-photos-v1','[]');
   ls.setItem('jisu-user','김지수');
+  seedPhoto();
+}
+/* 출고 사진 시트 검증용 1x1 JPEG (실제 사진은 아님) */
+const PHOTO_DATA = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==';
+function seedPhoto(){
+  try{
+    const req = W('fD').indexedDB.open('jisu-photos',1);
+    req.onupgradeneeded = () => { const db=req.result; if(!db.objectStoreNames.contains('outbound')) db.createObjectStore('outbound',{keyPath:'id'}); };
+    req.onsuccess = () => { const db=req.result; try{
+      const tx=db.transaction('outbound','readwrite');
+      tx.objectStore('outbound').put({id:'QAphoto1', day:TODAY, at:'11. 19. 10:30', name:'QA_출고사진.jpg', data:PHOTO_DATA});
+      tx.oncomplete=()=>db.close();
+    }catch(e){ db.close(); } };
+  }catch(e){}
 }
 async function resetState(){
   seedAll();
@@ -227,7 +242,7 @@ async function runFunctional(){
   const saved = [];
   for(const day of days){
     ev('fD', "window.jisuCalOpenDay('"+day+"')"); await sleep(250);
-    ev('fD', "(function(){var t=document.getElementById('czText'); t.value='오전 SH 36 TON\\n오후 HH 36 TON'; t.dispatchEvent(new Event('input',{bubbles:true}));})()");
+    ev('fD', "(function(){var t=document.getElementById('czText'); t.value='입고 오전 SH 36 TON\\n입고 오후 HH 36 TON'; t.dispatchEvent(new Event('input',{bubbles:true}));})()");
     ev('fD', "document.getElementById('czSave').click()"); await sleep(500);
     const items = (sch()||[]).filter(x=>x.date===day);
     saved.push(day+': '+items.map(x=>x.text).join(' / '));
@@ -248,6 +263,14 @@ async function runFunctional(){
   ev('fD', "(function(){var b=document.querySelector('[data-cz-ok=\""+editId+"\"]'); if(b) b.click();})()"); await sleep(350);
   rec('F 수정 반영', (sch().filter(x=>x.date===D2)[0]||{}).text==='사각박스 320 EA', JSON.stringify((sch().filter(x=>x.date===D2)).map(x=>x.text)));
 
+  /* ---------- F2: 달력 한 줄 혼합 입력 ---------- */
+  ev('fD', "window.jisuCalOpenDay('"+D2+"')"); await sleep(250);
+  ev('fD', "(function(){var t=document.getElementById('czText'); t.value='출고 오전 RAS-2 20 TON, 오후 L1 20 TON'; t.dispatchEvent(new Event('input',{bubbles:true}));})()");
+  ev('fD', "document.getElementById('czSave').click()"); await sleep(500);
+  const d2items = (sch()||[]).filter(x=>x.date===D2);
+  R.data.F2 = d2items.map(x=>x.target+'|'+x.text);
+  rec('F2 한 줄 오전/오후 분리 저장', d2items.length===2 && d2items.every(x=>x.target==='outbound') && d2items.some(x=>/^오전 RAS-2 20 TON$/.test(x.text)) && d2items.some(x=>/^오후 L1 20 TON$/.test(x.text)), JSON.stringify(R.data.F2));
+
   /* ---------- G: 08시 적용(금일작업으로 이동) ---------- */
   ev('fD', "(function(){var s=JSON.parse(localStorage.getItem('jisu-schedule-v1')||'[]').filter(x=>x.date==='"+TODAY+"'); s.forEach(function(x){delete x.applied; delete x.appliedAt;}); var c=JSON.parse(localStorage.getItem('jisu-commands-v1')||'[]').filter(x=>!/^s/.test(x.id)); localStorage.setItem('jisu-commands-v1',JSON.stringify(c)); localStorage.setItem('jisu-schedule-v1',JSON.stringify(s));})()");
   ev('fD', "window.jisuApplySchedules(null,{immediateToday:true})"); await sleep(400);
@@ -255,6 +278,18 @@ async function runFunctional(){
   R.data.G = {cmds:todayCmds.map(x=>x.id+'|'+x.target+'|'+x.text).join('\n')};
   rec('G 금일작업 2건 분리 등록', todayCmds.length===2 && todayCmds.some(x=>x.text==='오전 SH 36 TON') && todayCmds.some(x=>x.text==='오후 HH 36 TON'), R.data.G.cmds);
   rec('G id 규칙(s·s-1)', todayCmds.some(x=>/-1$/.test(x.id)), R.data.G.cmds.split('\n')[0]);
+
+  /* ---------- J: 분리된 작업 완료 토글 ---------- */
+  const pmId = (todayCmds.find(x=>/오후 HH/.test(x.text||''))||{}).id;
+  ev('fD', "(function(){var s=document.getElementById('cmdTarget'); s.value='inbound'; s.dispatchEvent(new Event('change',{bubbles:true}));})()");
+  await sleep(400);
+  ev('fD', "(function(){var b=document.querySelector('[data-cmd-complete=\""+(pmId||'')+"\"]'); if(b) b.click();})()");
+  await sleep(500);
+  const pmCmd = (cmds()||[]).find(x=>x.id===pmId)||{};
+  R.data.J = JSON.stringify(pmCmd);
+  rec('J 오후 작업만 완료 토글', pmCmd.completed===true && Number(pmCmd.done)===36, R.data.J);
+  const amCmd = (cmds()||[]).find(x=>x.id===(todayCmds.find(y=>/오전 HH/.test(y.text||''))||{}).id)||{};
+  rec('J 오전 작업은 그대로', !amCmd.completed, JSON.stringify({id:amCmd.id,completed:amCmd.completed,done:amCmd.done}));
 
   /* ---------- H: 엑셀 ---------- */
   await resetState();
@@ -271,6 +306,7 @@ async function runFunctional(){
   R.data.week = wk;
   rec('I 주간 실적 렌더', /전체 완료율/.test(wk||'') && /출고|입고/.test(wk||''), (wk||'').slice(0,120));
   rec('I 내부 키 노출 없음', !/outbound:|inbound:|production-a/.test(wk||''), '');
+  rec('I 주간 작업 2건(어제 마감)', /(^|\n)2(\n|$)/.test(wk||'') && /TON 63 \/ 69/.test(wk||''), ((wk||'').match(/TON [^\n]*/)||[''])[0]);
   ev('fD', "(function(){var b=document.querySelector('[data-pf-mode=\"month\"]'); if(b) b.click();})()"); await sleep(600);
   const mo = ev('fD', "document.getElementById('pfSlide').innerText");
   R.data.month = mo;
