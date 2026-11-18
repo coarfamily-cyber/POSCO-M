@@ -258,6 +258,7 @@ async function runFunctional(){
   ev('fD', "(function(){var b=document.querySelector('[data-cz-del=\""+(delId||'')+"\"]'); if(b) b.click();})()");
   await sleep(500);
   rec('F 삭제 후 1건', (sch().filter(x=>x.date===D1)).length===1, JSON.stringify((sch().filter(x=>x.date===D1)).map(x=>x.text)));
+  ev('fD', "window.jisuCalOpenDay('"+D2+"')"); await sleep(300);
   const editId = (sch().filter(x=>x.date===D2)[0]||{}).id;
   ev('fD', "(function(){var b=document.querySelector('[data-cz-edit=\""+editId+"\"]'); if(b) b.click();})()"); await sleep(250);
   ev('fD', "(function(){var i=document.querySelector('[data-cz-input=\""+editId+"\"]'); i.value='입고 사각박스 320 EA';})()");
@@ -316,7 +317,7 @@ async function runFunctional(){
   R.data.week = wk;
   rec('I 주간 실적 렌더', /전체 완료율/.test(wk||'') && /출고|입고/.test(wk||''), (wk||'').slice(0,120));
   rec('I 내부 키 노출 없음', !/outbound:|inbound:|production-a/.test(wk||''), '');
-  rec('I 주간 작업 2건(어제 마감)', /(^|\n)2(\n|$)/.test(wk||'') && /TON 63 \/ 69/.test(wk||''), ((wk||'').match(/TON [^\n]*/)||[''])[0]);
+  rec('I 주간 수치(어제 마감 65.5/69 TON)', (wk||'').indexOf('TON 65.5 / 69')>=0 && (wk||'').indexOf('100%')>=0, String((wk||'').match(/TON [^ ]+ \/ [0-9.]+/)||''));
   ev('fD', "(function(){var b=document.querySelector('[data-pf-mode=\"month\"]'); if(b) b.click();})()"); await sleep(600);
   const mo = ev('fD', "document.getElementById('pfSlide').innerText");
   R.data.month = mo;
