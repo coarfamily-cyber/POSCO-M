@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <script>
-/* ===== QA 전용 가드: DB·알림 전송 차단, localStorage는 메모리 전용(프로필 오염 방지) + 마이그레이션 검증용 시드 ===== */
+/* ===== QA 전용 가드: Firebase·알림 전송 차단, localStorage는 메모리 전용 + 마이그레이션 검증용 시드 ===== */
 (function(){
   window.__qaErrors = [];
   window.addEventListener('error', function(e){ window.__qaErrors.push('error: ' + (e.message||'') + ' @' + (e.filename||'') + ':' + (e.lineno||'')); });
@@ -21,12 +21,13 @@
     window.__QA_MEMORY_STORAGE__ = true;
     mem['jisu-commands-v1'] = JSON.stringify([{"id": "qa_pal_1", "target": "inbound:16kg 파렛트", "kind": "instruction", "text": "16kg 파렛트 576 EA", "done": 288, "at": "11. 18. 17:40", "day": "2026-11-18"}, {"id": "qa_pal_2", "target": "inbound:16kg 파렛트", "kind": "instruction", "text": "파렛트 288개", "done": 288, "at": "11. 18. 17:41", "day": "2026-11-18", "completed": true, "completedAt": "11. 18. 17:42"}, {"id": "qa_pal_3", "target": "inbound:알루미늄 파우치백", "kind": "instruction", "text": "알루미늄 파우치백 600 EA", "done": 0, "at": "11. 18. 17:42", "day": "2026-11-18"}, {"id": "qa_pal_4", "target": "outbound:2공장→1공장", "kind": "instruction", "text": "2공장→1공장 30 EA", "done": 0, "at": "11. 18. 17:43", "day": "2026-11-18"}]);
     mem['jisu-schedule-v1'] = JSON.stringify([{"id": "qa_sch_1", "date": "2026-11-19", "target": "inbound:16kg 파렛트", "kind": "instruction", "text": "16kg 파렛트 576ea", "created": "11. 18. 17:44"}]);
+    mem['jisu-auto-excel-shift'] = '2026-11-18-am';
   }catch(err){ console.error('[QA] storage shim failed', err); }
   var of = window.fetch;
   window.fetch = function(u, o){
     var s = '';
     try{ s = String((u && u.url) || u); }catch(_){}
-    if(/api\/push|ntfy\.sh|firebasedatabase|googleapis\.com|firebaseio/i.test(s)){
+    if(/api\/push|ntfy\.sh|firebasedatabase|googleapis\.com|firebaseio|gstatic\.com/i.test(s)){
       console.log('[QA] blocked outbound:', s);
       window.__qaBlocked = window.__qaBlocked || [];
       window.__qaBlocked.push(s);
@@ -9029,8 +9030,8 @@ async function loadPhotos(){try{const db=await dbOpen();const rows=await new Pro
      · DB 경로: /jisu/state/{localStorage키} , /jisu/photos/{구역}/{사진id}
      · Firebase 장애·오프라인·CDN 차단 시에도 기존 localStorage 동작은 그대로
      ====================================================================== -->
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<!-- QA: Firebase SDK 미로드 -->
+<!-- QA: Firebase SDK 미로드 -->
 <script>
 (function(){
   'use strict';
