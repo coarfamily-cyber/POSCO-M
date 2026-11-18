@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow">
+<title>QA 하네스 (임시)</title>
+<style>body{margin:0;background:#0b1220;color:#e2e8f0;font:12px/1.4 -apple-system,system-ui,sans-serif}
+.row{display:flex;gap:14px;padding:10px}
+figure{margin:0}figcaption{font-weight:700;padding:3px 0;color:#93c5fd}
+iframe{display:block;background:#111;border:1px solid #334155}
+pre{white-space:pre-wrap;padding:10px;background:#0f172a;margin:0;font-size:11px;max-height:340px;overflow:auto}</style></head>
+<body>
+<div class="row">
+  <figure><figcaption>1) 관리자 전체 대시보드 390x844</figcaption><iframe id="f-admin" src="qa-7d2b91.html" width="390" height="844"></iframe></figure>
+  <figure><figcaption>2) ?zone=inbound</figcaption><iframe id="f-in" src="qa-7d2b91.html?zone=inbound" width="390" height="844"></iframe></figure>
+  <figure><figcaption>3) ?zone=outbound</figcaption><iframe id="f-out" src="qa-7d2b91.html?zone=outbound" width="390" height="844"></iframe></figure>
+  <figure><figcaption>4) ?zone=environment</figcaption><iframe id="f-env" src="qa-7d2b91.html?zone=environment" width="390" height="844"></iframe></figure>
+</div>
+<pre id="out">running...</pre>
+<script>
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const log=[];
+function rec(k,v){log.push(k+' = '+v);document.getElementById('out').textContent=log.join('\n');}
+function doc(id){return document.getElementById(id).contentDocument;}
+function win(id){return document.getElementById(id).contentWindow;}
+async function waitReady(id){
+  const w=win(id), d=doc(id);
+  for(let i=0;i<120;i++){ if(d && d.readyState==='complete' && d.querySelector('.hotspot-pill')) return true; await sleep(150); }
+  return false;
+}
+(async()=>{
+  const okA=await waitReady('f-admin');
+  rec('admin frame ready', okA);
+  const d=doc('f-admin'), w=win('f-admin');
+  const errs=(w.__qaErrors||[]).slice(0,8);
+  rec('admin JS errors', JSON.stringify(errs));
+  // 배지(동 표시) 점검
+  const badges=[...d.querySelectorAll('.bldg-badge')].map(b=>{const c=w.getComputedStyle(b),r=b.getBoundingClientRect();
+    return b.textContent.trim()+':'+b.tagName+',pe='+c.pointerEvents+',cursor='+c.cursor+',title='+(b.getAttribute('title')||'-')+',rect='+[Math.round(r.width),Math.round(r.height)].join('x');});
+  rec('badges', badges.join(' | '));
+  // 배지 클릭 시 아무 변화 없는지(모달/카드 열림 없음)
+  const badgeEl=d.querySelector('.bldg-badge');
+  let badgeClickOpened=false;
+  if(badgeEl){ const before=d.querySelectorAll('.is-open').length; badgeEl.dispatchEvent(new w.MouseEvent('click',{bubbles:true})); await sleep(300);
+    badgeClickOpened = (d.querySelectorAll('.is-open').length!==before) || !!(d.querySelector('#detailModal')&&!d.querySelector('#detailModal').hidden&&w.getComputedStyle(d.querySelector('#detailModal')).display!=='none');
+  }
+  rec('badge click opens anything', badgeClickOpened);
+  // 피치 vs 포장 색
+  const p=d.querySelector('.hotspot-pill[data-toggle-zone="pitch"]'), pk=d.querySelector('.hotspot-pill[data-toggle-zone="packaging"]');
+  const pcs=w.getComputedStyle(p), kcs=w.getComputedStyle(pk);
+  rec('pitch bg/color', pcs.backgroundColor+' / '+pcs.color);
+  rec('packaging bg/color', kcs.backgroundColor+' / '+kcs.color);
+  rec('viewport', w.innerWidth+'x'+w.innerHeight);
+  // 검색의 '동 건물 상세' 결과가 상세 창을 여는지 (동 배지를 버튼에서 라벨로 바꾼 뒤 회귀 점검)
+  try{
+    const si=d.getElementById('hdrSearchInput');
+    si.value='2동'; si.dispatchEvent(new w.Event('input',{bubbles:true}));
+    await sleep(500);
+    const items=[...d.querySelectorAll('#hdrSearchPanel button.hdr-sr-item')];
+    const bldg=items.find(el=>/건물 상세/.test(el.textContent||'')||/건물/.test((el.querySelector('.hdr-sr-badge')||{}).textContent||''));
+    rec('search results', items.length+' / bldg item: '+(bldg?bldg.textContent.trim().slice(0,40):'none'));
+    if(bldg){ bldg.click(); await sleep(400); }
+    const dm=d.getElementById('detailModal');
+    const modalOpen=!!dm && !dm.hidden && w.getComputedStyle(dm).display!=='none';
+    rec('bldg search opens detail modal', modalOpen);
+    if(modalOpen){ const cl=dm.querySelector('#closeModalX,#closeModalBtn'); if(cl) cl.click(); await sleep(200); }
+    const sc=d.getElementById('hdrSearchClear'); if(sc) sc.click();
+    await sleep(150);
+  }catch(e){ rec('search test error', String(e&&e.message||e)); }
+  // 14개 카드 열기/닫기
+  const zones=[...d.querySelectorAll('.hotspot-pill[data-toggle-zone]')].map(b=>b.getAttribute('data-toggle-zone'));
+  const rows=[];
+  for(const z of zones){
+    const btn=d.querySelector('.hotspot-pill[data-toggle-zone="'+z+'"]');
+    const wrap=btn.closest('.hotspot-wrapper');
+    btn.click(); await sleep(380);
+    const card=wrap.querySelector(':scope > .expand-card');
+    const r=card.getBoundingClientRect();
+    const mapVisible = r.width < w.innerWidth-20 && r.height < w.innerHeight-20;
+    const inside = r.left>=-1 && r.top>=-1 && r.right<=w.innerWidth+1 && r.bottom<=w.innerHeight+1;
+    const scrolls = card.scrollHeight - card.clientHeight;
+    rows.push(z+' '+Math.round(r.width)+'x'+Math.round(r.height)+' @'+Math.round(r.left)+','+Math.round(r.top)+' inside='+inside+' popup='+mapVisible+' scroll='+Math.round(scrolls));
+    const x=wrap.querySelector('.mobile-card-close');
+    if(x) x.click(); else btn.click();
+    await sleep(220);
+    if(wrap.classList.contains('is-open')){ wrap.classList.remove('is-open'); }
+  }
+  rec('cards('+zones.length+')', rows.join('\n'));
+  rec('admin JS errors after', JSON.stringify((w.__qaErrors||[]).slice(0,8)));
+  // 작업자 뷰 점검
+  for(const id of ['f-in','f-out','f-env']){
+    const ok=await waitReady(id);
+    const ww=win(id), dd=doc(id);
+    const card=dd&&dd.querySelector('.hotspot-wrapper.is-worker-zone .expand-card');
+    let info='no-card';
+    if(card){const r=card.getBoundingClientRect();info=Math.round(r.width)+'x'+Math.round(r.height)+' @'+Math.round(r.left)+','+Math.round(r.top)+' vw='+ww.innerWidth+' vh='+ww.innerHeight;}
+    rec(id+' ready='+ok+' card='+info+' errors='+JSON.stringify((ww.__qaErrors||[]).slice(0,3)));
+  }
+  rec('DONE','all checks finished');
+  document.title='QA_DONE';
+})();
+</script></body></html>
