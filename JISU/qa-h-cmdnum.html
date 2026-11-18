@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>QA · 진행량 쉼표 파싱</title>
+<style>
+body{margin:0;background:#0b1220;color:#dbeafe;font:12px/1.45 ui-monospace,Menlo,monospace}
+#bar{position:fixed;inset:0 0 auto 0;height:26px;background:#111c31;border-bottom:1px solid #27405f;padding:4px 8px;z-index:9}
+#out{position:fixed;inset:30px 0 0 0;overflow:auto;padding:8px;white-space:pre-wrap;z-index:5}
+#stage{position:absolute;left:-3000px;top:0;width:1600px;height:1200px;overflow:hidden}
+</style></head><body>
+<div id="bar"><span id="summary">준비…</span></div>
+<pre id="out"></pre>
+<div id="stage"></div>
+<script>
+const K = { C:'jisu-commands-v1', S:'jisu-schedule-v1' };
+const R = { checks:[], notes:[] };
+function rec(n,pass,d){ R.checks.push({n:n,p:!!pass,d:d===undefined?'':String(d).slice(0,600)}); paint(); }
+function note(s){ R.notes.push(String(s).slice(0,400)); paint(); }
+function paint(){
+  const fail = R.checks.filter(c=>!c.p).length;
+  document.getElementById('summary').textContent = 'checks '+R.checks.length+' / fail '+fail;
+  document.getElementById('out').textContent = R.checks.map(c=>(c.p?'PASS ':'FAIL ')+c.n+(c.d?' :: '+c.d:'')).join('\n')+'\n---- notes\n'+R.notes.join('\n');
+}
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+function today(){ return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }
+function store(){ try{ return JSON.parse(localStorage.getItem(K.C)||'[]'); }catch(e){ return []; } }
+function item(id){ return store().find(x=>x.id===id); }
+function seed(){
+  const t = today();
+  const base = { kind:'instruction', at:'11. 19. 08:20', day:t, target:'outbound' };
+  const list = [
+    Object.assign({}, base, { id:'q1', text:'16 KG 파렛트 1동 → 2동 이동 18,000 KG' }),
+    Object.assign({}, base, { id:'q2', text:'알루미늄 파우치백 1동 → 2동 이동 12.5 TON' }),
+    Object.assign({}, base, { id:'q3', text:'사각박스 2동 → 3동 이동 1,234,567 EA' })
+  ];
+  localStorage.setItem(K.C, JSON.stringify(list));
+  localStorage.setItem(K.S, '[]');
+  try{ localStorage.removeItem('jisu-user'); }catch(e){}
+}
+function W(){ const f=document.getElementById('f'); return f?f.contentWindow:null; }
+function D(){ const f=document.getElementById('f'); return f?f.contentDocument:null; }
+function wrap(){ const d=D(); return d?d.getElementById('hotspot-outbound'):null; }
+function openZone(){
+  const d=D(); if(!d) return false;
+  const w=d.getElementById('hotspot-outbound');
+  const pill=w && w.querySelector('.hotspot-pill');
+  if(!pill) return false;
+  if(!w.classList.contains('is-open')) pill.click();
+  return true;
+}
+async function waitInp(id, ms){
+  const lim=ms||8000, t0=Date.now();
+  while(Date.now()-t0<lim){
+    const w=wrap();
+    const inp=w?w.querySelector('[data-cmd-progress="'+id+'"]'):null;
+    if(inp) return inp;
+    if(w && !w.classList.contains('is-open')) openZone();
+    await sleep(200);
+  }
+  return null;
+}
+async function waitReady(){
+  const t0=Date.now();
+  while(Date.now()-t0<25000){
+    const d=D();
+    if(d && d.readyState==='complete' && d.querySelector('.hotspot-pill')) return true;
+    await sleep(150);
+  }
+  return false;
+}
+async function typeVal(id,raw){
+  const inp=await waitInp(id);
+  if(!inp) return null;
+  inp.focus();
+  inp.value=raw;
+  const IW = W().InputEvent;
+  inp.dispatchEvent(IW? new IW('input',{bubbles:true,inputType:'insertText',data:raw}) : new (W().Event)('input',{bubbles:true}));
+  await sleep(120);
+  return inp;
+}
+async function change(id){
+  const inp=await waitInp(id);
+  if(!inp) return null;
+  inp.dispatchEvent(new (W().Event)('change',{bubbles:true}));
+  await sleep(200);
+  return inp;
+}
+function doneOf(id){ const it=item(id); return it?it.done:undefined; }
+function resetDone(id){
+  const all=store(); const it=all.find(x=>x.id===id);
+  if(it){ delete it.done; delete it.completed; delete it.completedAt; delete it.doneBefore; delete it.short; delete it.review; }
+  localStorage.setItem(K.C, JSON.stringify(all));
+  try{ W().jisuCmdRender(); }catch(e){}
+}
+
+(async function(){
+  seed();
+  const f=document.createElement('iframe');
+  f.id='f'; f.width=1500; f.height=1000; f.style.cssText='border:0;display:block';
+  f.src='./qa-cmdnum.html?t='+Date.now();
+  document.getElementById('stage').appendChild(f);
+
+  const ok = await waitReady();
+  rec('앱 로드(.hotspot-pill)', ok);
+  if(!ok){ note('load timeout'); return; }
+
+  /* QA 사본은 DB가 막혀 있어 동기화 방식 전환이 한 번 일어나며 스스로 새로고침한다 → 안정될 때까지 대기 */
+  await sleep(6000);
+  await waitReady();
+  await sleep(1200);
+  rec('초기 자동 새로고침 후 재로드', !!D() && !!D().querySelector('.hotspot-pill'));
+  openZone();
+  await sleep(600);
+
+  const cntOf = () => { const w=wrap(); return w?w.querySelectorAll('[data-cmd-progress]').length:-1; };
+  let inp = await waitInp('q1');
+  rec('진행량 입력칸 존재', !!inp, 'progress inputs in outbound card='+cntOf());
+
+  /* 1) 18,000 입력 → 18000 저장 */
+  inp = await typeVal('q1','18,000');
+  await sleep(250);
+  rec('18,000 입력 즉시 저장 done=18000', doneOf('q1')===18000, 'done='+doneOf('q1'));
+  rec('18,000 입력 시 목표 일치 표시(is-goal-done)', !!(inp&&inp.classList.contains('is-goal-done')), inp?inp.className:'no input');
+
+  /* 2) change(blur) 후에도 18000 유지, 칸 표시 18000 */
+  await change('q1');
+  await sleep(400);
+  rec('blur(change) 후 done=18000', doneOf('q1')===18000, 'done='+doneOf('q1'));
+  inp = await waitInp('q1');
+  rec('칸 표시값 18000', !!inp && inp.value==='18000', inp?inp.value:'no input');
+  const unitEl = inp && inp.closest('.work-done-num') ? inp.closest('.work-done-num').querySelector('.work-unit') : null;
+  const labTxt = inp && unitEl ? ('완료 ' + inp.value + ' ' + unitEl.textContent).replace(/\s+/g,' ').trim() : '';
+  rec('카드 문구 "완료 18000 / 18000 KG"', /^완료 18000 \/ 18000 KG$/.test(labTxt), labTxt);
+  rec('칸에서 18000이 잘리지 않음', !!inp && inp.scrollWidth <= inp.clientWidth + 1, inp? ('scrollWidth='+inp.scrollWidth+' clientWidth='+inp.clientWidth) : 'no input');
+
+  /* 3) 작업완료 클릭 → 완료 처리 */
+  const w0=wrap();
+  const btn = w0 && w0.querySelector('[data-cmd-complete="q1"]');
+  if(btn) btn.click();
+  await sleep(500);
+  const it1 = item('q1')||{};
+  rec('작업완료 클릭 후 completed', it1.completed===true, 'completed='+it1.completed+' done='+it1.done);
+  rec('완료 후 done=18000 (부족 아님)', it1.done===18000 && !it1.short, 'done='+it1.done+' short='+it1.short);
+  const w1=wrap();
+  const doneBtn = w1 && w1.querySelector('[data-cmd-complete="q1"]');
+  rec('버튼 문구 "완료됨"', !!doneBtn && /완료됨/.test(doneBtn.textContent), doneBtn?doneBtn.textContent.trim():'');
+
+  /* 4) 소수 12,5 → 12.5 */
+  resetDone('q2'); await sleep(300);
+  await typeVal('q2','12,5'); await change('q2'); await sleep(300);
+  rec('12,5 입력 → done=12.5', doneOf('q2')===12.5, 'done='+doneOf('q2'));
+  resetDone('q2'); await sleep(300);
+  await typeVal('q2','12.5'); await change('q2'); await sleep(300);
+  rec('12.5 입력 → done=12.5', doneOf('q2')===12.5, 'done='+doneOf('q2'));
+  const w2=wrap(); const cbtn = w2 && w2.querySelector('[data-cmd-complete="q2"]');
+  if(cbtn) cbtn.click(); await sleep(500);
+  const it2=item('q2')||{};
+  rec('소수 작업완료 completed', it2.completed===true && it2.done===12.5, 'completed='+it2.completed+' done='+it2.done+' short='+it2.short);
+
+  /* 5) 1,234,567 → 1234567 */
+  resetDone('q3'); await sleep(300);
+  await typeVal('q3','1,234,567'); await change('q3'); await sleep(300);
+  rec('1,234,567 입력 → done=1234567', doneOf('q3')===1234567, 'done='+doneOf('q3'));
+  const inp7=await waitInp('q3');
+  rec('칸에서 1234567이 잘리지 않음', !!inp7 && inp7.scrollWidth <= inp7.clientWidth + 1, inp7? ('scrollWidth='+inp7.scrollWidth+' clientWidth='+inp7.clientWidth) : 'no input');
+
+  /* 6) 1,2 (유럽식 소수) → 1.2 */
+  resetDone('q3'); await sleep(300);
+  await typeVal('q3','1,2'); await change('q3'); await sleep(300);
+  rec('1,2 입력 → done=1.2', doneOf('q3')===1.2, 'done='+doneOf('q3'));
+
+  /* 7) 빈칸 → null */
+  resetDone('q3'); await sleep(300);
+  await typeVal('q3',''); await change('q3'); await sleep(300);
+  rec('빈칸 입력 → done=null', doneOf('q3')===null, 'done='+doneOf('q3'));
+
+  /* 8) 글자 → 칸에서 걸러지고 null */
+  resetDone('q3'); await sleep(300);
+  const junkInp = await typeVal('q3','abc'); await sleep(200);
+  rec('글자 입력은 칸에서 걸러짐(숫자만)', !!junkInp && junkInp.value==='', junkInp?junkInp.value:'no input');
+  await change('q3'); await sleep(300);
+  rec('글자 입력 → done=null', doneOf('q3')===null, 'done='+doneOf('q3'));
+
+  /* 9) change 없이 작업완료 클릭(카드 입력값 직접 읽기) */
+  resetDone('q3'); await sleep(400);
+  const live=await waitInp('q3');
+  if(live){ live.value='2,400'; }
+  const w3=wrap(); const lbtn=w3 && w3.querySelector('[data-cmd-complete="q3"]');
+  if(lbtn) lbtn.click(); await sleep(500);
+  const it3=item('q3')||{};
+  rec('change 없이 2,400 + 작업완료 → done=2400', it3.done===2400, 'done='+it3.done+' completed='+it3.completed);
+
+  /* 10) 판단창(이월 판단) 수량 수정 qty "1,200" */
+  resetDone('q1'); await sleep(400);
+  const r1 = W().jisuCarryAct('q1','qty','1,200');
+  await sleep(300);
+  const it1b=item('q1')||{};
+  rec('판단창 수량 "1,200" → 목표 1200', r1==null && /1200\s*KG/.test(String(it1b.text)), 'ret='+r1+' text='+it1b.text);
+  const r2 = W().jisuCarryAct('q1','qty','abc');
+  rec('판단창 수량 "abc" → 오류 문구', /수량을 숫자로/.test(String(r2)), 'ret='+r2);
+
+  /* 11) JS 오류 */
+  let errs=[]; try{ errs=(W().__qaErrors||[]).slice(0,10); }catch(e){ errs=['n/a']; }
+  rec('JS 오류 0건', errs.length===0, JSON.stringify(errs));
+  let blocked=-1; try{ blocked=W().__qaBlocked; }catch(e){}
+  note('qaBlocked(실 네트워크 차단 수)='+blocked);
+
+
+  window.__qaRead=(id)=>{ const it=item(id); return it?JSON.stringify({id:it.id,done:it.done,text:it.text,completed:it.completed,short:it.short}):'none'; };
+  window.__qaReset=(id)=>{ resetDone(id); };
+  window.__qaPrepare=(id,txt)=>{ const all=store(); const it=all.find(x=>x.id===id); if(it){ it.text=txt; delete it.done; delete it.completed; delete it.completedAt; delete it.doneBefore; delete it.short; delete it.review; } localStorage.setItem(K.C, JSON.stringify(all)); try{ W().jisuCmdRender(); }catch(e){} };
+  window.__qaChecks=()=>R.checks.filter(c=>!c.p).map(c=>c.n+' :: '+c.d).join(' | ');
+  window.__qaOpen=()=>openZone();
+  note('완료: ' + R.checks.filter(c=>c.p).length + '/' + R.checks.length);
+})();
+</script>
+</body></html>

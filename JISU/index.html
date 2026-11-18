@@ -8,6 +8,13 @@
     if (!s) return NaN;
     if (/^\d{1,3}(?:,\d{3})+(?:\.\d+)?$/.test(s)) return Number(s.replace(/,/g, ''));
     return Number(s.replace(',', '.'));
+  };
+  /* 입력칸 숫자 읽기: "18,000" → 18000, "12,5"·"12.5" → 12.5, 빈칸·글자 → null. 진행량·수량 입력칸 공용. */
+  window.jisuParseInputNum = function (raw) {
+    var s = String(raw == null ? '' : raw).replace(/[^0-9.,]/g, '').trim();
+    if (!s) return null;
+    var n = window.jisuParseNum ? window.jisuParseNum(s) : Number(s.replace(',', '.'));
+    return isFinite(n) ? n : null;
   };</script>
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
@@ -764,7 +771,7 @@
     .cmd-text{flex:1;min-width:0;overflow-wrap:break-word;word-break:keep-all;font-weight:700;color:#f1f5f9;}
     .work-ctrl{display:flex;flex-direction:row;align-items:center;gap:6px;flex:0 0 auto;margin-left:auto;}
     .work-done-num{display:flex;align-items:center;gap:4px;font-size:10.5px;color:#94a3b8;font-weight:700;white-space:nowrap;}
-    .work-done-num input{width:58px;font-size:16px !important;-moz-appearance:textfield;appearance:textfield;background:#0b0f14;border:1px solid #475569;border-radius:7px;color:#fff;font-size:13px;font-weight:800;padding:3px 6px;text-align:right;}
+    .work-done-num input{width:var(--wpn,58px);font-size:16px !important;-moz-appearance:textfield;appearance:textfield;background:#0b0f14;border:1px solid #475569;border-radius:7px;color:#fff;font-size:13px;font-weight:800;padding:3px 6px;text-align:right;}
     .work-done-num input:focus{outline:none;border-color:#22c55e;}
     .work-done-num span{color:#cbd5e1;}
     .work-complete{font-size:11px;font-weight:800;padding:4px 9px;border-radius:7px;background:#16a34a;color:#fff;border:1px solid #22c55e;white-space:nowrap;}
@@ -801,7 +808,7 @@
     @keyframes workPulse{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.55),0 6px 16px rgba(249,115,22,.35);}50%{box-shadow:0 6px 16px rgba(249,115,22,.5);}}
     .cmd-item.is-completed .work-progress{opacity:.55;}
     .cmd-side .work-ctrl{gap:4px;flex-wrap:wrap;justify-content:flex-end;max-width:100%;}
-    .cmd-side .work-done-num input{width:48px;}
+    .cmd-side .work-done-num input{width:var(--wpn,48px);}
     .cmd-side .work-complete{padding:5px 9px !important;font-size:11px !important;}
     .forklift-icon{width:40px;height:40px;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));}
     /* Fixed column widths so rows line up regardless of state (작업완료 / 완료됨) */
@@ -822,7 +829,7 @@
       .work-unit{min-width:4.8em;}
       .work-complete{min-width:54px;padding:5px 6px !important;font-size:11px !important;}
       .work-done-num{gap:3px;}
-      .work-done-num input{width:46px;}
+      .work-done-num input{width:var(--wpn,46px);}
     }
     /* Building labels: glass style matching the map buttons (no white box, no dot) */
     .bldg-badge{background:rgba(15,23,42,.42) !important;color:#f8fafc !important;border:1px solid rgba(255,255,255,.28) !important;border-radius:10px !important;
@@ -1750,7 +1757,7 @@
       border-radius: 10px !important;
       color: #0f172a !important;
       font-weight: 800 !important;
-      width: 46px !important;
+      width: var(--wpn, 46px) !important;
       height: 30px !important;
       font-size: 14px !important;
       padding: 2px 6px !important;
@@ -2921,7 +2928,7 @@
       .expand-card .work-ctrl{margin-left:auto !important;max-width:100% !important;column-gap:5px !important;align-items:flex-end !important;}
       .expand-card .work-done-num,.expand-card .work-unit{font-size:clamp(12px,3.3vw,13px) !important;}
       .expand-card .work-unit{min-width:0 !important;}
-      .expand-card .work-done-num input{width:clamp(44px,12vw,52px) !important;height:30px !important;font-size:14px !important;}
+      .expand-card .work-done-num input{width:var(--wpn,clamp(44px,12vw,52px)) !important;height:30px !important;font-size:14px !important;}
       .expand-card .work-complete{font-size:clamp(11px,3.1vw,12px) !important;padding:5px clamp(8px,2.4vw,11px) !important;min-width:clamp(54px,15vw,66px) !important;height:30px !important;}
       .cmd-item.has-img .cmd-row{flex-wrap:wrap !important;align-items:flex-end !important;gap:8px 6px !important;}
       .cmd-card-img-wrap{flex:1 1 auto !important;min-width:0 !important;align-items:flex-end !important;gap:8px !important;}
@@ -4780,6 +4787,9 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(37,99,
       return s;
     }
     function carrySub(x){ return ''; }
+    /* 긴 수량(예: 18,000)이 칸에서 잘리지 않게: 자릿수에 따라 칸 너비(--wpn)만 늘린다 (3자리 이하는 기본 너비) */
+    const progW=v=>{ const n=String(v==null?'':v).replace(/[^0-9.]/g,'').length; return n<=3?0:(n===4?58:n===5?68:n===6?76:84); };
+    const progWAttr=v=>{ const w=progW(v); return w?' style="--wpn:'+w+'px"':''; };
     const OB_PREFIX_RE=/^\[(RAS-2|L1|CP3K|C3B|연구요청|분진상차|내화물상차|폐파레트|SH|HH|16kg 파렛트|알루미늄 파우치백|사각박스|공장간 이송 \(2공장→1공장\)|공장간 이송 \(1공장→2공장\)|공장간 이송 2공장→1공장|공장간 이송 1공장→2공장|2공장→1공장|1공장→2공장)\]/i;
     const OB_STRIP_RE=/^\[(RAS-2|L1|CP3K|C3B|연구요청|분진상차|내화물상차|폐파레트|SH|HH|16kg 파렛트|알루미늄 파우치백|사각박스|공장간 이송 \(2공장→1공장\)|공장간 이송 \(1공장→2공장\)|공장간 이송 2공장→1공장|공장간 이송 1공장→2공장|2공장→1공장|1공장→2공장)\]\s*/i;
     function getObItem(x){
@@ -4814,7 +4824,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(37,99,
       if(isWork){
         const isGoalDone = !!(x.completed || (g && x.done != null && x.done !== '' && !isNaN(Number(x.done)) && Number(x.done) === Number(g.n)));
         right='<div class="work-ctrl">'
-          +(isMove ? '<div class="work-done-col">'+carrySub(x)+'<label class="work-done-num">완료 <input type="text" class="'+(isGoalDone?'is-goal-done':'is-in-progress')+'" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" enterkeyhint="done" data-cmd-progress="'+x.id+'" data-cmd-goal="'+(g?esc(g.n):'')+'" value="'+(x.done!=null?esc(x.done):'')+'" placeholder="0"'+(x.completed?' disabled':'')+'>'+'<span class="work-unit">'+(g?'/ '+esc(g.n)+(g.u?' '+esc(g.u):''):'')+'</span>'+'</label></div>' : '')
+          +(isMove ? '<div class="work-done-col">'+carrySub(x)+'<label class="work-done-num">완료 <input type="text" class="'+(isGoalDone?'is-goal-done':'is-in-progress')+'" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" enterkeyhint="done" data-cmd-progress="'+x.id+'" data-cmd-goal="'+(g?esc(g.n):'')+'" value="'+(x.done!=null?esc(x.done):'')+'" placeholder="0"'+progWAttr(x.done)+(x.completed?' disabled':'')+'>'+'<span class="work-unit">'+(g?'/ '+esc(g.n)+(g.u?' '+esc(g.u):''):'')+'</span>'+'</label></div>' : '')
           +'<button type="button" class="work-complete work-progress'+(x.working&&!x.completed?' is-working':'')+'" data-cmd-working="'+x.id+'">작업중</button>'
           +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?(x.short?'부족 완료':'완료됨'):'작업완료')+'</button>'
           +'</div>';
@@ -5060,7 +5070,7 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(37,99,
     }
     function update(id,fn){const all=load();const it=all.find(x=>x.id===id);if(!it)return;fn(it);save(all);render();if(modalKey)fillModal(modalKey);}
     const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
-    function onChange(e){const id=e.target.getAttribute&&e.target.getAttribute('data-cmd-progress');if(!id)return;e.stopPropagation();const v=e.target.value.replace(',','.').replace(/[^0-9.]/g,'').trim();const n=v===''?null:Number(v);update(id,it=>{it.done=(n==null||isNaN(n))?null:n;});}
+    function onChange(e){const id=e.target.getAttribute&&e.target.getAttribute('data-cmd-progress');if(!id)return;e.stopPropagation();const n=window.jisuParseInputNum(e.target.value);update(id,it=>{it.done=n;});}
     function onClick(e){const t=e.target.closest?e.target.closest('[data-cmd-del],[data-cmd-complete],[data-cmd-working],[data-cmd-progress],.work-ctrl'):null;if(!t)return;e.stopPropagation();
       const did=t.getAttribute('data-cmd-del');
       if(did){save(load().filter(x=>x.id!==did));render();if(modalKey)fillModal(modalKey);return;}
@@ -5069,10 +5079,9 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(37,99,
       const id=t.getAttribute('data-cmd-complete');if(!id)return;
       const cardEl=t.closest&&t.closest('.cmd-item');
       const liveInp=cardEl?cardEl.querySelector('[data-cmd-progress="'+id+'"]'):null;
-      const liveVal=liveInp?liveInp.value.replace(',','.').replace(/[^0-9.]/g,'').trim():null;
-      const liveNum=(liveVal!==null&&liveVal!=='')?Number(liveVal):null;
+      const liveNum=liveInp?window.jisuParseInputNum(liveInp.value):null;
       update(id,it=>{if(liveNum!==null&&!isNaN(liveNum))it.done=liveNum;if(it.completed){it.completed=false;it.completedAt=null;if(it.short){delete it.short;if(it.review==='pending'&&!it.carryFrom)delete it.review;}if('doneBefore' in it){it.done=it.doneBefore;delete it.doneBefore;}}else{const g=isMoveWork(it)?goalOf(it.text):null;it.completed=true;it.working=false;it.completedAt=nowStr();it.doneBefore=(it.done==null?null:it.done);if(g){const goal=Number(g.n);const cur=Number(it.done);if(it.done!=null&&it.done!==''&&!isNaN(cur)&&cur<goal){it.short=true;it.review='pending';}else{it.done=(it.done==null||it.done===''||isNaN(cur))?goal:cur;}}}});}
-    [document.getElementById('mapStage'),document.getElementById('modalCmds'),list].forEach(el=>{if(!el)return;el.addEventListener('change',onChange,true);el.addEventListener('click',onClick,true);el.addEventListener('focus',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){const inp=e.target;setTimeout(()=>{try{inp.select();if(inp.setSelectionRange)inp.setSelectionRange(0,inp.value.length);}catch(_){}},20);}},true);el.addEventListener('keydown',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){e.stopPropagation();if(e.key==='Enter')e.target.blur();}},true);el.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){const c=e.target.value.replace(/[^0-9.,]/g,'');if(c!==e.target.value)e.target.value=c;const ga=e.target.getAttribute('data-cmd-goal');const gn=(ga!==null&&ga!=='')?Number(ga):NaN;const vn=c.trim()===''?NaN:Number(c.replace(',','.'));const met=!isNaN(gn)&&!isNaN(vn)&&vn===gn;e.target.classList.toggle('is-goal-done',met);e.target.classList.toggle('is-in-progress',!met);const pid=e.target.getAttribute('data-cmd-progress');if(pid){const all=load();const it=all.find(x=>x.id===pid);if(it){it.done=(c.trim()===''||isNaN(vn))?null:vn;save(all);}}}},true);});
+    [document.getElementById('mapStage'),document.getElementById('modalCmds'),list].forEach(el=>{if(!el)return;el.addEventListener('change',onChange,true);el.addEventListener('click',onClick,true);el.addEventListener('focus',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){const inp=e.target;setTimeout(()=>{try{inp.select();if(inp.setSelectionRange)inp.setSelectionRange(0,inp.value.length);}catch(_){}},20);}},true);el.addEventListener('keydown',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){e.stopPropagation();if(e.key==='Enter')e.target.blur();}},true);el.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('[data-cmd-progress]')){const c=e.target.value.replace(/[^0-9.,]/g,'');if(c!==e.target.value)e.target.value=c;const wp=progW(c);if(wp)e.target.style.setProperty('--wpn',wp+'px');else e.target.style.removeProperty('--wpn');const ga=e.target.getAttribute('data-cmd-goal');const gn=(ga!==null&&ga!=='')?Number(ga):NaN;const vn=window.jisuParseInputNum(c);const met=vn!=null&&!isNaN(gn)&&vn===gn;e.target.classList.toggle('is-goal-done',met);e.target.classList.toggle('is-in-progress',!met);const pid=e.target.getAttribute('data-cmd-progress');if(pid){const all=load();const it=all.find(x=>x.id===pid);if(it){it.done=vn;save(all);}}}},true);});
     const PLACE_LABEL={A:'1동',B:'B동',C:'2동',D:'3동','1':'1동','2':'2동','3':'3동','4':'4동',W:'창고',outbound:'출고',inbound:'입고',packaging:'포장','packaging-d':'포장(3동)',pitch:'피치',environment:'환경','production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H'};
     function detectMove(t){
       t=String(t||'').replace(/＞/g,'>'); if(!/이동|→|->|⇒|>|에서|운반|옮/.test(t)) return null;
@@ -6954,7 +6963,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const all=load(CKEY), x=all.find(r=>r.id===id); if(!x) return '';
       const by=me(), at=nowStr(); let note='';
       if(type==='ok'){ x.review='ok'; note='계속 진행'; }
-      else if(type==='qty'){ const n=Number(String(val).replace(',','.')); if(!(n>0)) return '수량을 숫자로 적어주세요'; const old=goalN(x.text); x.text=withGoal(x.text,n); x.review='ok'; note='수량 '+(old!=null?fmt(old)+' → ':'')+fmt(n); }
+      else if(type==='qty'){ const n=window.jisuParseInputNum(val); if(n==null||!(n>0)) return '수량을 숫자로 적어주세요'; const old=goalN(x.text); x.text=withGoal(x.text,n); x.review='ok'; note='수량 '+(old!=null?fmt(old)+' → ':'')+fmt(n); }
       else if(type==='move'){ if(!val||val<=kstToday()) return '내일 이후 날짜를 골라주세요';
         const sch=load(SKEY), s={id:Date.now().toString(36)+'m',date:val,target:x.target,kind:'instruction',text:x.text,created:at,carryFrom:x.id,carryCount:x.carryCount||1,origGoal:x.origGoal!=null?x.origGoal:goalN(x.text),origDay:x.origDay||dayOf(x)}; if(x.by) s.by=x.by; if(x.urgent) s.urgent=true; sch.push(s); save(SKEY,sch);
         x.closed=true; x.review='moved'; x.movedTo=val; x.working=false; note=mdOf(val)+'로 변경'; }
