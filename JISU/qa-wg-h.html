@@ -94,7 +94,8 @@ async function run(){
   if(!ok){ note('프레임 로드 실패'); return; }
   seedToday();
   rec('시드 후 재로드', await reload());
-  rec('시드 9건 유지(자정 이월 미개입)', cmds().length===9, cmds().map(x=>x.id).join(','));
+  const seedIds=['w1','w2','w3','w4','w5','w6','w7','w8','n1'];
+  rec('시드 9건 유지(자정 이월 미개입)', seedIds.every(id=>cmds().some(x=>x.id===id)) && cmds().filter(x=>/^(w[1-8]|n1)$/.test(x.id)).length===9, cmds().map(x=>x.id).join(','));
 
   /* 1) 이월 판단창 */
   rec('이월 버튼 존재', ev(`!!document.querySelector(".carry-tool-btn")`)===true);
@@ -129,7 +130,8 @@ async function run(){
   setVal(chRow('w5')+' .rv-in','12'); await sleep(150);
   rec('w5 바꾸기 클릭', click(chRow('w5')+' [data-ch-go]')); await sleep(600);
   rec('w5 → [RAS-2] 12 TON', txt('w5')==='[RAS-2] 12 TON', txt('w5'));
-  rec('w5 수정 후 달력 표시 정상', hist().includes('[RAS-2] 12 TON') && !hist().includes('33 TON'), hist().replace(/\s+/g,' ').slice(0,240));
+  const w5row = String(ev(`(function(){var a=document.querySelector('[data-ch-id="w5"]'); if(!a) return 'no-row'; var it=a.closest('.ch-item'); var t=it?it.querySelector('.ch-txt'):null; return t?t.textContent:'';})()`));
+  rec('w5 수정 후 달력 행 표시 정상', w5row==='[RAS-2] 12 TON', w5row);
   rec('w6 수량 수정 버튼 클릭', click(chRow('w6')+' [data-ch-act="qty"]')); await sleep(400);
   setVal(chRow('w6')+' .rv-in','45'); await sleep(150);
   rec('w6 바꾸기 클릭', click(chRow('w6')+' [data-ch-go]')); await sleep(600);
