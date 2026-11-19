@@ -3969,7 +3969,6 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
     body:not(#zz) .map-stage.weather-snow .hotspot-pill:hover{ background: rgba(15, 23, 42, 0.74); }
   </style>
 <script>
-/* ── QA 전용(배포 금지): Firebase 쓰기·/api/push 차단 + 콘솔 오류 수집 ── */
 window.__qaErrors=[];
 window.addEventListener('error',function(e){ window.__qaErrors.push('error: '+(e.message||'')+' @'+((e.filename||'')+':'+(e.lineno||''))); });
 window.addEventListener('unhandledrejection',function(e){ var r=e.reason; window.__qaErrors.push('rejection: '+((r&&(r.message||r))||'')); });
@@ -10807,10 +10806,10 @@ paint()})();</script>
   /* ── 입자 만들기 ─────────────────────────────────────────────── */
   function newDrop(layer){
     var sp=[0.52,0.78,1.12][layer];
-    var a=[0.13,0.2,0.3][layer]*rnd(0.72,1.12);
-    return { x:rnd(-W*0.18,W), y:rnd(-H,H), len:[0.62,1,1.5][layer]*rnd(9,16),
-             sp:sp*rnd(0.9,1.1), w:[0.7,1,1.5][layer],
-             c:'rgba(198,224,255,'+a.toFixed(3)+')' };
+    var a=[0.18,0.28,0.4][layer]*rnd(0.7,1.15);
+    return { x:rnd(-W*0.25,W), y:rnd(-H,H), len:[0.7,1,1.45][layer]*rnd(14,23),
+             sp:sp*rnd(0.9,1.1), w:[0.9,1.3,1.9][layer],
+             c:'rgba(204,228,255,'+a.toFixed(3)+')' };
   }
   function newFlake(){
     var big=Math.random();
@@ -10824,10 +10823,11 @@ paint()})();</script>
     drops=[]; flakes=[]; ripples=[];
     var i,n;
     if(state==='rain'){
-      n=Math.round(Math.min(260,Math.max(90,W*H/16000)));
-      for(i=0;i<n;i++) drops.push(newDrop(i%3));
+      /* 화면 넓이에 따라 200~520줄, 세 겹(뒤·중간·앞)으로 깔아 빗줄기가 비어 보이지 않게 한다 */
+      n=Math.round(Math.min(520,Math.max(200,W*H/3400)));
+      for(i=0;i<n;i++) drops.push(newDrop(i%10<5?0:(i%10<8?1:2)));
     }else if(state==='snow'){
-      n=Math.round(Math.min(320,Math.max(120,W*H/12000)));
+      n=Math.round(Math.min(420,Math.max(150,W*H/5200)));
       for(i=0;i<n;i++) flakes.push(newFlake());
     }
     ctx.clearRect(0,0,W,H);
@@ -10849,7 +10849,7 @@ paint()})();</script>
     ctx.lineCap='round';
     for(i=0;i<drops.length;i++){
       p=drops[i];
-      dy=p.sp*1000*dt; dx=dy*0.23;
+      dy=p.sp*1150*dt; dx=dy*0.22;
       p.y+=dy; p.x+=dx;
       if(p.y-p.len>H || p.x>W+40){ p.y=-p.len-rnd(0,H*0.3); p.x=rnd(-W*0.2,W*0.92); }
       ctx.strokeStyle=p.c;
@@ -10857,12 +10857,12 @@ paint()})();</script>
       ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-dx*(p.len/dy),p.y-p.len); ctx.stroke();
     }
     /* 물웅덩이 파문: 바닥 쪽에 낮은 타원으로 퍼졌다 사라진다 */
-    if(Math.random()<dt*11) ripples.push({ x:rnd(0,W), y:rnd(H*0.18,H*0.98), r:0, max:rnd(7,15) });
+    if(Math.random()<dt*16) ripples.push({ x:rnd(0,W), y:rnd(H*0.12,H*0.98), r:0, max:rnd(7,16) });
     for(i=ripples.length-1;i>=0;i--){
       p=ripples[i]; p.r+=p.max*dt*2.1;
       if(p.r>=p.max){ ripples.splice(i,1); continue; }
       var k=1-p.r/p.max;
-      ctx.strokeStyle='rgba(206,230,255,'+(0.26*k*k).toFixed(3)+')';
+      ctx.strokeStyle='rgba(208,232,255,'+(0.34*k*k).toFixed(3)+')';
       ctx.lineWidth=1;
       ctx.beginPath(); ctx.ellipse(p.x,p.y,p.r,p.r*0.4,0,0,Math.PI*2); ctx.stroke();
     }
