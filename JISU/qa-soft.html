@@ -45,7 +45,7 @@ window.addEventListener('unhandledrejection',function(e){ var r=e.reason; __qaRe
   }catch(_){}
 })();</script>
 
-  <meta name="jisu-build" content="202611190943">
+  <meta name="jisu-build" content="202611192235">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -3706,6 +3706,294 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(37,99,
       border-radius: 6px;
       cursor: pointer;
     }
+  </style>
+  <style id="soft-ui-polish">
+/* ==========================================================================
+   [2026-11-19] 부드러운 UI 다듬기 — 다크 톤·유리 질감·레이아웃·모든 기능은 그대로.
+   카드 안쪽 여백(세로 호흡)만 조금 늘리고, 테두리는 1px 헤어라인으로 통일하고,
+   글씨 굵기를 제목 700 / 보조 400~500 / 본문 500~600 으로 풀어 부드럽게 다듬는다.
+   ========================================================================== */
+
+/* ---------- 0. 공통 토큰 ---------- */
+:root{
+  --soft-hair-dark: rgba(255,255,255,.075);
+  --soft-hair-dark-2: rgba(255,255,255,.11);
+  --soft-hair-light: rgba(15,23,42,.085);
+  --soft-hair-light-2: rgba(15,23,42,.12);
+  --soft-muted-dark: #8e9bad;
+  --soft-muted-light: #475569;
+  --soft-line: 1.5;
+}
+
+/* ---------- 1. 좌측 사이드바 (.cmd-side) ---------- */
+.cmd-side{
+  padding: 16px !important;
+  gap: 11px !important;
+  border-radius: 18px !important;
+  border: 1px solid var(--soft-hair-dark) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.40) !important;
+}
+.cmd-side h2{ font-weight: 700 !important; letter-spacing: -.01em; color:#f4f6f9; }
+.cmd-side label{
+  font-weight: 500 !important;
+  color: var(--soft-muted-dark) !important;
+  letter-spacing: .005em;
+  line-height: 1.45;
+}
+.cmd-side select, .cmd-side textarea{
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 11px !important;
+  padding: 9px 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.5;
+}
+.cmd-side textarea{ min-height: 92px; }
+.cmd-side select:focus, .cmd-side textarea:focus{ border-color: rgba(255,255,255,.20) !important; }
+.cmd-kind{ gap: 7px; }
+.cmd-kind button{
+  font-weight: 600 !important;
+  padding: 8px 7px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+}
+.cmd-kind button[aria-pressed="true"]{ font-weight: 700 !important; }
+.cmd-side .cmd-submit{
+  font-weight: 700 !important;
+  border-radius: 11px !important;
+  padding: 10px !important;
+  letter-spacing: -.005em;
+}
+.cmd-side .cmd-submit .cmd-submit-target{ font-weight: 700 !important; }
+
+/* 등록 내역 카드 */
+.cmd-list{ gap: 9px !important; }
+.cmd-side .cmd-item{
+  padding: 9px 10px !important;
+  border-radius: 13px !important;
+  border: 1px solid var(--soft-hair-dark) !important;
+  background: rgba(255,255,255,.042) !important;
+  line-height: var(--soft-line);
+}
+.cmd-item .meta{
+  margin-bottom: 4px !important;
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+  color: var(--soft-muted-dark) !important;
+}
+.cmd-item .tag{ font-weight: 600 !important; }
+.cmd-item .tag.instruction{ color:#a8b6ff !important; }
+.cmd-item .tag.notice{ color:#f4c45e !important; }
+.cmd-empty{ font-weight: 500; }
+
+/* 진행/완료 컨트롤: 라벨은 가볍게, 숫자·버튼은 또렷하게 */
+.cmd-text{ font-weight: 600 !important; line-height: 1.5; letter-spacing: -.005em; }
+.work-done-num{ font-weight: 500 !important; color:#93a1b3 !important; }
+.work-done-num input{ font-weight: 600 !important; border-color: rgba(255,255,255,.16) !important; }
+.work-complete{ font-weight: 600 !important; letter-spacing: -.005em; }
+.work-unit{ font-weight: 500 !important; }
+.cmd-move-h{ font-weight: 500 !important; color:#8e9bad !important; }
+.cmd-move-h small{ font-weight: 400 !important; opacity:.9; }
+.cmd-summary-h{ font-weight: 500 !important; color:#8e9bad !important; }
+.cmd-sum-chip{ font-weight: 500 !important; border-color: rgba(255,255,255,.10) !important; }
+.cmd-sum-chip b, .cmd-sum-chip i{ font-weight: 600 !important; }
+.cmd-attach-hint, .cmd-attach-btn{ font-weight: 500 !important; }
+.cmd-notice-banner span{ font-weight: 500 !important; }
+.cmd-item .cmd-in-card-h{ font-weight: 600 !important; }
+
+/* 사이드바 유틸 버튼 */
+.side-tool-btn{ font-weight: 600 !important; border-radius: 10px !important; }
+
+/* 특이사항(메모) */
+.memo-box{ margin-top: 14px; padding-top: 12px; gap: 8px; border-top-color: var(--soft-hair-dark) !important; }
+.memo-h{ font-weight: 700 !important; letter-spacing: -.005em; }
+.memo-h span{ font-weight: 600 !important; }
+.memo-list{ gap: 7px; }
+.memo-item{
+  padding: 9px 11px !important;
+  border-radius: 13px !important;
+  border: 1px solid rgba(248,113,113,.28) !important;
+  background: rgba(239,68,68,.10) !important;
+}
+.memo-item.acked{ border-color: var(--soft-hair-dark) !important; }
+.memo-text{ font-weight: 500 !important; line-height: 1.5; }
+.memo-meta{ font-weight: 400 !important; color:#a9b6c6 !important; }
+.memo-tag{ font-weight: 600 !important; }
+.memo-input{ border-radius: 11px !important; font-weight: 500 !important; }
+.memo-send{ font-weight: 700 !important; border-radius: 11px !important; }
+.memo-chip{ font-weight: 500 !important; }
+.memo-more{ font-weight: 500 !important; }
+
+/* ---------- 2. 자세히보기 유리 팝업 (.expand-card) ---------- */
+body:not(#z1#z2#z3#z4#z5) .expand-card{
+  padding: 22px 20px 20px !important;
+  border: 1px solid rgba(255,255,255,.46) !important;
+  border-top: 1px solid rgba(255,255,255,.72) !important;
+  border-left: 1px solid rgba(255,255,255,.58) !important;
+  border-radius: 28px !important;
+}
+.expand-card .enscape-header{ margin-bottom: 14px !important; }
+.expand-card .enscape-eyebrow{ font-weight: 500 !important; letter-spacing: .06em !important; }
+.expand-card .enscape-title{
+  font-weight: 700 !important;
+  letter-spacing: -.01em !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.45) !important;
+}
+body:not(#z1#z2#z3#z4#z5) .expand-card .pitch-head h4,
+body:not(#z1#z2#z3#z4#z5) .expand-card .inbound-title-row h4{
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+}
+
+/* 팝업 안 밝은 유리 카드: 두꺼운 흰 테두리 → 얇은 헤어라인 */
+body:not(#z1#z2#z3#z4#z5) .expand-card .ob-card-items-bar,
+body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
+  margin: 10px 0 14px !important;
+  padding: 13px 14px !important;
+  border-radius: 16px !important;
+  border: 1px solid var(--soft-hair-light) !important;
+  border-top: 1px solid rgba(255,255,255,.55) !important;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.40), 0 3px 14px rgba(0,0,0,.06) !important;
+}
+.expand-card .ob-card-items-head{ margin-bottom: 9px !important; }
+.expand-card .ob-card-items-head span:first-child{ font-weight: 600 !important; letter-spacing: -.005em; }
+.expand-card .ob-card-hint{ font-weight: 400 !important; color: var(--soft-muted-light) !important; }
+.expand-card .ob-card-chip{
+  height: 30px !important;
+  padding: 0 13px !important;
+  font-weight: 500 !important;
+  border: 1px solid var(--soft-hair-light) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.03) !important;
+}
+.expand-card .ob-card-chip:hover{ font-weight: 600 !important; }
+.expand-card .cmd-in-card-h{ font-weight: 600 !important; letter-spacing: -.005em; }
+.expand-card .cmd-in-card-h span{ font-weight: 500 !important; }
+.expand-card .cmd-in-card-h .cmd-count,
+.expand-card .cmd-notice-count{ font-weight: 600 !important; }
+.expand-card .cmd-in-card{ padding: 3px 0 !important; }
+.expand-card .cmd-item{ padding: 10px 9px !important; }
+.expand-card .cmd-text{ font-weight: 600 !important; line-height: 1.5; }
+.expand-card .cmd-item{ background: rgba(255,255,255,.24) !important; border-color: var(--soft-hair-light) !important; }
+.expand-card .cmd-item .meta{ color:#5b6675 !important; font-weight: 400 !important; }
+.expand-card .text-slate-400, .expand-card .text-slate-300, .expand-card .text-slate-500,
+.expand-card .text-white\/60, .expand-card .text-white\/70, .expand-card .text-white\/80{
+  font-weight: 500 !important;
+  color: #475569 !important;
+}
+.expand-card .work-done-num{ color:#5b6675 !important; font-weight: 400 !important; }
+.expand-card .work-done-num input{ font-weight: 600 !important; border-color: rgba(15,23,42,.16) !important; }
+.expand-card .work-complete{ font-weight: 600 !important; }
+.expand-card .work-unit{ font-weight: 500 !important; }
+.expand-card .ob-photo-head{ font-weight: 600 !important; letter-spacing: -.005em; }
+.expand-card .ob-count{ font-weight: 400 !important; color:#5b6675 !important; }
+.expand-card .ob-btn{ font-weight: 500 !important; border-color: var(--soft-hair-light) !important; }
+.expand-card .ob-jisu{ font-weight: 500 !important; }
+.expand-card .learn-more-action{ font-weight: 600 !important; }
+
+/* 입고 표: 헤어라인 + 가벼운 본문 */
+.inbound-tbl th{
+  font-weight: 600 !important;
+  color: #334155 !important;
+  border-bottom: 1px solid var(--soft-hair-light-2) !important;
+}
+.inbound-tbl td{
+  font-weight: 600 !important;
+  border-bottom: 1px solid var(--soft-hair-light) !important;
+}
+.inbound-tbl tr.inb-entry-row{ border-bottom: 1px solid var(--soft-hair-light) !important; }
+.inbound-tbl .inb-kg-btn{ font-weight: 600 !important; }
+.inbound-tbl-summary{
+  padding: 9px 12px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--soft-hair-light) !important;
+  background: rgba(255,255,255,.40) !important;
+}
+.inbound-sum-item{ font-weight: 500 !important; }
+.inbound-sum-item b{ font-weight: 700 !important; }
+.inbound-sum-item small{ font-weight: 400 !important; color:#475569 !important; }
+.inbound-work-btn{ font-weight: 600 !important; }
+#inboundDate{ font-weight: 500 !important; color:#5b6675 !important; }
+
+/* 피치 카드 */
+.pitch-log{ padding: 13px !important; border-radius: 16px !important; box-shadow: inset 0 0 0 1px var(--soft-hair-light) !important; }
+.pitch-head{ padding-bottom: 11px !important; border-bottom: 1px solid var(--soft-hair-light) !important; }
+.pitch-head h4{ font-weight: 700 !important; letter-spacing: -.01em; }
+.pitch-head time{ font-weight: 500 !important; color:#5b6675 !important; }
+.pitch-eyebrow{ font-weight: 600 !important; }
+.pitch-section{ padding-top: 11px !important; }
+.pitch-section-title{ font-weight: 600 !important; }
+.pitch-row{ font-weight: 500 !important; line-height: 1.5; }
+.pitch-row > span:first-child{ font-weight: 500 !important; }
+.pitch-input{ font-weight: 500 !important; }
+.pitch-photo{ margin-top: 12px !important; padding-top: 11px !important; border-top: 1px solid var(--soft-hair-light) !important; }
+.pitch-photo-btn{ font-weight: 600 !important; }
+.pitch-add, .pitch-save-btn, .pitch-work-btn{ font-weight: 600 !important; }
+
+/* ---------- 3. 달력 (전체 화면 유리 모달) ---------- */
+.cal-box{
+  border: 1px solid rgba(255,255,255,.16) !important;
+  border-radius: 22px !important;
+  padding: 18px !important;
+}
+.cal-head{ margin-bottom: 14px !important; gap: 9px !important; }
+.cal-head h3{ font-weight: 700 !important; letter-spacing: -.01em; }
+.cal-nav, .cal-today, .cal-close{ border-radius: 11px !important; font-weight: 600 !important; }
+.cal-week{ font-weight: 500 !important; letter-spacing: .01em; margin-bottom: 6px !important; }
+.cal-grid{ gap: 5px !important; }
+.cal-box .cal-cell{
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 12px !important;
+  padding: 6px !important;
+}
+.cal-num{ font-weight: 600 !important; }
+.cal-chip{ font-weight: 500 !important; border-radius: 6px !important; padding: 2px 5px !important; }
+.cal-more, .cal-note, .cal-hint{ font-weight: 400 !important; color: rgba(255,255,255,.72) !important; }
+.cal-box .cal-side{
+  border: 1px solid var(--soft-hair-dark) !important;
+  border-radius: 16px !important;
+  padding: 14px !important;
+  gap: 11px !important;
+}
+.cal-side .cz-head h4{ font-weight: 700 !important; }
+.cal-box .cz-add textarea{ border-radius: 11px !important; font-weight: 500 !important; }
+.cal-box .cz-item{
+  padding: 9px 10px !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--soft-hair-dark) !important;
+}
+.cal-box .cz-item b{ font-weight: 600 !important; }
+.cal-box .cz-b, .cal-box .cz-save{ border-radius: 9px !important; font-weight: 600 !important; }
+.cal-box .cz-list-h, .cal-box .cz-empty, .cal-box .cz-state{ font-weight: 500 !important; }
+
+/* 경고/안내 노트 */
+.jisu-note-warn{ font-weight: 500 !important; }
+.jisu-note thead th{ font-weight: 600 !important; }
+
+/* ---------- 4. 모바일 팝업 (좁은 화면) ---------- */
+@media (max-width: 768px){
+  body:not(#z1#z2#z3#z4#z5):not(.worker-zone-only) .hotspot-wrapper.is-open .expand-card{
+    padding: 15px 12px 17px !important;
+    border-radius: 22px !important;
+  }
+  body:not(#z1#z2#z3#z4#z5) .expand-card .ob-card-items-bar,
+  body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
+    padding: 12px 13px !important;
+    border-radius: 14px !important;
+    margin: 9px 0 12px !important;
+  }
+  .inbound-tbl-summary{ padding: 8px 10px !important; }
+  .cal-box{ padding: 12px !important; }
+  .cal-head{ margin-bottom: 10px !important; }
+  .cal-box .cal-cell{ padding: 4px !important; border-radius: 10px !important; }
+  .cmd-item{ padding: 9px 10px !important; }
+}
+@media (min-width: 769px) and (max-width: 900px){
+  body:not(#z1#z2#z3#z4#z5):not(.worker-zone-only) .hotspot-wrapper.is-open .expand-card{
+    padding: 18px 18px 20px !important;
+    border-radius: 22px !important;
+  }
+}
+
   </style>
 <style id="soft-ui-polish">
 /* ==========================================================================
