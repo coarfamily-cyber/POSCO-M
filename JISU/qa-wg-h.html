@@ -86,7 +86,23 @@ function seedToday(){
   setLS('jisu-pitch-records-v1','{}');
   setLS('jisu-user','김지수');
 }
-async function reload(){ ev('location.reload()'); await sleep(1300); return ready(); }
+async function reload(){
+  try{ ev('window.__qaReloadMark="loading"; location.reload()'); }catch(e){}
+  const t0=Date.now();
+  while(Date.now()-t0<15000){
+    await sleep(300);
+    let m=null;
+    try{ m=W().eval('window.__qaReloadMark'); }catch(e){ m=null; }
+    if(m===undefined || m===null) break;
+  }
+  return ready();
+}
+async function freshCal(){
+  if(visible('#calModal')){ click('.cal-close'); await sleep(300); }
+  ev(`window.jisuCalOpenDay(${JSON.stringify(TODAY)})`);
+  await sleep(900);
+  return visible('#calModal');
+}
 
 async function run(){
   const ok = await ready();
@@ -120,30 +136,27 @@ async function run(){
   click('.rv-modal .cal-close'); await sleep(300);
   rec('판단창 닫힘', ev(`document.querySelector(".rv-modal").hidden`)===true);
 
-  /* 3) 달력 기록 수량 수정 */
-  const calOpen = ev(`(function(){ if(window.jisuCalOpenDay){ window.jisuCalOpenDay(${JSON.stringify(TODAY)}); return true; } return false; })()`);
-  await sleep(900);
-  rec('달력 열기', calOpen===true && visible('#calModal'), String(calOpen));
-  rec('달력 기록에 w5 원문', hist().includes('[RAS-2] 33 TON'), hist().replace(/\s+/g,' ').slice(0,240));
-  rec('w5 수량 수정 버튼 클릭', click(chRow('w5')+' [data-ch-act="qty"]')); await sleep(400);
-  rec('w5 입력칸 현재값 33', q1(chRow('w5')+' .rv-in','value')==='33', q1(chRow('w5')+' .rv-in','value'));
-  setVal(chRow('w5')+' .rv-in','12'); await sleep(150);
-  rec('w5 바꾸기 클릭', click(chRow('w5')+' [data-ch-go]')); await sleep(600);
-  rec('w5 → [RAS-2] 12 TON', txt('w5')==='[RAS-2] 12 TON', txt('w5'));
-  const w5row = String(ev(`(function(){var a=document.querySelector('[data-ch-id="w5"]'); if(!a) return 'no-row'; var it=a.closest('.ch-item'); var t=it?it.querySelector('.ch-txt'):null; return t?t.textContent:'';})()`));
-  rec('w5 수정 후 달력 행 표시 정상', w5row==='[RAS-2] 12 TON', w5row);
-  rec('w6 수량 수정 버튼 클릭', click(chRow('w6')+' [data-ch-act="qty"]')); await sleep(400);
-  setVal(chRow('w6')+' .rv-in','45'); await sleep(150);
-  rec('w6 바꾸기 클릭', click(chRow('w6')+' [data-ch-go]')); await sleep(600);
-  rec('w6 → [HH] 1동>2동 이동작업 45 EA', txt('w6')==='[HH] 1동>2동 이동작업 45 EA', txt('w6'));
-  rec('w7 수량 수정 버튼 클릭', click(chRow('w7')+' [data-ch-act="qty"]')); await sleep(400);
-  setVal(chRow('w7')+' .rv-in','5'); await sleep(150);
-  rec('w7 바꾸기 클릭', click(chRow('w7')+' [data-ch-go]')); await sleep(600);
-  rec('w7 → [RAS-2] 16 KG 파렛트 5대', txt('w7')==='[RAS-2] 16 KG 파렛트 5대', txt('w7'));
-  rec('w8 수량 수정 버튼 클릭', click(chRow('w8')+' [data-ch-act="qty"]')); await sleep(400);
-  setVal(chRow('w8')+' .rv-in','3'); await sleep(150);
-  rec('w8 바꾸기 클릭', click(chRow('w8')+' [data-ch-go]')); await sleep(600);
-  rec('w8 → [연구요청] 3건', txt('w8')==='[연구요청] 3건', txt('w8'));
+  /* 3) 달력 기록 수량 수정 — 접두사 있는 작업(항목마다 달력을 새로 열어 확인) */
+  rec('달력 열기', await freshCal(), hist().replace(/\s+/g,' ').slice(0,120));
+  rec('달력 기록에 w5 원문', hist().includes('[RAS-2] 33 TON'), hist().replace(/\s+/g,' ').slice(0,200));
+  const qtyCases = [
+    {id:'w5', val:'12', exp:'[RAS-2] 12 TON', cur:'33'},
+    {id:'w6', val:'45', exp:'[HH] 1동>2동 이동작업 45 EA', cur:'30'},
+    {id:'w7', val:'5', exp:'[RAS-2] 16 KG 파렛트 5대', cur:'2'},
+    {id:'w8', val:'3', exp:'[연구요청] 3건', cur:'2'}
+  ];
+  for(const c of qtyCases){
+    await freshCal();
+    rec(c.id+' 수량 수정 버튼', click(chRow(c.id)+' [data-ch-act="qty"]')); await sleep(400);
+    rec(c.id+' 입력칸 현재값 '+c.cur, String(q1(chRow(c.id)+' .rv-in','value'))===c.cur, q1(chRow(c.id)+' .rv-in','value'));
+    setVal(chRow(c.id)+' .rv-in', c.val); await sleep(150);
+    rec(c.id+' 바꾸기 클릭', click(chRow(c.id)+' [data-ch-go]')); await sleep(700);
+    rec(c.id+' → '+c.exp, txt(c.id)===c.exp, txt(c.id));
+    await freshCal();
+    const rowTxt = String(ev(`(function(){var a=document.querySelector('[data-ch-id="${c.id}"]'); if(!a) return 'no-row'; var it=a.closest('.ch-item'); var t=it?it.querySelector('.ch-txt'):null; return t?t.textContent:'';})()`));
+    rec(c.id+' 달력 행 표시 정상', rowTxt===c.exp, rowTxt);
+  }
+  click('.cal-close'); await sleep(300);
 
   /* 4) 공통 act 경로: 소수·천단위·빈값 */
   rec('act qty 소수 12.5', ev(`window.jisuCarryAct("w5","qty","12.5")`)===null && txt('w5')==='[RAS-2] 12.5 TON', txt('w5'));
