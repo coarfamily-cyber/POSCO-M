@@ -3951,6 +3951,23 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
 }
 
   </style>
+  <style>
+    /* ── 실시간 날씨 효과 (Open-Meteo · 세종 2공장) ──────────────────────────
+       캔버스는 조감도 바로 위(z-index 2), 구역 버튼(25)·동 표시(15)·이동 동선(22)보다 아래.
+       포인터를 받지 않으므로 비·눈이 버튼 클릭을 가로막지 않는다. */
+    .map-stage > img.map-bg{ position: relative; z-index: 1; }
+    .map-stage > .weather-fx{
+      position: absolute; inset: 0; display: block;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 2;
+      border-radius: 16px;
+    }
+    html.kiosk .map-stage > .weather-fx{ border-radius: 0; }
+    html.worker-zone-only .map-stage > .weather-fx{ display: none !important; }
+    /* 눈: 흰 눈밭 위에서도 구역 버튼 글씨가 또렷하도록 살짝 어두운 반투명 캡슐 */
+    body:not(#zz) .map-stage.weather-snow .hotspot-pill{ background: rgba(15, 23, 42, 0.62); }
+    body:not(#zz) .map-stage.weather-snow .hotspot-pill:hover{ background: rgba(15, 23, 42, 0.74); }
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -4126,6 +4143,8 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
     <div class="cmd-map-wrap">
     <div class="map-stage" id="mapStage">
       <img src="./assets/plant-map.jpg" alt="POSCO M 3D 공장 조감도" class="map-bg" />
+      <!-- 실시간 날씨 효과(비·눈) 캔버스: 조감도 위, 구역 버튼·동 표시·이동 동선 아래 -->
+      <canvas class="weather-fx" id="weatherFx" aria-hidden="true"></canvas>
 
       <!-- Building Badges: 1동, 2동, 3동, 4동, 창고 -->
       <span class="bldg-badge" style="left: 14.6%; top: 68%;" data-bldg="A" aria-hidden="true">
@@ -10730,6 +10749,202 @@ paint()})();</script>
   window.addEventListener('resize', schedule);
   document.addEventListener('DOMContentLoaded', function(){ setTimeout(refresh, 400); setTimeout(refresh, 1800); });
   setInterval(refresh, 4500);
+})();
+</script>
+<script>
+/* ══ 실시간 날씨 효과 ══════════════════════════════════════════════════════
+   · Open-Meteo(무료·키 없음) 현재 날씨 코드 → 조감도 사진 3종 + 캔버스 효과
+     clear/그 밖  ./assets/plant-map.jpg        (효과 없음·애니메이션 정지 = CPU 0)
+     rain        ./assets/plant-map-rain.jpg   (빗줄기 3겹 + 물웅덩이 물방울 파문)
+     snow        ./assets/plant-map-snow.jpg   (눈송이 다중 크기 + 구역 버튼 캡슐)
+   · 기준 좌표: POSCO퓨처엠 세종 2공장(세종 소정면 매실로 294). 10분마다 새로 받는다.
+   · 화면 어디에도 날씨 배지·글씨를 두지 않는다 — 조감도 배경과 효과만.
+   · 확인용: 주소 뒤에 ?weather=clear|rain|snow 를 붙이면 그 상태로 고정(실서비스 경로는 실시간 API).
+   · 실패(오프라인)하면 조용히 기본 화면으로 돌아간다. */
+(function(){
+  'use strict';
+  var stage=document.getElementById('mapStage');
+  if(!stage) return;
+  var canvas=document.getElementById('weatherFx');
+  var bg=stage.querySelector('img.map-bg');
+  if(!canvas||!bg||!canvas.getContext) return;
+  /* ?zone= 작업자 전용 화면은 조감도를 감추므로 효과를 켜지 않는다 */
+  if(document.documentElement.classList.contains('worker-zone-only')) return;
+
+  var PHOTO={ clear:'./assets/plant-map.jpg', rain:'./assets/plant-map-rain.jpg', snow:'./assets/plant-map-snow.jpg' };
+  var RAIN=[51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99];
+  var SNOW=[71,73,75,77,85,86];
+  var API='https://api.open-meteo.com/v1/forecast?latitude=36.7140&longitude=127.1998&current=weather_code&timezone=Asia%2FSeoul';
+  var REFRESH_MS=600000;
+
+  var override=''; try{ var qp=new URLSearchParams(location.search).get('weather'); if(qp==='clear'||qp==='rain'||qp==='snow') override=qp; }catch(_){}
+  var state='';
+  var ctx=canvas.getContext('2d');
+  var W=0,H=0,DPR=1,raf=0,lastTs=0,drops=[],flakes=[],ripples=[],sprite=null;
+  var reduce=false; try{ reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(_){}
+
+  function rnd(a,b){ return a+Math.random()*(b-a); }
+
+  function size(){
+    var r=stage.getBoundingClientRect();
+    W=Math.max(1,Math.round(r.width)); H=Math.max(1,Math.round(r.height));
+    DPR=Math.min(2, window.devicePixelRatio||1);
+    canvas.width=Math.round(W*DPR); canvas.height=Math.round(H*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    if(state==='rain'||state==='snow') build();
+  }
+
+  /* ── 입자 만들기 ─────────────────────────────────────────────── */
+  function newDrop(layer){
+    var sp=[0.52,0.78,1.12][layer];
+    var a=[0.18,0.28,0.4][layer]*rnd(0.7,1.15);
+    return { x:rnd(-W*0.25,W), y:rnd(-H,H), len:[0.7,1,1.45][layer]*rnd(14,23),
+             sp:sp*rnd(0.9,1.1), w:[0.9,1.3,1.9][layer],
+             c:'rgba(204,228,255,'+a.toFixed(3)+')' };
+  }
+  function newFlake(){
+    var big=Math.random();
+    var r = big>0.86 ? rnd(3.4,5.4) : (big>0.52 ? rnd(2.0,3.2) : rnd(0.9,1.7));
+    return { x:rnd(0,W), y:rnd(-H*0.5,H), r:r,
+             vy:r*(window.devicePixelRatio>1?0.30:0.34)*rnd(0.72,1.15)+0.16,
+             ph:rnd(0,Math.PI*2), sw:rnd(0.35,0.95), sp:rnd(0.5,1.5),
+             a:(r>3.4?0.5:0.92)*rnd(0.75,1.0) };
+  }
+  function build(){
+    drops=[]; flakes=[]; ripples=[];
+    var i,n;
+    if(state==='rain'){
+      /* 화면 넓이에 따라 200~520줄, 세 겹(뒤·중간·앞)으로 깔아 빗줄기가 비어 보이지 않게 한다 */
+      n=Math.round(Math.min(620,Math.max(220,W*H/1700)));
+      for(i=0;i<n;i++) drops.push(newDrop(i%10<5?0:(i%10<8?1:2)));
+    }else if(state==='snow'){
+      n=Math.round(Math.min(420,Math.max(150,W*H/5200)));
+      for(i=0;i<n;i++) flakes.push(newFlake());
+    }
+    ctx.clearRect(0,0,W,H);
+  }
+  function makeSprite(){
+    var s=document.createElement('canvas'); s.width=s.height=32;
+    var g=s.getContext('2d'), gr=g.createRadialGradient(16,16,0,16,16,16);
+    gr.addColorStop(0,'rgba(255,255,255,1)');
+    gr.addColorStop(0.38,'rgba(255,255,255,0.9)');
+    gr.addColorStop(0.68,'rgba(255,255,255,0.32)');
+    gr.addColorStop(1,'rgba(255,255,255,0)');
+    g.fillStyle=gr; g.beginPath(); g.arc(16,16,16,0,Math.PI*2); g.fill();
+    return s;
+  }
+
+  /* ── 그리기 ─────────────────────────────────────────────────── */
+  function drawRain(dt){
+    var i,p,dy,dx;
+    ctx.lineCap='round';
+    for(i=0;i<drops.length;i++){
+      p=drops[i];
+      dy=p.sp*1150*dt; dx=dy*0.22;
+      p.y+=dy; p.x+=dx;
+      if(p.y-p.len>H || p.x>W+40){ p.y=-p.len-rnd(0,H*0.3); p.x=rnd(-W*0.2,W*0.92); }
+      ctx.strokeStyle=p.c;
+      ctx.lineWidth=p.w;
+      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-dx*(p.len/dy),p.y-p.len); ctx.stroke();
+    }
+    /* 물웅덩이 파문: 바닥 쪽에 낮은 타원으로 퍼졌다 사라진다 */
+    if(Math.random()<dt*16) ripples.push({ x:rnd(0,W), y:rnd(H*0.12,H*0.98), r:0, max:rnd(7,16) });
+    for(i=ripples.length-1;i>=0;i--){
+      p=ripples[i]; p.r+=p.max*dt*2.1;
+      if(p.r>=p.max){ ripples.splice(i,1); continue; }
+      var k=1-p.r/p.max;
+      ctx.strokeStyle='rgba(208,232,255,'+(0.34*k*k).toFixed(3)+')';
+      ctx.lineWidth=1;
+      ctx.beginPath(); ctx.ellipse(p.x,p.y,p.r,p.r*0.4,0,0,Math.PI*2); ctx.stroke();
+    }
+  }
+  function drawSnow(dt,ts){
+    if(!sprite) sprite=makeSprite();
+    var t=ts/1000,i,p;
+    ctx.clearRect(0,0,W,H);
+    for(i=0;i<flakes.length;i++){
+      p=flakes[i];
+      p.y+=p.vy*dt*60;
+      p.x+=Math.sin(t*p.sp+p.ph)*p.sw*dt*26;
+      if(p.y-p.r>H){ p.y=-p.r-rnd(0,24); p.x=rnd(0,W); }
+      if(p.x<-10) p.x=W+8; else if(p.x>W+10) p.x=-8;
+      ctx.globalAlpha=p.a;
+      ctx.drawImage(sprite,p.x-p.r,p.y-p.r,p.r*2,p.r*2);
+    }
+    ctx.globalAlpha=1;
+  }
+
+  function frame(ts){
+    raf=0;
+    if(state!=='rain'&&state!=='snow') return;
+    if(!lastTs) lastTs=ts;
+    var dt=Math.min(0.05,Math.max(0.001,(ts-lastTs)/1000)); lastTs=ts;
+    if(state==='rain'){ ctx.clearRect(0,0,W,H); drawRain(dt); }
+    else drawSnow(dt,ts);
+    raf=requestAnimationFrame(frame);
+  }
+  function start(){ if(raf||reduce) return; lastTs=0; raf=requestAnimationFrame(frame); }
+  function stop(){ if(raf){ cancelAnimationFrame(raf); raf=0; } }
+
+  /* ── 상태 반영 ───────────────────────────────────────────────── */
+  function apply(next){
+    if(next!=='rain'&&next!=='snow') next='clear';
+    var changed=(next!==state);
+    state=next;
+    var want=PHOTO[next];
+    if(bg.getAttribute('src')!==want) bg.setAttribute('src',want);
+    if(next==='snow') stage.classList.add('weather-snow'); else stage.classList.remove('weather-snow');
+    if(!W||!H) size();
+    if(changed) build();
+    if(next==='clear'||reduce){ stop(); ctx.clearRect(0,0,W,H); }
+    else start();
+  }
+
+  /* ── 날씨 받아오기 ───────────────────────────────────────────── */
+  function stateOfCode(c){
+    if(typeof c!=='number') return 'clear';
+    if(SNOW.indexOf(c)>=0) return 'snow';
+    if(RAIN.indexOf(c)>=0) return 'rain';
+    return 'clear';
+  }
+  function fetchWeather(){
+    if(override) return;
+    var ctrl=('AbortController' in window)?new AbortController():null;
+    var timer=ctrl?setTimeout(function(){ try{ ctrl.abort(); }catch(_){} },8000):0;
+    fetch(API,{ cache:'no-store', signal:ctrl?ctrl.signal:undefined })
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(j){ if(timer) clearTimeout(timer); apply(stateOfCode(j&&j.current?j.current.weather_code:null)); })
+      .catch(function(){ if(timer) clearTimeout(timer); apply('clear'); });   /* 조용히 기본 화면 */
+  }
+
+  /* ── 시작 ───────────────────────────────────────────────────── */
+  size();
+  if(override){ apply(override); }
+  else{
+    apply('clear');
+    fetchWeather();
+    setInterval(fetchWeather, REFRESH_MS);
+    document.addEventListener('visibilitychange',function(){
+      if(document.hidden) stop();
+      else if(state==='rain'||state==='snow'){ start(); fetchWeather(); }
+    });
+  }
+  try{
+    if(window.ResizeObserver){
+      new ResizeObserver(function(){ if(state==='rain'||state==='snow') size(); }).observe(stage);
+    }
+  }catch(_){}
+  /* 다음 상태로 바로 넘어갈 수 있게 비·눈 사진을 미리 받아 둔다(절전·데이터 절약 모드에서는 생략) */
+  function preload(){
+    try{
+      var cn=navigator.connection||{};
+      if(cn.saveData) return;
+      [PHOTO.rain,PHOTO.snow].forEach(function(src){ var im=new Image(); im.decoding='async'; im.src=src; });
+    }catch(_){}
+  }
+  if('requestIdleCallback' in window) requestIdleCallback(preload,{timeout:4000}); else setTimeout(preload,1200);
+  /* 확인용 핸들(화면에는 아무것도 보이지 않는다) */
+  window.jisuWeatherFx={ state:function(){ return state; }, apply:apply, photo:function(){ return bg.getAttribute('src'); } };
 })();
 </script>
 </body>

@@ -10824,7 +10824,7 @@ paint()})();</script>
     var i,n;
     if(state==='rain'){
       /* 화면 넓이에 따라 200~520줄, 세 겹(뒤·중간·앞)으로 깔아 빗줄기가 비어 보이지 않게 한다 */
-      n=Math.round(Math.min(520,Math.max(200,W*H/3400)));
+      n=Math.round(Math.min(620,Math.max(220,W*H/1700)));
       for(i=0;i<n;i++) drops.push(newDrop(i%10<5?0:(i%10<8?1:2)));
     }else if(state==='snow'){
       n=Math.round(Math.min(420,Math.max(150,W*H/5200)));
