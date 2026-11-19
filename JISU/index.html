@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611192305">
+  <meta name="jisu-build" content="202611200855">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -3486,29 +3486,6 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(37,99,
     /* ==========================================================================
        달력 메신저 공지 일괄 등록 (날짜별 자동분류)
        ========================================================================== */
-    .cal-batch-btn {
-      background: rgba(14, 165, 233, 0.2) !important;
-      border: 1px solid rgba(56, 189, 248, 0.45) !important;
-      color: #7dd3fc !important;
-      font-weight: 800;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .cal-batch-btn:hover {
-      background: rgba(14, 165, 233, 0.35) !important;
-      color: #fff !important;
-      border-color: #38bdf8 !important;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
-    }
-    .cal-batch-btn.is-active {
-      background: linear-gradient(135deg, #0284c7, #38bdf8) !important;
-      color: #fff !important;
-      border-color: #7dd3fc !important;
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
-    }
     .cz-batch-view {
       display: flex;
       flex-direction: column;
@@ -4543,7 +4520,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
 
   <div id="loginModal" class="login-modal" hidden><div class="login-box" role="dialog" aria-label="작업자 로그인"><h3>작업자 로그인</h3><p class="login-note">이름을 넣으면 등록하는 금일작업·공지에 작성자로 남고, 액셀에도 들어갑니다.</p><input id="loginName" type="text" maxlength="20" placeholder="이름 (예: 지수)" autocomplete="name"><div class="login-actions"><button type="button" id="loginCancel" class="lg-ghost">닫기</button><button type="button" id="logoutBtn" class="lg-ghost" hidden>로그아웃</button><button type="button" id="loginOk" class="lg-primary">로그인</button></div></div></div>
   <div id="calModal" class="cal-modal" hidden><div class="cal-box" role="dialog" aria-label="작업 스케줄 달력">
-    <div class="cal-head"><button type="button" class="cal-nav" id="calPrev" aria-label="이전 달">‹</button><h3 id="calTitle"></h3><button type="button" class="cal-nav" id="calNext" aria-label="다음 달">›</button><button type="button" class="cal-today" id="calToday">오늘</button><button type="button" class="cal-today cal-batch-btn" id="calBatchBtn" title="메신저 공지글 복사-붙여넣기로 날짜별 일괄 자동 등록">📋 공지 일괄등록</button><button type="button" class="cal-close" id="calClose" aria-label="닫기">✕</button></div>
+    <div class="cal-head"><button type="button" class="cal-nav" id="calPrev" aria-label="이전 달">‹</button><h3 id="calTitle"></h3><button type="button" class="cal-nav" id="calNext" aria-label="다음 달">›</button><button type="button" class="cal-today" id="calToday">오늘</button><button type="button" class="cal-close" id="calClose" aria-label="닫기">✕</button></div>
     <div class="cal-body"><div class="cal-grid-wrap"><div class="cal-week"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div><div class="cal-grid" id="calGrid"></div></div>
     <div class="cal-side">
       <div id="czSingleView">
@@ -6625,7 +6602,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     /* ==========================================================================
        메신저 공지 일괄 등록 (날짜별 자동 분류 및 저장)
        ========================================================================== */
-    const batchBtn=$('calBatchBtn'), singleView=$('czSingleView'), batchView=$('czBatchView');
+    const singleView=$('czSingleView'), batchView=$('czBatchView');
     const batchText=$('czBatchText'), batchTarget=$('czBatchTarget'), batchPreview=$('czBatchPreview');
     const batchCountBadge=$('czBatchCountBadge'), batchSaveBtn=$('czBatchSaveBtn'), batchMsg=$('czBatchMsg');
     const batchCancelBtn=$('czBatchCancelBtn'), batchBackTopBtn=$('czBatchBackTopBtn');
@@ -6648,7 +6625,6 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       singleView.style.display=show?'none':'block';
       batchView.style.display=show?'flex':'none';
       batchView.classList.toggle('is-open-mobile',Boolean(show));
-      if(batchBtn) batchBtn.classList.toggle('is-active',show);
       if(show){
         if(batchText){ batchText.focus(); renderBatchPreview(); }
       } else {
@@ -6872,10 +6848,6 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       });
     })();
 
-    if(batchBtn) batchBtn.addEventListener('click',()=>{
-      const isBatch=batchView && batchView.style.display!=='none';
-      setBatchView(!isBatch);
-    });
     if(batchCancelBtn) batchCancelBtn.addEventListener('click',()=>setBatchView(false));
     if(batchBackTopBtn) batchBackTopBtn.addEventListener('click',()=>setBatchView(false));
 
@@ -10753,7 +10725,7 @@ paint()})();</script>
 </script>
 <script>
 /* ══ 실시간 날씨 효과 ══════════════════════════════════════════════════════
-   · Open-Meteo(무료·키 없음) 현재 날씨 코드 → 조감도 사진 3종 + 캔버스 효과
+   · wttr.in(무료·키 없음) 1순위, 실패하면 Open-Meteo(무료·키 없음) 2순위 → 조감도 사진 3종 + 캔버스 효과
      clear/그 밖  ./assets/plant-map.jpg        (효과 없음·애니메이션 정지 = CPU 0)
      rain        ./assets/plant-map-rain.jpg   (빗줄기 3겹 + 물웅덩이 물방울 파문)
      snow        ./assets/plant-map-snow.jpg   (눈송이 다중 크기 + 구역 버튼 캡슐)
@@ -10774,6 +10746,12 @@ paint()})();</script>
   var PHOTO={ clear:'./assets/plant-map.jpg', rain:'./assets/plant-map-rain.jpg', snow:'./assets/plant-map-snow.jpg' };
   var RAIN=[51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99];
   var SNOW=[71,73,75,77,85,86];
+  /* wttr.in(WorldWeatherOnline) 코드·설명 — 눈/비 판정 (1순위 소스) */
+  var WTTR='https://wttr.in/36.7140,127.1998?format=j1';
+  var SNOW_WWO=[179,182,185,227,230,317,320,323,326,329,332,335,338,362,365,368,371,374,377,392,395];
+  var RAIN_WWO=[176,263,266,281,284,293,296,299,302,305,308,311,314,353,356,359,386,389];
+  var SNOW_WORD=['snow','sleet','blizzard','flurries','ice pellets'];
+  var RAIN_WORD=['rain','drizzle','shower','thunder'];
   var API='https://api.open-meteo.com/v1/forecast?latitude=36.7140&longitude=127.1998&current=weather_code&timezone=Asia%2FSeoul';
   var REFRESH_MS=600000;
 
@@ -10907,14 +10885,38 @@ paint()})();</script>
     if(RAIN.indexOf(c)>=0) return 'rain';
     return 'clear';
   }
-  function fetchWeather(){
-    if(override) return;
+  /* wttr.in 현재 상태 → snow/rain/clear (코드 우선, 설명 문구 보조) */
+  function stateOfWwo(code,desc){
+    var d=String(desc||'').toLowerCase(), c=Number(code), i;
+    for(i=0;i<SNOW_WORD.length;i++){ if(d.indexOf(SNOW_WORD[i])>=0) return 'snow'; }
+    if(SNOW_WWO.indexOf(c)>=0) return 'snow';
+    for(i=0;i<RAIN_WORD.length;i++){ if(d.indexOf(RAIN_WORD[i])>=0) return 'rain'; }
+    if(RAIN_WWO.indexOf(c)>=0) return 'rain';
+    return 'clear';
+  }
+  function fetchWithTimeout(url,fail){
     var ctrl=('AbortController' in window)?new AbortController():null;
     var timer=ctrl?setTimeout(function(){ try{ ctrl.abort(); }catch(_){} },8000):0;
-    fetch(API,{ cache:'no-store', signal:ctrl?ctrl.signal:undefined })
+    fetch(url,{ cache:'no-store', signal:ctrl?ctrl.signal:undefined })
       .then(function(r){ return r.ok?r.json():null; })
-      .then(function(j){ if(timer) clearTimeout(timer); apply(stateOfCode(j&&j.current?j.current.weather_code:null)); })
-      .catch(function(){ if(timer) clearTimeout(timer); apply('clear'); });   /* 조용히 기본 화면 */
+      .then(function(j){ if(timer) clearTimeout(timer); fail(j); })
+      .catch(function(){ if(timer) clearTimeout(timer); fail(null); });
+  }
+  /* 2순위: Open-Meteo (wttr.in 이 실패·형식 오류일 때만 조용히) */
+  function fetchFallback(){
+    fetchWithTimeout(API,function(j){
+      if(j&&j.current) apply(stateOfCode(j.current.weather_code));
+      else apply('clear');                                        /* 둘 다 실패 → 기본 화면 */
+    });
+  }
+  function fetchWeather(){
+    if(override) return;
+    fetchWithTimeout(WTTR,function(j){
+      var cur=j&&j.current_condition&&j.current_condition[0];
+      if(!cur){ fetchFallback(); return; }                          /* 형식 오류 → Open-Meteo */
+      var desc=cur.weatherDesc&&cur.weatherDesc[0]&&cur.weatherDesc[0].value;
+      apply(stateOfWwo(cur.weatherCode,desc));
+    });
   }
 
   /* ── 시작 ───────────────────────────────────────────────────── */
