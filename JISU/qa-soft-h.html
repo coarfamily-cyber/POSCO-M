@@ -16,7 +16,7 @@
   var w=parseInt(p.get('w')||'1280',10), h=parseInt(p.get('h')||'800',10);
   var extra=p.get('q')||'';
   var f=document.createElement('iframe');
-  f.id='F'; f.width=w; f.height=h; f.src='./qa-soft.html'+(extra?'?'+extra:'');
+  f.id='F'; f.width=w; f.height=h; f.setAttribute('aria-hidden','true'); f.src='./qa-soft.html'+(extra?'?'+extra:'');
   document.body.appendChild(f);
 })();
 </script>
