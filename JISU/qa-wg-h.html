@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<title>QA 하네스 — 품목 접두사 수량 수정</title>
+<style>
+  body{margin:0;font:12px/1.45 ui-monospace,Menlo,monospace;background:#0b1220;color:#e2e8f0}
+  #summary{position:fixed;right:8px;top:8px;background:#111827;border:1px solid #334155;padding:4px 10px;border-radius:6px;z-index:9}
+  #out{white-space:pre-wrap;padding:10px;margin:0;font-size:12px}
+  #stage{position:absolute;left:-99999px;top:0;width:1280px;height:900px;overflow:hidden}
+  iframe{width:1280px;height:900px;border:0;display:block}
+</style>
+</head>
+<body>
+<div id="summary">…</div>
+<pre id="out"></pre>
+<div id="stage"></div>
+<script>
+const QS = '?cb=' + Date.now();
+const FRAME_URL = 'qa-wg-copy.html' + QS;
+const FID = 'fD';
+const kst = d => new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d||new Date());
+const TODAY = kst();
+const Y1 = kst(new Date(Date.parse(TODAY+'T12:00:00+09:00') - 864e5));
+const R = {checks:[], log:[]};
+function rec(n,pass,d){ R.checks.push({n:n,p:!!pass,d:d===undefined?'':String(d).slice(0,700)}); paint(); }
+function note(s){ R.log.push(String(s).slice(0,500)); paint(); }
+function paint(){
+  const fail = R.checks.filter(c=>!c.p).length;
+  document.getElementById('summary').textContent = R.checks.length + ' checks / fail ' + fail;
+  document.getElementById('out').textContent =
+    'TODAY ' + TODAY + '  Y1 ' + Y1 + '  checks ' + R.checks.length + '  fail ' + fail + '\n' +
+    R.checks.map(c=>(c.p?'PASS ':'FAIL ')+c.n+(c.d?' :: '+c.d:'')).join('\n') + '\n---- notes\n' + R.log.join('\n');
+}
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+function W(){ return document.getElementById(FID).contentWindow; }
+function D(){ return document.getElementById(FID).contentDocument; }
+function ev(code){ try{ return W().eval(code); }catch(e){ note('eval error: '+(e&&e.message)); return 'EVALERR:'+(e&&e.message); } }
+function frame(){ const f=document.createElement('iframe'); f.id=FID; f.src=FRAME_URL; document.getElementById('stage').appendChild(f); return f; }
+async function ready(ms){
+  const limit=ms||30000, t0=Date.now();
+  while(Date.now()-t0<limit){
+    const d=D();
+    if(d && d.readyState==='complete' && d.querySelector('.hotspot-pill')){ await sleep(700); return true; }
+    await sleep(150);
+  }
+  return false;
+}
+function setLS(k,v){ try{ W().localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+function getLS(k){ try{ return W().localStorage.getItem(k); }catch(e){ return null; } }
+function cmds(){ try{ return JSON.parse(getLS('jisu-commands-v1')||'[]'); }catch(e){ return []; } }
+function txt(id){ const x=cmds().find(r=>r.id===id); return x?String(x.text):'MISSING'; }
+function byCarry(from){ return cmds().filter(x=>x.carryFrom===from); }
+function click(sel){
+  return ev(`(function(){var e=document.querySelector(${JSON.stringify(sel)}); if(!e) return false; e.click(); return true;})()`)===true;
+}
+function setVal(sel,v){
+  return ev(`(function(){var e=document.querySelector(${JSON.stringify(sel)}); if(!e) return false; e.focus(); e.value=${JSON.stringify(String(v))}; e.dispatchEvent(new Event("input",{bubbles:true})); e.dispatchEvent(new Event("change",{bubbles:true})); return e.value;})()`)===v;
+}
+function visible(sel){
+  return ev(`(function(){var e=document.querySelector(${JSON.stringify(sel)}); return !!e && !e.hidden && getComputedStyle(e).display!=="none";})()`)===true;
+}
+function hist(){ return String(ev(`(document.getElementById("czHist")||{}).textContent||""`)); }
+function q1(sel,prop){ return ev(`((document.querySelector(${JSON.stringify(sel)})||{}).${prop})`); }
+function rvRow(id){ return '[data-rv-id="'+id+'"]'; }
+function chRow(id){ return '[data-ch-id="'+id+'"]'; }
+
+/* ---------- 시드: 오늘 날짜라야 자정 이월(rollover)이 건드리지 않는다 ---------- */
+const SEED = () => [
+  {id:'w1',target:'outbound',kind:'instruction',text:'[RAS-2] 33 TON',at:'11. 19. 08:00',day:TODAY,done:20,completed:true,completedAt:'11. 19. 15:00',short:true,review:'pending'},
+  {id:'w2',target:'inbound',kind:'instruction',text:'[HH] 1동>2동 이동작업 30 EA',at:'11. 19. 08:05',day:TODAY,done:10,completed:true,completedAt:'11. 19. 15:05',short:true,review:'pending'},
+  {id:'w3',target:'outbound',kind:'instruction',text:'[RAS-2] 16 KG 파렛트 2대',at:'11. 19. 08:10',day:TODAY,done:1,completed:true,completedAt:'11. 19. 15:10',short:true,review:'pending'},
+  {id:'w4',target:'production-a',kind:'instruction',text:'생산A 12 TON',at:'11. 19. 08:15',day:TODAY,done:5,completed:true,completedAt:'11. 19. 15:15',short:true,review:'pending'},
+  {id:'w5',target:'outbound',kind:'instruction',text:'[RAS-2] 33 TON',at:'11. 19. 07:00',day:TODAY,done:5,carryCount:1,carryFrom:'x0',origGoal:33,review:'ok',working:false},
+  {id:'w6',target:'inbound',kind:'instruction',text:'[HH] 1동>2동 이동작업 30 EA',at:'11. 19. 07:05',day:TODAY,done:10,carryCount:1,carryFrom:'x1',origGoal:30,review:'ok',working:false},
+  {id:'w7',target:'outbound',kind:'instruction',text:'[RAS-2] 16 KG 파렛트 2대',at:'11. 19. 07:10',day:TODAY,done:0,carryCount:1,carryFrom:'x2',origGoal:2,review:'ok',working:false},
+  {id:'w8',target:'outbound',kind:'instruction',text:'[연구요청] 2건',at:'11. 19. 07:15',day:TODAY,done:1,carryCount:1,carryFrom:'x3',origGoal:2,review:'ok',working:false},
+  {id:'n1',target:'*',kind:'notice',text:'[RAS-2] 바닥 공사 안내',at:'11. 19. 07:20',day:TODAY}
+];
+function seedToday(){
+  setLS('jisu-commands-v1', JSON.stringify(SEED()));
+  setLS('jisu-schedule-v1','[]');
+  setLS('jisu-memos-v1','[]');
+  setLS('jisu-inbound-records-v1','{}');
+  setLS('jisu-pitch-records-v1','{}');
+  setLS('jisu-user','김지수');
+}
+async function reload(){ ev('location.reload()'); await sleep(1300); return ready(); }
+
+async function run(){
+  const ok = await ready();
+  rec('QA 사본 로드', ok);
+  if(!ok){ note('프레임 로드 실패'); return; }
+  seedToday();
+  rec('시드 후 재로드', await reload());
+  rec('시드 9건 유지(자정 이월 미개입)', cmds().length===9, cmds().map(x=>x.id).join(','));
+
+  /* 1) 이월 판단창 */
+  rec('이월 버튼 존재', ev(`!!document.querySelector(".carry-tool-btn")`)===true);
+  click('.carry-tool-btn'); await sleep(500);
+  rec('이월 판단창 열림', visible('.rv-modal'));
+  rec('판단 필요 4건', ev(`document.querySelectorAll(".rv-list .rv-row").length`)===4, ev(`document.querySelectorAll(".rv-list .rv-row").length`));
+  rec('판단창 w1 원문 그대로', q1(rvRow('w1')+' .rv-txt','textContent')==='[RAS-2] 33 TON', q1(rvRow('w1')+' .rv-txt','textContent'));
+  rec('판단창 w2 원문 그대로', q1(rvRow('w2')+' .rv-txt','textContent')==='[HH] 1동>2동 이동작업 30 EA', q1(rvRow('w2')+' .rv-txt','textContent'));
+
+  /* 2) 잔량 이월 */
+  rec('w1 잔량 이월 클릭', click(rvRow('w1')+' [data-rv="carry"]')); await sleep(600);
+  rec('w1 → [RAS-2] 13 TON', txt(byCarry('w1')[0]?byCarry('w1')[0].id:'')==='[RAS-2] 13 TON', byCarry('w1').map(x=>x.text).join(' | '));
+  rec('w1 origGoal 33 · carriedQty 13', (byCarry('w1')[0]||{}).origGoal===33 && (cmds().find(x=>x.id==='w1')||{}).carriedQty===13, JSON.stringify({orig:(byCarry('w1')[0]||{}).origGoal,qty:(cmds().find(x=>x.id==='w1')||{}).carriedQty}));
+  rec('w2 잔량 이월 클릭', click(rvRow('w2')+' [data-rv="carry"]')); await sleep(600);
+  rec('w2 → [HH] 1동>2동 이동작업 20 EA', txt(byCarry('w2')[0]?byCarry('w2')[0].id:'')==='[HH] 1동>2동 이동작업 20 EA', byCarry('w2').map(x=>x.text).join(' | '));
+  rec('w3 잔량 이월 클릭', click(rvRow('w3')+' [data-rv="carry"]')); await sleep(600);
+  rec('w3 → [RAS-2] 16 KG 파렛트 1대', txt(byCarry('w3')[0]?byCarry('w3')[0].id:'')==='[RAS-2] 16 KG 파렛트 1대', byCarry('w3').map(x=>x.text).join(' | '));
+  rec('w4 잔량 이월 클릭', click(rvRow('w4')+' [data-rv="carry"]')); await sleep(600);
+  rec('w4 → 생산A 7 TON(접두사 없음 회귀)', txt(byCarry('w4')[0]?byCarry('w4')[0].id:'')==='생산A 7 TON', byCarry('w4').map(x=>x.text).join(' | '));
+  const okList = String(ev(`document.querySelector(".rv-oklist").textContent`));
+  rec('진행 중 0 / 13 TON 표시', /0 \/ 13 TON/.test(okList), okList.replace(/\s+/g,' ').slice(0,200));
+  click('.rv-modal .cal-close'); await sleep(300);
+  rec('판단창 닫힘', ev(`document.querySelector(".rv-modal").hidden`)===true);
+
+  /* 3) 달력 기록 수량 수정 */
+  const calOpen = ev(`(function(){ if(window.jisuCalOpenDay){ window.jisuCalOpenDay(${JSON.stringify(TODAY)}); return true; } return false; })()`);
+  await sleep(900);
+  rec('달력 열기', calOpen===true && visible('#calModal'), String(calOpen));
+  rec('달력 기록에 w5 원문', hist().includes('[RAS-2] 33 TON'), hist().replace(/\s+/g,' ').slice(0,240));
+  rec('w5 수량 수정 버튼 클릭', click(chRow('w5')+' [data-ch-act="qty"]')); await sleep(400);
+  rec('w5 입력칸 현재값 33', q1(chRow('w5')+' .rv-in','value')==='33', q1(chRow('w5')+' .rv-in','value'));
+  setVal(chRow('w5')+' .rv-in','12'); await sleep(150);
+  rec('w5 바꾸기 클릭', click(chRow('w5')+' [data-ch-go]')); await sleep(600);
+  rec('w5 → [RAS-2] 12 TON', txt('w5')==='[RAS-2] 12 TON', txt('w5'));
+  rec('w5 수정 후 달력 표시 정상', hist().includes('[RAS-2] 12 TON') && !hist().includes('33 TON'), hist().replace(/\s+/g,' ').slice(0,240));
+  rec('w6 수량 수정 버튼 클릭', click(chRow('w6')+' [data-ch-act="qty"]')); await sleep(400);
+  setVal(chRow('w6')+' .rv-in','45'); await sleep(150);
+  rec('w6 바꾸기 클릭', click(chRow('w6')+' [data-ch-go]')); await sleep(600);
+  rec('w6 → [HH] 1동>2동 이동작업 45 EA', txt('w6')==='[HH] 1동>2동 이동작업 45 EA', txt('w6'));
+  rec('w7 수량 수정 버튼 클릭', click(chRow('w7')+' [data-ch-act="qty"]')); await sleep(400);
+  setVal(chRow('w7')+' .rv-in','5'); await sleep(150);
+  rec('w7 바꾸기 클릭', click(chRow('w7')+' [data-ch-go]')); await sleep(600);
+  rec('w7 → [RAS-2] 16 KG 파렛트 5대', txt('w7')==='[RAS-2] 16 KG 파렛트 5대', txt('w7'));
+  rec('w8 수량 수정 버튼 클릭', click(chRow('w8')+' [data-ch-act="qty"]')); await sleep(400);
+  setVal(chRow('w8')+' .rv-in','3'); await sleep(150);
+  rec('w8 바꾸기 클릭', click(chRow('w8')+' [data-ch-go]')); await sleep(600);
+  rec('w8 → [연구요청] 3건', txt('w8')==='[연구요청] 3건', txt('w8'));
+
+  /* 4) 공통 act 경로: 소수·천단위·빈값 */
+  rec('act qty 소수 12.5', ev(`window.jisuCarryAct("w5","qty","12.5")`)===null && txt('w5')==='[RAS-2] 12.5 TON', txt('w5'));
+  const arr = cmds(); const w7 = arr.find(x=>x.id==='w7'); if(w7){ w7.text='[RAS-2] 1,200 EA'; w7.done=200; }
+  setLS('jisu-commands-v1', JSON.stringify(arr));
+  rec('act qty 천단위 [RAS-2] 1,200 EA → 1000', ev(`window.jisuCarryAct("w7","qty","1000")`)===null && txt('w7')==='[RAS-2] 1000 EA', txt('w7'));
+  const emptyErr = String(ev(`window.jisuCarryAct("w5","qty","")`));
+  rec('act qty 빈 값 거부', /숫자/.test(emptyErr), emptyErr);
+  click('.cal-close'); await sleep(300);
+
+  /* 5) JS 오류·차단 */
+  const errsRaw = ev(`JSON.stringify((window.__qaErrors||[]).filter(function(s){return !/csp-blocked|qa-network-blocked|serviceWorker|firebase is not defined|Failed to fetch|NetworkError/i.test(s);}))`);
+  let errList = []; try{ errList = JSON.parse(errsRaw); }catch(e){ errList = [String(errsRaw)]; }
+  rec('JS 오류 0건(차단 계열 제외)', Array.isArray(errList) && errList.length===0, JSON.stringify(errList).slice(0,400));
+  note('qaBlocked=' + ev(`window.__qaBlocked`) + ' cspBlocked=' + ev(`window.__qaCspBlocked`));
+
+  /* 6) 자정 자동 이월(rollover) */
+  const arr2 = cmds().filter(x=>x.carryFrom!=='r1');
+  arr2.push({id:'r1',target:'outbound',kind:'instruction',text:'[RAS-2] 33 TON',at:'11. 18. 08:00',day:Y1,done:20});
+  arr2.push({id:'r2',target:'inbound',kind:'instruction',text:'[HH] 1동>2동 이동작업 30 EA',at:'11. 18. 08:05',day:Y1,done:10});
+  setLS('jisu-commands-v1', JSON.stringify(arr2));
+  rec('rollover 재로드', await reload());
+  const r1c = byCarry('r1'), r2c = byCarry('r2');
+  rec('r1 자동 이월 → [RAS-2] 13 TON', r1c.length===1 && String(r1c[0].text)==='[RAS-2] 13 TON', r1c.map(x=>x.text).join(' | '));
+  rec('r2 자동 이월 → [HH] 1동>2동 이동작업 20 EA', r2c.length===1 && String(r2c[0].text)==='[HH] 1동>2동 이동작업 20 EA', r2c.map(x=>x.text).join(' | '));
+  rec('r1 원본 마감·이월 표시', (cmds().find(x=>x.id==='r1')||{}).closed===true && (cmds().find(x=>x.id==='r1')||{}).carried===true, JSON.stringify(cmds().find(x=>x.id==='r1')||{}).slice(0,200));
+  rec('자동 이월 origGoal 33', (r1c[0]||{}).origGoal===33, String((r1c[0]||{}).origGoal));
+
+  /* 7) 전체 무결성 */
+  const all = cmds();
+  const broken = all.filter(x=>{ const t=String(x.text); return /(\d+(?:\.\d+)?)\s*(TON|EA|KG|대|건)[^\n]{0,4}?\1/.test(t) || /\]\s*\d+\s*(TON|EA|KG|대|건)[^\n]{0,4}\d/.test(t); });
+  rec('깨진 문구 없음(전체)', broken.length===0, JSON.stringify(broken.map(x=>x.text)).slice(0,300));
+  note('최종: ' + all.filter(x=>x.kind!=='notice').map(x=>x.id+'='+x.text).join(' / '));
+}
+
+async function seedOnly(){
+  const ok = await ready();
+  if(!ok){ rec('QA 사본 로드', false); return; }
+  seedToday();
+  rec('시드 완료', await reload());
+  note('SEEDED today=' + TODAY);
+}
+
+frame();
+sleep(50);
+const mode = new URLSearchParams(location.search).get('seed');
+(mode ? seedOnly() : run()).catch(e=>{ rec('하네스 예외', false, e && e.message); });
+</script>
+</body>
+</html>
