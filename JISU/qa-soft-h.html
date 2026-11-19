@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<title>POSCO-M QA harness (temp)</title>
+<style>
+  html,body{margin:0;background:#0b1220;color:#cbd5e1;font:12px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .row{display:flex;gap:12px;padding:12px;align-items:flex-start}
+  .box{position:relative;background:#111827;outline:1px solid #334155;flex:0 0 auto}
+  .box>span.lab{position:absolute;left:0;top:-0px;z-index:2;font-size:10px;background:#1e293b;color:#94a3b8;padding:1px 5px;border-radius:0 0 4px 0}
+  iframe{border:0;display:block;background:#000}
+</style>
+</head>
+<body>
+<div class="row" id="row1">
+  <div class="box"><span class="lab">DESKTOP 1280x800</span><iframe id="fD" width="1280" height="800" src="./qa-soft.html"></iframe></div>
+</div>
+<div class="row" id="row2">
+  <div class="box"><span class="lab">MOBILE 360x800</span><iframe id="fA" width="360" height="800" src="./qa-soft.html"></iframe></div>
+  <div class="box"><span class="lab">MOBILE 412x915</span><iframe id="fB" width="412" height="915" src="./qa-soft.html"></iframe></div>
+</div>
+</body>
+</html>
