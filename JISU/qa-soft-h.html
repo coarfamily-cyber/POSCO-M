@@ -10,15 +10,18 @@
 </style>
 </head>
 <body>
+<iframe id="F" width="10" height="10" src="about:blank"></iframe>
 <script>
-(function(){
-  var p=new URLSearchParams(location.search);
-  var w=parseInt(p.get('w')||'1280',10), h=parseInt(p.get('h')||'800',10);
-  var extra=p.get('q')||'';
-  var f=document.createElement('iframe');
-  f.id='F'; f.width=w; f.height=h; f.setAttribute('aria-hidden','true'); f.src='./qa-soft.html'+(extra?'?'+extra:'');
-  document.body.appendChild(f);
-})();
+window.__set = function(w,h,q,reload){
+  var f=document.getElementById('F');
+  f.width=w; f.height=h;
+  var src='./qa-soft.html'+(q?('?'+q):'');
+  if(reload){ src += (src.indexOf('?')<0?'?':'&') + 'r=' + Date.now(); f.src=src; }
+  f.style.width=w+'px'; f.style.height=h+'px';
+  return src;
+};
+window.__W = function(){ return document.getElementById('F').contentWindow; };
+window.__D = function(){ return document.getElementById('F').contentDocument; };
 </script>
 </body>
 </html>
