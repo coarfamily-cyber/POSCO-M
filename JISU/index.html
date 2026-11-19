@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611190838">
+  <meta name="jisu-build" content="202611190943">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -6902,7 +6902,10 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     function dayOf(rec){ if(rec.day) return rec.day; const m=String(rec.at||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); if(!m) return rec.sched||'';
       const t=kstToday(), ty=+t.slice(0,4); let k=ty+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); if(k>t) k=(ty-1)+k.slice(4); return k; }
     const RE_END=/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/, RE_ANY=/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/;
-    const goalM=t=>{ t=String(t||'').replace(/^\[[^\]]+\]\s*/,''); return t.match(RE_END)||t.match(RE_ANY); };
+    /* 품목 접두사("[RAS-2] ")는 목표 수량을 찾기 전에 떼지만, match.index는 뗀 문자열 기준이라
+       원문 위치와 어긋난다. 접두사 길이(off)를 더해 원문 기준 위치로 되돌린다 — withGoal이 이 위치로 글자를 자른다. */
+    const PREFIX_RE=/^\[[^\]]+\]\s*/;
+    const goalM=t=>{ const s=String(t||''), p=s.match(PREFIX_RE), off=p?p[0].length:0, body=s.slice(off), m=body.match(RE_END)||body.match(RE_ANY); if(m) m.index+=off; return m; };
     const goalN=t=>{ const m=goalM(t); return m?(window.jisuParseNum?window.jisuParseNum(m[1]):Number(String(m[1]).replace(',','.'))):null; };
     const unitOf=t=>{ const m=goalM(t); return m?(({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()):''; };
     const fmt=n=>String(Math.round(Number(n)*100)/100);
