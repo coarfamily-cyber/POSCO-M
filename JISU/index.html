@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611202226">
+  <meta name="jisu-build" content="202611202245">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -4102,6 +4102,100 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
     /* 눈: 흰 눈밭 위에서도 구역 버튼 글씨가 또렷하도록 살짝 어두운 반투명 캡슐 */
     body:not(#zz) .map-stage.weather-snow .hotspot-pill{ background: rgba(15, 23, 42, 0.62); }
     body:not(#zz) .map-stage.weather-snow .hotspot-pill:hover{ background: rgba(15, 23, 42, 0.74); }
+  </style>
+  <style id="neon-lime-glossy">
+    /* ── 네온 라임 글로시 (2026-11-20 사용자 지정 팔레트) ────────────────────────
+       그라데이션 linear-gradient(135deg, #DEFF3B → #A4FF00) · 글씨 #0B1200 · 테두리 없이 빛(글로우)만.
+       적용 4곳 ① 사이드바 [금일작업 내용] 활성 ② #cmdSubmit(등록) ③ 달력 [저장 (오늘 바로 등록)] ④ 달력 [오늘] 칸 + [오늘] 배지.
+       공지 모드(공지사항 선택)는 기존 크림색 그대로 두고, 아래 hover 확대폭(--hvs)은 건드리지 않는다. */
+
+    /* ① 사이드바 [금일작업 내용] 활성 */
+    body:not(#zz) .cmd-side .cmd-kind button[data-cmd-kind="instruction"][aria-pressed="true"],
+    .cmd-side .cmd-kind button[data-cmd-kind="instruction"][aria-pressed="true"]{
+      background: linear-gradient(135deg, #DEFF3B 0%, #A4FF00 100%) !important;
+      border: 0 !important; border-color: transparent !important;
+      color: #0B1200 !important; font-weight: 900 !important; text-shadow: none !important;
+      box-shadow: 0 0 18px rgba(164, 255, 0, .45), 0 4px 12px rgba(0, 0, 0, .25) !important;
+    }
+    body:not(#zz) .cmd-side .cmd-kind button[data-cmd-kind="instruction"][aria-pressed="true"]:hover,
+    body:not(#zz) .cmd-side .cmd-kind button[data-cmd-kind="instruction"][aria-pressed="true"]:focus-visible{
+      background: linear-gradient(135deg, #DEFF3B 0%, #A4FF00 100%) !important;
+      color: #0B1200 !important;
+      box-shadow: 0 0 22px rgba(164, 255, 0, .55), 0 12px 28px rgba(0, 0, 0, .40) !important;
+    }
+    /* 공지사항 선택 시 [금일작업 내용]은 기존 어두운 비활성 상태 그대로 (별도 규칙 없음) */
+
+    /* ② 사이드바 등록 버튼 (#cmdSubmit) — 공지 모드의 크림색은 그대로 둔다 */
+    body:not(#zz) .cmd-side .cmd-submit:not(:disabled),
+    #cmdSubmit:not(:disabled){
+      background: linear-gradient(135deg, #DEFF3B 0%, #A4FF00 100%) !important;
+      border: 0 !important; border-color: transparent !important;
+      color: #0B1200 !important; font-weight: 900 !important; text-shadow: none !important;
+      box-shadow: 0 0 18px rgba(164, 255, 0, .45), 0 4px 12px rgba(0, 0, 0, .25) !important;
+    }
+    body:not(#zz) .cmd-side .cmd-submit:not(:disabled):hover,
+    body:not(#zz) .cmd-side .cmd-submit:not(:disabled):focus-visible{
+      background: linear-gradient(135deg, #DEFF3B 0%, #A4FF00 100%) !important;
+      color: #0B1200 !important;
+      box-shadow: 0 0 22px rgba(164, 255, 0, .55), 0 12px 28px rgba(0, 0, 0, .40) !important;
+    }
+    /* 라임 위 구역 배지(예: [출고])는 진한 판 + 라임 글씨로 또렷하게 (공지 모드의 갈색 배지는 그대로) */
+    body:not(#zz) .cmd-side:not(:has([data-cmd-kind="notice"][aria-pressed="true"])) #cmdSubmit .cmd-submit-target{
+      background: rgba(11, 18, 0, .86) !important;
+      color: #DEFF3B !important;
+      box-shadow: inset 0 0 0 1px rgba(222, 255, 59, .26) !important; text-shadow: none !important;
+    }
+
+    /* ③ 달력 [저장 (오늘 바로 등록)] — hover 확대폭(--hvs:1.012)은 기존 그대로 유지 */
+    #calModal .cal-box .cz-save:not(:disabled){
+      background: linear-gradient(135deg, #DEFF3B 0%, #A4FF00 100%) !important;
+      border: 0 !important; border-color: transparent !important;
+      color: #0B1200 !important; font-weight: 900 !important; text-shadow: none !important;
+      box-shadow: 0 0 18px rgba(164, 255, 0, .45), 0 4px 12px rgba(0, 0, 0, .25) !important;
+    }
+    #calModal .cal-box .cz-save:not(:disabled):hover,
+    #calModal .cal-box .cz-save:not(:disabled):focus-visible{
+      background: linear-gradient(135deg, #DEFF3B 0%, #A4FF00 100%) !important;
+      color: #0B1200 !important;
+      box-shadow: 0 0 22px rgba(164, 255, 0, .55), 0 12px 28px rgba(0, 0, 0, .40) !important;
+    }
+
+    /* ④ 달력 [오늘] 칸 */
+    #calModal .cal-box .cal-cell.is-today,
+    #calModal .cal-box .cal-cell.is-today.is-picked{
+      background: linear-gradient(135deg, #DEFF3B 0%, #A4FF00 100%) !important;
+      border: 0 !important; border-color: transparent !important; color: #0B1200 !important;
+      box-shadow: 0 0 18px rgba(164, 255, 0, .45), 0 4px 12px rgba(0, 0, 0, .25) !important;
+    }
+    #calModal .cal-box .cal-cell.is-today .cal-num{ color: #0B1200 !important; text-shadow: none !important; }
+    #calModal .cal-box .cal-cell.is-today .cal-more{ color: rgba(11, 18, 0, .80) !important; }
+    #calModal .cal-box .cal-cell.is-today .cal-chip,
+    #calModal .cal-box .cal-cell.is-today .cal-chip.w,
+    #calModal .cal-box .cal-cell.is-today .cal-chip.n{ background: rgba(11, 18, 0, .80) !important; }
+    /* 라임 위에서는 '등록됨' 칩도 너무 흐리지 않게 (취소선은 유지) */
+    #calModal .cal-box .cal-cell.is-today .cal-chip.done{ opacity: .92 !important; }
+    #calModal .cal-box .cal-cell.is-today .cal-rec{
+      background: rgba(11, 18, 0, .80) !important; border-color: transparent !important;
+      box-shadow: none !important; color: #a5f3fc !important;
+    }
+    /* 오늘 칸 hover: 흰 배경·흰 숫자로 바뀌지 않고 라임 유지 */
+    #calModal .cal-box .cal-cell.is-today:hover,
+    #calModal .cal-box .cal-cell.is-today:active{
+      background: linear-gradient(135deg, #DEFF3B 0%, #A4FF00 100%) !important;
+      border-color: transparent !important; color: #0B1200 !important;
+      box-shadow: 0 0 22px rgba(164, 255, 0, .55), 0 12px 28px rgba(0, 0, 0, .40) !important;
+    }
+    #calModal .cal-box .cal-cell.is-today:hover .cal-num{ color: #0B1200 !important; }
+
+    /* ④-2 [오늘] 배지 (11월 20일 (금) 스케줄 옆) */
+    #calModal #czBadge.cz-badge.today,
+    #calModal .cal-box .cz-badge.today{
+      background: linear-gradient(135deg, #DEFF3B 0%, #A4FF00 100%) !important;
+      border: 0 !important; border-color: transparent !important;
+      color: #0B1200 !important; font-weight: 900 !important; text-shadow: none !important;
+      padding: 2px 10px !important;
+      box-shadow: 0 0 18px rgba(164, 255, 0, .45), 0 4px 12px rgba(0, 0, 0, .25) !important;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
