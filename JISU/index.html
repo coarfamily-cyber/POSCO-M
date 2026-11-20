@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611201455">
+  <meta name="jisu-build" content="202611201510">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -7765,7 +7765,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
   /* 환경 상세보기 2단계: ① 호기 7개 → ② 고른 호기의 설비 4종(분체·충진기·포장기·소성로)
      설비 버튼은 누를 때마다 대기 → 작업중(초록) → 작업완료(파랑) → 대기로 돌고, 완료할 때마다
      jisu-env-log-v1 에 {day, unit, equip, round, ts, td, by} 로 남긴다.
-     호기 버튼은 설비 상태를 모아 보여준다 — 4/4 완료면 파랑, 하나라도 진행 중이면 초록(완료 수/4).
+     호기 버튼은 설비 상태를 모아 보여준다 — 하나라도 청소 중이면 초록(완료 수/4), 청소중이 없고 하나라도 끝났으면
+     파랑(완료 수/4, 예: 소성로만 끝난 1,2호기 = 1/4 파랑), 모두 대기면 회색.
      예전 자료(호기 한 칸짜리 상태)도 설비 4종으로 읽히게 채워 넣어 화면·검색·엑셀이 깨지지 않는다.
      환경 호기는 시간(08·18시)으로 초기화하지 않고 7개 호기 설비가 모두 완료됐을 때만 다음 회차로 넘어간다. */
   (function(){
@@ -7779,25 +7780,28 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     /* 환경 호기는 시간(08시·18시)으로 초기화하지 않고, 7칸이 모두 작업완료(파랑)됐을 때만 바로 초기화 */
     function subsOf(x){ x=(x&&typeof x==='object')?x:{}; if(!x.subs||typeof x.subs!=='object'){ const o={}; EQ.forEach(e=>{ o[e]= x.s? {s:x.s,ts:x.ts||'',td:x.td||'',day:x.day||''} : {s:''}; }); x.subs=o; }
       EQ.forEach(e=>{ const y=x.subs[e]; if(!y||typeof y!=='object') x.subs[e]={s:''}; }); return x.subs; }
-    /* 호기 한 칸의 상태(s·ts·td)는 설비 4종에서 계산해 채운다 — 지도 표시·홈 알림·검색·엑셀이 그대로 읽는다 */
+    /* 호기 한 칸의 상태(s·ts·td)는 설비 4종에서 계산해 채운다 — 지도 표시·홈 알림·검색·엑셀이 그대로 읽는다
+       [11-20] 색 규칙: 하나라도 청소 중(work)이면 초록, 작업중이 없고 하나라도 작업완료(done)면 파랑, 모두 대기면 회색.
+       (예: 소성로만 완료한 1,2호기 = 1/4 이면서 파랑) */
     function sync(x){ const sb=subsOf(x); let d=0,w=0,ts='',td='';
       EQ.forEach(e=>{ const y=sb[e]||{}; if(y.s==='done'){ d++; if(y.td&&(!td||y.td>td)) td=y.td; } else if(y.s==='work') w++;
         if(y.s&&y.ts&&(!ts||y.ts<ts)) ts=y.ts; });
-      x.doneCnt=d; x.workCnt=w; x.s=(d===EQ.length?'done':((d||w)?'work':'')); x.ts=ts; x.td=td; return x; }
+      x.doneCnt=d; x.workCnt=w; x.s=(w>0?'work':(d>0?'done':'')); x.ts=ts; x.td=td; return x; }
     function load(){ let d; try{ d=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){} if(!d||typeof d!=='object') d={}; if(!d.u||typeof d.u!=='object') d.u={}; if(!d.round) d.round=1; delete d.day; delete d.resetDay;
       Object.keys(d.u).forEach(k=>{ const x=d.u[k]; if(!x||typeof x!=='object'){ delete d.u[k]; return; } sync(x); });
       return d; }
     const save=d=>localStorage.setItem(KEY,JSON.stringify(d));
     const loadLog=()=>{ try{ return JSON.parse(localStorage.getItem(LOG)||'[]'); }catch(e){ return []; } };
     let resetT=null;
-    function draw(){ const d=load(); let r=0,dn=0;
+    function draw(){ const d=load(); let r=0,dn=0,totalDone=0;
       box.querySelectorAll('[data-env-unit]').forEach(b=>{ const x=d.u[b.dataset.envUnit]||{}; b.classList.toggle('work',x.s==='work'); b.classList.toggle('done',x.s==='done'); if(x.s==='work') r++; if(x.s==='done') dn++;
+        totalDone+=(x.doneCnt||0);
         const cnt=b.querySelector('[data-env-cnt]'), dc=x.doneCnt||0, wc=x.workCnt||0;
         if(cnt){ cnt.textContent=dc+'/'+EQ.length; cnt.hidden=!((dc+wc)>0); }
         b.setAttribute('aria-pressed',x.s?'true':'false');
-        b.title=b.dataset.envUnit+'호기 · '+(x.s==='work'?('설비 청소중 '+dc+'/'+EQ.length):x.s==='done'?('설비 4종 청소완료 '+(x.td||'')):'대기 (누르면 설비 4종)'); });
+        b.title=b.dataset.envUnit+'호기 · '+(x.s==='work'?('설비 청소중 '+dc+'/'+EQ.length):x.s==='done'?('설비 청소완료 '+dc+'/'+EQ.length+(x.td?' ('+x.td+')':'')):'대기 (누르면 설비 4종)'); });
       if(sumEl) sumEl.textContent=(dn||r)?('완료 호기 '+dn+' · 작업중 '+r):'';
-      const eb=document.querySelector('[data-toggle-zone="environment"]'); if(eb){ eb.classList.toggle('env-run',r>0); eb.classList.toggle('env-all',r===0&&dn>0); const bd=eb.querySelector('.env-badge'); if(bd) bd.remove(); }
+      const eb=document.querySelector('[data-toggle-zone="environment"]'); if(eb){ eb.classList.toggle('env-run',r>0); eb.classList.toggle('env-all',totalDone===N*EQ.length); const bd=eb.querySelector('.env-badge'); if(bd) bd.remove(); }
       { /* 지도 위 청소중 표시 (C·D동 박스 위치) */ const stage=document.getElementById('mapStage'); if(stage){ let ly=document.getElementById('envCleanLayer'); if(!ly){ ly=document.createElement('div'); ly.id='envCleanLayer'; ly.className='env-clean-layer'; stage.appendChild(ly); }
         const POS={'1,2':[65.0,30.2],'3,4':[69.4,30.2],'5,6':[73.4,30.2],'7,8':[77.5,30.2],'9,10':[67.9,73.4],'11,12':[72.5,73.4],'13,14':[76.8,73.4]}; /* C동(위)=1~8호기, D동(아래)=9~14호기 */
         /* 지도 위 사람 그림은 실제로 청소 중인 설비가 있는 호기에만 (일부만 끝난 호기는 세우지 않음) */
@@ -7809,7 +7813,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         eqBox.querySelectorAll('[data-env-eq]').forEach(b=>{ const y=sb[b.dataset.envEq]||{};
           b.classList.toggle('work',y.s==='work'); b.classList.toggle('done',y.s==='done'); b.setAttribute('aria-pressed',y.s?'true':'false');
           b.title=b.dataset.envEq+' · '+(y.s==='done'?('청소완료 '+(y.td||'')):y.s==='work'?('청소중 '+(y.ts||'')):'대기 (누르면 청소 시작)'); }); }
-      if(dn===N && !resetT){ resetT=setTimeout(()=>{ resetT=null; const d2=load(); if(Object.values(d2.u).filter(x=>x&&x.s==='done').length===N){ d2.u={}; d2.round=(d2.round||1)+1; save(d2); draw(); } },1200); } }
+      /* 28칸(7호기 × 4설비)이 모두 작업완료일 때만 다음 회차로 — 일부만 끝난 파랑 호기는 초기화하지 않는다 */
+      if(totalDone===N*EQ.length && !resetT){ resetT=setTimeout(()=>{ resetT=null; const d2=load(); let tot=0,run=0; Object.keys(d2.u).forEach(k=>{ const y=d2.u[k]||{}; tot+=(y.doneCnt||0); if((y.workCnt||0)>0) run++; }); if(tot===N*EQ.length&&!run){ d2.u={}; d2.round=(d2.round||1)+1; save(d2); draw(); } },1200); } }
     function showList(){ openUnit=null; if(listStep) listStep.hidden=false; if(unitStep) unitStep.hidden=true; draw(); }
     function showUnit(k){ openUnit=k; if(listStep) listStep.hidden=true; if(unitStep) unitStep.hidden=false; draw(); }
     /* 설비 버튼: 대기 → 작업중 → 작업완료 → 대기. 완료로 넘어갈 때만 기록을 남기고, 완료를 되돌리면 그 기록도 지운다 */
@@ -8950,7 +8955,7 @@ paint()})();</script>
         const st = env.u[u]; if(!st) return;
         const subs = envSubs(st); let dc = 0, wc = 0;
         EQS.forEach(e => { const y = subs[e] || {}; if(y.s === 'done') dc++; else if(y.s === 'work') wc++; });
-        const stLabel = dc >= EQS.length ? '완료' : ((dc || wc) ? '작업중' : '대기');
+        const stLabel = wc > 0 ? '작업중' : (dc >= EQS.length ? '완료' : (dc > 0 ? '작업완료' : '대기'));
         const prog = (dc || wc) ? ('(' + dc + '/' + EQS.length + ')') : '';
         items.push({
           badge: '환경 호기', cls: 't-cmd', title: u + '호기 · ' + stLabel + (prog ? ' ' + prog : ''),
@@ -10959,7 +10964,7 @@ paint()})();</script>
   /* ── 입자 만들기 ─────────────────────────────────────────────── */
   function newDrop(layer){
     var sp=[0.52,0.78,1.12][layer];
-    var a=[0.18,0.28,0.4][layer]*rnd(0.7,1.15);
+    var a=[0.17,0.26,0.36][layer]*rnd(0.7,1.15);
     return { x:rnd(-W*0.25,W), y:rnd(-H,H), len:[0.7,1,1.45][layer]*rnd(14,23),
              sp:sp*rnd(0.9,1.1), w:[0.9,1.3,1.9][layer],
              c:'rgba(204,228,255,'+a.toFixed(3)+')' };
@@ -10976,8 +10981,9 @@ paint()})();</script>
     drops=[]; flakes=[]; ripples=[];
     var i,n;
     if(state==='rain'){
-      /* 화면 넓이에 따라 200~520줄, 세 겹(뒤·중간·앞)으로 깔아 빗줄기가 비어 보이지 않게 한다 */
-      n=Math.round(Math.min(620,Math.max(220,W*H/1700)));
+      /* 화면 넓이에 따라 65~180줄(모바일 지도 400px 폭 65·데스크탑 968px 폭 90), 세 겹(뒤·중간·앞)으로 얇게 깐다
+         — 조감도·구역 버튼을 가리지 않을 만큼만 내린다(11-20 빗줄기 과밀 지적 반영) */
+      n=Math.round(Math.min(180,Math.max(65,W*H/5800)));
       for(i=0;i<n;i++) drops.push(newDrop(i%10<5?0:(i%10<8?1:2)));
     }else if(state==='snow'){
       n=Math.round(Math.min(420,Math.max(150,W*H/5200)));
@@ -11010,7 +11016,7 @@ paint()})();</script>
       ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-dx*(p.len/dy),p.y-p.len); ctx.stroke();
     }
     /* 물웅덩이 파문: 바닥 쪽에 낮은 타원으로 퍼졌다 사라진다 */
-    if(Math.random()<dt*16) ripples.push({ x:rnd(0,W), y:rnd(H*0.12,H*0.98), r:0, max:rnd(7,16) });
+    if(Math.random()<dt*8) ripples.push({ x:rnd(0,W), y:rnd(H*0.12,H*0.98), r:0, max:rnd(7,16) });
     for(i=ripples.length-1;i>=0;i--){
       p=ripples[i]; p.r+=p.max*dt*2.1;
       if(p.r>=p.max){ ripples.splice(i,1); continue; }
