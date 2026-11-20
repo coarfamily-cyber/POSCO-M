@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611202315">
+  <meta name="jisu-build" content="202611202308">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -3773,6 +3773,14 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(37,99,
       gap: 8px;
       margin-top: 4px;
     }
+    .cz-batch-opts {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-top: 10px;
+      margin-top: 2px;
+      border-top: 1px solid rgba(255, 255, 255, 0.10);
+    }
     .cz-quick-batch-prompt {
       display: flex;
       align-items: center;
@@ -4258,21 +4266,22 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
       color: #F8FAFC !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.28) !important;
     }
 
-    /* 색상 범례 (달력 바로 아래) */
-    .cal-legend{
-      display: flex; flex-wrap: wrap; align-items: center; gap: 5px 6px;
-      margin-top: 10px;
+    /* 색상 범례 (달력 헤더 — [오늘] 과 [✕] 사이) */
+    .cal-head .cal-legend{
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+      flex: 1 1 auto; min-width: 0; gap: 5px 6px; margin: 0;
     }
-    .cal-legend .cal-lg-t{ font-size: 10px; font-weight: 800; color: rgba(255,255,255,.66); }
-    .cal-legend .cal-lg{
+    .cal-head .cal-legend .cal-lg-t{ font-size: 10px; font-weight: 800; color: rgba(255,255,255,.66); white-space: nowrap; }
+    .cal-head .cal-legend .cal-lg{
       font-size: 10px; font-weight: 800; line-height: 1.45; border-radius: 9999px;
       padding: 2px 8px; white-space: nowrap; text-shadow: none; box-shadow: none;
       background: var(--zc,#334155); color: var(--zt,#FFFFFF);
     }
     @media(max-width:720px){
-      .cal-legend{ margin-top: 8px; gap: 3px; }
-      .cal-legend .cal-lg-t{ display: none; }
-      .cal-legend .cal-lg{ font-size: 9px; padding: 1px 5px; }
+      /* 모바일: 1줄 [‹ 11월 › 오늘 ✕] + 2줄 범례 (가로 넘침 0, ✕ 오른쪽 고정) */
+      .cal-head .cal-legend{ order: 1; flex: 1 0 100%; gap: 4px 3px; margin-top: 2px; }
+      .cal-head .cal-legend .cal-lg-t{ display: none; }
+      .cal-head .cal-legend .cal-lg{ font-size: 9px; padding: 1px 5px; }
       .cal-box.is-batch-mobile .cal-legend{ display: none !important; }
     }
   </style>
@@ -4866,9 +4875,10 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
 
   <div id="loginModal" class="login-modal" hidden><div class="login-box" role="dialog" aria-label="작업자 로그인"><h3>작업자 로그인</h3><p class="login-note">이름을 넣으면 등록하는 금일작업·공지에 작성자로 남고, 액셀에도 들어갑니다.</p><input id="loginName" type="text" maxlength="20" placeholder="이름 (예: 지수)" autocomplete="name"><div class="login-actions"><button type="button" id="loginCancel" class="lg-ghost">닫기</button><button type="button" id="logoutBtn" class="lg-ghost" hidden>로그아웃</button><button type="button" id="loginOk" class="lg-primary">로그인</button></div></div></div>
   <div id="calModal" class="cal-modal" hidden><div class="cal-box" role="dialog" aria-label="작업 스케줄 달력">
-    <div class="cal-head"><button type="button" class="cal-nav" id="calPrev" aria-label="이전 달">‹</button><h3 id="calTitle"></h3><button type="button" class="cal-nav" id="calNext" aria-label="다음 달">›</button><button type="button" class="cal-today" id="calToday">오늘</button><button type="button" class="cal-close" id="calClose" aria-label="닫기">✕</button></div>
-    <div class="cal-body"><div class="cal-grid-wrap"><div class="cal-week"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div><div class="cal-grid" id="calGrid"></div>
-      <div class="cal-legend" id="calLegend" aria-label="달력 색상 범례"><span class="cal-lg-t">색상</span><span class="cal-lg c-outbound">출고</span><span class="cal-lg c-inbound">입고</span><span class="cal-lg c-pack">포장</span><span class="cal-lg c-prod">생산</span><span class="cal-lg c-env">환경</span><span class="cal-lg c-pitch">피치</span><span class="cal-lg c-memo">특이사항</span><span class="cal-lg c-notice">공지</span><span class="cal-lg c-urgent">긴급</span><span class="cal-lg c-rec">기록</span></div></div>
+    <div class="cal-head"><button type="button" class="cal-nav" id="calPrev" aria-label="이전 달">‹</button><h3 id="calTitle"></h3><button type="button" class="cal-nav" id="calNext" aria-label="다음 달">›</button><button type="button" class="cal-today" id="calToday">오늘</button>
+      <div class="cal-legend" id="calLegend" aria-label="달력 색상 범례"><span class="cal-lg-t">색상</span><span class="cal-lg c-outbound">출고</span><span class="cal-lg c-inbound">입고</span><span class="cal-lg c-pack">포장</span><span class="cal-lg c-prod">생산</span><span class="cal-lg c-env">환경</span><span class="cal-lg c-pitch">피치</span><span class="cal-lg c-memo">특이사항</span><span class="cal-lg c-notice">공지</span><span class="cal-lg c-urgent">긴급</span><span class="cal-lg c-rec">기록</span></div>
+      <button type="button" class="cal-close" id="calClose" aria-label="닫기">✕</button></div>
+    <div class="cal-body"><div class="cal-grid-wrap"><div class="cal-week"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div><div class="cal-grid" id="calGrid"></div></div>
     <div class="cal-side">
       <div id="czSingleView">
         <div class="cz-head"><h4 id="czTitle"></h4><span class="cz-badge" id="czBadge"></span></div>
@@ -4929,40 +4939,6 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
         <div class="cal-hint" style="margin-bottom:4px;">
           카톡·메신저 공지글, 지시서 표/이미지, 또는 날짜 없는 여러 줄을 붙여넣으세요. (표는 2공장만 자동 추출)
         </div>
-        <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#cbd5e1;margin-bottom:6px;cursor:pointer;">
-          <input type="checkbox" id="czBatchLockTarget">
-          <span>선택한 기본 대상 버튼으로만 고정 등록 (다른 구역명 자동 전환 끄기)</span>
-        </label>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
-          <button type="button" id="czGemToggleBtn" class="cz-b" style="font-size:11px;padding:4px 8px;background:rgba(139,92,246,.22) !important;border-color:rgba(167,139,250,.45) !important;color:#e9d5ff !important;">✨ Gemini AI 키 설정 ▾</button>
-          <span id="czGemMiniSt" style="font-size:11px;color:#94a3b8;">키 미등록 시 기본 무료 OCR</span>
-        </div>
-        <div class="gem-key-box" id="czGemKeyBox" hidden>
-          <input type="text" id="czGemKeyInput" placeholder="✨ Gemini 무료 API 키 입력 (선택)" autocomplete="off" style="-webkit-text-security:disc">
-          <button type="button" id="czGemSaveBtn" class="gem-key-save">키 저장</button>
-          <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="gem-key-link">무료 키 발급 ↗</a>
-          <button type="button" id="czGemGuideBtn" class="gem-guide-btn" aria-expanded="false">🔒 지수가 확인</button>
-          <div id="czGemStatus" class="gem-key-st"></div>
-          <div id="czGemGuideBox" class="gem-guide-box" hidden>
-            <b>📌 달력 공지 일괄등록 Gemini 무료 AI 연동 안내</b><br>
-            • ✨ Gemini 무료 API 키 입력 + <b>키 저장</b> + <b>무료 키 발급 ↗</b>으로 1번만 저장해 두세요.<br>
-            • <b>Gemini Flash-Lite(하루 500회 무료)</b>가 지시서 표에서 <b>2공장</b> 차량번호·수량·날짜를 먼저 읽고, 키가 없거나 한도가 차면 기존 무료 OCR로 자동 전환됩니다.<br>
-            • <b>첨부한 이미지를 작업 카드에도 함께 올리기</b> 체크가 켜져 있어 텍스트와 함께 지시서 원본 사진도 작업 카드에 같이 띄울 수 있습니다.
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
-          <button type="button" id="czBatchImgBtn" class="cz-b" style="background:rgba(14,165,233,.22) !important;border-color:rgba(56,189,248,.45) !important;color:#e0f2fe !important;font-weight:800;">🖼️ 이미지 첨부</button>
-          <input type="file" id="czBatchImgInput" accept="image/*" hidden>
-          <span id="czBatchOcrStatus" style="font-size:11.5px;color:#94a3b8;">입력창에서 Ctrl+V로 이미지 바로 붙여넣기 가능</span>
-        </div>
-        <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#cbd5e1;margin-bottom:6px;cursor:pointer;">
-          <input type="checkbox" id="czBatchIncludeImg" checked>
-          <span>첨부한 이미지를 작업 카드에도 함께 올리기 (눌러서 확대)</span>
-        </label>
-        <div id="czBatchImgWrap" style="display:none;margin-bottom:6px;position:relative;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.28);">
-          <img id="czBatchImgThumb" alt="첨부 지시서 이미지" style="display:block;width:100%;max-height:110px;object-fit:contain;">
-          <button type="button" id="czBatchImgClear" aria-label="이미지 지우기" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:9999px;border:0;background:rgba(15,23,42,.82);color:#fff;font-size:11px;cursor:pointer;">✕</button>
-        </div>
         <textarea id="czBatchText" rows="6" class="cz-batch-textarea" placeholder="주임님 금주 소모품 입고 내역 공유드립니다.&#10;&#10;11월10일&#10;사각박스 640set&#10;&#10;11월11일&#10;알루미늄 파우치백 600ea&#10;16kg 파렛트 576ea&#10;&#10;입니다."></textarea>
         <div class="cz-batch-preview-wrap">
           <div class="cz-batch-preview-head">
@@ -4977,6 +4953,42 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
         <div class="cz-batch-actions">
           <button type="button" class="cz-save" id="czBatchSaveBtn" disabled>날짜별 일괄 저장</button>
           <button type="button" class="cz-b" id="czBatchCancelBtn">취소 (달력으로)</button>
+        </div>
+        <div class="cz-batch-opts">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#cbd5e1;margin-bottom:6px;cursor:pointer;">
+            <input type="checkbox" id="czBatchLockTarget">
+            <span>선택한 기본 대상 버튼으로만 고정 등록 (다른 구역명 자동 전환 끄기)</span>
+          </label>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+            <button type="button" id="czGemToggleBtn" class="cz-b" style="font-size:11px;padding:4px 8px;background:rgba(139,92,246,.22) !important;border-color:rgba(167,139,250,.45) !important;color:#e9d5ff !important;">✨ Gemini AI 키 설정 ▾</button>
+            <span id="czGemMiniSt" style="font-size:11px;color:#94a3b8;">키 미등록 시 기본 무료 OCR</span>
+          </div>
+          <div class="gem-key-box" id="czGemKeyBox" hidden>
+            <input type="text" id="czGemKeyInput" placeholder="✨ Gemini 무료 API 키 입력 (선택)" autocomplete="off" style="-webkit-text-security:disc">
+            <button type="button" id="czGemSaveBtn" class="gem-key-save">키 저장</button>
+            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="gem-key-link">무료 키 발급 ↗</a>
+            <button type="button" id="czGemGuideBtn" class="gem-guide-btn" aria-expanded="false">🔒 지수가 확인</button>
+            <div id="czGemStatus" class="gem-key-st"></div>
+            <div id="czGemGuideBox" class="gem-guide-box" hidden>
+              <b>📌 달력 공지 일괄등록 Gemini 무료 AI 연동 안내</b><br>
+              • ✨ Gemini 무료 API 키 입력 + <b>키 저장</b> + <b>무료 키 발급 ↗</b>으로 1번만 저장해 두세요.<br>
+              • <b>Gemini Flash-Lite(하루 500회 무료)</b>가 지시서 표에서 <b>2공장</b> 차량번호·수량·날짜를 먼저 읽고, 키가 없거나 한도가 차면 기존 무료 OCR로 자동 전환됩니다.<br>
+              • <b>첨부한 이미지를 작업 카드에도 함께 올리기</b> 체크가 켜져 있어 텍스트와 함께 지시서 원본 사진도 작업 카드에 같이 띄울 수 있습니다.
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+            <button type="button" id="czBatchImgBtn" class="cz-b" style="background:rgba(14,165,233,.22) !important;border-color:rgba(56,189,248,.45) !important;color:#e0f2fe !important;font-weight:800;">🖼️ 이미지 첨부</button>
+            <input type="file" id="czBatchImgInput" accept="image/*" hidden>
+            <span id="czBatchOcrStatus" style="font-size:11.5px;color:#94a3b8;">입력창에서 Ctrl+V로 이미지 바로 붙여넣기 가능</span>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#cbd5e1;margin-bottom:6px;cursor:pointer;">
+            <input type="checkbox" id="czBatchIncludeImg" checked>
+            <span>첨부한 이미지를 작업 카드에도 함께 올리기 (눌러서 확대)</span>
+          </label>
+          <div id="czBatchImgWrap" style="display:none;margin-bottom:6px;position:relative;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.28);">
+            <img id="czBatchImgThumb" alt="첨부 지시서 이미지" style="display:block;width:100%;max-height:110px;object-fit:contain;">
+            <button type="button" id="czBatchImgClear" aria-label="이미지 지우기" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:9999px;border:0;background:rgba(15,23,42,.82);color:#fff;font-size:11px;cursor:pointer;">✕</button>
+          </div>
         </div>
       </div>
     </div></div>
