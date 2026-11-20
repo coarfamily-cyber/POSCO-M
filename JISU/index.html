@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611202320">
+  <meta name="jisu-build" content="202611202335">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -4285,6 +4285,108 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
       .cal-box.is-batch-mobile .cal-legend{ display: none !important; }
     }
   </style>
+  <style id="sidebar-notice-cream">
+    /* ── 사이드바 [등록 내역]의 공지 카드 = 지도 버튼(자세히보기) 안 공지 카드와 같은 크림색 (2026-11-20 사용자 지정)
+       "사이드바 공지색상도 버튼에 뜨는공지랑 같은색으로 해줘"
+       · 크림 바탕(달력 공지 팔레트 #FBF6D3) + 진한 글씨(#0B1200) + 주황 [공지] 배지(#F59E0B, 진한 글씨)
+       · 전체·수정·삭제·시간은 크림 위에서 읽히도록 진한 슬레이트 / 옅은 붉은 삭제
+       · 금일작업 카드(.cmd-item:not(.is-notice))는 기존 다크 카드 그대로 유지한다. */
+    #cmdSide #cmdList .cmd-item.is-notice{
+      background: linear-gradient(180deg,#FDFAE4 0%,#FBF6D3 55%,#F6F0C6 100%) !important;
+      border: 0 !important;
+      border-radius: 16px !important;
+      box-shadow: 0 2px 9px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.62) !important;
+      padding: 9px 11px !important;
+    }
+    /* [공지] 배지 — 버튼 안 공지 카드와 같은 주황 */
+    #cmdSide #cmdList .cmd-item.is-notice .tag.notice{
+      background: #F59E0B !important;
+      color: #0F172A !important;
+      border: 0 !important;
+      border-radius: 6px !important;
+      padding: 2px 7px !important;
+      font-size: 10.5px !important;
+      font-weight: 900 !important;
+      line-height: 1.35 !important;
+      text-shadow: none !important;
+      box-shadow: inset 0 0 0 0 transparent !important;
+    }
+    /* 공지 내용 — 크림 위 진한 글씨 */
+    #cmdSide #cmdList .cmd-item.is-notice .cmd-text,
+    #cmdSide #cmdList .cmd-item.is-notice .cmd-card-img-cap{
+      color: #0B1200 !important;
+      font-weight: 700 !important;
+      text-shadow: none !important;
+    }
+    /* 대상 배지(전체·출고·포장 등) — 크림 위에서 진한 알약 */
+    #cmdSide #cmdList .cmd-item.is-notice .all-tag,
+    #cmdSide #cmdList .cmd-item.is-notice .meta .tag.ob-item-tag,
+    #cmdSide #cmdList .cmd-item.is-notice .move-tag{
+      background: rgba(15,23,42,.09) !important;
+      color: #0F172A !important;
+      border: 1px solid rgba(15,23,42,.16) !important;
+      text-shadow: none !important;
+    }
+    /* 시간 — 크림 위에서 흐려지지 않는 진한 슬레이트 */
+    #cmdSide #cmdList .cmd-item.is-notice .meta{
+      color: #1E293B !important;
+    }
+    #cmdSide #cmdList .cmd-item.is-notice .ci-when{
+      color: #1E293B !important;
+      opacity: .82;
+    }
+    /* 수정·삭제 — 크림 위 진한 알약 (hover 확대폭을 줄여 서로 겹치지 않게) */
+    #cmdSide #cmdList .cmd-item.is-notice .ci-b{
+      --hvs: 1.05; --hvt: -1px;
+      background: rgba(15,23,42,.09) !important;
+      border: 1px solid rgba(15,23,42,.16) !important;
+      color: #0F172A !important;
+      box-shadow: none !important;
+    }
+    #cmdSide #cmdList .cmd-item.is-notice .ci-b:hover{
+      background: rgba(15,23,42,.17) !important;
+      border-color: rgba(15,23,42,.32) !important;
+      color: #0F172A !important;
+    }
+    #cmdSide #cmdList .cmd-item.is-notice .ci-b.del{
+      background: rgba(220,38,38,.10) !important;
+      border-color: rgba(220,38,38,.30) !important;
+      color: #B91C1C !important;
+    }
+    #cmdSide #cmdList .cmd-item.is-notice .ci-b.del:hover{
+      background: rgba(220,38,38,.18) !important;
+      border-color: rgba(220,38,38,.50) !important;
+      color: #B91C1C !important;
+    }
+    /* 인라인 수정(수정 누른 상태) — 크림 카드 안 흰 입력칸 + 주황 포커스 */
+    #cmdSide #cmdList .cmd-item.is-notice.is-editing{
+      box-shadow: 0 0 0 2px rgba(245,158,11,.85), 0 2px 9px rgba(0,0,0,.20) !important;
+    }
+    #cmdSide #cmdList .cmd-item.is-notice .ce-in{
+      background: #FFFDF2 !important;
+      border: 1px solid rgba(15,23,42,.22) !important;
+      color: #0B1200 !important;
+    }
+    #cmdSide #cmdList .cmd-item.is-notice .ce-in:focus{
+      border-color: #F59E0B !important;
+      box-shadow: 0 0 0 2px rgba(245,158,11,.28) !important;
+    }
+    #cmdSide #cmdList .cmd-item.is-notice .ce-in::placeholder{ color: rgba(15,23,42,.42) !important; }
+    #cmdSide #cmdList .cmd-item.is-notice .ci-b.pri{
+      background: #0F172A !important;
+      border-color: #0F172A !important;
+      color: #FFFDF3 !important;
+    }
+    #cmdSide #cmdList .cmd-item.is-notice .ci-b.pri:hover{
+      background: #1E293B !important;
+      border-color: #1E293B !important;
+    }
+    /* 긴급 공지 — 크림 위에서도 바로 눈에 띄게 붉은 테두리 */
+    #cmdSide #cmdList .cmd-item.is-notice.is-urgent{
+      box-shadow: inset 0 0 0 2px rgba(239,68,68,.80), 0 2px 9px rgba(0,0,0,.20) !important;
+      background: linear-gradient(180deg,#FDF3E0 0%,#FBEFD6 55%,#F6E7C4 100%) !important;
+    }
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -5510,7 +5612,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
       const metaLeft='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;">'+kindTag+moveTag+(x.target==='*'&&!hasImg?'<span class="all-tag">전체</span>':'')+carryTags(x)+'</div>';
       const whenHtml=(x.by?esc(x.by)+' · ':'')+esc(x.at)+(x.completed&&x.completedAt?' · 완료 '+esc(x.completedAt):(x.working&&x.startedAt?' · 작업중 '+esc(x.startedAt):''));
       const actsHtml=adminEdit?'<span class="ci-acts"><button type="button" class="ci-b" data-cmd-edit="'+esc(x.id)+'">수정</button><button type="button" class="ci-b del" data-cmd-del="'+esc(x.id)+'">삭제</button></span>':(withDel?'<button type="button" data-cmd-del="'+x.id+'">삭제</button>':'');
-      return '<div class="cmd-item'+(hasImg?' has-img':'')+(x.completed?' is-completed':'')+(x.review==='pending'?' is-pending':'')+(isCarryover(x)?' is-carry':'')+(x.urgent&&!x.completed?' is-urgent':'')+(cmdEditing?' is-editing':'')+'"><div class="meta">'+metaLeft+(actsHtml?'<span class="ci-right"><span class="ci-when">'+whenHtml+'</span>'+actsHtml+'</span>':'<span style="margin-left:auto;">'+whenHtml+'</span>')+'</div>'
+      return '<div class="cmd-item'+(!isWork?' is-notice':'')+(hasImg?' has-img':'')+(x.completed?' is-completed':'')+(x.review==='pending'?' is-pending':'')+(isCarryover(x)?' is-carry':'')+(x.urgent&&!x.completed?' is-urgent':'')+(cmdEditing?' is-editing':'')+'"><div class="meta">'+metaLeft+(actsHtml?'<span class="ci-right"><span class="ci-when">'+whenHtml+'</span>'+actsHtml+'</span>':'<span style="margin-left:auto;">'+whenHtml+'</span>')+'</div>'
         +'<div class="cmd-row">'+bodyHtml+right+'</div></div>';
     }
     /* HOME 상태 사이드바: 오늘 전체 현황 (등록된 금일작업 기준, 임의 숫자 없음) */
