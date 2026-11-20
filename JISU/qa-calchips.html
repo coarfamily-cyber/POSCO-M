@@ -7069,7 +7069,10 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate(), sch=load(SKEY), cmds=load(CKEY), hc=histCount(), cc=carryCnt();
       /* 칸 안 칩은 등록 시각 순서로 — 시각이 없는 기록은 뒤로 */
       const hmOf=o=>{ const t=String((o&&(o.at||o.created))||'').match(/(\d{1,2}):(\d{2})/); return t?(+t[1])*60+(+t[2]):9999; };
-      const chipOf=(o,done)=>'<span class="cal-chip '+zoneClass(o)+(o.kind==='notice'?' n':' w')+(done?' done':'')+'">'+esc(NAMES[o.target]||o.target)+' '+esc(o.text)+'</span>';
+      const chipOf=(o,done)=>{ const lb=String(NAMES[o.target]||o.target||''); let tx=String(o.text==null?'':o.text);
+        /* 내용이 이미 구역 이름으로 시작하면(예: 대상 생산A · 내용 "생산A 12 TON") 이름을 두 번 적지 않는다 */
+        if(lb&&lb!=='전체'&&tx.slice(0,lb.length).toUpperCase()===lb.toUpperCase()) tx=tx.slice(lb.length).replace(/^[\s:：\-]+/,'');
+        return '<span class="cal-chip '+zoneClass(o)+(o.kind==='notice'?' n':' w')+(done?' done':'')+'">'+esc(lb)+' '+esc(tx)+'</span>'; };
       let html=''; for(let i=0;i<first;i++) html+='<div class="cal-cell empty"></div>';
       for(let d=1;d<=days;d++){ const key=ymd(y,m,d), dow=(first+d-1)%7;
         const schItems=sch.filter(s=>s.date===key);
