@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611202216">
+  <meta name="jisu-build" content="202611202226">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -2641,7 +2641,7 @@
     .ob-photo-sq-btn, .pitch-photo-btn { --hvs:1.04; --hvt:-1px; }
     .ob-stack-btn { --hvs:1; --hvt:0; }
     /* E. 작업중/작업완료 토글: 두 버튼이 바로 붙어 있음 */
-    .work-complete { --hvs:1.04; --hvt:-1px; }
+    .work-complete, .inb-confirm-cancel, .inb-confirm-del { --hvs:1.04; --hvt:-1px; }
     /* F. 손가락 화면(≤720px): 지도·카드가 좁아지므로 확대폭을 더 줄인다 */
     @media (max-width:720px){
       .hotspot-pill, .mobile-card-close { --hvs:1.04; --hvt:-1px; }
