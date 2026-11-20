@@ -46,7 +46,7 @@
     {id:'qa21s1',date:'2026-11-21',target:'inbound:HH',kind:'instruction',text:'HH 18 TON',created:'11. 20. 21:00'},
     {id:'qa25s1',date:'2026-11-25',target:'outbound',kind:'instruction',text:'분진상차 4대',created:'11. 20. 22:00'}
   ];
-  try{ localStorage.setItem('jisu-commands-v1',JSON.stringify(CMD)); localStorage.setItem('jisu-schedule-v1',JSON.stringify(SCH)); }catch(e){}
+  try{ localStorage.setItem('jisu-sync-mode','state'); localStorage.setItem('jisu-commands-v1',JSON.stringify(CMD)); localStorage.setItem('jisu-schedule-v1',JSON.stringify(SCH)); }catch(e){}
 })();
 </script>
 
@@ -10294,9 +10294,6 @@ paint()})();</script>
      · DB 경로: /jisu/state/{localStorage키} , /jisu/photos/{구역}/{사진id}
      · Firebase 장애·오프라인·CDN 차단 시에도 기존 localStorage 동작은 그대로
      ====================================================================== -->
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="./auth.js"></script>
 <script>
 (function(){
