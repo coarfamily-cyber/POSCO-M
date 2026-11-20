@@ -7077,8 +7077,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
            예약에서 넘어온 기록은 같은 칩을 두 번 그리지 않고, 완료·마감 표시가 붙은 그 기록 칩 하나로 보여준다. */
         const cmdItems=cmds.filter(c=>c&&c.id!=='demo_dispatch_1'&&dayOf(c)===key);
         const fromSch=s=>cmdItems.some(c=>{ const cid=String(c.id||''); return cid==='s'+s.id||cid.indexOf('s'+s.id+'-')===0; });
-        const cellItems=schItems.filter(s=>!fromSch(s)).map((o,i)=>({o,done:!!o.applied,k:0,t:hmOf(o),i}))
-          .concat(cmdItems.map((o,i)=>({o,done:!!(o.completed||o.closed),k:1,t:hmOf(o),i})))
+        const cellItems=schItems.filter(s=>!fromSch(s)).map((o,i)=>({o,done:o.kind!=='notice'&&!!o.applied,k:0,t:hmOf(o),i}))
+          .concat(cmdItems.map((o,i)=>({o,done:(o.kind==='notice'?!!o.completed:!!(o.completed||o.closed)),k:1,t:hmOf(o),i})))
           .sort((a,b)=>(a.t-b.t)||(a.k-b.k)||(a.i-b.i));
         html+='<button type="button" class="cal-cell'+(key===today?' is-today':'')+(key===picked?' is-picked':'')+(key<today?' is-past':'')+(dow===0?' sun':'')+(dow===6?' sat':'')+'" data-day="'+key+'"><span class="cal-num">'+d+'</span>'
           +cellItems.slice(0,3).map(e=>chipOf(e.o,e.done)).join('')
