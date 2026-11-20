@@ -16,6 +16,7 @@
   var p = new URLSearchParams(location.search);
   var w = p.get('w') || '1440', h = p.get('h') || '900';
   var f = document.getElementById('f');
+  f.src = 'qa-calchips.html?cb=' + Date.now();
   f.style.width = w + 'px';
   f.style.height = h + 'px';
   document.getElementById('lbl').textContent = w + 'x' + h;
