@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611201552">
+  <meta name="jisu-build" content="202611201612">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -2822,6 +2822,23 @@
     .env-unit.done{background:rgba(59,130,246,.62);color:#fff;}
     .env-unit.done i{background:#38bdf8;box-shadow:0 0 6px #38bdf8;animation:none;}
     .env-units .eu-tip{margin-top:6px;font-size:10.5px;color:#94a3b8;}
+    /* [11-20] 환경 호기·설비 버튼: hover 확대 애니메이션은 남기되 1.04배로 낮추고, 버튼을 조금 납작하게 줄이고
+       격자 간격·안내문 여백을 넓혀 커져도 이웃 버튼과 안내문을 절대 덮지 않게 한다(눌리는 느낌은 유지). */
+    body:not(#zz) .env-units .env-grid{ gap:10px 12px !important; }
+    body:not(#zz) .env-units .env-grid .env-unit{ min-height:40px; padding:9px 6px; font-size:13px; }
+    body:not(#zz) .env-units .eu-eq-grid{ gap:10px 12px !important; }
+    body:not(#zz) .env-units .eu-eq{ min-height:54px; padding:10px 6px; font-size:14px; }
+    body:not(#zz) .env-units .eu-tip{ margin-top:12px !important; }
+    body:not(#zz) .env-units :is(.env-unit,.eu-eq,.eu-back):hover,
+    body:not(#zz) .env-units :is(.env-unit,.eu-eq,.eu-back):focus-visible{ scale:1.04 !important; translate:0 -1.5px !important; }
+    body:not(#zz) .env-units :is(.env-unit,.eu-eq,.eu-back):active{ scale:.97 !important; translate:0 0 !important; }
+    body:not(#zz) .env-units .env-unit:hover{ filter:brightness(1.15); box-shadow:0 6px 16px rgba(0,0,0,.32) !important; }
+    body:not(#zz) .env-units .eu-eq:hover{ filter:brightness(1.06); box-shadow:0 6px 18px rgba(15,23,42,.22) !important; }
+    body:not(#zz) .env-units .eu-back:hover{ filter:brightness(1.08); }
+    @media (max-width:900px), (pointer:coarse){
+      body:not(#zz) .env-units .env-grid .env-unit{ min-height:46px; font-size:14.5px; }
+      body:not(#zz) .env-units .eu-eq{ min-height:64px; font-size:15px; }
+    }
     /* 지도 환경 버튼: 작업중인 설비가 있으면 초록 깜빡임, 작업중 없이 완료가 1개 이상이면 파랑 */
     body:not(#zz) [data-toggle-zone="environment"].env-run .pulse-ring{background:#22c55e !important;color:#4ade80 !important;animation:workBlink 1s ease-in-out infinite !important;box-shadow:0 0 8px #22c55e !important;}
     /* 작업중인 설비가 없고 완료된 호기가 1개 이상이면 지도 '환경' 버튼을 '입고' 완료 버튼과 똑같이 버튼 전체 파란 발광으로
@@ -11075,14 +11092,27 @@ paint()})();</script>
   }
 
   /* ── 날씨 받아오기 (wttr.in 하나만) ─────────────────────────────── */
-  /* wttr.in 현재 상태 → snow/rain/clear (설명 문구 우선, 코드 보조) */
-  function stateOfWwo(code,desc){
-    var d=String(desc||'').toLowerCase(), c=Number(code), i;
-    for(i=0;i<SNOW_WORD.length;i++){ if(d.indexOf(SNOW_WORD[i])>=0) return 'snow'; }
-    if(SNOW_WWO.indexOf(c)>=0) return 'snow';
-    for(i=0;i<RAIN_WORD.length;i++){ if(d.indexOf(RAIN_WORD[i])>=0) return 'rain'; }
-    if(RAIN_WWO.indexOf(c)>=0) return 'rain';
-    return 'clear';
+  /* wttr.in 현재 상태 → snow/rain/clear
+     강수량만으로는 부족하다(실측): 세종 'Patchy rain nearby'(176)·0.0mm = 비 안 내림,
+     대전 'Light snow showers'(368)·0.0mm = 실제 눈 내림, 제주 'Light rain shower'(353)·0.5mm = 비.
+     그래서 ① 강수량>0 이면 그대로 비/눈,
+              ② 강수량 0 이면 'nearby·patchy·chance·possible·전망' 같은 예보성 문구만 걸러 맑음으로 두고,
+                 'Light snow' 처럼 지금 내리는 표현은 살린다. */
+  var NEARBY_WORD=['nearby','possible','patchy','chance','vicinity','at times'];
+  var NEARBY_WWO=[176,179,182,185,263,293,299,305,386,392];   /* wttr.in 기본 설명이 Patchy/nearby/at times 인 코드 */
+  function stateOfWwo(code,desc,precipMm){
+    var d=String(desc||'').toLowerCase(), c=Number(code), mm=Number(precipMm), i, kind='clear';
+    for(i=0;i<SNOW_WORD.length;i++){ if(d.indexOf(SNOW_WORD[i])>=0){ kind='snow'; break; } }
+    if(kind==='clear' && SNOW_WWO.indexOf(c)>=0) kind='snow';
+    if(kind==='clear'){
+      for(i=0;i<RAIN_WORD.length;i++){ if(d.indexOf(RAIN_WORD[i])>=0){ kind='rain'; break; } }
+      if(kind==='clear' && RAIN_WWO.indexOf(c)>=0) kind='rain';
+    }
+    if(kind==='clear') return 'clear';
+    if(mm>0) return kind;                     /* 실제로 내리는 양이 있으면 그대로 */
+    for(i=0;i<NEARBY_WORD.length;i++){ if(d.indexOf(NEARBY_WORD[i])>=0) return 'clear'; }
+    if(!d && NEARBY_WWO.indexOf(c)>=0) return 'clear';   /* 설명 없이 예보성 코드만 남은 경우 */
+    return kind;                              /* 'Light snow showers' 처럼 현재 눈/비를 설명하면 표시 */
   }
   function fetchWithTimeout(url,fail,ms){
     var ctrl=('AbortController' in window)?new AbortController():null;
@@ -11112,7 +11142,7 @@ paint()})();</script>
       }
       var desc=cur.weatherDesc&&cur.weatherDesc[0]&&cur.weatherDesc[0].value;
       gotWeather=true; fetching=false;
-      apply(stateOfWwo(cur.weatherCode,desc));
+      apply(stateOfWwo(cur.weatherCode,desc,cur.precipMM));
     },WTTR_MS);
   }
 
