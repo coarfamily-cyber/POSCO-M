@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611201535">
+  <meta name="jisu-build" content="202611201552">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -2824,9 +2824,12 @@
     .env-units .eu-tip{margin-top:6px;font-size:10.5px;color:#94a3b8;}
     /* 지도 환경 버튼: 작업중인 설비가 있으면 초록 깜빡임, 작업중 없이 완료가 1개 이상이면 파랑 */
     body:not(#zz) [data-toggle-zone="environment"].env-run .pulse-ring{background:#22c55e !important;color:#4ade80 !important;animation:workBlink 1s ease-in-out infinite !important;box-shadow:0 0 8px #22c55e !important;}
-    /* 작업중인 설비가 없고 완료된 설비가 1개 이상이면 지도 '환경' 버튼 점을 파란 불로 (흰 테두리 + 파란 발광) */
-    body:not(#zz) [data-toggle-zone="environment"].env-all .pulse-ring{background-color:#38bdf8 !important;color:#7dd3fc !important;box-shadow:0 0 8px #38bdf8,0 0 0 2px rgba(255,255,255,.55) !important;animation:none !important;}
-    body:not(#zz) [data-toggle-zone="environment"].env-all .pulse-ring::after{animation:none !important;opacity:0 !important;}
+    /* 작업중인 설비가 없고 완료된 호기가 1개 이상이면 지도 '환경' 버튼을 '입고' 완료 버튼과 똑같이 버튼 전체 파란 발광으로
+       (jisuStateRefresh 가 붙이는 st-none·st-wait 회색보다 우선하도록 !important, 눈 화면 캡슐 색도 덮는다) */
+    body:not(#zz) [data-toggle-zone="environment"].env-all:not(.env-run){background:rgba(59,130,246,.62) !important;color:#fff !important;box-shadow:0 0 16px 2px rgba(96,165,250,.7),inset 0 0 12px rgba(191,219,254,.35),inset 0 1px 0 rgba(255,255,255,.3) !important;animation:doneGlow 2.4s ease-in-out infinite !important;}
+    body:not(#zz) [data-toggle-zone="environment"].env-all:not(.env-run) span{color:#fff !important;}
+    body:not(#zz) [data-toggle-zone="environment"].env-all:not(.env-run) .pulse-ring{background:#38bdf8 !important;color:#7dd3fc !important;box-shadow:0 0 8px #38bdf8,0 0 0 2px rgba(255,255,255,.55) !important;animation:workBlink 1s ease-in-out infinite !important;}
+    body:not(#zz) [data-toggle-zone="environment"].env-all:not(.env-run) .pulse-ring::after{animation:none !important;opacity:0 !important;}
     .env-badge{display:inline-flex;align-items:center;justify-content:center;min-width:1.35em;height:1.35em;padding:0 .4em;border-radius:9999px;background:#64748b;color:#fff;font-size:.7em;font-weight:900;margin-left:.3em;line-height:1;white-space:nowrap;}
     .env-badge.run{background:#22c55e;color:#052e16;} .env-badge.all{background:#3b82f6;}
   </style>
@@ -2839,11 +2842,11 @@
     /* [11-20] 환경 2단계: ① 호기 목록 → ② 그 호기의 설비 4종(분체·충진기·포장기·소성로) 2×2 */
     .env-units .eu-step[hidden]{display:none !important;}
     .env-units .eu-sub-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
-    /* [11-20] '← 호기 목록': 흰 설비 버튼과 확실히 구분되게 진한 남색 고대비 알약 */
-    .env-units .eu-back{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:11px;font-weight:900;font-size:12px;letter-spacing:-.2px;color:#ffffff;background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border:1px solid rgba(15,23,42,.9);box-shadow:0 4px 12px rgba(15,23,42,.38),inset 0 1px 0 rgba(255,255,255,.16);cursor:pointer;touch-action:manipulation;transition:background .15s ease,box-shadow .15s ease,transform .08s ease;}
-    .env-units .eu-back:hover{background:linear-gradient(135deg,#334155 0%,#1e293b 100%);box-shadow:0 6px 16px rgba(15,23,42,.44),inset 0 1px 0 rgba(255,255,255,.2);}
-    .env-units .eu-back:active{transform:translateY(1px);box-shadow:0 2px 8px rgba(15,23,42,.4),inset 0 1px 0 rgba(255,255,255,.14);}
-    .env-units .eu-back:focus-visible{outline:2px solid #38bdf8;outline-offset:2px;}
+    /* [11-20] '← 호기 목록': 환경 색(청록) 무테두리 알약 — 아래 흰 설비 버튼과 확실히 구분, 글씨는 또렷한 흰색 */
+    .env-units .eu-back{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:11px;font-weight:900;font-size:12px;letter-spacing:-.2px;color:#ffffff;background:linear-gradient(135deg,#14b8a6 0%,#0d9488 100%);border:0;box-shadow:0 4px 12px rgba(13,148,136,.28);cursor:pointer;touch-action:manipulation;transition:background .15s ease,box-shadow .15s ease,transform .08s ease;}
+    .env-units .eu-back:hover{background:linear-gradient(135deg,#2dd4bf 0%,#0d9488 100%);box-shadow:0 6px 16px rgba(13,148,136,.36);}
+    .env-units .eu-back:active{transform:translateY(1px);background:linear-gradient(135deg,#0d9488 0%,#0f766e 100%);box-shadow:0 2px 8px rgba(13,148,136,.32);}
+    .env-units .eu-back:focus-visible{outline:2px solid #5eead4;outline-offset:2px;}
     .env-units .eu-sub-head b{margin-left:auto;font-size:13px;font-weight:900;color:#0f172a;}
     .env-units .eu-eq-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
     .env-units .eu-eq{display:flex;align-items:center;justify-content:center;gap:6px;min-height:62px;padding:12px 6px;border-radius:12px;font-weight:900;font-size:14.5px;color:#0f172a;background:rgba(255,255,255,.34);border:1px solid rgba(255,255,255,.5);box-shadow:0 1px 4px rgba(15,23,42,.08);cursor:pointer;touch-action:manipulation;}
@@ -3986,7 +3989,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
 
   </style>
   <style>
-    /* ── 실시간 날씨 효과 (Open-Meteo · 세종 2공장) ──────────────────────────
+    /* ── 실시간 날씨 효과 (wttr.in · 세종 2공장) ────────────────────────────
        캔버스는 조감도 바로 위(z-index 2), 구역 버튼(25)·동 표시(15)·이동 동선(22)보다 아래.
        포인터를 받지 않으므로 비·눈이 버튼 클릭을 가로막지 않는다. */
     .map-stage > img.map-bg{ position: relative; z-index: 1; }
@@ -10919,14 +10922,14 @@ paint()})();</script>
 </script>
 <script>
 /* ══ 실시간 날씨 효과 ══════════════════════════════════════════════════════
-   · wttr.in(무료·키 없음) 1순위, 실패하면 Open-Meteo(무료·키 없음) 2순위 → 조감도 사진 3종 + 캔버스 효과
+   · wttr.in(무료·키 없음) 단일 소스(백업 API 없음) → 조감도 사진 3종 + 캔버스 효과
      clear/그 밖  ./assets/plant-map.jpg        (효과 없음·애니메이션 정지 = CPU 0)
      rain        ./assets/plant-map-rain.jpg   (빗줄기 3겹 + 물웅덩이 물방울 파문)
      snow        ./assets/plant-map-snow.jpg   (눈송이 다중 크기 + 구역 버튼 캡슐)
    · 기준 좌표: POSCO퓨처엠 세종 2공장(세종 소정면 매실로 294). 10분마다 새로 받는다.
    · 화면 어디에도 날씨 배지·글씨를 두지 않는다 — 조감도 배경과 효과만.
    · 확인용: 주소 뒤에 ?weather=clear|rain|snow 를 붙이면 그 상태로 고정(실서비스 경로는 실시간 API).
-   · 실패(오프라인)하면 조용히 기본 화면으로 돌아간다. */
+   · 일시 오류면 3초 간격으로 최대 2번 더 받고, 그래도 실패하면 이미 보이던 비/눈 상태를 그대로 둔다(첫 로드 실패만 기본 화면). */
 (function(){
   'use strict';
   var stage=document.getElementById('mapStage');
@@ -10938,19 +10941,17 @@ paint()})();</script>
   if(document.documentElement.classList.contains('worker-zone-only')) return;
 
   var PHOTO={ clear:'./assets/plant-map.jpg', rain:'./assets/plant-map-rain.jpg', snow:'./assets/plant-map-snow.jpg' };
-  var RAIN=[51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99];
-  var SNOW=[71,73,75,77,85,86];
-  /* wttr.in(WorldWeatherOnline) 코드·설명 — 눈/비 판정 (1순위 소스) */
+  /* wttr.in(WorldWeatherOnline) 코드·설명 — 눈/비 판정 (유일한 소스) */
   var WTTR='https://wttr.in/36.7140,127.1998?format=j1';
   var SNOW_WWO=[179,182,185,227,230,317,320,323,326,329,332,335,338,362,365,368,371,374,377,392,395];
   var RAIN_WWO=[176,263,266,281,284,293,296,299,302,305,308,311,314,353,356,359,386,389];
   var SNOW_WORD=['snow','sleet','blizzard','flurries','ice pellets'];
   var RAIN_WORD=['rain','drizzle','shower','thunder'];
-  var API='https://api.open-meteo.com/v1/forecast?latitude=36.7140&longitude=127.1998&current=weather_code&timezone=Asia%2FSeoul';
   var REFRESH_MS=600000;
 
   var override=''; try{ var qp=new URLSearchParams(location.search).get('weather'); if(qp==='clear'||qp==='rain'||qp==='snow') override=qp; }catch(_){}
   var state='';
+  var gotWeather=false;   /* wttr.in 에서 한 번이라도 실제 날씨를 받았는지 (실패 시 기존 비/눈을 덮지 않기 위해) */
   var ctx=canvas.getContext('2d');
   var W=0,H=0,DPR=1,raf=0,lastTs=0,drops=[],flakes=[],ripples=[],sprite=null;
   var reduce=false; try{ reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(_){}
@@ -11073,14 +11074,8 @@ paint()})();</script>
     else start();
   }
 
-  /* ── 날씨 받아오기 ───────────────────────────────────────────── */
-  function stateOfCode(c){
-    if(typeof c!=='number') return 'clear';
-    if(SNOW.indexOf(c)>=0) return 'snow';
-    if(RAIN.indexOf(c)>=0) return 'rain';
-    return 'clear';
-  }
-  /* wttr.in 현재 상태 → snow/rain/clear (코드 우선, 설명 문구 보조) */
+  /* ── 날씨 받아오기 (wttr.in 하나만) ─────────────────────────────── */
+  /* wttr.in 현재 상태 → snow/rain/clear (설명 문구 우선, 코드 보조) */
   function stateOfWwo(code,desc){
     var d=String(desc||'').toLowerCase(), c=Number(code), i;
     for(i=0;i<SNOW_WORD.length;i++){ if(d.indexOf(SNOW_WORD[i])>=0) return 'snow'; }
@@ -11097,28 +11092,26 @@ paint()})();</script>
       .then(function(j){ if(timer) clearTimeout(timer); fail(j); })
       .catch(function(){ if(timer) clearTimeout(timer); fail(null); });
   }
-  /* 2순위: Open-Meteo (wttr.in 이 실패·형식 오류일 때만 조용히) */
-  function fetchFallback(){
-    fetchWithTimeout(API,function(j){
-      if(j&&j.current) apply(stateOfCode(j.current.weather_code));
-      else apply('clear');                                        /* 둘 다 실패 → 기본 화면 */
-    });
-  }
-  /* 1순위: wttr.in — 한 번 느리거나 어긋나면 2.5초 뒤 한 번 더, 그래도 실패면 Open-Meteo */
-  var WTTR_MS=12000, WTTR_RETRY_MS=2500;
+  /* wttr.in 하나만 쓴다 — 느리거나 어긋나면 3초 간격으로 최대 2번 더 (총 3회) 받는다.
+     모두 실패하면 이미 잡아 둔 비/눈 상태는 그대로 두고, 첫 로드부터 실패했을 때만 조용히 기본 화면. */
+  var WTTR_MS=12000, WTTR_RETRIES=2, WTTR_RETRY_MS=3000;
+  var fetching=false;
   function fetchWeather(){
-    if(override) return;
-    tryWttr(1);
+    if(override||fetching) return;
+    fetching=true;
+    tryWttr(WTTR_RETRIES);
   }
   function tryWttr(left){
     fetchWithTimeout(WTTR,function(j){
       var cur=j&&j.current_condition&&j.current_condition[0];
-      if(!cur){                                                     /* 일시적 실패 → 한 번만 더 조용히 */
-        if(left>0) setTimeout(function(){ tryWttr(left-1); },WTTR_RETRY_MS);
-        else fetchFallback();                                       /* 두 번 다 실패 → Open-Meteo */
+      if(!cur){                                                     /* 일시적 실패 → 3초 뒤 다시 */
+        if(left>0){ setTimeout(function(){ tryWttr(left-1); },WTTR_RETRY_MS); return; }
+        fetching=false;
+        if(!gotWeather) apply('clear');                             /* 첫 로드부터 실패 → 기본 조감도 유지 */
         return;
       }
       var desc=cur.weatherDesc&&cur.weatherDesc[0]&&cur.weatherDesc[0].value;
+      gotWeather=true; fetching=false;
       apply(stateOfWwo(cur.weatherCode,desc));
     },WTTR_MS);
   }
