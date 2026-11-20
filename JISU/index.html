@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611202352">
+  <meta name="jisu-build" content="202611210000">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -4996,7 +4996,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
           </div>
           <div class="cz-quick-batch-prompt" id="czQuickBatchPrompt" style="display:none;">
             <span>💡 여러 날짜가 감지되었습니다.</span>
-            <button type="button" id="czQuickBatchBtn">공지 일괄등록으로 전환</button>
+            <button type="button" id="czQuickBatchBtn">일괄등록으로 전환</button>
           </div>
           <div class="cal-hint">맨 앞에 버튼 이름, 띄우고 내용. 공지는 앞에 "공지". 지시서 표 붙여넣기 시 2공장만 자동 추출됩니다.</div>
           <div class="cz-msg" id="czMsg"></div>
@@ -5008,7 +5008,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
       <div id="czBatchView" class="cz-batch-view" style="display:none;">
         <div class="cz-batch-head">
           <div class="flex items-center gap-2">
-            <span class="text-base font-extrabold text-white">📋 공지 일괄 등록</span>
+            <span class="text-base font-extrabold text-white">📋 일괄등록</span>
             <span class="cz-badge" style="background:#0284c7;color:#fff;">날짜별 자동분류</span>
           </div>
           <button type="button" class="cz-b" id="czBatchBackTopBtn" title="달력으로 돌아가기">✕ 닫기</button>
@@ -5072,7 +5072,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
             <button type="button" id="czGemGuideBtn" class="gem-guide-btn" aria-expanded="false">🔒 지수가 확인</button>
             <div id="czGemStatus" class="gem-key-st"></div>
             <div id="czGemGuideBox" class="gem-guide-box" hidden>
-              <b>📌 달력 공지 일괄등록 Gemini 무료 AI 연동 안내</b><br>
+              <b>📌 달력 일괄등록 Gemini 무료 AI 연동 안내</b><br>
               • ✨ Gemini 무료 API 키 입력 + <b>키 저장</b> + <b>무료 키 발급 ↗</b>으로 1번만 저장해 두세요.<br>
               • <b>Gemini Flash-Lite(하루 500회 무료)</b>가 지시서 표에서 <b>2공장</b> 차량번호·수량·날짜를 먼저 읽고, 키가 없거나 한도가 차면 기존 무료 OCR로 자동 전환됩니다.<br>
               • <b>첨부한 이미지를 작업 카드에도 함께 올리기</b> 체크가 켜져 있어 텍스트와 함께 지시서 원본 사진도 작업 카드에 같이 띄울 수 있습니다.
