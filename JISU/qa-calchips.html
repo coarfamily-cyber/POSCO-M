@@ -4287,15 +4287,19 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
       color: var(--zt,#F8FAFC) !important;
       border-color: transparent !important; box-shadow: none !important;
     }
-    /* 완료·마감 칩: 한 줄 긋기(line-through)는 완료 표식으로 그대로 두고,
-       투명도로 흐려지지만 않게 해서 10색 배경·글씨를 또렷하게 유지한다 */
+    /* 오늘 칸 칩만 100% 진하게 — 당일 강조가 우선.
+       지난 날·예약 날짜의 칸은 색을 살짝 연하게 해서 오늘 칸이 도드라지게 한다(10색은 그대로 알아본다). */
+    #calModal .cal-box .cal-cell.is-today .cal-chip{ opacity: 1 !important; }
+    #calModal .cal-box .cal-cell:not(.is-today) .cal-chip{ opacity: .65 !important; }
+    /* 완료·마감 칩: 한 줄 긋기(line-through)는 완료 표식으로 유지 */
     #calModal .cal-box .cal-cell .cal-chip.done,
     #calModal .cal-box .cal-cell.is-today .cal-chip.done{
-      opacity: 1 !important;
       text-decoration: line-through !important;
       text-decoration-thickness: 1px !important;
       text-decoration-color: currentColor !important;
     }
+    #calModal .cal-box .cal-cell.is-today .cal-chip.done{ opacity: 1 !important; }
+    #calModal .cal-box .cal-cell:not(.is-today) .cal-chip.done{ opacity: .65 !important; }
     /* 지난 날짜 칸: 칸 투명도로 흐리면 그 안 칩까지 같이 바래므로
        배경·테두리·날짜 숫자만 가라앉히고 칩은 제 색 그대로 둔다 */
     #calModal .cal-box .cal-cell.is-past{
