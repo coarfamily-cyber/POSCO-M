@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611201717">
+  <meta name="jisu-build" content="202611202042">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -7855,8 +7855,26 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     let openUnit=null;
     const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
     const now=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false});
+    /* [11-20] 지도 '환경' 필 불빛만 18시 마감으로 꺼진다 — 호기·설비·메인통로의 완료(파랑) 상태는 그대로 두고,
+       가장 최근 18:00(KST) 이후에 완료된 칸이 하나라도 있을 때만 지도 필에 파란불을 켠다.
+       (시각 비교는 doneAt(완료 순간의 ms)으로 하고, 예전 기록은 day+td → 18시 이전/이후로 판정) */
+    function last18CutoffMs(){ const DAY=24*60*60*1000, kstNow=Date.now()+9*3600*1000, d=new Date(kstNow);
+      const today18Utc=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),18,0,0,0)-9*3600*1000;
+      return (Date.now()>=today18Utc)?today18Utc:(today18Utc-DAY); }
+    function parseDayMs(day,td){ const m=String(day||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m) return 0;
+      const tm=String(td||'').match(/(\d{1,2})\s*[:시]\s*(\d{1,2})/); let h=tm?parseInt(tm[1],10):0; const mi=tm?parseInt(tm[2],10):0;
+      let extra=0; if(h>=24){ extra=24*3600000; h=0; } h=Math.max(0,Math.min(23,h));
+      return Date.UTC(+m[1],+m[2]-1,+m[3],h,Math.max(0,Math.min(59,mi)),0,0)-9*3600*1000+extra; }
+    function itemDoneAtMs(it){ if(!it||typeof it!=='object') return 0;
+      if(typeof it.doneAt==='number'&&isFinite(it.doneAt)) return it.doneAt;
+      if(it.s!=='done') return 0;
+      return parseDayMs(it.day,it.td); }
+    function recentDoneSince(d,cut){ let recent=false;
+      Object.keys((d&&d.u)||{}).forEach(k=>{ const sb=subsOf(d.u[k]); EQ.forEach(e=>{ const y=sb[e]||{}; if(y.s==='done'&&itemDoneAtMs(y)>=cut) recent=true; }); });
+      const a=(d&&d.a)||{}; if(a.s==='done'&&itemDoneAtMs(a)>=cut) recent=true; return recent; }
     /* 환경 호기는 시간(08시·18시)으로 초기화하지 않고, 7칸이 모두 작업완료(파랑)됐을 때만 바로 초기화 */
-    function subsOf(x){ x=(x&&typeof x==='object')?x:{}; if(!x.subs||typeof x.subs!=='object'){ const o={}; EQ.forEach(e=>{ o[e]= x.s? {s:x.s,ts:x.ts||'',td:x.td||'',day:x.day||''} : {s:''}; }); x.subs=o; }
+    function legacySub(x){ const y={s:x.s,ts:x.ts||'',td:x.td||'',day:x.day||''}; if(typeof x.doneAt==='number'&&isFinite(x.doneAt)) y.doneAt=x.doneAt; return y; }
+    function subsOf(x){ x=(x&&typeof x==='object')?x:{}; if(!x.subs||typeof x.subs!=='object'){ const o={}; EQ.forEach(e=>{ o[e]= x.s? legacySub(x) : {s:''}; }); x.subs=o; }
       EQ.forEach(e=>{ const y=x.subs[e]; if(!y||typeof y!=='object') x.subs[e]={s:''}; }); return x.subs; }
     /* 호기 한 칸의 상태(s·ts·td)는 설비 4종에서 계산해 채운다 — 지도 표시·홈 알림·검색·엑셀이 그대로 읽는다
        [11-20] 색 규칙: 하나라도 청소 중(work)이면 초록, 작업중이 없고 하나라도 작업완료(done)면 파랑, 모두 대기면 회색.
@@ -7885,7 +7903,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         b.setAttribute('aria-pressed',x.s?'true':'false');
         b.title=b.dataset.envUnit+'호기 · '+(x.s==='work'?('설비 청소중 '+dc+'/'+EQ.length):x.s==='done'?('설비 청소완료 '+dc+'/'+EQ.length+(x.td?' ('+x.td+')':'')):'대기 (누르면 설비 4종)'); });
       if(sumEl) sumEl.textContent=(dn||r)?('완료 '+dn+' · 작업중 '+r):'';
-      const eb=document.querySelector('[data-toggle-zone="environment"]'); if(eb){ eb.classList.toggle('env-run',r>0); eb.classList.toggle('env-all',r===0&&dn>0); const bd=eb.querySelector('.env-badge'); if(bd) bd.remove(); }
+      const eb=document.querySelector('[data-toggle-zone="environment"]'); if(eb){ const cut=last18CutoffMs(), recent=recentDoneSince(d,cut);
+        eb.classList.toggle('env-run',r>0); eb.classList.toggle('env-all',r===0&&recent); const bd=eb.querySelector('.env-badge'); if(bd) bd.remove(); }
       { /* 지도 위 청소중 표시 (C·D동 박스 위치) */ const stage=document.getElementById('mapStage'); if(stage){ let ly=document.getElementById('envCleanLayer'); if(!ly){ ly=document.createElement('div'); ly.id='envCleanLayer'; ly.className='env-clean-layer'; stage.appendChild(ly); }
         const POS={'1,2':[65.0,30.2],'3,4':[69.4,30.2],'5,6':[73.4,30.2],'7,8':[77.5,30.2],'9,10':[67.9,73.4],'11,12':[72.5,73.4],'13,14':[76.8,73.4],'메인통로':[72.2,51.6]}; /* C동(위)=1~8호기, D동(아래)=9~14호기 · 메인통로=C·D동 사이 통로 */
         /* 지도 위 사람 그림은 실제로 청소 중인 설비가 있는 호기에만 (일부만 끝난 호기는 세우지 않음) · 메인통로도 청소중이면 세운다 */
@@ -7904,7 +7923,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     /* 설비 버튼: 대기 → 작업중 → 작업완료 → 대기. 완료로 넘어갈 때만 기록을 남기고, 완료를 되돌리면 그 기록도 지운다 */
     function tapEq(k,e){ const d=load(), x=d.u[k]||(d.u[k]={}), sb=subsOf(x), cur=sb[e]||{};
       if(!cur.s){ sb[e]={s:'work',ts:now(),day:today()}; }
-      else if(cur.s==='work'){ const td=now(), ts=cur.ts||''; sb[e]={s:'done',ts,td,day:today()};
+      else if(cur.s==='work'){ const td=now(), ts=cur.ts||''; sb[e]={s:'done',ts,td,day:today(),doneAt:Date.now()};
         const lg=loadLog(); lg.push({day:today(),unit:k,equip:e,round:d.round||1,ts,td,by:(localStorage.getItem('jisu-user')||'')}); localStorage.setItem(LOG,JSON.stringify(lg.slice(-5000))); }
       else { sb[e]={s:''};
         const lg=loadLog(); for(let i=lg.length-1;i>=0;i--){ const y=lg[i]; if(y&&y.unit===k&&y.equip===e&&(y.round||1)===(d.round||1)){ lg.splice(i,1); break; } }
@@ -7914,10 +7933,10 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
        완료로 넘어갈 때만 jisu-env-log-v1 에 {day, unit:'메인통로', equip:'', round, ts, td, by} 로 남기고,
        완료를 되돌리면 이번 회차의 그 기록도 지운다(설비와 같은 규칙). */
     function tapAisle(){ const d=load(), x=d.a||(d.a={s:''});
-      if(!x.s){ x.s='work'; x.ts=now(); x.td=''; x.day=today(); }
-      else if(x.s==='work'){ const td=now(), ts=x.ts||''; x.s='done'; x.ts=ts; x.td=td; x.day=today();
+      if(!x.s){ x.s='work'; x.ts=now(); x.td=''; x.day=today(); x.doneAt=0; }
+      else if(x.s==='work'){ const td=now(), ts=x.ts||''; x.s='done'; x.ts=ts; x.td=td; x.day=today(); x.doneAt=Date.now();
         const lg=loadLog(); lg.push({day:today(),unit:AISLE,equip:'',round:d.round||1,ts,td,by:(localStorage.getItem('jisu-user')||'')}); localStorage.setItem(LOG,JSON.stringify(lg.slice(-5000))); }
-      else { x.s=''; x.ts=''; x.td=''; x.day='';
+      else { x.s=''; x.ts=''; x.td=''; x.day=''; x.doneAt=0;
         const lg=loadLog(); for(let i=lg.length-1;i>=0;i--){ const y=lg[i]; if(y&&y.unit===AISLE&&(y.round||1)===(d.round||1)){ lg.splice(i,1); break; } }
         localStorage.setItem(LOG,JSON.stringify(lg.slice(-5000))); }
       save(d); draw(); if(window.jisuCmdRender) window.jisuCmdRender(); }
@@ -7926,8 +7945,16 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const eq=e.target.closest('[data-env-eq]'); if(eq){ e.stopPropagation(); if(openUnit) tapEq(openUnit,eq.dataset.envEq); return; }
       const u=e.target.closest('[data-env-unit]'); if(u){ e.stopPropagation(); if(u.dataset.envDirect==='1'){ tapAisle(); } else { showUnit(u.dataset.envUnit); } return; } });
     window.addEventListener('storage',e=>{ if(e.key===KEY) draw(); });
+    /* 18:00(KST)을 넘긴 채 화면이 켜져 있어도 지도 '환경' 필 불빛이 저절로 꺼지게 30초·복귀 시 다시 그린다 */
+    document.addEventListener('visibilitychange',()=>{ if(!document.hidden) draw(); });
+    window.addEventListener('focus',()=>draw());
     setInterval(draw,30000); if(listStep) listStep.hidden=false; if(unitStep) unitStep.hidden=true; draw();
     window.jisuEnvDraw=draw; window.jisuEnvShowUnit=showUnit; window.jisuEnvShowList=showList;
+    /* 점검용: 현재 지도 필의 초록(작업중)/파랑(18시 이후 완료) 판정 상태 */
+    window.jisuEnvPillState=function(){ const d=load(), cut=last18CutoffMs(), recent=recentDoneSince(d,cut);
+      let r=0,dn=0; Object.keys(d.u||{}).forEach(k=>{ const s=(d.u[k]||{}).s; if(s==='work') r++; else if(s==='done') dn++; });
+      const as=(d.a||{}).s; if(as==='work') r++; else if(as==='done') dn++;
+      return {work:r,done:dn,recentDone:recent,cutoffMs:cut,green:r>0,blue:(r===0&&recent)}; };
   })();
   </script>
 <script>(function(){const root=document.getElementById('pitchLog');if(!root)return;const KEY='jisu-pitch-records-v1',DB='jisu-pitch-photos',STORE='pitch';const DEF={add1:'',add2:'',grind1:'',grind2:'',move:''};try{window.addEventListener('jisu:photo-sync',function(e){if(!e||!e.detail||!e.detail.zone||e.detail.zone==='pitch'){try{loadPhotos();}catch(_){}}});}catch(_){}const kstDate=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());const pretty=d=>{const [y,m,day]=d.split('-');return y+'. '+m+'. '+day+'.'};let active=kstDate();const dbOpen=()=>new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE,{keyPath:'id'});};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});const records=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}};function listValues(row,k){const prop=k==='move'?'moves':k+'s';let v=row[prop];if(Array.isArray(v))return v.length?v:[DEF[k]];const legacy=row[k];return [legacy??DEF[k]]}function drawList(k,values){const box=root.querySelector('[data-pitch-list="'+k+'"]');box.replaceChildren();values.forEach((v,i)=>{const label=document.createElement('label');label.className='pitch-row';const num=document.createElement('span');num.textContent=(i+1)+'.';const input=document.createElement('input');input.className='pitch-input';input.type='text';input.maxLength=40;input.placeholder='RPB12345678-999';input.autocomplete='off';input.dataset.pitchListField=k;input.value=v??'';label.append(num,input);if(i===values.length-1){const add=document.createElement('button');add.type='button';add.className='pitch-add';add.dataset.pitchAdd=k;add.textContent='+ 추가';label.append(add)}box.append(label)})}const workStamp=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});let busy=false;
