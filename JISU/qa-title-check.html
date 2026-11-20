@@ -1,22 +1,17 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head><script>
-/* QA ONLY — no DB write/read: blocks Firebase, push, external CDNs that carry data */
+/* QA ONLY — realtime DB socket is redirected to a dead local port so no data reaches posco-m-jisu */
 (function(){
   window.__QA_ERRORS=[];
   window.addEventListener('error',function(e){window.__QA_ERRORS.push('error:'+(e.message||'')+' @'+(e.filename||'')+':'+(e.lineno||''));});
   window.addEventListener('unhandledrejection',function(e){window.__QA_ERRORS.push('rejection:'+((e.reason&&(e.reason.message||e.reason))||''));});
-  var pat=/firebase|firebasedatabase|googleapis|vercel\.app|ntfy\.sh|fcmregistrations/i;
+  var pat=/vercel\.app|ntfy\.sh|fcmregistrations/i;
   var of=window.fetch;
   window.fetch=function(u,o){var s=(u&&u.url)?u.url:String(u);if(pat.test(s)){window.__QA_BLOCKED=(window.__QA_BLOCKED||0)+1;return Promise.reject(new Error('QA_BLOCK'));}return of.apply(this,arguments);};
-  var ox=XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open=function(m,u){if(pat.test(String(u))){this.__qaBlocked=true;window.__QA_BLOCKED=(window.__QA_BLOCKED||0)+1;}return ox.apply(this,arguments);};
-  var os=XMLHttpRequest.prototype.send;
-  XMLHttpRequest.prototype.send=function(){if(this.__qaBlocked){try{this.abort();}catch(e){}return;}return os.apply(this,arguments);};
   var OW=window.WebSocket;
-  function QWS(u){window.__QA_BLOCKED=(window.__QA_BLOCKED||0)+1;this.readyState=3;this.close=function(){};this.send=function(){};this.addEventListener=function(){};this.removeEventListener=function(){};}
-  QWS.prototype=OW?OW.prototype:{};
-  QWS.CONNECTING=0;QWS.OPEN=1;QWS.CLOSING=2;QWS.CLOSED=3;
+  function QWS(url,protocols){window.__QA_BLOCKED=(window.__QA_BLOCKED||0)+1;return protocols?new OW('ws://127.0.0.1:9/',protocols):new OW('ws://127.0.0.1:9/');}
+  QWS.prototype=OW.prototype;QWS.CONNECTING=0;QWS.OPEN=1;QWS.CLOSING=2;QWS.CLOSED=3;
   window.WebSocket=QWS;
 })();
 </script>
