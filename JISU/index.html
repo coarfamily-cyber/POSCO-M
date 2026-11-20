@@ -7862,7 +7862,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const today18Utc=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),18,0,0,0)-9*3600*1000;
       return (Date.now()>=today18Utc)?today18Utc:(today18Utc-DAY); }
     function parseDayMs(day,td){ const m=String(day||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m) return 0;
-      const tm=String(td||'').match(/(\d{1,2})\s*[:시]\s*(\d{1,2})/); let h=tm?parseInt(tm[1],10):0; const mi=tm?parseInt(tm[2],10):0;
+      const raw=String(td||''), tm=raw.match(/(\d{1,2})\s*[:시]\s*(\d{1,2})/); let h=tm?parseInt(tm[1],10):0; const mi=tm?parseInt(tm[2],10):0;
+      if(/오후|\bPM\b/i.test(raw)&&h<12) h+=12; else if(/오전|\bAM\b/i.test(raw)&&h===12) h=0;
       let extra=0; if(h>=24){ extra=24*3600000; h=0; } h=Math.max(0,Math.min(23,h));
       return Date.UTC(+m[1],+m[2]-1,+m[3],h,Math.max(0,Math.min(59,mi)),0,0)-9*3600*1000+extra; }
     function itemDoneAtMs(it){ if(!it||typeof it!=='object') return 0;
