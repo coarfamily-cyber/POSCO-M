@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611202042">
+  <meta name="jisu-build" content="202611202216">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -2210,14 +2210,14 @@
     .cal-box .cal-week span:first-child{color:#fca5a5 !important;}.cal-box .cal-week span:last-child{color:#93c5fd !important;}
     /* calendar day hover: pop-out like the clock */
     .cal-box .cal-cell{position:relative;transition:transform .18s cubic-bezier(.2,.9,.3,1.25),box-shadow .18s,background .18s,border-color .18s !important;}
-    .cal-box .cal-cell:not(.empty):hover{transform:scale(1.12) translateY(-2px) !important;z-index:3;
+    .cal-box .cal-cell:not(.empty):hover{transform:scale(1.045) translateY(-1px) !important;z-index:3;
       background:rgba(255,255,255,.16) !important;border-color:rgba(199,210,254,.95) !important;
       box-shadow:0 12px 28px rgba(0,0,0,.40),inset 0 1px 0 rgba(255,255,255,.35) !important;}
     .cal-box .cal-cell:not(.empty):hover .cal-num{color:#fff;}
     .cal-box .cal-cell:not(.empty):active{transform:scale(1.05) !important;}
     /* clock: same pop-out as calendar days, no ring/border */
     .hdr-clock{position:relative;transition:transform .18s cubic-bezier(.2,.9,.3,1.25),box-shadow .18s,background .18s !important;}
-    .hdr-clock:hover,.hdr-clock:focus-visible{transform:scale(1.12) translateY(-2px) !important;z-index:5;outline:none !important;
+    .hdr-clock:hover,.hdr-clock:focus-visible{transform:scale(1.06) translateY(-2px) !important;z-index:5;outline:none !important;
       box-shadow:0 12px 28px rgba(0,0,0,.40) !important;}
     .hdr-clock:active{transform:scale(1.05) !important;}
     /* 인수인계 · 메모 */
@@ -2427,7 +2427,7 @@
     /* ===== 모든 버튼: 시계와 같은 hover 모션 (12% 확대 + 위로 떠오름 + 그림자) ===== */
     button:not(.cal-cell),[role="button"]:not(#liveClock),label.ob-btn,select{transition:scale .18s cubic-bezier(.2,.9,.3,1.25),translate .18s cubic-bezier(.2,.9,.3,1.25),box-shadow .18s,background-color .18s,color .18s,opacity .18s !important;transform-origin:center;}
     button:not(.cal-cell):not(.cmd-card-img-btn):not(:disabled):hover,[role="button"]:not(#liveClock):hover,label.ob-btn:hover,select:hover,
-    button:not(.cal-cell):not(.cmd-card-img-btn):not(:disabled):focus-visible{scale:1.12;translate:0 -2px;box-shadow:0 12px 28px rgba(0,0,0,.40) !important;z-index:5;}
+    button:not(.cal-cell):not(.cmd-card-img-btn):not(:disabled):focus-visible{scale:var(--hvs,1.12);translate:0 var(--hvt,-2px);box-shadow:0 12px 28px rgba(0,0,0,.40) !important;z-index:5;}
     button:not(.cal-cell):not(.cmd-card-img-btn):not(:disabled):active,label.ob-btn:active{scale:1.05;translate:0 0;}
     .rv-btn:hover{transform:none !important;}
     .hotspot-wrapper > button:hover{z-index:6;}
@@ -2625,6 +2625,43 @@
     [data-toggle-zone].st-done:not([data-production-btn="C"]) .pulse-ring::after{animation:none !important;opacity:0 !important;}
     /* HS 로고: 다른 버튼과 같은 투명 유리 스타일 (버튼 아님) */
     .hs-logo{background:linear-gradient(180deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.05) 55%,rgba(255,255,255,.02) 100%),rgba(12,18,28,.40);backdrop-filter:blur(6px) saturate(140%);-webkit-backdrop-filter:blur(6px) saturate(140%);color:#fde68a;box-shadow:0 6px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.22);letter-spacing:.5px;text-shadow:0 0 10px rgba(253,230,138,.35);}
+  </style>
+  <style id="hover-guard-scrollbars">
+    /* ===== 1) hover 확대폭: 버튼이 넓거나 이웃과 붙어 있으면 덜 커져서 옆 칸·이웃 버튼을 침범하지 않게 =====
+       작은 버튼은 기존 그대로 12%(기본값)로 커지고, 아래 그룹만 확대폭(--hvs)을 줄인다.
+       그림자·떠오름은 그대로라 눌리는 느낌은 유지된다. */
+    /* A. 한 줄 전체를 채우는 넓은 버튼(달력 저장·기록 열기 등, 500px 내외) */
+    .cz-save, .ch-toggle, .cz-batch-actions > button { --hvs:1.012; --hvt:-1.5px; }
+    /* B. 사이드바·모달의 넓은 버튼(160~300px) */
+    #cmdSubmit, .cmd-submit, .kiosk-tool-btn, #kioskBtn, .side-tool-btn, .carry-tool-btn,
+    #inboundSaveBtn, .inbound-work-btn, .ob-btn, .memo-send, .pitch-save-btn, .env-unit { --hvs:1.02; --hvt:-1.5px; }
+    /* C. 칩·토글·셀렉트처럼 간격이 좁은 것들 */
+    .ob-chip, .cz-b, .cmd-kind button, .cal-today, select { --hvs:1.045; --hvt:-1px; }
+    /* D. 카드 안에서 목록과 붙어 있는 사진 버튼 (사진 묶음 버튼은 확대 없이 카드가 펼쳐지는 동작으로 반응) */
+    .ob-photo-sq-btn, .pitch-photo-btn { --hvs:1.04; --hvt:-1px; }
+    .ob-stack-btn { --hvs:1; --hvt:0; }
+    /* E. 작업중/작업완료 토글: 두 버튼이 바로 붙어 있음 */
+    .work-complete { --hvs:1.04; --hvt:-1px; }
+    /* F. 손가락 화면(≤720px): 지도·카드가 좁아지므로 확대폭을 더 줄인다 */
+    @media (max-width:720px){
+      .hotspot-pill, .mobile-card-close { --hvs:1.04; --hvt:-1px; }
+      #perfModal button { --hvs:1.01; --hvt:0; }   /* 주간/월간 붙은 토글 */
+      .ob-stack-btn { --hvs:1; --hvt:0; }
+      .ob-photo-sq-btn { --hvs:1.01; --hvt:0; }   /* 카드 제목 바로 아래에 붙어 있음 */
+    }
+
+    /* ===== 2) 스크롤바: 흰색 기본 스크롤바 대신 배경에 녹아드는 얇은 다크 슬림 ===== */
+    *, *::before, *::after { scrollbar-width: thin; scrollbar-color: rgba(148,163,184,.28) transparent; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148,163,184,.25); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,.45); }
+    ::-webkit-scrollbar-corner { background: transparent; }
+    ::-webkit-scrollbar-button { display: none; width: 0; height: 0; }   /* 끝의 화살표 버튼 제거 */
+    /* 어두운 판의 입력칸·셀렉트는 네이티브 UI(리사이즈 손잡이·목록)도 어둡게 — 밝은 유리 판(.pitch-log 등)과 체크박스는 그대로 둔다 */
+    #cmdSide, .cmd-side, textarea, .cz-batch-textarea, .cmd-side textarea, pre, select { color-scheme: dark; }
+    /* 진행 바 등 의도적으로 숨긴 곳은 그대로 유지 */
+    body > header::-webkit-scrollbar { display: none; }
   </style>
   <style>
     /* 키오스크(?kiosk=1): 공장 화면만 - 헤더·사이드바·오른쪽 위 버튼 숨김, 지도 전체 화면 */
