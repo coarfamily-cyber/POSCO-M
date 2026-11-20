@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611202245">
+  <meta name="jisu-build" content="202611202315">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -4197,6 +4197,85 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
       box-shadow: 0 0 18px rgba(164, 255, 0, .45), 0 4px 12px rgba(0, 0, 0, .25) !important;
     }
   </style>
+  <style id="cal-zone-palette">
+    /* ── 달력 구역·유형 10색 팔레트 (2026-11-20 사용자 지정) ──────────────────────
+       출고 #FF8A00 · 입고 #0686EF · 포장 #CBD5E1 · 생산 #EC4899 · 환경 #059669 ·
+       피치 #9A5219 · 특이사항 #7C3AED · 공지 #FBF6D3 · 긴급 #FB433A · 기록 #0B0E14
+       밝은 색(출고·포장·공지)은 진한 글씨(#0B1200), 진한 색은 흰 글씨.
+       달력 칸 칩 · 예약 목록/오늘 기록 배지 · 일괄등록 미리보기가 모두 같은 색 언어를 쓰고,
+       오늘(네온 라임) 칸 안에서도 각 칩은 자기 색을 그대로 유지한다. */
+    .c-outbound{--zc:#FF8A00;--zt:#0B1200;}
+    .c-inbound{--zc:#0686EF;--zt:#FFFFFF;}
+    .c-pack{--zc:#CBD5E1;--zt:#0B1200;}
+    .c-prod{--zc:#EC4899;--zt:#FFFFFF;}
+    .c-env{--zc:#059669;--zt:#FFFFFF;}
+    .c-pitch{--zc:#9A5219;--zt:#FFFFFF;}
+    .c-memo{--zc:#7C3AED;--zt:#FFFFFF;}
+    .c-notice{--zc:#FBF6D3;--zt:#0B1200;}
+    .c-urgent{--zc:#FB433A;--zt:#FFFFFF;}
+    .c-rec{--zc:#0B0E14;--zt:#F8FAFC;}
+    .c-base{--zc:#334155;--zt:#FFFFFF;}
+
+    /* 달력 칸 안 칩 — 오늘 라임 칸의 진한 판(rgba(11,18,0,.80))보다 우선한다 */
+    #calModal .cal-box .cal-cell .cal-chip[class*=" c-"],
+    #calModal .cal-box .cal-cell.is-today .cal-chip[class*=" c-"]{
+      background: var(--zc,#334155) !important;
+      color: var(--zt,#FFFFFF) !important;
+      border: 0 !important; text-shadow: none !important;
+    }
+    /* 기록 N 칩 — 오늘 칸에서도 #0B0E14 그대로 */
+    #calModal .cal-box .cal-cell .cal-rec,
+    #calModal .cal-box .cal-cell.is-today .cal-rec{
+      background: var(--zc,#0B0E14) !important;
+      color: var(--zt,#F8FAFC) !important;
+      border-color: transparent !important; box-shadow: none !important;
+    }
+
+    /* 예약 목록 · 오늘 기록 · 미리보기의 구역/유형 배지 */
+    .cal-box .z-badge{
+      display: inline-flex; align-items: center; gap: 3px; flex: 0 0 auto;
+      font-size: 10.5px; font-weight: 900; line-height: 1.5;
+      border-radius: 6px; padding: 1px 7px; white-space: nowrap;
+      background: var(--zc,#334155); color: var(--zt,#FFFFFF);
+      border: 0; text-shadow: none; box-shadow: none;
+    }
+    .cal-box .cz-item .z-badge{ font-size: 11px; padding: 1.5px 8px; }
+    .cal-box .z-dot{
+      display: inline-block; flex: 0 0 auto; width: 8px; height: 8px; border-radius: 9999px;
+      background: var(--zc,#334155); margin-right: 5px; vertical-align: middle;
+    }
+    .cal-box .cz-batch-target-tag[class*=" c-"]{
+      background: var(--zc,#334155) !important;
+      border: 0 !important; color: var(--zt,#FFFFFF) !important;
+    }
+    /* 미리보기의 [공지] 표시 — 배지와 겹치지 않게 공지 팔레트 테두리만 */
+    #calModal .cal-tag.n{
+      background: rgba(251,246,211,.14) !important;
+      color: #FBF6D3 !important; box-shadow: inset 0 0 0 1px rgba(251,246,211,.42) !important;
+    }
+    #calModal .cal-tag.w{
+      background: rgba(255,255,255,.12) !important;
+      color: #F8FAFC !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.28) !important;
+    }
+
+    /* 색상 범례 (달력 바로 아래) */
+    .cal-legend{
+      display: flex; flex-wrap: wrap; align-items: center; gap: 5px 6px;
+      margin-top: 10px;
+    }
+    .cal-legend .cal-lg-t{ font-size: 10px; font-weight: 800; color: rgba(255,255,255,.66); }
+    .cal-legend .cal-lg{
+      font-size: 10px; font-weight: 800; line-height: 1.45; border-radius: 9999px;
+      padding: 2px 8px; white-space: nowrap; text-shadow: none; box-shadow: none;
+      background: var(--zc,#334155); color: var(--zt,#FFFFFF);
+    }
+    @media(max-width:720px){
+      .cal-legend{ margin-top: 8px; gap: 3px; }
+      .cal-legend .cal-lg-t{ display: none; }
+      .cal-legend .cal-lg{ font-size: 9px; padding: 1px 5px; }
+      .cal-box.is-batch-mobile .cal-legend{ display: none !important; }
+    }
+  </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -4788,7 +4867,8 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
   <div id="loginModal" class="login-modal" hidden><div class="login-box" role="dialog" aria-label="작업자 로그인"><h3>작업자 로그인</h3><p class="login-note">이름을 넣으면 등록하는 금일작업·공지에 작성자로 남고, 액셀에도 들어갑니다.</p><input id="loginName" type="text" maxlength="20" placeholder="이름 (예: 지수)" autocomplete="name"><div class="login-actions"><button type="button" id="loginCancel" class="lg-ghost">닫기</button><button type="button" id="logoutBtn" class="lg-ghost" hidden>로그아웃</button><button type="button" id="loginOk" class="lg-primary">로그인</button></div></div></div>
   <div id="calModal" class="cal-modal" hidden><div class="cal-box" role="dialog" aria-label="작업 스케줄 달력">
     <div class="cal-head"><button type="button" class="cal-nav" id="calPrev" aria-label="이전 달">‹</button><h3 id="calTitle"></h3><button type="button" class="cal-nav" id="calNext" aria-label="다음 달">›</button><button type="button" class="cal-today" id="calToday">오늘</button><button type="button" class="cal-close" id="calClose" aria-label="닫기">✕</button></div>
-    <div class="cal-body"><div class="cal-grid-wrap"><div class="cal-week"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div><div class="cal-grid" id="calGrid"></div></div>
+    <div class="cal-body"><div class="cal-grid-wrap"><div class="cal-week"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div><div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend" id="calLegend" aria-label="달력 색상 범례"><span class="cal-lg-t">색상</span><span class="cal-lg c-outbound">출고</span><span class="cal-lg c-inbound">입고</span><span class="cal-lg c-pack">포장</span><span class="cal-lg c-prod">생산</span><span class="cal-lg c-env">환경</span><span class="cal-lg c-pitch">피치</span><span class="cal-lg c-memo">특이사항</span><span class="cal-lg c-notice">공지</span><span class="cal-lg c-urgent">긴급</span><span class="cal-lg c-rec">기록</span></div></div>
     <div class="cal-side">
       <div id="czSingleView">
         <div class="cz-head"><h4 id="czTitle"></h4><span class="cz-badge" id="czBadge"></span></div>
@@ -6679,17 +6759,17 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const bar='<button type="button" class="ch-toggle" data-ch-toggle="'+day+'" aria-expanded="'+(isOpen?'true':'false')+'" aria-controls="chBody"><span class="ch-tg-tt"><b>'+histTitle+'</b><span class="ch-tg-n">'+total+'건</span></span>'+(metaBits.length?'<span class="ch-tg-meta">'+metaBits.join(' · ')+'</span>':'')+'<span class="ch-tg-chev">'+CH_CHEV+'</span></button>';
       let html='<div class="ch-sum"><span>작업 <b>'+work.length+'</b>건</span><span>완료 <b>'+doneN+'</b>건</span>'+(tgt?'<span>완료량 <b>'+(Math.round(got*10)/10)+'</b> / '+(Math.round(tgt*10)/10)+' TON</span>':'')+(memos.length?'<span class="m">특이사항 <b>'+memos.length+'</b></span>':'')+'</div>';
       if(inb||pitch){ html+='<div class="ch-sec">현장 일지</div>';
-        if(inb){ const ist=inb.state==='done'?'<span class="ch-st ok">입고완료</span>':(inb.state==='work'?'<span class="ch-st run">입고중</span>':'<span class="ch-st">기록</span>'); html+='<div class="ch-item'+(inb.state==='done'?' done':'')+'"><div class="ch-top"><b>입고 중량일지</b>'+ist+'</div><div class="ch-txt">'+inb.bags+' BAG · '+inb.ton+' TON ('+Math.round(inb.kg*10)/10+' kg)</div></div>'; }
-        if(pitch){ const pst=pitch.state==='done'?'<span class="ch-st ok">작업완료</span>':(pitch.state==='work'?'<span class="ch-st run">작업중</span>':'<span class="ch-st">기록</span>'); html+='<div class="ch-item'+(pitch.state==='done'?' done':'')+'"><div class="ch-top"><b>피치 작업일지</b>'+pst+'</div><div class="ch-txt">분쇄 현황 '+pitch.grind+' BAG</div></div>'; }
+        if(inb){ const ist=inb.state==='done'?'<span class="ch-st ok">입고완료</span>':(inb.state==='work'?'<span class="ch-st run">입고중</span>':'<span class="ch-st">기록</span>'); html+='<div class="ch-item'+(inb.state==='done'?' done':'')+'"><div class="ch-top"><i class="z-dot c-inbound"></i><b>입고 중량일지</b>'+ist+'</div><div class="ch-txt">'+inb.bags+' BAG · '+inb.ton+' TON ('+Math.round(inb.kg*10)/10+' kg)</div></div>'; }
+        if(pitch){ const pst=pitch.state==='done'?'<span class="ch-st ok">작업완료</span>':(pitch.state==='work'?'<span class="ch-st run">작업중</span>':'<span class="ch-st">기록</span>'); html+='<div class="ch-item'+(pitch.state==='done'?' done':'')+'"><div class="ch-top"><i class="z-dot c-pitch"></i><b>피치 작업일지</b>'+pst+'</div><div class="ch-txt">분쇄 현황 '+pitch.grind+' BAG</div></div>'; }
       }
       if(work.length){ html+='<div class="ch-sec">금일작업</div>'+work.map(x=>{ const m=String(x.text).match(/(\d+(?:\.\d+)?)\s*TON/i);
           const q2=v=>String(Math.round(v*100)/100), mdk=k=>{const p=String(k).split('-');return (+p[1])+'/'+(+p[2]);};
           const dCarry=isCarryover(x);
           const st=x.ended?'<span class="ch-st end">종료</span>':(x.review==='moved'&&x.movedTo?'<span class="ch-st carry">'+mdk(x.movedTo)+'로 변경</span>':((x.carried&&!x.short)?'<span class="ch-st carry">'+(x.origDay?mdk(x.origDay)+' 이월':'이월')+'</span>':(x.completed?'<span class="ch-st '+(x.short?'short':'ok')+'">'+(x.short?'부족 완료 ':'완료 ')+esc((dayOf({at:x.completedAt})!==day?md(x.completedAt):'')+hm(x.completedAt))+'</span>':(x.working?'<span class="ch-st run">작업중</span>':'<span class="ch-st no">'+(dCarry?'이월':'미완료')+'</span>'))));
           const cTag=dCarry?'<span class="carry-tag'+((x.carryCount||1)>=3?' hot':'')+'">이월'+((x.carryCount||1)>1?' '+(x.carryCount||1)+'회':'')+'</span>':(x.origDay&&x.origDay!==day?'<span class="date-tag">'+esc(mdk(x.origDay))+'</span>':'');
-          return '<div class="ch-item'+(x.completed&&!x.short?' done':'')+(dCarry?' carry':'')+(x.ended?' ended':'')+'"><div class="ch-top"><b>'+esc(NAMES[x.target]||x.target)+'</b>'+(x.urgent?'<span class="urg-tag">긴급</span>':'')+cTag+st+'</div><div class="ch-txt">'+esc(x.text)+'</div><div class="ch-meta">'+(m?'완료 '+esc(x.done||0)+' / '+m[1]+' TON · ':'')+'등록 '+esc(hm(x.at))+(x.startedAt?' · 시작 '+esc(hm(x.startedAt)):'')+(x.by?' · '+esc(x.by):'')+(x.reviewNote?' · 판단: '+esc(x.reviewNote)+(x.reviewBy?' ('+esc(x.reviewBy)+')':''):(x.review==='pending'?' · 확인 대기':''))+'</div>'+chActs(x)+'</div>'; }).join(''); }
-      if(notes.length){ html+='<div class="ch-sec">공지</div>'+notes.map(x=>'<div class="ch-item n"><div class="ch-top"><b>'+esc(NAMES[x.target]||x.target)+'</b><span class="ch-time">'+esc(hm(x.at))+'</span></div><div class="ch-txt">'+esc(x.text)+'</div></div>').join(''); }
-      if(memos.length){ html+='<div class="ch-sec m">특이사항</div>'+memos.map(x=>'<div class="ch-item m"><div class="ch-top"><b>'+esc(NAMES[x.target]||x.target)+'</b><span class="ch-time">'+esc(hm(x.at))+(x.by?' · '+esc(x.by):'')+'</span></div><div class="ch-txt">'+esc(x.text)+'</div></div>').join(''); }
+          return '<div class="ch-item'+(x.completed&&!x.short?' done':'')+(dCarry?' carry':'')+(x.ended?' ended':'')+'"><div class="ch-top"><span class="z-badge '+zoneClass(x)+'">'+esc(NAMES[x.target]||x.target)+'</span>'+(x.urgent?'<span class="urg-tag">긴급</span>':'')+cTag+st+'</div><div class="ch-txt">'+esc(x.text)+'</div><div class="ch-meta">'+(m?'완료 '+esc(x.done||0)+' / '+m[1]+' TON · ':'')+'등록 '+esc(hm(x.at))+(x.startedAt?' · 시작 '+esc(hm(x.startedAt)):'')+(x.by?' · '+esc(x.by):'')+(x.reviewNote?' · 판단: '+esc(x.reviewNote)+(x.reviewBy?' ('+esc(x.reviewBy)+')':''):(x.review==='pending'?' · 확인 대기':''))+'</div>'+chActs(x)+'</div>'; }).join(''); }
+      if(notes.length){ html+='<div class="ch-sec">공지</div>'+notes.map(x=>'<div class="ch-item n"><div class="ch-top"><span class="z-badge '+zoneClass(x)+'">'+esc(NAMES[x.target]||x.target)+'</span><span class="ch-time">'+esc(hm(x.at))+'</span></div><div class="ch-txt">'+esc(x.text)+'</div></div>').join(''); }
+      if(memos.length){ html+='<div class="ch-sec m">특이사항</div>'+memos.map(x=>'<div class="ch-item m"><div class="ch-top"><span class="z-badge c-memo">'+esc(NAMES[x.target]||x.target)+'</span><span class="ch-time">'+esc(hm(x.at))+(x.by?' · '+esc(x.by):'')+'</span></div><div class="ch-txt">'+esc(x.text)+'</div></div>').join(''); }
       box.innerHTML=bar+'<div class="ch-body" id="chBody">'+html+'</div>';
     }
     /* 이월작업 날짜로 적용 & 작성한 날 지나면 이월 표시 제거 마이그레이션 */
@@ -6762,6 +6842,22 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     window.jisuApplySchedules=apply; apply(); setInterval(()=>apply(),30000); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') apply(); });
     let view=null, picked=null, editing=null;
     const ymd=(y,m,d)=>y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    /* 구역·유형 색 클래스 — 달력 칩·배지·기록이 같은 10색 팔레트를 쓴다 (긴급이 최우선) */
+    function zoneClass(o){
+      if(!o) return 'c-base';
+      if(o.urgent) return 'c-urgent';
+      if(o.kind==='notice') return 'c-notice';
+      const t=String(o.target||'');
+      if(t==='outbound'||t.indexOf('outbound:')===0) return 'c-outbound';
+      if(t==='inbound'||t.indexOf('inbound:')===0) return 'c-inbound';
+      if(t==='packaging'||t==='packaging-d') return 'c-pack';
+      if(/^production-[a-h]$/.test(t)) return 'c-prod';
+      if(t==='environment') return 'c-env';
+      if(t==='pitch') return 'c-pitch';
+      if(t==='memo'||t==='특이사항') return 'c-memo';
+      return 'c-base';
+    }
+    window.jisuZoneClass=zoneClass;
     function draw(){
       if(window.jisuInboundRefresh) window.jisuInboundRefresh();
       const [y,m]=view, today=kstToday(); $('calTitle').textContent=y+'년 '+(m+1)+'월';
@@ -6769,8 +6865,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       let html=''; for(let i=0;i<first;i++) html+='<div class="cal-cell empty"></div>';
       for(let d=1;d<=days;d++){ const key=ymd(y,m,d), items=sch.filter(s=>s.date===key), dow=(first+d-1)%7;
         html+='<button type="button" class="cal-cell'+(key===today?' is-today':'')+(key===picked?' is-picked':'')+(key<today?' is-past':'')+(dow===0?' sun':'')+(dow===6?' sat':'')+'" data-day="'+key+'"><span class="cal-num">'+d+'</span>'
-          +items.slice(0,3).map(s=>'<span class="cal-chip '+(s.kind==='notice'?'n':'w')+(s.applied?' done':'')+'">'+esc(NAMES[s.target]||s.target)+' '+esc(s.text)+'</span>').join('')
-          +(items.length>3?'<span class="cal-more">+'+(items.length-3)+'</span>':'')+(hc[key]&&key<=today?'<span class="cal-rec">기록 '+hc[key]+'</span>':'')+'</button>'; }
+          +items.slice(0,3).map(s=>'<span class="cal-chip '+zoneClass(s)+(s.kind==='notice'?' n':' w')+(s.applied?' done':'')+'">'+esc(NAMES[s.target]||s.target)+' '+esc(s.text)+'</span>').join('')
+          +(items.length>3?'<span class="cal-more">+'+(items.length-3)+'</span>':'')+(hc[key]&&key<=today?'<span class="cal-rec c-rec">기록 '+hc[key]+'</span>':'')+'</button>'; }
       $('calGrid').innerHTML=html;
     }
     const DOW=['일','월','화','수','목','금','토'];
@@ -6783,7 +6879,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const items=load(SKEY).filter(s=>s.date===picked);
       $('czList').innerHTML=items.length?items.map(s=>{
         if(editing===s.id) return '<div class="cz-item editing"><input class="cz-edit" data-cz-input="'+s.id+'" value="'+esc(lineOf(s))+'"><div class="cz-btns"><button type="button" class="cz-b ok" data-cz-ok="'+s.id+'">저장</button><button type="button" class="cz-b" data-cz-cancel="'+s.id+'">취소</button></div></div>';
-        return '<div class="cz-item'+(s.applied?' done':'')+'"><span class="cal-tag '+(s.kind==='notice'?'n':'w')+'">'+(s.kind==='notice'?'공지':'금일작업')+'</span><b>'+esc(NAMES[s.target]||s.target)+'</b>'+(s.urgent?'<span class="urg-tag">긴급</span>':'')+'<span class="cz-t">'+esc(s.text)+'</span>'
+        return '<div class="cz-item'+(s.applied?' done':'')+'"><span class="z-badge '+zoneClass(s)+'">'+esc(NAMES[s.target]||s.target)+'</span>'+(s.urgent?'<span class="urg-tag">긴급</span>':'')+'<span class="cz-t">'+esc(s.text)+'</span>'
           +(s.applied?'<span class="cz-state">등록됨</span>':'<div class="cz-btns"><button type="button" class="cz-b" data-cz-edit="'+s.id+'">수정</button><button type="button" class="cz-b del" data-cz-del="'+s.id+'">삭제</button></div>')+'</div>'; }).join(''):'<div class="cz-empty">아직 스케줄이 없어요.</div>';
       const addBox=$('czText').closest('.cz-add'); if(addBox) addBox.hidden=past; const note=modal.querySelector('.cal-note'); if(note) note.hidden=past;
       if(past && !items.length) $('czList').innerHTML='';
@@ -7333,7 +7429,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           +g.items.map(it=>{
             const tgtName=NAMES[it.target]||it.target;
             return '<div class="cz-batch-item">'
-              +'<span class="cz-batch-target-tag">'+esc(tgtName)+'</span>'
+              +'<span class="cz-batch-target-tag '+zoneClass(it)+'">'+esc(tgtName)+'</span>'
               +(it.kind==='notice'?'<span class="cal-tag n">공지</span>':'')
               +(it.urgent?'<span class="urg-tag">긴급</span>':'')
               +'<span>'+esc(it.text)+'</span>'
