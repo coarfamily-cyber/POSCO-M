@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-JISU(지수 통합 관제 상황실) 달력 예약 스케줄 자동 반영 — 매일 08:00 KST (GitHub Actions)
+JISU(지수 통합 관제 상황실) 달력 예약 스케줄 자동 반영 — 매일 08:00 KST
+
+이 파일 한 벌이 두 곳에서 같은 일을 한다(두 경로의 내용은 항상 같게 유지한다).
+  · GitHub Actions : .github/workflows/jisu-schedule.yml  (cron 0 23 * * *, JISU_APPLY_BY=gh-actions-0800)
+  · 피클 예약 작업 : scheduled-actions/jisu-0800-schedule-apply/  (JISU_APPLY_BY=pickle-0800)
 
 JISU/index.html 안의 달력 자동 적용 로직(apply(), window.JISU_SCHEDULE_APPLY_TIME=08:00)과
 완전히 같은 규칙으로, Firebase Realtime DB 의 jisu-schedule-v1(jisu/state/jisu-schedule-v1)을
@@ -10,14 +14,29 @@ JISU/index.html 안의 달력 자동 적용 로직(apply(), window.JISU_SCHEDULE
 - s.date <  today : 지난 예약 → at "MM. DD. 00:00", closed=true (이월/과거 기록)
 - s.date == today : 오늘 예약 → at "MM. DD. HH:MM"(현재 KST), closed 없음
 - 이미 같은 id('s'+s.id)의 작업이 있으면 카드는 추가하지 않고 applied 마킹만 한다.
+- 본문에 "오전 … 오후 …" 가 함께 있으면 index.html 과 같은 규칙으로 두 작업으로 나눈다
+  (두 번째부터 id 뒤에 -1, -2 … / 사진·톤수는 첫 작업에만).
+- 파렛트·팔레트 품목의 EA/개 수량은 288 EA = 1대로 환산한다(index.html 과 같은 규칙).
+- 08:00 마감: 08:00 이전에 완료된 작업은 closed=true 로 화면에서 내린다.
+- 08:00 초기화: 입고 입력칸(jisu-inbound-records-v1)의 rows 를 모두 archivedRows 로 옮기고 비운다
+  (실적·엑셀 자료는 archivedRows·workState 등에 그대로 보존).
+- 반영·마감 뒤 Web Push(요약)와 ntfy(새 카드) 알림을 보낸다. 알림 실패는 반영 결과에 영향 없음.
 - 바뀐 것이 없으면 DB에 아무것도 쓰지 않고 정상 종료한다.
 
 Firebase REST 쓰기는 X-Firebase-ETag / if-match 조건부 요청으로 보호한다.
 (그 사이 대시보드에서 저장이 일어났다면 412로 되돌아오고, 다시 읽어 재계산한다.)
 
+DB 구조가 v2(구역 묶음, jisu/config/syncMode = "v2")면 자동으로 v2 규칙으로 동작한다.
+
 사용:
     python3 jisu_apply_schedule.py            # 실제 반영
     python3 jisu_apply_schedule.py --dry-run  # 읽기만 하고 무엇을 할지 출력
+환경:
+    JISU_APPLY_BY             기록용 실행 주체 표기
+    JISU_ZONE_MIRROR=0        구역 복사본 갱신 끄기
+    JISU_PUSH_API_URL         Web Push 주소(기본 https://posco-m.vercel.app/api/push)
+    JISU_PUSH_AUTH_TOKEN      Web Push 인증 토큰(선택)
+    FIREBASE_SERVICE_ACCOUNT_JSON  서비스 계정 인증(선택)
 """
 from __future__ import annotations
 
@@ -31,10 +50,12 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 
 DB_URL = "https://posco-m-jisu-default-rtdb.asia-southeast1.firebasedatabase.app"
+PUSH_API_URL = os.environ.get("JISU_PUSH_API_URL", "https://posco-m.vercel.app/api/push").strip()
 ROOT = "jisu"
 STATE = f"{ROOT}/state"
 SKEY = "jisu-schedule-v1"
 CKEY = "jisu-commands-v1"
+INB = "jisu-inbound-records-v1"
 BY = os.environ.get("JISU_APPLY_BY", "gh-actions-0800")   # 실행 주체 표기(기록용)
 
 KST = timezone(timedelta(hours=9))  # 한국 표준시는 DST 없음 (tzdata 불필요)
@@ -353,6 +374,125 @@ def apply_schedules(sch: list, cmds: list, today: str, now_s: str):
     return added, marked
 
 
+# ---------------------------------------------------------------- 08:00 마감·입고 초기화·Web Push
+def close_completed_before_0800(cmds: list, today: str, now: datetime) -> int:
+    """08:00 기준 이전 완료 작업을 화면에서 숨김(closed=True) 초기화한다."""
+    cutoff = now.replace(hour=8, minute=0, second=0, microsecond=0)
+    if now.hour < 8:
+        cutoff = cutoff - timedelta(days=1)
+    closed_cnt = 0
+    ty = int(today[:4])
+    for x in cmds:
+        if not isinstance(x, dict):
+            continue
+        if x.get("id") == "demo_dispatch_1" or x.get("closed"):
+            continue
+        if x.get("completed") is not True:
+            continue
+        s = str(x.get("completedAt") or "")
+        m = re.search(r"(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{1,2}):(\d{2})", s)
+        done_dt = None
+        if m:
+            try:
+                done_dt = datetime(ty, int(m.group(1)), int(m.group(2)), int(m.group(3)), int(m.group(4)), tzinfo=KST)
+                if done_dt.timestamp() > now.timestamp() + 86400:
+                    done_dt = done_dt.replace(year=ty - 1)
+            except ValueError:
+                done_dt = None
+        else:
+            d = str(x.get("day") or "")
+            if d:
+                try:
+                    done_dt = datetime(int(d[:4]), int(d[5:7]), int(d[8:10]), tzinfo=KST)
+                except (ValueError, IndexError):
+                    done_dt = None
+        if done_dt is not None and done_dt <= cutoff:
+            x["closed"] = True
+            closed_cnt += 1
+            print(f"  - 완료 초기화 {x.get('id')} [{x.get('target')}] {x.get('text')}")
+    return closed_cnt
+
+
+def inbound_records_path(v2: bool = False) -> str:
+    """입고 기록 위치: v2(구역 묶음)면 inbound 묶음, 지금 방식이면 state."""
+    return f"{ROOT}/v2/inbound/{INB}" if v2 else f"{STATE}/{INB}"
+
+
+def cleanup_completed_inputs_0800(dry: bool = False, v2: bool = False) -> None:
+    """08:00 초기화: 입고 입력칸의 rows(모든 날짜)를 archivedRows 로 옮기고 비운다.
+
+    · 비우는 것은 화면 입력칸(rows)뿐이고, 옮긴 값은 archivedRows 에 그대로 남는다(실적·엑셀 자료 보존).
+    · 작업 상태는 idle, 근무 표시는 '오늘-am' 으로 되돌린다. (환경 호기 칸은 이 초기화 대상이 아니다)
+    """
+    try:
+        path = inbound_records_path(v2)
+        inb_node, inb_etag = db_get(path)
+        if isinstance(inb_node, dict) and isinstance(inb_node.get("v"), str):
+            ir = json.loads(inb_node["v"])
+            if isinstance(ir, dict):
+                changed = False
+                for d, rec in ir.items():
+                    if isinstance(rec, dict) and rec.get("rows"):
+                        rec["archivedRows"] = (rec.get("archivedRows") or []) + rec["rows"]
+                        rec["rows"] = []
+                        rec["workState"] = "idle"
+                        rec["shiftKey"] = f"{kst_today()}-am"
+                        changed = True
+                if changed:
+                    db_put(path, {"by": BY, "t": int(time.time() * 1000), "v": dump_v(ir)}, inb_etag, dry)
+    except Exception as e:
+        print(f"[warn] 입고 입력칸 초기화 실패(무시): {e}")
+
+
+def send_push_notifications(added_items: list, cmds: list, dry: bool = False) -> None:
+    """08시에 새로 추가된 작업지시 또는 미완료 작업이 있으면 Web Push 서버로 알린다."""
+    active_cmds = [
+        c for c in cmds
+        if isinstance(c, dict) and not c.get("closed") and not c.get("completed")
+        and c.get("kind") != "notice" and c.get("id") != "demo_dispatch_1"
+    ]
+    if not added_items and not active_cmds:
+        return
+
+    if added_items:
+        title = f"⏰ 08시 새 작업지시 {len(added_items)}건"
+        body = " / ".join(f"{it.get('target')} {it.get('text')}" for it in added_items[:3])
+        if len(added_items) > 3:
+            body += f" 외 {len(added_items) - 3}건"
+    else:
+        title = f"⏰ 08시 작업지시 {len(active_cmds)}건 대기"
+        body = f"미완료 작업지시 {len(active_cmds)}건이 대시보드에 대기 중입니다."
+
+    zones_to_notify = {"master"}
+    for it in (added_items or active_cmds):
+        z = it.get("target")
+        if z == "*":
+            zones_to_notify.add("all")
+        elif z:
+            zones_to_notify.add(str(z))
+
+    for zone in sorted(zones_to_notify):
+        url = (
+            "https://coarfamily-cyber.github.io/POSCO-M/JISU/"
+            if zone in ("master", "all")
+            else f"https://coarfamily-cyber.github.io/POSCO-M/JISU/?zone={zone}"
+        )
+        if dry or not PUSH_API_URL:
+            print(f"[dry-run] POST {PUSH_API_URL} ({zone}) — {title}: {body}")
+            continue
+        payload = json.dumps({"zone": zone, "title": title, "body": body, "url": url}, ensure_ascii=False).encode("utf-8")
+        headers = {"Content-Type": "application/json; charset=utf-8"}
+        tok = os.environ.get("JISU_PUSH_AUTH_TOKEN", "").strip()
+        if tok:
+            headers["Authorization"] = f"Bearer {tok}"
+        try:
+            # 다른 요청과 같이 _request 를 쓴다 (테스트에서 가짜 DB·가짜 알림으로 바꿔 끼울 수 있게)
+            status, _, text = _request(PUSH_API_URL, "POST", payload, headers)
+            print(f"[ok] Web Push({zone}) -> HTTP {status} {text[:100]}")
+        except Exception as e:
+            print(f"[warn] Web Push({zone}) 발송 실패(무시): {e}")
+
+
 # ---------------------------------------------------------------- 구역 복사본 (index.html ZONE-MIRROR 와 같은 규칙)
 ZONE_MIRROR_KEYS = ["outbound", "inbound", "pitch", "packaging", "packaging-d", "environment",
                     "production-a", "production-b", "production-c", "production-d",
@@ -488,14 +628,24 @@ def run_v2(dry: bool = False) -> int:
             parts[pt] = (parse_v(node), etag, node is not None)
         cmds = [x for pt in V2_PARTS for x in parts[pt][0]]
         before_len = len(cmds)
+        before_ids = {c.get("id") for c in cmds if isinstance(c, dict)}
+        parts_before = {pt: dump_v(parts[pt][0]) for pt in V2_PARTS}
         sch_before = json.dumps(sch, ensure_ascii=False, sort_keys=True)
         print(f"[jisu] (v2) 시도 {attempt}: 예약 {len(sch)}건 · 금일작업 {before_len}건")
 
+        closed_cnt = 0
+        for pt in V2_PARTS:      # 08:00 이전 완료 작업은 각 묶음에서 마감
+            closed_cnt += close_completed_before_0800(parts[pt][0], today, now)
+
         added, marked = apply_schedules(sch, cmds, today, now_s)
         new_recs = cmds[before_len:]
+        added_items = [c for c in cmds if isinstance(c, dict) and c.get("id") not in before_ids]
         sch_changed = json.dumps(sch, ensure_ascii=False, sort_keys=True) != sch_before
-        if not new_recs and not sch_changed:
-            print("[jisu] 반영할 예약이 없습니다 — DB에 쓰지 않고 종료")
+        changed_parts = [pt for pt in V2_PARTS if dump_v(parts[pt][0]) != parts_before[pt]]
+        if not new_recs and not sch_changed and not changed_parts:
+            print("[jisu] (v2) 반영·초기화할 항목이 없습니다 — DB에 쓰지 않음")
+            cleanup_completed_inputs_0800(dry, v2=True)
+            send_push_notifications([], cmds, dry)
             return 0
 
         t = int(time.time() * 1000)
@@ -503,7 +653,10 @@ def run_v2(dry: bool = False) -> int:
         for rec in new_recs:
             by_part.setdefault(v2_bucket_of(rec), []).append(rec)
         ok = True
-        for pt, recs in by_part.items():   # 카드 → 먼저(묶음별 조건부), 예약 마킹 → 나중
+        for pt in V2_PARTS:      # 카드 → 먼저(묶음별 조건부), 예약 마킹 → 나중
+            recs = by_part.get(pt) or []
+            if not recs and pt not in changed_parts:
+                continue
             cur, etag, _exists = parts[pt]
             ok = db_put(f"{ROOT}/v2/{pt}/{CKEY}", {"by": BY, "t": t, "v": dump_v(cur + recs)}, etag, dry)
             if not ok:
@@ -511,10 +664,12 @@ def run_v2(dry: bool = False) -> int:
         if ok and sch_changed:
             ok = db_put(sch_path, {"by": BY, "t": t, "v": dump_v(sch)}, sch_etag, dry)
         if ok:
-            print(f"[jisu] (v2) 완료 — 카드 {added}건 추가 · 예약 {marked}건 applied 마킹")
+            print(f"[jisu] (v2) 완료 — 완료 초기화 {closed_cnt}건 · 카드 {added}건 추가 · 예약 {marked}건 applied 마킹")
             if not dry and added > 0:
                 # 지난 날짜 예약을 소급 마킹한 closed 카드는 알리지 않는다 (오늘 실제로 열린 작업만)
                 notify_new([r for r in cmds[-added:] if not r.get("closed")])
+            cleanup_completed_inputs_0800(dry, v2=True)
+            send_push_notifications(added_items, cmds, dry)
             return 0
         time.sleep(1)
     raise SystemExit("[error] 3회 재시도에도 다른 기기 저장과 겹쳐 반영하지 못했습니다.")
@@ -538,12 +693,18 @@ def run(dry: bool = False) -> int:
         sch_before = json.dumps(sch, ensure_ascii=False, sort_keys=True)
         cmds_before = json.dumps(cmds, ensure_ascii=False, sort_keys=True)
 
+        before_ids = {c.get("id") for c in cmds if isinstance(c, dict)}
+        closed_cnt = close_completed_before_0800(cmds, today, now)   # 08:00 마감 → 예약 반영
         added, marked = apply_schedules(sch, cmds, today, now_s)
+        added_items = [c for c in cmds if isinstance(c, dict) and c.get("id") not in before_ids]
+
         sch_changed = json.dumps(sch, ensure_ascii=False, sort_keys=True) != sch_before
         cmds_changed = json.dumps(cmds, ensure_ascii=False, sort_keys=True) != cmds_before
 
         if not sch_changed and not cmds_changed:
-            print("[jisu] 반영할 예약이 없습니다 — DB에 쓰지 않고 종료")
+            print("[jisu] 반영·초기화할 항목이 없습니다 — DB에 쓰지 않음")
+            cleanup_completed_inputs_0800(dry)
+            send_push_notifications(added_items, cmds, dry)
             return 0
 
         t = int(time.time() * 1000)
@@ -555,12 +716,14 @@ def run(dry: bool = False) -> int:
             ok = db_put(f"{STATE}/{SKEY}",
                         {"by": BY, "t": t, "v": dump_v(sch)}, sch_etag, dry)
         if ok:
-            print(f"[jisu] 완료 — 카드 {added}건 추가 · 예약 {marked}건 applied 마킹")
+            print(f"[jisu] 완료 — 완료 초기화 {closed_cnt}건 · 카드 {added}건 추가 · 예약 {marked}건 applied 마킹")
             if cmds_changed and not dry:
                 mirror_zones(cmds, t)
             if not dry and added > 0:
                 # 지난 날짜 예약을 소급 마킹한 closed 카드는 알리지 않는다 (오늘 실제로 열린 작업만)
                 notify_new([r for r in cmds[-added:] if not r.get("closed")])
+            cleanup_completed_inputs_0800(dry)
+            send_push_notifications(added_items, cmds, dry)
             return 0
         time.sleep(1)   # 다른 기기 저장과 겹침 → 다시 읽고 재계산
 

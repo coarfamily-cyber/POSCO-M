@@ -16,6 +16,9 @@ const yesterday = kst(new Date(Date.now() - 86400000));
 const tomorrow = kst(new Date(Date.now() + 86400000));
 const md = d => d.slice(5, 7) + '. ' + d.slice(8, 10) + '.';
 const CK = 'jisu-commands-v1', MK = 'jisu-memos-v1';
+// 구역 묶음 16곳 × (작업지시·특이사항) 32 + 통째로 다루는 묶음 7
+// (피치 기록·입고 기록·환경·환경 로그·예약·예약(별칭)·정비 기록) = 39
+const UNITS = 39;
 const results = [];
 const ok = (name, fn) => { try { fn(); results.push('PASS ' + name); } catch (e) { results.push('FAIL ' + name + ' :: ' + e.message.slice(0, 300)); } };
 const pages = [];
@@ -47,7 +50,12 @@ function seedServer(fake) {
 async function device(fake, { claims = null, gate = false, local = {}, wait = 1600 } = {}) {
   const errors = [], navs = [];
   const vc = new VirtualConsole();
-  vc.on('jsdomError', e => { const m = String(e.message || e); if (/navigation/i.test(m)) navs.push(m); else errors.push('jsdom: ' + m.slice(0, 160)); });
+  vc.on('jsdomError', e => {
+    const m = String(e.message || e);
+    // 캔버스는 jsdom 에 없는 브라우저 기능이다(사진 축소 등). 테스트 환경 한계라 오류로 세지 않는다.
+    if (/Not implemented: HTMLCanvasElement\.prototype\.getContext/.test(m)) return;
+    if (/navigation/i.test(m)) navs.push(m); else errors.push('jsdom: ' + m.slice(0, 160));
+  });
   vc.on('error', (...a) => errors.push('error: ' + a.map(String).join(' ').slice(0, 160)));
   const warns = [];
   vc.on('warn', (...a) => warns.push(a.map(String).join(' ').slice(0, 160)));
@@ -120,7 +128,7 @@ const srv = (fake, part, key) => { const d = fake.getServer(`jisu/v2/${part}/${k
 
   // 2) 새로고침 = v2 로 시작
   const A = await device(fake, { local: A0.dump() });
-  ok('A: v2로 시작, 묶음 38개', () => { assert.equal(A.w.jisuDb.sync.mode(), 'v2'); assert.equal(A.w.jisuDb.sync.units().length, 38); });
+  ok('A: v2로 시작, 묶음 39개', () => { assert.equal(A.w.jisuDb.sync.mode(), 'v2'); assert.equal(A.w.jisuDb.sync.units().length, UNITS); });
   ok('A: 화면 목록에 모든 항목, 원래 순서 유지', () => assert.deepEqual(ids(A.arr(CK)), seedCommands().map(x => x.id)));
   ok('A: 새로고침 반복 없음', () => assert.equal(A.navs.length, 0));
 
@@ -193,7 +201,7 @@ const srv = (fake, part, key) => { const d = fake.getServer(`jisu/v2/${part}/${k
 
   // 6-1) 게이트를 켠 관리자 기기: 전체 묶음
   const G = await device(fake, { claims: { role: 'admin', approved: true }, gate: true, local: { 'jisu-sync-mode': 'v2' } });
-  ok('게이트 켠 관리자: 전체 묶음 38개, 모든 항목', () => { assert.equal(G.w.jisuDb.sync.units().length, 38); assert.ok(ids(G.arr(CK)).includes('b1')); });
+  ok('게이트 켠 관리자: 전체 묶음 39개, 모든 항목', () => { assert.equal(G.w.jisuDb.sync.units().length, UNITS); assert.ok(ids(G.arr(CK)).includes('b1')); });
   const P = await device(fake, { claims: { role: 'staff', zone: 'pitch', approved: false }, gate: true, local: { 'jisu-sync-mode': 'v2' } });
   ok('승인 전 계정: 동기화하지 않음', () => { assert.equal(P.w.jisuDb.sync.units().length, 0); assert.ok(!P.ls(CK) || ids(P.arr(CK)).length === 0); });
 

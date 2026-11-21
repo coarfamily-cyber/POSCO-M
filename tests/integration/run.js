@@ -12,6 +12,10 @@ const KEY = 'jisu-commands-v1';
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const md = today.slice(5, 7) + '. ' + today.slice(8, 10) + '.';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+// 닫힌 페이지에 남은 타이머·약속의 거부는 Node 프로세스를 죽인다. 테스트 판정은 결과 줄로 하고,
+// 그런 거부는 모아서 출력만 한다 (페이지가 열려 있는 동안의 오류는 errors[] 로 따로 검사한다).
+const lateErrors = [];
+process.on('unhandledRejection', e => lateErrors.push(String((e && e.message) || e).slice(0, 160)));
 
 function baseItems() {
   return [
@@ -26,7 +30,9 @@ function baseItems() {
 async function loadPage({ fake, localSeed }) {
   const errors = [];
   const vc = new VirtualConsole();
-  vc.on('jsdomError', e => errors.push('jsdom: ' + String(e.message || e).slice(0, 160)));
+  // 캔버스는 jsdom 에 없는 브라우저 기능이다(사진 축소 등). 테스트 환경 한계라 오류로 세지 않는다.
+  const envOnly = m => /Not implemented: HTMLCanvasElement\.prototype\.getContext/.test(m);
+  vc.on('jsdomError', e => { const m = String(e.message || e); if (!envOnly(m)) errors.push('jsdom: ' + m.slice(0, 160)); });
   vc.on('error', (...a) => errors.push('error: ' + a.map(String).join(' ').slice(0, 160)));
   vc.on('warn', (...a) => errors.push('warn: ' + a.map(String).join(' ').slice(0, 160)));
   const fidb = require('fake-indexeddb');
@@ -41,6 +47,7 @@ async function loadPage({ fake, localSeed }) {
       w.ResizeObserver = w.ResizeObserver || class { observe() {} unobserve() {} disconnect() {} };
       w.IntersectionObserver = w.IntersectionObserver || class { observe() {} unobserve() {} disconnect() {} };
       w.scrollTo = () => {};
+      w.fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve({}), text: () => Promise.resolve('') });   // 날씨·알림 등 외부 요청 차단
       Object.entries(localSeed || {}).forEach(([k, v]) => w.localStorage.setItem(k, v));
     }
   });
@@ -146,6 +153,7 @@ async function clearBackups(w) {
 
   console.log(results.join('\n'));
   console.log('ERRORS(first load) ' + p1.errors.length); p1.errors.forEach(e => console.log('  - ' + e));
+  if (lateErrors.length) console.log('닫힌 페이지의 늦은 거부(무시) ' + lateErrors.length + '건: ' + [...new Set(lateErrors)].join(' | '));
   const failed = results.filter(r => r.startsWith('FAIL')).length;
   console.log(failed ? `\n${failed} FAILED` : '\nALL PASSED');
   process.exit(failed ? 1 : 0);
