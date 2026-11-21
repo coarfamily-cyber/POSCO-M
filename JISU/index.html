@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611211012">
+  <meta name="jisu-build" content="202611211035">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -813,6 +813,8 @@
     .forklift-icon{width:40px;height:40px;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));}
     /* Fixed column widths so rows line up regardless of state (작업완료 / 완료됨) */
     .work-ctrl{display:grid !important;grid-template-columns:auto auto auto;align-items:center;column-gap:6px;}
+    /* 일반 작업지시: 작업중 버튼이 없으니 작업완료 한 칸만 */
+    .work-ctrl.is-solo{grid-template-columns:auto !important;}
     .work-done-num{display:inline-flex;align-items:center;gap:4px;}
     .work-unit{display:inline-block;min-width:5.6em;text-align:left;white-space:nowrap;color:#cbd5e1;}
     .work-complete{justify-content:center !important;min-width:72px;box-sizing:border-box;text-align:center;}
@@ -5091,10 +5093,6 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
           <button type="button" class="cz-b" id="czBatchCancelBtn">취소 (달력으로)</button>
         </div>
         <div class="cz-batch-opts">
-          <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#cbd5e1;margin-bottom:6px;cursor:pointer;">
-            <input type="checkbox" id="czBatchLockTarget">
-            <span>선택한 기본 대상 버튼으로만 고정 등록 (다른 구역명 자동 전환 끄기)</span>
-          </label>
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
             <button type="button" id="czGemToggleBtn" class="cz-b" style="font-size:11px;padding:4px 8px;background:rgba(139,92,246,.22) !important;border-color:rgba(167,139,250,.45) !important;color:#e9d5ff !important;">✨ Gemini AI 키 설정 ▾</button>
             <span id="czGemMiniSt" style="font-size:11px;color:#94a3b8;">키 미등록 시 기본 무료 OCR</span>
@@ -5606,9 +5604,10 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
       const hasImg = Boolean(imgSrc);
       if(isWork){
         const isGoalDone = !!(x.completed || (g && x.done != null && x.done !== '' && !isNaN(Number(x.done)) && Number(x.done) === Number(g.n)));
-        right='<div class="work-ctrl">'
+        /* 작업중 버튼은 이동작업 카드에만 둔다 — 일반 작업지시는 작업완료 하나만 */
+        right='<div class="work-ctrl'+(isMove?'':' is-solo')+'">'
           +(isMove ? '<div class="work-done-col">'+carrySub(x)+'<label class="work-done-num">완료 <input type="text" class="'+(isGoalDone?'is-goal-done':'is-in-progress')+'" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" autocomplete="off" enterkeyhint="done" data-cmd-progress="'+x.id+'" data-cmd-goal="'+(g?esc(g.n):'')+'" value="'+(x.done!=null?esc(x.done):'')+'" placeholder="0"'+progWAttr(x.done)+(x.completed?' disabled':'')+'>'+'<span class="work-unit">'+(g?'/ '+esc(g.n)+(g.u?' '+esc(g.u):''):'')+'</span>'+'</label></div>' : '')
-          +'<button type="button" class="work-complete work-progress'+(x.working&&!x.completed?' is-working':'')+'" data-cmd-working="'+x.id+'">작업중</button>'
+          +(isMove ? '<button type="button" class="work-complete work-progress'+(x.working&&!x.completed?' is-working':'')+'" data-cmd-working="'+x.id+'">작업중</button>' : '')
           +'<button type="button" class="work-complete'+(x.completed?' is-done':'')+'" data-cmd-complete="'+x.id+'">'+(x.completed?(x.short?'부족 완료':'완료됨'):'작업완료')+'</button>'
           +'</div>';
       }
@@ -7489,7 +7488,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       return null;
     }
 
-    function parseBatch(text,defTarget,lockTarget){
+    function parseBatch(text,defTarget){
       if(!text||!text.trim()) return [];
       const lines=text.split(/\r?\n/);
       const ignoreRes=[
@@ -7507,7 +7506,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         let clean=raw.replace(/^[-*•·|]+\s*/,'').replace(/^\d+[.)]\s*/,'').trim();
         if(!clean) return;
         const tgtDefault=defTarget||'inbound';
-        const p=lockTarget?null:parseLine(clean);
+        const p=parseLine(clean);
         if(p&&!p.err){
           groups.get(d).push({target:p.target,kind:p.kind,text:p.text,urgent:!!p.urgent});
         } else {
@@ -7517,7 +7516,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           if(/^공지(?:사항)?(?:\s*[:：]\s*|\s+|$)/.test(clean)){ kind='notice'; clean=clean.replace(/^공지(?:사항)?(?:\s*[:：]\s*|\s+|$)/,''); }
           if(!clean) return;
           /* 배차 지시서 한 줄(차량번호 포함)은 기본 대상과 상관없이 출고로 보낸다 (표 붙여넣기 경로와 같은 규칙) */
-          const carHit=!lockTarget && kind!=='notice' && /[가-힣]{2}\s*\d{2,3}\s*[가-힣]\s*\d{4}/.test(clean);
+          const carHit=kind!=='notice' && /[가-힣]{2}\s*\d{2,3}\s*[가-힣]\s*\d{4}/.test(clean);
           const tgt=(kind==='notice'?'*':(carHit?'outbound':tgtDefault));
           groups.get(d).push({
             target:tgt,
@@ -7555,7 +7554,6 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     function renderBatchPreview(){
       if(!batchPreview||!batchText) return;
       const defTarget=(batchTarget&&batchTarget.value)||'inbound';
-      const lockTarget=Boolean($('czBatchLockTarget')&&$('czBatchLockTarget').checked);
       const text=batchText.value;
       /* AI가 "YYYY-MM-DD | 내용" 형식으로 뽑은 텍스트는 표 파서보다 날짜별 분류를 먼저 쓴다(조건 누락·오분류 방지) */
       const aiDated=/^\d{4}-\d{2}-\d{2}\s*\|/m.test(text);
@@ -7568,10 +7566,10 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         parsedBatchData=[{date:picked||kstToday(),items:[item]}];
       } else if(disp&&disp.items.length){
         const gMap=new Map();
-        disp.items.forEach(x=>{ if(!gMap.has(x.date)) gMap.set(x.date,[]); gMap.get(x.date).push({target:lockTarget?defTarget:'outbound',kind:'instruction',text:x.text}); });
+        disp.items.forEach(x=>{ if(!gMap.has(x.date)) gMap.set(x.date,[]); gMap.get(x.date).push({target:'outbound',kind:'instruction',text:x.text}); });
         parsedBatchData=Array.from(gMap.entries()).map(([date,items])=>({date,items})).sort((a,b)=>a.date.localeCompare(b.date));
       }else{
-        parsedBatchData=parseBatch(text,defTarget,lockTarget);
+        parsedBatchData=parseBatch(text,defTarget);
       }
       /* 오전/오후가 한 줄에 함께 들어온 항목은 두 개의 독립된 작업으로 나눠 미리보기·저장한다 */
       if(window.jisuExpandAmPmItems && parsedBatchData && parsedBatchData.length){
@@ -7626,9 +7624,6 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     }
     if(batchTarget){
       batchTarget.addEventListener('change',renderBatchPreview);
-    }
-    if($('czBatchLockTarget')){
-      $('czBatchLockTarget').addEventListener('change',renderBatchPreview);
     }
     if($('czBatchIncludeImg')){
       $('czBatchIncludeImg').addEventListener('change',renderBatchPreview);
