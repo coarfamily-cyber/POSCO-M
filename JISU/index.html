@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611210040">
+  <meta name="jisu-build" content="202611210919">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -2419,6 +2419,12 @@
     .rv-b.pri{background:rgba(99,102,241,.85) !important;border-color:rgba(165,180,252,.6) !important;color:#fff !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.25);}
     .rv-b.pri:hover{background:rgba(99,102,241,1) !important;}
     .rv-in{border-color:rgba(165,180,252,.7) !important;}
+    /* 이월 진행 중 카드의 수정·삭제: 오른쪽 칸이 좁아 hover 확대폭을 줄여 옆 버튼·카드 경계를 넘지 않게 한다 */
+    .rv-oklist .rv-b{--hvs:1.06;--hvt:-1px;}
+    .rv-oklist .rv-btns{margin-top:6px;}
+    .rv-oklist .rv-form{margin-top:6px;}
+    .rv-oklist .rv-in{width:100%;flex-basis:100%;min-width:0;min-height:52px;line-height:1.35;resize:vertical;font-family:inherit;}
+    .rv-oklist .rv-in.is-err{border-color:#f87171 !important;}
     /* ===== 테두리 없음 (모든 요소) ===== */
     :is(#nb#nb#nb#nb,*),:is(#nb#nb#nb#nb,*)::before,:is(#nb#nb#nb#nb,*)::after{border-color:transparent !important;--tw-ring-color:transparent !important;--tw-ring-shadow:0 0 #0000 !important;--tw-ring-offset-shadow:0 0 #0000 !important;outline-color:transparent !important;}
     :is(#nb#nb#nb#nb,*):focus,:is(#nb#nb#nb#nb,*):focus-visible{outline:none !important;}
@@ -5536,7 +5542,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
       return k;
     }
     function isCarryover(x){
-      if(!x || x.kind==='notice' || x.completed) return false;
+      if(!x || x.closed || x.kind==='notice' || x.completed) return false;   /* 마감·종료된 과거 기록은 이월 건수에서 제외 */
       const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
       const d=dayOf(x);
       if(x.origDay && x.origDay < today) return true;
@@ -7845,7 +7851,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       all.forEach(x=>{ if(x&&x.closed&&x.img&&x.id!=='demo_dispatch_1'){ delete x.img; changed=true; } });
       if(changed){ save(CKEY,all.concat(add)); redraw(); }
     }
-    const queue=()=>load(CKEY).filter(x=>x.kind!=='notice' && x.review==='pending' && x.short);
+    const queue=()=>load(CKEY).filter(x=>!x.closed && x.kind!=='notice' && x.review==='pending' && x.short);
     window.jisuReviewCount=()=>queue().length;
     window.jisuCarryAct=(id,type,val)=>{ const err=act(id,type,val); if(!err){ redraw(); if(window.jisuCarryRefresh) window.jisuCarryRefresh(); } return err; };
     window.jisuTomorrow=()=>tomorrow();
@@ -7874,7 +7880,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       +'<p class="rv-sub">자정에 넘어온 작업과 목표보다 적게 끝난 작업이에요. 판단 전에도 현장 작업은 계속할 수 있어요.</p>'
       +'<div class="cal-body"><div class="rv-main"><div class="rv-colh">판단 필요</div><div class="rv-list"></div></div><div class="cal-side"><div class="rv-colh ok">이월 진행 중</div><div class="rv-oklist"></div><div class="rv-done"></div></div></div></div>';
     document.body.appendChild(modal); const listEl=modal.querySelector('.rv-list'), okEl=modal.querySelector('.rv-oklist'), doneEl=modal.querySelector('.rv-done');
-    let form=null, msg=null;
+    let form=null, msg=null, okForm=null, okMsg=null;
+    const canOkEdit=!document.documentElement.classList.contains('worker-zone-only');
     function stOf(x){ const u=unitOf(x.text);
       if(x.short) return ['부족 완료 '+fmt(Number(x.done)||0)+' / '+fmt(goalN(x.text))+(u?' '+u:''),'short'];
       if(x.prevGoal!=null && !x.prevDone) return ['손 안 댐 (0 / '+fmt(x.prevGoal)+(u?' '+u:'')+')','none'];
@@ -7894,8 +7901,28 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     }
     function okRowHtml(x){ const nm=NAMES[x.target]||x.target, g=goalN(x.text), u=unitOf(x.text);
       const prog=x.completed?'완료':(x.working?'작업중':'대기'), pc=x.completed?'ok':(x.working?'run':'wait');
-      return '<div class="rv-row okrow"><div class="rv-top"><b>'+esc(nm)+'</b><span class="rv-txt">'+esc(x.text)+'</span><span class="rv-st '+pc+'">'+prog+(g!=null?' '+fmt(Number(x.done)||0)+' / '+fmt(g)+(u?' '+u:''):'')+'</span></div>'
-        +'<div class="rv-meta">'+metaOf(x).join(' · ')+(x.reviewNote?' · 판단: '+esc(x.reviewNote)+(x.reviewBy?' ('+esc(x.reviewBy)+')':''):'')+'</div></div>'; }
+      const id=esc(x.id), editing=canOkEdit&&okForm&&okForm.id===x.id;
+      const acts=canOkEdit&&!editing?'<div class="rv-btns"><button type="button" class="rv-b" data-ok-edit="'+id+'">수정</button><button type="button" class="rv-b del" data-ok-del="'+id+'">삭제</button></div>':'';
+      const f=editing?'<div class="rv-form"><textarea class="rv-in" rows="2" data-ok-edit-in="'+id+'" placeholder="작업 내용을 입력하세요" autocomplete="off">'+esc(okForm.draft!=null?okForm.draft:String(x.text||''))+'</textarea><button type="button" class="rv-b pri" data-ok-save="'+id+'">저장</button><button type="button" class="rv-b" data-ok-cancel="'+id+'">취소</button></div>':'';
+      return '<div class="rv-row okrow" data-ok-id="'+id+'"><div class="rv-top"><b>'+esc(nm)+'</b><span class="rv-txt">'+esc(x.text)+'</span><span class="rv-st '+pc+'">'+prog+(g!=null?' '+fmt(Number(x.done)||0)+' / '+fmt(g)+(u?' '+u:''):'')+'</span></div>'
+        +'<div class="rv-meta">'+metaOf(x).join(' · ')+(x.reviewNote?' · 판단: '+esc(x.reviewNote)+(x.reviewBy?' ('+esc(x.reviewBy)+')':''):'')+'</div>'+acts+f
+        +(okMsg&&okMsg.id===x.id?'<div class="rv-msg">'+esc(okMsg.t)+'</div>':'')+'</div>'; }
+    /* 이월 진행 중 카드 수정·삭제 (관리자 화면 전용 — ?zone= 작업자 화면에는 안 보임) */
+    function okFocus(){ const ta=okEl.querySelector('[data-ok-edit-in]'); if(ta){ try{ ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length); }catch(_){ ta.focus(); } } }
+    function okEditStart(id){ const it=load(CKEY).find(x=>x.id===id); if(!it) return; okMsg=null; okForm={id,draft:String(it.text||'')}; drawModal(); okFocus(); }
+    function okEditStop(){ okForm=null; okMsg=null; drawModal(); }
+    function okSave(){ if(!okForm) return; const id=okForm.id, ta=okEl.querySelector('[data-ok-edit-in="'+id+'"]');
+      let raw=String((ta?ta.value:okForm.draft)||'').replace(/\s+/g,' ').trim();
+      if(!raw){ if(ta){ ta.classList.add('is-err'); ta.focus(); } okMsg={id,t:'내용을 입력해 주세요'}; drawModal(); return; }
+      raw=raw.replace(/[a-z]/g,c=>c.toUpperCase());
+      const all=load(CKEY), it=all.find(x=>x.id===id); okForm=null; okMsg=null;
+      if(it){   /* id·target·done·working·completed·day 등은 그대로 두고 글자만 바꾼다 (사이드바 카드 수정과 동일) */
+        const norm=(window.jisuNormUnitFor?window.jisuNormUnitFor(raw,it.target):(window.jisuNormUnit?window.jisuNormUnit(raw):raw)).replace(/[a-z]/g,c=>c.toUpperCase());
+        it.text=norm; it.editedAt=nowStr(); const u=me(); if(u) it.editedBy=u; save(CKEY,all);
+      }
+      redraw(); refresh(); }
+    /* 삭제: 사이드바 카드 삭제(data-cmd-del)와 같은 즉시 삭제 — 확인 단계 없음 */
+    function okDel(id){ if(!load(CKEY).some(x=>x.id===id)){ refresh(); return; } okForm=null; okMsg=null; save(CKEY, load(CKEY).filter(x=>x.id!==id)); redraw(); refresh(); }
     const openCarry=()=>load(CKEY).filter(x=>!x.closed&&x.carryCount&&x.kind!=='notice'&&(x.review!=='pending'||(x.completed&&!x.short)));
     function drawModal(){
       const q=queue(), ok=openCarry(), keep=listEl.scrollTop;
@@ -7906,23 +7933,36 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const done=load(CKEY).filter(x=>x.reviewNote&&String(x.reviewAt||'').startsWith(tp)&&x.reviewNote!=='잔량 이월로 등록').reverse().slice(0,10);
       doneEl.innerHTML=done.length?'<div class="rv-dh">오늘 판단한 것</div>'+done.map(x=>'<div class="rv-drow"><b>'+esc(NAMES[x.target]||x.target)+'</b> '+esc(x.text)+' <span>→ '+esc(x.reviewNote)+' · '+esc(x.reviewBy||'')+' '+esc(String(x.reviewAt||'').slice(-5))+'</span></div>').join(''):'';
       listEl.scrollTop=keep;
+      if(okForm){ const ta=okEl.querySelector('[data-ok-edit-in]'); if(ta){ ta.focus(); try{ ta.setSelectionRange(ta.value.length,ta.value.length); }catch(_){} } }
       if(form){ const fi=listEl.querySelector('.rv-in'); if(fi){ fi.focus(); if(fi.select&&fi.type==='text') fi.select(); } }
     }
     const isCarryover=x=>(window.jisuIsCarryover?window.jisuIsCarryover(x):false);
-    function refresh(){ const q=load(CKEY).filter(isCarryover).length, b=hb.querySelector('b'); b.hidden=!q; b.textContent=q; hb.classList.toggle('has-pending',q>0); hb.title=q?'이월 작업 · '+q+'건':'이월 작업 보기'; if(!modal.hidden) drawModal(); }
+    /* 배지 숫자는 모달의 판단 필요 + 진행 중 합계와 같은 식으로 센다 — 두 숫자가 어긋나지 않게 */
+    function refresh(){ const q=queue().length+openCarry().length, b=hb.querySelector('b'); b.hidden=!q; b.textContent=q; hb.classList.toggle('has-pending',q>0); hb.title=q?'이월 작업 · '+q+'건':'이월 작업 보기'; if(!modal.hidden) drawModal(); }
     window.jisuCarryRefresh=refresh;
-    const openModal=()=>{ form=null; msg=null; modal.hidden=false; drawModal(); }, closeModal=()=>{ modal.hidden=true; form=null; msg=null; };
+    const openModal=()=>{ form=null; msg=null; okForm=null; okMsg=null; modal.hidden=false; drawModal(); }, closeModal=()=>{ modal.hidden=true; form=null; msg=null; okForm=null; okMsg=null; };
     window.jisuOpenReview=openModal;
     hb.addEventListener('click',e=>{ e.stopPropagation(); modal.hidden?openModal():closeModal(); });
     function go(){ const row=listEl.querySelector('[data-rv-id="'+form.id+'"]'), inp=row&&row.querySelector('.rv-in'); const id=form.id, err=act(id,form.type,inp?inp.value:''); if(err){ msg={id,t:err}; drawModal(); return; } form=null; msg=null; redraw(); refresh(); }
     modal.addEventListener('click',e=>{ e.stopPropagation(); if(e.target===modal||e.target.closest('[data-rv-close]')){ closeModal(); return; }
+      const okRow=e.target.closest('[data-ok-id]');
+      if(okRow){ const oid=okRow.getAttribute('data-ok-id');
+        if(e.target.closest('[data-ok-edit]')){ okEditStart(oid); return; }
+        if(e.target.closest('[data-ok-del]')){ okDel(oid); return; }
+        if(e.target.closest('[data-ok-save]')){ okSave(); return; }
+        if(e.target.closest('[data-ok-cancel]')){ okEditStop(); return; }
+        return; }
       const row=e.target.closest('[data-rv-id]'); if(!row) return; const id=row.getAttribute('data-rv-id');
       const b=e.target.closest('[data-rv]'); if(b){ const t=b.getAttribute('data-rv'); msg=null;
         if(t==='move'||t==='qty'||t==='end'){ form={id,type:t}; drawModal(); return; }
         const err=act(id,t); if(err) msg={id,t:err}; form=null; redraw(); refresh(); return; }
       if(e.target.closest('[data-rv-go]')){ go(); return; }
       if(e.target.closest('[data-rv-cancel]')){ form=null; msg=null; drawModal(); } });
-    modal.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Escape'){ if(form){ form=null; drawModal(); } else closeModal(); return; } if(e.key==='Enter'&&e.target.classList.contains('rv-in')&&!e.isComposing){ e.preventDefault(); go(); } });
+    okEl.addEventListener('input',e=>{ const ta=e.target.closest&&e.target.closest('[data-ok-edit-in]'); if(ta&&okForm&&okForm.id===ta.getAttribute('data-ok-edit-in')) okForm.draft=ta.value.replace(/[a-z]/g,c=>c.toUpperCase()); });
+    modal.addEventListener('keydown',e=>{ e.stopPropagation();
+      const okTa=e.target.closest&&e.target.closest('[data-ok-edit-in]');
+      if(okTa){ if(e.key==='Escape'){ e.preventDefault(); okEditStop(); return; } if(e.key==='Enter'&&!e.isComposing&&!e.shiftKey){ e.preventDefault(); okSave(); return; } return; }
+      if(e.key==='Escape'){ if(okForm){ okForm=null; okMsg=null; drawModal(); return; } if(form){ form=null; drawModal(); } else closeModal(); return; } if(e.key==='Enter'&&e.target.classList.contains('rv-in')&&!e.isComposing){ e.preventDefault(); go(); } });
     document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!modal.hidden&&!modal.contains(e.target)){ e.stopImmediatePropagation(); closeModal(); } },true);
     window.addEventListener('storage',e=>{ if(e.key===CKEY) refresh(); });
     window.jisuRollover=rollover;
