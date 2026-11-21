@@ -1,13 +1,24 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611212012">
+  <meta name="jisu-build" content="202611212020">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
     if (!s) return NaN;
-    if (/^\d{1,3}(?:,\d{3})+(?:\.\d+)?$/.test(s)) return Number(s.replace(/,/g, ''));
-    return Number(s.replace(',', '.'));
+    if (/^[+-]?\d{1,3}(?:,\d{3})+(?:\.\d+)?$/.test(s)) return Number(s.replace(/,/g, ''));
+    if (/^[+-]?\d+,\d{1,2}$/.test(s)) return Number(s.replace(',', '.'));
+    return Number(s.replace(/,/g, ''));
+  };
+  window.jisuDedupeInboundRows = function (archivedRows, activeRows) {
+    var seenRid = new Set();
+    return [].concat(archivedRows || [], activeRows || []).filter(function (r) {
+      if (!r) return false;
+      if (!r.rid) return true;
+      if (seenRid.has(r.rid)) return false;
+      seenRid.add(r.rid);
+      return true;
+    });
   };
   /* 입력칸 숫자 읽기: "18,000" → 18000, "12,5"·"12.5" → 12.5, 빈칸·글자 → null. 진행량·수량 입력칸 공용. */
   window.jisuParseInputNum = function (raw) {
@@ -5719,9 +5730,9 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
     function homeSummary(){ return homeWork()+homeEnv()+homeMemos(); }
     /* HOME: 환경 호기별 마지막 청소 후 지난 날수 (청소 기록 기준) */
     function homeEnv(){ let lg=[], cur=null; try{ lg=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]'); cur=JSON.parse(localStorage.getItem('jisu-env-v1')||'null'); }catch(e){}
-      const U=['1,2','3,4','5,6','7,8','9,10','11,12','13,14'], td=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()), dd=(a,b)=>Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/86400000);
-      const rows=U.map(k=>{ const last=lg.filter(x=>x.unit===k&&x.day).map(x=>x.day).sort().pop(); const working=cur&&cur.u&&cur.u[k]&&cur.u[k].s==='work'; return {k,last,days:last?dd(last,td):null,working}; }).sort((a,b)=>(b.days==null?1e9:b.days)-(a.days==null?1e9:a.days));
-      const line=r=>'<div class="he-row'+(r.working?' run':r.days==null?' none':r.days>=3?' warn':r.days>=1?' late':' ok')+'"><b>'+r.k+'호기</b><span>'+(r.working?'지금 청소중':r.days==null?'청소 기록 없음':r.days===0?'오늘 청소 완료':r.days+'일째 청소 안 됨')+'</span></div>';
+      const U=['1,2','3,4','5,6','7,8','9,10','11,12','13,14','메인통로'], td=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()), dd=(a,b)=>Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/86400000);
+      const rows=U.map(k=>{ const last=lg.filter(x=>x.unit===k&&x.day).map(x=>x.day).sort().pop(); const working=k==='메인통로'?(cur&&cur.a&&cur.a.s==='work'):(cur&&cur.u&&cur.u[k]&&cur.u[k].s==='work'); return {k,last,days:last?dd(last,td):null,working}; }).sort((a,b)=>(b.days==null?1e9:b.days)-(a.days==null?1e9:a.days));
+      const line=r=>'<div class="he-row'+(r.working?' run':r.days==null?' none':r.days>=3?' warn':r.days>=1?' late':' ok')+'"><b>'+(r.k==='메인통로'?r.k:(r.k+'호기'))+'</b><span>'+(r.working?'지금 청소중':r.days==null?'청소 기록 없음':r.days===0?'오늘 청소 완료':r.days+'일째 청소 안 됨')+'</span></div>';
       const late=rows.filter(r=>!r.working&&r.days!=null&&r.days>=3); if(!late.length) return ''; /* 3일 이상 청소 안 된 호기만 알림 */
       return '<div class="home-env alert"><div class="hs-h">⚠ 환경 청소 알림 <span>'+late.length+'</span></div>'+late.map(line).join('')+'</div>'; }
     function homeMemos(){
@@ -6170,9 +6181,22 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
       raw=raw.replace(/[a-z]/g,c=>c.toUpperCase());
       const all=load(), it=all.find(x=>x.id===id);
       editCmdId=null; editCmdDraft=null;
-      if(it){   /* id·target·done·working·completed·urgent·day 등은 그대로 두고 글자만 바꿈다 */
+      if(it){   /* id·target·done·working·completed·urgent·day 등은 그대로 두고 글자만 바꾸되, 완료된 작업의 목표량이 바뀌면 부족완료 여부를 다시 맞춘다 */
+        const oldG=isMoveWork(it)?goalOf(it.text):null;
         const norm=(window.jisuNormUnitFor?window.jisuNormUnitFor(raw,it.target):(window.jisuNormUnit?window.jisuNormUnit(raw):raw)).replace(/[a-z]/g,c=>c.toUpperCase());
-        it.text=norm; it.editedAt=nowStr(); try{ const u=localStorage.getItem('jisu-user'); if(u) it.editedBy=u; }catch(_){} save(all);
+        it.text=norm; it.editedAt=nowStr(); try{ const u=localStorage.getItem('jisu-user'); if(u) it.editedBy=u; }catch(_){}
+        if(it.completed && isMoveWork(it)){
+          const newG=goalOf(it.text);
+          if(newG){
+            const goal=Number(newG.n), cur=Number(it.done);
+            if(!it.short && oldG && cur===Number(oldG.n)) it.done=goal;
+            else if(it.done!=null && it.done!=='' && !isNaN(cur)){
+              if(cur<goal){ it.short=true; if(!it.review||it.review==='ok') it.review='pending'; }
+              else if(it.short){ delete it.short; if(it.review==='pending'&&!it.carryFrom) delete it.review; }
+            }
+          }
+        }
+        save(all);
       }
       render(); if(modalKey) fillModal(modalKey);
     }
@@ -6728,7 +6752,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         try {
           if (window.jisuInboundArchive) {
             const inb = window.jisuInboundArchive.getToday();
-            const irows = inb ? ([...(inb.archivedRows || []), ...(inb.rows || [])]) : [];
+            const irows = inb ? window.jisuDedupeInboundRows(inb.archivedRows, inb.rows) : [];
             let tKg = 0;
             const sInb = [
               ["입고원료 중량 기록일지"],
@@ -6739,7 +6763,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
             const kgHist = r => { try { return (window.jisuKgHistory && window.jisuKgHistory.excel(r)) || ""; } catch(_) { return ""; } };
             if (irows.length) {
               irows.forEach((r, i) => {
-                const kg = parseFloat(r.kg) || 0;
+                const kg = window.jisuParseNum(r.kg) || 0;
                 tKg += kg;
                 sInb.push([i + 1, inb.day || todayIso, r.lot || "", r.bag || "", kg, r.worker || "", r.car || r.loc || "", kgHist(r)]);
               });
@@ -7001,7 +7025,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const hm=s=>{ const m=String(s||'').match(/(\d{1,2}:\d{2})/); return m?m[1]:''; };
     const md=s=>{ const m=String(s||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); return m?(+m[1])+'/'+(+m[2])+' ':''; };
     /* 교대(08시/18시)로 rows가 archivedRows로 넘어간 뒤에도 달력 "기록"에 그날 입고가 남도록 둘을 합쳐서 센다 */
-    function inbOf(day){ try{ const r=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}')[day]; if(!r) return null; const rows=[...(r.archivedRows||[]),...(r.rows||[])].filter(Boolean); const arch=(r.archivedRows||[]).length; if(!rows.length&&(!r.workState||r.workState==='idle')) return null; const kg=rows.reduce((s,x)=>s+(parseFloat(x.kg)||0),0); const st=(r.workState&&r.workState!=='idle')?r.workState:(arch?'done':'idle'); return {day,bags:rows.length,kg,ton:Math.round(kg/10)/100,state:st}; }catch(_){return null;} }
+    function inbOf(day){ try{ const r=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}')[day]; if(!r) return null; const rows=window.jisuDedupeInboundRows(r.archivedRows,r.rows); const arch=(r.archivedRows||[]).length; if(!rows.length&&(!r.workState||r.workState==='idle')) return null; const kg=rows.reduce((s,x)=>s+(window.jisuParseNum(x.kg)||0),0); const st=(r.workState&&r.workState!=='idle')?r.workState:(arch?'done':'idle'); return {day,bags:rows.length,kg,ton:Math.round(kg/10)/100,state:st}; }catch(_){return null;} }
     function pitchOf(day){ try{ const r=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}')[day]; if(!r) return null; const g=(parseFloat(r.grind1)||0)+(parseFloat(r.grind2)||0); const hasAdd=[...(r.add1s||[]),...(r.add2s||[]),...(r.moves||[])].some(v=>String(v||'').trim()); if(!g&&!hasAdd&&(!r.workState||r.workState==='idle')) return null; return {day,grind:g,state:r.workState||'idle'}; }catch(_){return null;} }
     function histOf(day){ return { cmds:load(CKEY).filter(x=>dayOf(x)===day), memos:load(MKEY).filter(m=>dayOf(m)===day), inb:inbOf(day), pitch:pitchOf(day) }; } /* 특이사항은 달력에 표시하지 않음 (사이드바 HOME에서 보기) */
     function carryCnt(){ const c={}; load(CKEY).forEach(x=>{ if(x.carryCount&&x.carryFrom&&x.kind!=='notice'){ const d=dayOf(x); if(d) c[d]=(c[d]||0)+1; } }); return c; }
@@ -7031,7 +7055,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const {cmds,memos,inb,pitch}=histOf(day), work=cmds.filter(x=>x.kind!=='notice'), notes=cmds.filter(x=>x.kind==='notice');
       const doneN=work.filter(x=>x.completed).length, extraN=(inb?1:0)+(pitch?1:0);
       const total=cmds.length+memos.length+extraN;
-      let tgt=0, got=0; work.forEach(x=>{ const m=String(x.text).match(/(\d+(?:\.\d+)?)\s*TON/i); if(m){ tgt+=+m[1]; got+=Math.min(+(x.done||0)||0,+m[1]); } });
+      let tgt=0, got=0; work.forEach(x=>{ const m=String(x.text).match(/(\d+(?:[.,]\d+)?)\s*TON/i); if(m){ const gn=window.jisuParseNum(m[1])||0; tgt+=gn; got+=Math.min(+(x.done||0)||0,gn); } });
       const histTitle=(day===today?'오늘 기록':'그날 기록');
       const metaBits=[]; if(work.length){ metaBits.push('작업 '+work.length); metaBits.push('완료 '+doneN); } if(notes.length) metaBits.push('공지 '+notes.length); if(memos.length) metaBits.push('특이사항 '+memos.length);
       if(!total){ box.innerHTML='<div class="ch-toggle is-empty" role="status"><span class="ch-tg-tt"><b>'+histTitle+'</b><span class="ch-tg-n">0건</span></span></div><div class="ch-empty-msg">이 날짜에 남은 기록이 없어요.</div>'; return; }
@@ -7042,7 +7066,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(inb){ const ist=inb.state==='done'?'<span class="ch-st ok">입고완료</span>':(inb.state==='work'?'<span class="ch-st run">입고중</span>':'<span class="ch-st">기록</span>'); html+='<div class="ch-item'+(inb.state==='done'?' done':'')+'"><div class="ch-top"><i class="z-dot c-inbound"></i><b>입고 중량일지</b>'+ist+'</div><div class="ch-txt">'+inb.bags+' BAG · '+inb.ton+' TON ('+Math.round(inb.kg*10)/10+' kg)</div></div>'; }
         if(pitch){ const pst=pitch.state==='done'?'<span class="ch-st ok">작업완료</span>':(pitch.state==='work'?'<span class="ch-st run">작업중</span>':'<span class="ch-st">기록</span>'); html+='<div class="ch-item'+(pitch.state==='done'?' done':'')+'"><div class="ch-top"><i class="z-dot c-pitch"></i><b>피치 작업일지</b>'+pst+'</div><div class="ch-txt">분쇄 현황 '+pitch.grind+' BAG</div></div>'; }
       }
-      if(work.length){ html+='<div class="ch-sec">금일작업</div>'+work.map(x=>{ const m=String(x.text).match(/(\d+(?:\.\d+)?)\s*TON/i);
+      if(work.length){ html+='<div class="ch-sec">금일작업</div>'+work.map(x=>{ const m=String(x.text).match(/(\d+(?:[.,]\d+)?)\s*TON/i);
           const q2=v=>String(Math.round(v*100)/100), mdk=k=>{const p=String(k).split('-');return (+p[1])+'/'+(+p[2]);};
           const dCarry=isCarryover(x);
           const st=x.ended?'<span class="ch-st end">종료</span>':(x.review==='moved'&&x.movedTo?'<span class="ch-st carry">'+mdk(x.movedTo)+'로 변경</span>':((x.carried&&!x.short)?'<span class="ch-st carry">'+(x.origDay?mdk(x.origDay)+' 이월':'이월')+'</span>':(x.completed?'<span class="ch-st '+(x.short?'short':'ok')+'">'+(x.short?'부족 완료 ':'완료 ')+esc((dayOf({at:x.completedAt})!==day?md(x.completedAt):'')+hm(x.completedAt))+'</span>':(x.working?'<span class="ch-st run">작업중</span>':'<span class="ch-st no">'+(dCarry?'이월':'미완료')+'</span>'))));
@@ -8100,8 +8124,9 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         const g=goalN(x.text), done=Number(x.done)||0;
         if(g!=null && done>=g){ x.completed=true; x.completedAt=x.completedAt||nowStr(); x.closed=true; return; }
         const rem=g!=null?g-done:null;
-        const cid='c_'+x.id+'_'+today; if(all.some(function(r){return r&&r.id===cid;})||add.some(function(r){return r&&r.id===cid;})) { x.closed=true; x.carried=true; x.carriedTo=cid; x.carriedQty=rem; x.carriedDay=today; x.working=false; if(x.review==='pending') x.review='superseded'; return; }
-        const rec={id:cid,target:x.target,kind:'instruction',text:rem!=null?withGoal(x.text,rem):x.text,at:atOf(today),day:today,
+        const originId=x.originId||x.id;
+        const cid='c_'+originId+'_'+today; if(all.some(function(r){return r&&r.id===cid;})||add.some(function(r){return r&&r.id===cid;})) { x.closed=true; x.carried=true; x.carriedTo=cid; x.carriedQty=rem; x.carriedDay=today; x.working=false; if(x.review==='pending') x.review='superseded'; return; }
+        const rec={id:cid,originId:originId,target:x.target,kind:'instruction',text:rem!=null?withGoal(x.text,rem):x.text,at:atOf(today),day:today,
           carryFrom:x.id,carryCount:(x.carryCount||0)+1,origGoal:x.origGoal!=null?x.origGoal:g,origDay:x.origDay||d,prevDone:done,prevGoal:g,review:'ok'};
         if(x.by) rec.by=x.by; if(x.urgent) rec.urgent=true; if(x.from&&x.to){ rec.from=x.from; rec.to=x.to; }
         add.push(rec);
@@ -8583,7 +8608,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         const cur={at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour12:false}),closedAt18:true};
         try{
           const ir=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}')[t];
-          if(ir&&ir.rows&&ir.rows.length){ cur.inbTon=ir.rows.reduce((s,x)=>s+(parseFloat(x.kg)||0),0)/1000; cur.inbBag=ir.rows.length; }
+          if(ir){ const irows=window.jisuDedupeInboundRows(ir.archivedRows,ir.rows); if(irows.length){ cur.inbTon=irows.reduce((s,x)=>s+(window.jisuParseNum(x.kg)||0),0)/1000; cur.inbBag=irows.length; } }
           const pr=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}')[t];
           if(pr){ cur.pitchBag=(parseFloat(pr.grind1)||0)+(parseFloat(pr.grind2)||0); }
         }catch(_){}
@@ -8604,7 +8629,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const addDayZone=(d,z,u,amt)=>{ if(!dayDetail[d]) dayDetail[d]={}; if(!dayDetail[d][z]) dayDetail[d][z]={}; dayDetail[d][z][u]=(dayDetail[d][z][u]||0)+amt; };
       work.forEach(x=>{ const g=goal(x.text); if(!g) return; const u=units[g.u]||(units[g.u]={goal:0,done:0,byDay:{}}); if(!(x.carried&&!x.short)) u.goal+=g.n; const a=doneAmt(x,g); u.done+=a; const d=dayOf(x); u.byDay[d]=(u.byDay[d]||0)+a; if(a>0) addDayZone(d,x.target,g.u,a); });
       const zones={}; const Z=t=>zones[t]||(zones[t]={n:0,done:0,carry:0,memo:0}); work.forEach(x=>{ const z=Z(x.target); z.n++; if(x.completed) z.done++; if(x.carryCount&&x.carryFrom) z.carry++; }); memos.forEach(m=>{ Z(m.target).memo++; });
-      try{ const ir=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}'); Object.keys(ir).forEach(d=>{ if(d<s||d>e) return; const r=ir[d]; if(!r) return; const rows=[...(r.archivedRows||[]),...(r.workState==='done'?(r.rows||[]):[])].filter(Boolean); if(!rows.length) return; const ton=rows.reduce((sum,x)=>sum+(parseFloat(x.kg)||0),0)/1000; if(ton>0){ const u=units['TON']||(units['TON']={goal:0,done:0,byDay:{}}); u.done+=ton; u.byDay[d]=(u.byDay[d]||0)+ton; addDayZone(d,'inbound','TON',ton); } if(rows.length){ const u=units['BAG']||(units['BAG']={goal:0,done:0,byDay:{}}); u.done+=rows.length; u.byDay[d]=(u.byDay[d]||0)+rows.length; addDayZone(d,'inbound','BAG',rows.length); } const z=Z('inbound'); z.n++; z.done++; }); }catch(_){}
+      try{ const ir=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}'); Object.keys(ir).forEach(d=>{ if(d<s||d>e) return; const r=ir[d]; if(!r) return; const rows=window.jisuDedupeInboundRows(r.archivedRows,r.workState==='done'?r.rows:[]); if(!rows.length) return; const ton=rows.reduce((sum,x)=>sum+(window.jisuParseNum(x.kg)||0),0)/1000; if(ton>0){ const u=units['TON']||(units['TON']={goal:0,done:0,byDay:{}}); u.done+=ton; u.byDay[d]=(u.byDay[d]||0)+ton; addDayZone(d,'inbound','TON',ton); } if(rows.length){ const u=units['BAG']||(units['BAG']={goal:0,done:0,byDay:{}}); u.done+=rows.length; u.byDay[d]=(u.byDay[d]||0)+rows.length; addDayZone(d,'inbound','BAG',rows.length); } const z=Z('inbound'); z.n++; z.done++; }); }catch(_){}
       try{ const pr=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}'); Object.keys(pr).forEach(d=>{ if(d<s||d>e) return; const r=pr[d]; if(!r) return; const g=(parseFloat(r.grind1)||0)+(parseFloat(r.grind2)||0); if(!g&&(!r.workState||r.workState==='idle')) return; if(g>0){ const u=units['BAG']||(units['BAG']={goal:0,done:0,byDay:{}}); u.done+=g; u.byDay[d]=(u.byDay[d]||0)+g; addDayZone(d,'pitch','BAG',g); } const z=Z('pitch'); z.n++; if(r.workState==='done') z.done++; }); }catch(_){}
       let envDone=0; try{ envDone=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]').filter(x=>x.day>=s&&x.day<=e).length; }catch(_){}
       return {s,e,days,work,memos,units,zones,dayDetail,envDone,done:work.filter(x=>x.completed).length,carry:work.filter(x=>x.carryCount&&x.carryFrom).length}; }
@@ -8915,8 +8940,10 @@ window.jisuPitchMigration=migrateLegacy().then(()=>{updateWork();}).catch(e=>con
 async function loadPhotos(){try{const db=await dbOpen();const rows=await new Promise((res,rej)=>{const q=db.transaction(STORE,'readonly').objectStore(STORE).getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error)});db.close();const list=rows.filter(p=>p.day===active).sort((a,b)=>a.id.localeCompare(b.id));const safeSrc=window.JisuCore?window.JisuCore.safeImgSrc:(u=>/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(String(u||''))?String(u):'');document.getElementById('pitchPhotoThumbs').innerHTML=list.map(p=>{const s=safeSrc(p.data);return s?'<img src="'+s+'" alt="피치 사진">':'';}).join('');const sb=document.getElementById('pitchStackBtn');if(sb){const c1=sb.querySelector('.c1'),c2=sb.querySelector('.c2'),c3=sb.querySelector('.c3'),rev=[...list].reverse(),s0=rev[0]?safeSrc(rev[0].data):'',s1=rev[1]?safeSrc(rev[1].data):'',s2=rev[2]?safeSrc(rev[2].data):'';if(c1)c1.innerHTML=s0?'<img src="'+s0+'" alt="최근 피치 사진">':'<svg class="ob-stack-empty-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';if(c2)c2.innerHTML=s1?'<img src="'+s1+'" alt="이전 피치 사진">':'';if(c3)c3.innerHTML=s2?'<img src="'+s2+'" alt="이전 피치 사진">':'';sb._items=rev;}}catch(e){console.error(e)}}document.getElementById('pitchPhotoBtn').addEventListener('click',()=>document.getElementById('pitchPhotoInput').click());if(document.getElementById('pitchTopPhotoBtn'))document.getElementById('pitchTopPhotoBtn').addEventListener('click',e=>{e.stopPropagation();if(window.jisuOpenCam){window.jisuOpenCam(async data=>{const db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close();await loadPhotos();},()=>document.getElementById('pitchPhotoInput').click());}else{document.getElementById('pitchPhotoInput').click();}});if(document.getElementById('pitchStackBtn'))document.getElementById('pitchStackBtn').addEventListener('click',e=>{e.stopPropagation();const sb=e.currentTarget;const items=(sb._items||[]).map(p=>({id:p.id,at:p.at||p.day,name:p.name||'피치 사진',data:p.data}));if(!items.length){document.getElementById('pitchPhotoInput').click();return;}if(window.jisuOpenGallery)window.jisuOpenGallery(items,0,async cur=>{const db=await dbOpen();await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).delete(cur.id);t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close();await loadPhotos();return (sb._items||[]).map(p=>({id:p.id,at:p.at||p.day,name:p.name||'피치 사진',data:p.data}));});});document.getElementById('pitchPhotoInput').addEventListener('change',async e=>{const _pf=[...e.target.files];e.target.value='';for(const f of _pf)await new Promise(resolve=>{const im=new Image();im.onload=async()=>{try{const sc=Math.min(1,2048/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*sc);c.height=Math.round(im.naturalHeight*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);const data=c.toDataURL('image/jpeg',.90),db=await dbOpen(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);await new Promise((res,rej)=>{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put({id,day:active,at:new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),name:'피치_'+active+'_'+id+'.jpg',data});t.oncomplete=res;t.onerror=()=>rej(t.error)});db.close()}catch(err){console.error(err)}URL.revokeObjectURL(im.src);resolve()};im.onerror=()=>{URL.revokeObjectURL(im.src);resolve();};im.src=URL.createObjectURL(f)});loadPhotos()});
 /* 다른 기기(모바일 등)에서 피치 작업시작·투입·분쇄를 누르거나 메모가 바뀌면 이 화면도 즉시 따라간다.
    이 카드를 직접 타이핑하는 중이면 입력값을 지우지 않도록 상태 표시만 갱신한다. */
-window.addEventListener('storage',e=>{if(!e||!e.key)return;
-  if(e.key===KEY){const a=document.activeElement;if(a&&root.contains(a)&&a.matches&&a.matches('input')){updateWork();}else{paint();}}
+let pendingPaint=false;
+root.addEventListener('focusout',()=>{if(!pendingPaint)return;setTimeout(()=>{const ae=document.activeElement;if(!ae||!root.contains(ae)||!ae.matches('input,textarea,select')){pendingPaint=false;paint();}},0);});
+window.addEventListener('storage',e=>{if(!e)return;
+  if(e.key===KEY||e.key===null){const a=document.activeElement;if(a&&root.contains(a)&&a.matches&&a.matches('input,textarea,select')){pendingPaint=true;updateWork();}else{pendingPaint=false;paint();}}
   else if(e.key==='jisu-memos-v1'){updateWork();}});
 /* 작업시작 버튼을 없앴으므로, 예전 기록의 '작업중'은 대기로 되돌려 초록불이 영구히 남지 않게 한다(완료 기록은 건드리지 않는다). */
 try{const _all=records(),_row=_all[active];if(_row&&_row.workState==='work'){_row.workState='idle';delete _row.startedAt;delete _row.beforeStart;localStorage.setItem(KEY,JSON.stringify(_all));}}catch(_){}
@@ -9634,36 +9661,30 @@ paint()})();</script>
     });
   }
 
-  async function exportInboundExcel() {
+  async function exportInboundExcel(targetRec) {
     try {
       const XLSX = await loadXLSX();
-      const rec = getTodayRecord();
+      const rec = targetRec || getTodayRecord();
+      const exportDay = (rec && rec.day) || activeDay;
       /* 교대 마감으로 보관(archived)된 행도 함께 출력한다. 같은 행이 두 번 들어가지 않게 rid로 막는다. */
-      const seenRid = new Set();
-      const rows = [...(rec.archivedRows || []), ...(rec.rows || [])].filter(r => {
-        if (!r) return false;
-        if (!r.rid) return true;
-        if (seenRid.has(r.rid)) return false;
-        seenRid.add(r.rid);
-        return true;
-      });
+      const rows = window.jisuDedupeInboundRows(rec && rec.archivedRows, rec && rec.rows);
       const wb = XLSX.utils.book_new();
 
       let totalKg = 0;
       const kgHist = r => { try { return (window.jisuKgHistory && window.jisuKgHistory.excel(r)) || ""; } catch(_) { return ""; } };
       const sheetData = [
         ["입고원료 중량 기록일지"],
-        [`입고일자: ${activeDay}`, "", `확인자: 출하 / 파트장`, "", `작업자: ${localStorage.getItem("jisu-user") || ""}`],
+        [`입고일자: ${exportDay}`, "", `확인자: 출하 / 파트장`, "", `작업자: ${localStorage.getItem("jisu-user") || ""}`],
         [],
         ["번호", "입고일자", "LOT 번호", "Bag No.", "실측 중량(kg)", "작업자", "차량번호", "재계량 이력"]
       ];
 
       rows.forEach((r, i) => {
-        const kg = parseFloat(r.kg) || 0;
+        const kg = window.jisuParseNum(r.kg) || 0;
         totalKg += kg;
         sheetData.push([
           i + 1,
-          activeDay,
+          exportDay,
           r.lot || "",
           r.bag || "",
           kg,
@@ -9683,7 +9704,7 @@ paint()})();</script>
       ];
       XLSX.utils.book_append_sheet(wb, ws, "입고원료 중량 기록일지");
 
-      const fname = `입고원료_중량기록일지_${activeDay.replace(/-/g, "")}.xlsx`;
+      const fname = `입고원료_중량기록일지_${exportDay.replace(/-/g, "")}.xlsx`;
       XLSX.writeFile(wb, fname);
       return true;
     } catch(e) {
@@ -9696,18 +9717,32 @@ paint()})();</script>
 
   function maybeAutoDownloadInboundExcel(rec) {
     if (isMobInbound() || !rec) return;
-    const rowsCount = (rec.archivedRows ? rec.archivedRows.length : 0) + (rec.rows ? rec.rows.length : 0);
-    if (!rowsCount) return;
-    const isDone = rec.workState === "done" || (Array.isArray(rec.archivedRows) && rec.archivedRows.length > 0);
-    if (!isDone) return;
+    const archLen = Array.isArray(rec.archivedRows) ? rec.archivedRows.length : 0;
+    const curLen = Array.isArray(rec.rows) ? rec.rows.length : 0;
+    if (!archLen && !curLen) return;
+
+    let triggerTag = "";
+    if (rec.workState === "done") {
+      const totalLen = window.jisuDedupeInboundRows(rec.archivedRows, rec.rows).length;
+      triggerTag = `done:${rec.completedAt || ""}:${totalLen}`;
+    } else if (archLen > 0 && curLen === 0) {
+      triggerTag = `arch:${archLen}`;
+    } else {
+      return;
+    }
+
     const tagBase = rec.shiftKey || activeDay;
-    const keyTag = tagBase + ':' + (rec.completedAt || '') + ':' + rowsCount;
+    const keyTag = `${tagBase}:${triggerTag}`;
     const markKey = "jisu-inb-auto-xlsx-" + tagBase;
     if (localStorage.getItem(markKey) === keyTag) return;
-    localStorage.setItem(markKey, keyTag);
-    exportInboundExcel().then(() => {
+
+    exportInboundExcel(rec).then(ok => {
+      if (!ok) return;
+      localStorage.setItem(markKey, keyTag);
       if (saveStatusEl) saveStatusEl.textContent = `모바일 입고완료 수신 · 엑셀 자동 저장됨! (${rec.completedAt || kstTime()})`;
-    }).catch(() => {});
+    }).catch(err => {
+      console.warn("[inbound auto-xlsx failed]", err);
+    });
   }
 
   function updateWorkflowUI() {
@@ -9884,7 +9919,7 @@ paint()})();</script>
     { key:'packaging', title:'포장 2동 (PACKAGING · 2)', sub:'포장 2동 · 금일작업 및 특이사항', kw:'포장 2동 포장 c동 c동 packaging' },
     { key:'packaging-d', title:'포장 3동 (PACKAGING · 3)', sub:'포장 3동 · 금일작업 및 특이사항', kw:'포장 3동 포장 d동 d동 packaging' },
     { key:'pitch', title:'피치 (PITCH)', sub:'부원료 투입 · 분쇄 현황 · 원료 이동', kw:'피치 pitch 부원료 분쇄 원료이동' },
-    { key:'environment', title:'환경 (ENVIRONMENT)', sub:'1~14호기 환경 호기 현황', kw:'환경 environment 호기 집진기' },
+    { key:'environment', title:'환경 (ENVIRONMENT)', sub:'1~14호기 · 메인통로 · 분체·충진기·포장기·소성로 현황', kw:'환경 environment 호기 집진기 메인통로 통로 분체 충진기 포장기 소성로' },
     { key:'outbound:RAS-2', title:'출고 · RAS-2', sub:'출하 품목 · 출고 상황실로 이동', kw:'출고 ras-2 ras2' },
     { key:'outbound:L1', title:'출고 · L1', sub:'출하 품목 · 출고 상황실로 이동', kw:'출고 l1' },
     { key:'outbound:CP3K', title:'출고 · CP3K', sub:'출하 품목 · 출고 상황실로 이동', kw:'출고 cp3k' },
