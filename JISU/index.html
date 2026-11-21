@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611211211">
+  <meta name="jisu-build" content="202611211234">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -679,14 +679,6 @@
     .bldg-badge .status-dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid currentColor;animation:ping 1.8s cubic-bezier(0,0,0.2,1) infinite;}
     .zone-quick-btn > span.rounded-full{position:relative;background:#22c55e !important;color:#4ade80;}
     .zone-quick-btn > span.rounded-full::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:2px solid currentColor;animation:ping 1.8s cubic-bezier(0,0,0.2,1) infinite;}
-
-    /* Production C: yellow light + whole button blinks yellow */
-    [data-production-btn="C"] .pulse-ring{background:#facc15 !important;color:#fde047 !important;}
-    @keyframes jisuYellowBlink{
-      0%,100%{background:rgba(250,204,21,0.12);box-shadow:0 8px 24px rgba(0,0,0,.24),0 0 0 0 rgba(250,204,21,0);color:#f8fafc;}
-      50%{background:rgba(250,204,21,0.85);box-shadow:0 8px 24px rgba(0,0,0,.24),0 0 18px 4px rgba(250,204,21,.75);color:#111827;}
-    }
-    .map-stage [data-production-btn="C"]{animation:jisuYellowBlink 1.2s ease-in-out infinite;}
 
     /* Outbound: blue blinking light */
     [data-toggle-zone="outbound"] .pulse-ring{background:#3b82f6 !important;color:#60a5fa !important;}
@@ -2512,17 +2504,17 @@
     .home-sum .hs-bar{margin-top:6px;height:10px;border-radius:9999px;background:rgba(255,255,255,.10);overflow:hidden;}
     .home-sum .hs-bar span{display:block;height:100%;border-radius:9999px;background:linear-gradient(90deg,#3b82f6,#22c55e);transition:width .4s ease;}
     .home-sum .hs-empty{font-size:12.5px;color:#94a3b8;}
-    /* 표시등 상태색 (생산C 제외) */
-    [data-toggle-zone]:not([data-production-btn="C"]).st-none .pulse-ring{background:#64748b !important;color:#94a3b8 !important;}
-    [data-toggle-zone]:not([data-production-btn="C"]).st-none .pulse-ring::after{animation:none !important;opacity:0 !important;}
-    [data-toggle-zone]:not([data-production-btn="C"]).st-wait .pulse-ring{background:#64748b !important;color:#94a3b8 !important;}
-    [data-toggle-zone]:not([data-production-btn="C"]).st-wait .pulse-ring::after{animation:none !important;opacity:0 !important;}
-    [data-toggle-zone]:not([data-production-btn="C"]).st-work .pulse-ring{background:#22c55e !important;color:#4ade80 !important;}
+    /* 표시등 상태색 */
+    [data-toggle-zone].st-none .pulse-ring{background:#64748b !important;color:#94a3b8 !important;}
+    [data-toggle-zone].st-none .pulse-ring::after{animation:none !important;opacity:0 !important;}
+    [data-toggle-zone].st-wait .pulse-ring{background:#64748b !important;color:#94a3b8 !important;}
+    [data-toggle-zone].st-wait .pulse-ring::after{animation:none !important;opacity:0 !important;}
+    [data-toggle-zone].st-work .pulse-ring{background:#22c55e !important;color:#4ade80 !important;}
     [data-zone-btn].st-work > span.rounded-full{background:#22c55e !important;color:#4ade80 !important;box-shadow:0 0 8px rgba(34,197,94,0.65);}
     [data-zone-btn].st-done > span.rounded-full{background:#3b82f6 !important;color:#60a5fa !important;}
     [data-zone-btn].st-wait > span.rounded-full,[data-zone-btn].st-none > span.rounded-full{background:#64748b !important;color:#94a3b8 !important;}
-    [data-toggle-zone]:not([data-production-btn="C"]).st-done .pulse-ring{background:#3b82f6 !important;color:#60a5fa !important;}
-    [data-toggle-zone]:not([data-production-btn="C"]).st-carry .pulse-ring{background:#ec4899 !important;color:#f472b6 !important;}
+    [data-toggle-zone].st-done .pulse-ring{background:#3b82f6 !important;color:#60a5fa !important;}
+    [data-toggle-zone].st-carry .pulse-ring{background:#ec4899 !important;color:#f472b6 !important;}
     .state-legend{position:absolute;left:12px;bottom:12px;z-index:30;display:flex;flex-wrap:wrap;gap:10px;padding:6px 12px;border-radius:9999px;background:rgba(12,18,28,.55);backdrop-filter:blur(4px);font-size:11.5px;font-weight:700;color:#e5e7eb;pointer-events:none;zoom:var(--ui-z,1);}
     .state-legend span{display:inline-flex;align-items:center;gap:5px;} .state-legend i{width:9px;height:9px;border-radius:9999px;display:inline-block;}
     .state-legend i.n{background:#64748b;} .state-legend i.w{background:#f8fafc;} .state-legend i.r{background:#22c55e;} .state-legend i.d{background:#3b82f6;} .state-legend i.c{background:#ec4899;}
@@ -2538,15 +2530,15 @@
     /* 긴 카드: 안쪽 여백 조금 줄임 */
     .hotspot-wrapper.is-open > .expand-card{overflow-y:auto !important;}
     body.map-modals #detailModal > *{max-width:min(32rem,calc((var(--map-w) - 24px) / var(--ui-z,1))) !important;}
-    /* 오늘 작업이 다 완료된 버튼: 버튼 전체를 파란색으로 (생산C 노란색은 제외) */
-    [data-toggle-zone].st-done:not([data-production-btn="C"]){background:rgba(59,130,246,.62) !important;color:#fff !important;box-shadow:0 0 16px 2px rgba(96,165,250,.7),inset 0 0 12px rgba(191,219,254,.35),inset 0 1px 0 rgba(255,255,255,.3) !important;animation:doneGlow 2.4s ease-in-out infinite;}
+    /* 오늘 작업이 다 완료된 버튼: 버튼 전체를 파란색으로 */
+    [data-toggle-zone].st-done{background:rgba(59,130,246,.62) !important;color:#fff !important;box-shadow:0 0 16px 2px rgba(96,165,250,.7),inset 0 0 12px rgba(191,219,254,.35),inset 0 1px 0 rgba(255,255,255,.3) !important;animation:doneGlow 2.4s ease-in-out infinite;}
     @keyframes doneGlow{0%,100%{box-shadow:0 0 12px 1px rgba(96,165,250,.5),inset 0 0 10px rgba(191,219,254,.3),inset 0 1px 0 rgba(255,255,255,.3)}50%{box-shadow:0 0 22px 4px rgba(96,165,250,.8),inset 0 0 14px rgba(191,219,254,.45),inset 0 1px 0 rgba(255,255,255,.3)}}
-    [data-toggle-zone].st-done:not([data-production-btn="C"]) span{color:#fff !important;}
-    [data-toggle-zone].st-done:not([data-production-btn="C"]) .pulse-ring{background:#fff !important;color:#dbeafe !important;}
-    [data-toggle-zone].st-done:not([data-production-btn="C"]) .cmd-count{background:rgba(255,255,255,.92) !important;color:#2563eb !important;box-shadow:none !important;}
+    [data-toggle-zone].st-done span{color:#fff !important;}
+    [data-toggle-zone].st-done .pulse-ring{background:#fff !important;color:#dbeafe !important;}
+    [data-toggle-zone].st-done .cmd-count{background:rgba(255,255,255,.92) !important;color:#2563eb !important;box-shadow:none !important;}
     /* 작업중 = 앞 점 초록 깜빡임 (이월과 겹쳐도 작업중 우선, 이월은 숫자 배지의 분홍 표시로) */
     @keyframes workBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.8)}}
-    [data-toggle-zone]:not([data-production-btn="C"]).st-work .pulse-ring{animation:workBlink 1s ease-in-out infinite !important;box-shadow:0 0 8px #22c55e !important;}
+    [data-toggle-zone].st-work .pulse-ring{animation:workBlink 1s ease-in-out infinite !important;box-shadow:0 0 8px #22c55e !important;}
     /* 긴급 작업 */
     .urg-tag{display:inline-flex;align-items:center;margin-left:4px;padding:0 7px;height:17px;border-radius:9999px;font-size:10.5px;font-weight:900;color:#fff;background:#dc2626;box-shadow:0 0 8px rgba(220,38,38,.7);white-space:nowrap;animation:urgPulse 1.4s ease-in-out infinite;}
     @keyframes urgPulse{0%,100%{box-shadow:0 0 4px rgba(220,38,38,.5)}50%{box-shadow:0 0 12px rgba(239,68,68,.95)}}
@@ -2629,8 +2621,22 @@
     .hm-txt{margin-top:2px;font-size:12.5px;font-weight:700;color:#f1f5f9;word-break:break-all;}
     .home-memo .hs-h{font-size:12px;font-weight:800;color:#cbd5e1;margin-bottom:6px;} .home-memo .hs-empty{font-size:12.5px;color:#94a3b8;}
     /* 완료된 버튼의 앞 점: 파란색 깜빡임 */
-    [data-toggle-zone].st-done:not([data-production-btn="C"]) .pulse-ring{background:#38bdf8 !important;color:#7dd3fc !important;box-shadow:0 0 8px #38bdf8,0 0 0 2px rgba(255,255,255,.55) !important;animation:workBlink 1s ease-in-out infinite !important;}
-    [data-toggle-zone].st-done:not([data-production-btn="C"]) .pulse-ring::after{animation:none !important;opacity:0 !important;}
+    [data-toggle-zone].st-done .pulse-ring{background:#38bdf8 !important;color:#7dd3fc !important;box-shadow:0 0 8px #38bdf8,0 0 0 2px rgba(255,255,255,.55) !important;animation:workBlink 1s ease-in-out infinite !important;}
+    [data-toggle-zone].st-done .pulse-ring::after{animation:none !important;opacity:0 !important;}
+    /* 확인 필요(2순위) = 노란색 깜빡임: 부족 완료(short)나 오늘 특이사항이 남은 구역 버튼.
+       상태 배경(완료 파랑·환경·피치 등 !important 규칙)을 이기도록 body:not(#zz) + 클래스로 특이도를 올린다.
+       배경 알파와 글씨색을 같은 애니메이션 변수(--warn-a)로 함께 움직여, 노랑이 진해질 때 글씨는 #111827,
+       옅을 때는 #f8fafc 로 대비가 깨지지 않는다. 표시등 색은 작업 상태(회색·초록·파랑)를 그대로 둔다. */
+    @property --warn-a{syntax:'<number>';inherits:false;initial-value:0.12;}
+    @keyframes warnBlink{0%,100%{--warn-a:0.12;}50%{--warn-a:0.85;}}
+    body:not(#zz) .map-stage button.hotspot-pill[data-toggle-zone].st-warn{
+      --warn-a:0.12;
+      background:rgba(250,204,21,var(--warn-a)) !important;
+      color:color-mix(in srgb,#111827 calc((var(--warn-a) - 0.12) * 136.99%),#f8fafc) !important;
+      box-shadow:0 8px 24px rgba(0,0,0,.24),0 0 18px 4px rgba(250,204,21,calc(var(--warn-a) * 0.88)) !important;
+      animation:warnBlink 1.6s ease-in-out infinite !important;
+    }
+    body:not(#zz) .map-stage button.hotspot-pill[data-toggle-zone].st-warn span{color:inherit !important;}
     /* HS 로고: 다른 버튼과 같은 투명 유리 스타일 (버튼 아님) */
     .hs-logo{background:linear-gradient(180deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.05) 55%,rgba(255,255,255,.02) 100%),rgba(12,18,28,.40);backdrop-filter:blur(6px) saturate(140%);-webkit-backdrop-filter:blur(6px) saturate(140%);color:#fde68a;box-shadow:0 6px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.22);letter-spacing:.5px;text-shadow:0 0 10px rgba(253,230,138,.35);}
   </style>
@@ -7938,13 +7944,13 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       });
     }
     function send(b){ const inp=b.querySelector('.memo-input'), v=inp.value.trim(); if(!v){ inp.focus(); return; } const k=b.dataset.memoFor;
-      const all=load(); const rec={id:Date.now().toString(36),target:k,tag:'issue',text:v,at:nowStr()}; const u=me(); if(u) rec.by=u; all.push(rec); save(all); inp.value=''; render(); if(window.jisuCmdRender) window.jisuCmdRender();
+      const all=load(); const rec={id:Date.now().toString(36),target:k,tag:'issue',text:v,at:nowStr()}; const u=me(); if(u) rec.by=u; all.push(rec); save(all); inp.value=''; render(); if(window.jisuCmdRender) window.jisuCmdRender(); if(window.jisuStateRefresh) window.jisuStateRefresh();
       const ni=document.querySelector('.memo-box[data-memo-for="'+k+'"] .memo-input'); if(ni) ni.focus(); }
     document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('.memo-box'); if(!b) return; e.stopPropagation();
       if(e.target.closest('.memo-send')){ send(b); return; }
-      const ack=e.target.closest('[data-memo-ack]'); if(ack){ const all=load(), it=all.find(x=>x.id===ack.dataset.memoAck); if(it){ it.ack=true; it.ackAt=nowStr(); const u=me(); if(u) it.ackBy=u; save(all); } render(); if(window.jisuCmdRender) window.jisuCmdRender(); } },true);
+      const ack=e.target.closest('[data-memo-ack]'); if(ack){ const all=load(), it=all.find(x=>x.id===ack.dataset.memoAck); if(it){ it.ack=true; it.ackAt=nowStr(); const u=me(); if(u) it.ackBy=u; save(all); } render(); if(window.jisuCmdRender) window.jisuCmdRender(); if(window.jisuStateRefresh) window.jisuStateRefresh(); } },true);
     document.addEventListener('keydown',e=>{ if(!(e.target.classList&&e.target.classList.contains('memo-input'))) return; e.stopPropagation(); if(e.key==='Enter'&&!e.isComposing){ e.preventDefault(); send(e.target.closest('.memo-box')); } },true);
-    window.addEventListener('storage',e=>{ if(e.key===KEY) render(); });
+    window.addEventListener('storage',e=>{ if(e.key===KEY){ render(); if(window.jisuStateRefresh) window.jisuStateRefresh(); } });
     window.jisuMemoRender=render; render();
   })();
   </script>
@@ -8231,18 +8237,27 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
   })();
   </script>
   <script>
-  /* 버튼 표시등 = 작업 상태 (생산C 노란색은 그대로 둠): 회색 작업 없음 · 흰색 대기 · 초록 작업중 · 파랑 완료 · 핑크 이월 */
+  /* 버튼 표시등 = 작업 상태: 회색 작업 없음 · 흰색 대기 · 초록 작업중 · 파랑 완료 · 핑크 이월 */
   (function(){
     const KEY='jisu-commands-v1', load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
     const ST=['st-none','st-wait','st-work','st-done','st-carry'];
     function refresh(){ const all=load().filter(x=>!x.closed&&x.kind!=='notice'&&x.id!=='demo_dispatch_1');
+      /* 확인 필요(st-warn, 2026-11-21 2순위): ① 부족 완료(short && completed) 또는 ② 오늘 특이사항(메모)이 남은 구역 → 노란색 깜빡임 */
+      const td=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+      const md=td.slice(5,7)+'. '+td.slice(8,10)+'.';
+      const isToday=r=>!!r&&(r.day?r.day===td:String(r.at||'').startsWith(md));
+      let memos=[]; try{ memos=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]'); }catch(e){}
+      const warn={};
+      all.forEach(x=>{ if(x.short===true&&x.completed===true&&isToday(x)) warn[String(x.target||'').split(':')[0]]=1; });
+      memos.forEach(m=>{ if(m&&!m.ack&&!m.closed&&isToday(m)&&m.target&&m.target!=='*') warn[String(m.target).split(':')[0]]=1; });
       document.querySelectorAll('[data-toggle-zone]').forEach(b=>{ const k=b.getAttribute('data-toggle-zone'), w=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(k==='inbound'&&x.target&&x.target.startsWith('inbound:')));
         let st=!w.length?'st-none':(w.some(x=>x.working&&!x.completed)?'st-work':(w.every(x=>x.completed)?'st-done':'st-wait') /* 이월은 점 색이 아니라 분홍 -N 배지로만 표시 */);
         if(k==='pitch'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done'&&(!w.length||w.every(x=>x.completed)))st='st-done';}catch(e){}}
         if(k==='inbound'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done'&&(!w.length||w.every(x=>x.completed)))st='st-done';}catch(e){}}ST.forEach(c=>b.classList.toggle(c,c===st));b.classList.toggle('has-active-work',st==='st-work');
         const sb=document.querySelector('[data-zone-btn="'+k+'"]');if(sb){ST.forEach(c=>sb.classList.toggle(c,c===st));sb.classList.toggle('has-active-work',st==='st-work');}
-        const urg=w.some(x=>x.urgent&&!x.completed); let um=b.querySelector('.urgent-mark'); if(urg&&!um){ um=document.createElement('span'); um.className='urgent-mark'; um.textContent='!'; um.title='긴급 작업'; b.appendChild(um); } else if(!urg&&um) um.remove(); }); }
-    window.jisuStateRefresh=refresh; refresh(); window.addEventListener('storage',e=>{ if(e.key===KEY) refresh(); });
+        const urg=w.some(x=>x.urgent&&!x.completed); let um=b.querySelector('.urgent-mark'); if(urg&&!um){ um=document.createElement('span'); um.className='urgent-mark'; um.textContent='!'; um.title='긴급 작업'; b.appendChild(um); } else if(!urg&&um) um.remove();
+        if(b.classList.contains('hotspot-pill')) b.classList.toggle('st-warn',!!warn[k]); }); }
+    window.jisuStateRefresh=refresh; refresh(); window.addEventListener('storage',e=>{ if(e.key===KEY||e.key==='jisu-memos-v1'||e.key==='jisu-pitch-records-v1'||e.key==='jisu-inbound-records-v1') refresh(); });
     const stage=document.getElementById('mapStage'); if(stage){ const lg=document.createElement('div'); lg.className='state-legend'; lg.innerHTML='<span><i class="n"></i>작업 없음</span><span><i class="r"></i>작업중</span><span><i class="d"></i>완료</span><span><i class="c"></i>이월</span>'; stage.appendChild(lg); }
   })();
   </script>
