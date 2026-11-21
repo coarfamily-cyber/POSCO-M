@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611211152">
+  <meta name="jisu-build" content="202611211211">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -5508,7 +5508,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
       const hasF2=lines.some(l=>/(?:세종\s*)?2\s*공장/.test(l));
       let tons=0, cnt=0;
       for(const l of lines){
-        if(/(?:세종\s*)?1\s*공장/.test(l)) continue;
+        if(/(?:세종\s*)?1\s*공장/.test(l) && !/(?:세종\s*)?2\s*공장/.test(l)) continue;
         if(hasF2 && !/(?:세종\s*)?2\s*공장/.test(l) && !/^\d{4}-\d{2}-\d{2}\s*\|/.test(l)) continue;
         const kp=l.match(/(\d+(?:[.,]\d+)?)\s*KG\s*\/\s*(\d+)\s*P/i);
         if(kp){
@@ -6877,22 +6877,57 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(e){return []}}, save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){console.warn('cal save err',e);return false;}};
     const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const kstToday=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+    const isValidYmd=(y,m,d)=>{
+      if(!Number.isInteger(y)||!Number.isInteger(m)||!Number.isInteger(d)) return false;
+      if(y<2000||y>2100||m<1||m>12||d<1||d>31) return false;
+      const dt=new Date(y,m-1,d);
+      return dt.getFullYear()===y && dt.getMonth()===m-1 && dt.getDate()===d;
+    };
+    const fmtYmd=(y,m,d)=>y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const shiftYmd=(baseYmd,delta)=>{
+      const p=String(baseYmd||kstToday()).split('-').map(Number);
+      const dt=new Date(p[0],p[1]-1,p[2]+(delta||0));
+      return fmtYmd(dt.getFullYear(),dt.getMonth()+1,dt.getDate());
+    };
     const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
     const NAMES={}; [...document.querySelectorAll('#cmdTarget option')].forEach(o=>{ if(o.value) NAMES[o.value]=o.textContent; }); Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     try{ Object.assign(NAMES, window.JISU_SUB_LABELS||{}); }catch(_){}
     const ALIAS=[]; Object.keys(NAMES).forEach(k=>{ const n=NAMES[k]; ALIAS.push([n,k]); ALIAS.push([n.replace(/[()\s]/g,''),k]); });
-    ALIAS.push(['D동포장','packaging-d'],['포장D','packaging-d'],['D포장','packaging-d']); ALIAS.sort((a,b)=>b[0].length-a[0].length);
+    ALIAS.push(['3동포장','packaging-d'],['3동 포장','packaging-d'],['D동포장','packaging-d'],['포장D','packaging-d'],['D포장','packaging-d']); ALIAS.sort((a,b)=>b[0].length-a[0].length);
+    const SINGLE_WORD_ZONES=new Set(['출고','입고','포장','피치','환경','창고','생산']);
     function parseLine(line){
-      let s=line.trim(); if(!s) return null; let kind='instruction', urgent=false;
-      if(/^[!！]/.test(s)){ urgent=true; s=s.replace(/^[!！]+\s*/,''); }
-      if(/^공지(?:사항)?(?:\s*[:：]\s*|\s+|$)/.test(s)){ kind='notice'; s=s.replace(/^공지(?:사항)?(?:\s*[:：]\s*|\s+|$)/,''); }
+      let s=String(line||'').trim(); if(!s) return null; let kind='instruction', urgent=false;
+      /* 선행 긴급·공지·대괄호 태그 반복 정리 ([긴급], (긴급), !, [공지], [출고] 등) */
+      for(let pass=0;pass<3;pass++){
+        let changed=false;
+        if(/^[!！]/.test(s)){ urgent=true; s=s.replace(/^[!！]+\s*/,''); changed=true; }
+        if(/^(?:\[긴급\]|\(긴급\)|【긴급】|긴급(?=[\s:：/\-]))/.test(s)){ urgent=true; s=s.replace(/^(?:\[긴급\]|\(긴급\)|【긴급】|긴급)\s*[:：/\-]?\s*/,''); changed=true; }
+        if(/^(?:\[공지(?:사항)?\]|\(공지(?:사항)?\)|【공지(?:사항)?】|공지(?:사항)?(?=\s*[:：/\-]|\s+|$))/.test(s)){ kind='notice'; s=s.replace(/^(?:\[공지(?:사항)?\]|\(공지(?:사항)?\)|【공지(?:사항)?】|공지(?:사항)?)\s*[:：/\-]?\s*/,''); changed=true; }
+        if(!changed) break;
+      }
+      /* 대괄호 구역명([출고] 내용, (입고) 내용) → 구역명 내용으로 풀기 */
+      const bm=s.match(/^[\[\(【]([^\]\)】]{1,16})[\]\)】]\s*(.*)$/);
+      if(bm){
+        const inner=bm[1].trim(), after=(bm[2]||'').trim();
+        const innerC=inner.replace(/\s+/g,'').toUpperCase();
+        if(innerC==='전체'||ALIAS.some(([a])=>a.replace(/\s+/g,'').toUpperCase()===innerC)){
+          s=inner+(after?(' '+after):'');
+        }
+      }
+      if(!s) return {err:'"'+String(line||'').trim()+'" - 내용이 없어요'};
       const compact=s.replace(/\s+/g,'').toUpperCase();
-      if(/^전체(\s|[:：]|공지|$)/.test(s)){ let rest=s.replace(/^전체\s*[:：]?\s*/,'').replace(/^공지\s*[:：]?\s*/,''); if(/^[!！]/.test(rest)){ urgent=true; rest=rest.replace(/^[!！]+\s*/,''); } if(!rest) return {err:'"'+line.trim()+'" - 내용이 없어요'}; return {target:'*',kind:'notice',text:rest,urgent}; }
+      if(/^전체(\s|[:：/\-]|공지|$)/.test(s)){ let rest=s.replace(/^전체\s*[:：/\-]?\s*/,'').replace(/^공지(?:사항)?\s*[:：/\-]?\s*/,''); if(/^[!！]/.test(rest)){ urgent=true; rest=rest.replace(/^[!！]+\s*/,''); } if(!rest) return {err:'"'+String(line||'').trim()+'" - 내용이 없어요'}; return {target:'*',kind:'notice',text:rest,urgent}; }
       for(const [a,k] of ALIAS){ const ac=a.replace(/\s+/g,'').toUpperCase(); if(compact.startsWith(ac)){
           let i=0,j=0; while(i<s.length && j<ac.length){ if(/\s/.test(s[i])){i++;continue;} i++; j++; }
-          let rest=s.slice(i).trim().replace(/^[:：\-]\s*/,''); if(/^공지(\s|[:：]|$)/.test(rest)){ kind='notice'; rest=rest.replace(/^공지\s*[:：]?\s*/,''); }
-          if(!rest) return {err:'"'+line.trim()+'" - 내용이 없어요'}; if(/^[!！]/.test(rest)){ urgent=true; rest=rest.replace(/^[!！]+\s*/,''); } if(!rest) return {err:'"'+line.trim()+'" - 내용이 없어요'}; return {target:kind==='notice'?'*':k,kind,text:(window.jisuNormUnitFor?window.jisuNormUnitFor(rest,k):(window.jisuNormUnit?window.jisuNormUnit(rest):rest)),urgent}; } }
-      return {err:'"'+line.trim()+'" - 맨 앞에 버튼 이름(출고, 입고, 생산A…)을 써주세요'};
+          const nextCh=s.slice(i,i+1);
+          /* 복합어 경계 보호: "포장재", "입고예정", "출고일정" 등이 구역명+남은글자로 찢어지지 않게 한다 */
+          if(SINGLE_WORD_ZONES.has(ac) && nextCh && /[가-힣]/.test(nextCh) && !s.slice(i).startsWith('공지')) continue;
+          let rest=s.slice(i).trim().replace(/^[:：\-/]\s*/,''); if(/^공지(?:사항)?(\s|[:：/\-]|$)/.test(rest)){ kind='notice'; rest=rest.replace(/^공지(?:사항)?\s*[:：/\-]?\s*/,''); }
+          /* !긴급 · [긴급] · (긴급) · 맨 긴급 단어를 여러 번 겹쳐 써도 한 번에 걷어낸다 */
+          for(let k2=0;k2<3;k2++){ if(!/^(?:\[긴급\]|\(긴급\)|【긴급】|[!！]+|긴급(?=[\s:：/\-]))/.test(rest)) break;
+            urgent=true; rest=rest.replace(/^(?:\[긴급\]|\(긴급\)|【긴급】|[!！]+|긴급)\s*[:：/\-]?/,'').trim(); }
+          if(!rest) return {err:'"'+String(line||'').trim()+'" - 내용이 없어요'}; return {target:kind==='notice'?'*':k,kind,text:(window.jisuNormUnitFor?window.jisuNormUnitFor(rest,k):(window.jisuNormUnit?window.jisuNormUnit(rest):rest)),urgent}; } }
+      return {err:'"'+String(line||'').trim()+'" - 맨 앞에 버튼 이름(출고, 입고, 생산A…)을 써주세요'};
     }
     const lineOf=s=>(s.urgent?'!':'')+(s.kind==='notice'?'공지 ':'')+(NAMES[s.target]||s.target)+' '+s.text;
     /* 지난 기록: 금일작업·공지(jisu-commands-v1)와 특이사항(jisu-memos-v1)을 등록한 날짜로 모아 보기 */
@@ -7014,8 +7049,33 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         }
       });
       if(changed){ save(CKEY,cmds); save(SKEY,sch); if(window.jisuCmdRender) window.jisuCmdRender();
-        /* 오늘 날짜로 새로 등록된 작업만 알림(Web Push·ntfy) — 달력 즉시등록·빠른등록·오전 예약 반영 */
-        try{ cmds.slice(before).forEach(function(r){ if(r&&r.day===today&&window.jisuSendNtfy) window.jisuSendNtfy(r); }); }catch(_){}
+        /* 오늘 날짜로 새로 등록된 작업만 알림(Web Push·ntfy) — 다건 일괄등록 시 구역별 1건 요약으로 폭주·레이트리밋 방지 */
+        try{
+          const todayNew=cmds.slice(before).filter(function(r){ return r&&r.day===today; });
+          if(window.jisuSendNtfy && todayNew.length){
+            if(todayNew.length<=2){
+              todayNew.forEach(function(r){ window.jisuSendNtfy(r); });
+            } else {
+              const byBase=new Map();
+              todayNew.forEach(function(r){
+                const b=String(r.target||'*').split(':')[0]||'*';
+                if(!byBase.has(b)) byBase.set(b,[]);
+                byBase.get(b).push(r);
+              });
+              byBase.forEach(function(list){
+                if(list.length===1){ window.jisuSendNtfy(list[0]); }
+                else {
+                  const first=list[0];
+                  const anyUrg=list.some(function(x){ return !!x.urgent; });
+                  window.jisuSendNtfy({
+                    id:first.id, target:first.target, kind:first.kind, urgent:anyUrg,
+                    text:String(first.text||'')+' 외 '+(list.length-1)+'건'
+                  });
+                }
+              });
+            }
+          }
+        }catch(_){}
       }
       if(window.jisuInboundRefresh) window.jisuInboundRefresh();
       return changed;
@@ -7097,56 +7157,75 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     $('calNext').addEventListener('click',()=>{ view=view[1]<11?[view[0],view[1]+1]:[view[0]+1,0]; draw(); });
     $('calToday').addEventListener('click',()=>{ const t=kstToday().split('-').map(Number); view=[t[0],t[1]-1]; draw(); });
     $('calGrid').addEventListener('click',e=>{ const c=e.target.closest('[data-day]'); if(c) openZoom(c.getAttribute('data-day')); });
+    /* 구형 지역번호판(부산96아2809) + 신형 번호판(85바1234, 123가4567) 안전 추출 ("공장85바1234" 오결합 방지) */
+    const CAR_REGIONS='서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주';
+    const RE_CAR_OLD=new RegExp('(?:'+CAR_REGIONS+')\\s*\\d{2,3}\\s*[가-힣]\\s*\\d{4}');
+    const RE_CAR_NEW=/(?:^|[^0-9])(\d{2,3}\s*[가-힣]\s*\d{4})(?![0-9])/;
+    function extractCarPlate(s){
+      const str=String(s||'');
+      const m1=str.match(RE_CAR_OLD);
+      if(m1) return m1[0].replace(/\s+/g,'');
+      const m2=str.match(RE_CAR_NEW);
+      if(m2) return m2[1].replace(/\s+/g,'');
+      return '';
+    }
+    function extractDispatchQty(s){
+      const str=String(s||'');
+      const m1=str.match(/\d{1,3}(?:,\d{3})*(?:\.\d+)?\s*(?:KG|T|TON|EA)\s*\/\s*\d+\s*P(?:LT)?/i)
+        || str.match(/\d+(?:[.,]\d+)?\s*(?:KG|T|TON|EA)\s*\/\s*\d+\s*P(?:LT)?/i);
+      if(m1) return m1[0].replace(/\s+/g,' ').trim();
+      const m2=str.match(/\d{1,3}(?:,\d{3})*(?:\.\d+)?\s*(?:KG|TON|톤|EA|PLT)(?![A-Za-z가-힣])/i)
+        || str.match(/\d+(?:[.,]\d+)?\s*(?:KG|TON|톤|EA|PLT)(?![A-Za-z가-힣])/i);
+      if(m2) return m2[0].replace(/\s+/g,' ').trim();
+      return '';
+    }
     function parseDispatchRows(raw, fallbackDate){
       const lines=String(raw||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
       if(!lines.length) return null;
-      const hasTable=lines.some(l=>(l.includes('\t')||/\s{2,}/.test(l))&&(/공장|윙바디|카고|톤|KG|PLT|차량번호|상차일/i.test(l)));
+      /* 진짜 배차표 판별: 탭 구분이거나(공장/차량/상차 키워드 동반), 다중 공백 + 배차표 핵심 키워드(공장/차량번호/상차일/하차지/윙바디/카고) 존재 */
+      const isDispatchLine=l=>(l.includes('\t')||/\s{2,}/.test(l))&&(/[12]\s*공장|윙바디|카고|차량번호|상차일|하차지|배차일/.test(l));
+      const hasTable=lines.some(isDispatchLine);
       if(!hasTable) return null;
-      const items=[]; let skipped1=0;
+      const items=[], leftoverLines=[]; let skipped1=0;
+      const safeFallback=(fallbackDate && /^\d{4}-\d{2}-\d{2}$/.test(fallbackDate))?fallbackDate:kstToday();
       const parseDt=(s)=>{
         const cleaned=String(s||'').replace(/0\d{1,2}-\d{3,4}-\d{4}/g,' ');
         let m=cleaned.match(/(\d{2,4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/);
         if(m){
-          const y=m[1].length===2?'20'+m[1]:m[1];
+          const y=parseInt(m[1].length===2?'20'+m[1]:m[1],10);
           const mo=parseInt(m[2],10), da=parseInt(m[3],10);
-          if(mo>=1&&mo<=12&&da>=1&&da<=31) return y+'-'+String(mo).padStart(2,'0')+'-'+String(da).padStart(2,'0');
+          if(isValidYmd(y,mo,da)) return fmtYmd(y,mo,da);
         }
-        m=cleaned.match(/\b(\d{1,2})[\/.\-](\d{1,2})\b/);
+        m=cleaned.match(/(?:^|[^0-9])(\d{1,2})[\/.\-](\d{1,2})(?![0-9가-힣])/);
         if(m){
           const mo=parseInt(m[1],10), da=parseInt(m[2],10);
-          if(mo>=1&&mo<=12&&da>=1&&da<=31){ const y=(fallbackDate||kstToday()).slice(0,4); return y+'-'+String(mo).padStart(2,'0')+'-'+String(da).padStart(2,'0'); }
+          const y=parseInt(safeFallback.slice(0,4),10);
+          if(isValidYmd(y,mo,da)) return fmtYmd(y,mo,da);
         }
-        return fallbackDate||kstToday();
+        return safeFallback;
       };
       for(const l of lines){
-        if(/상차일|입차시간|차량번호/.test(l)&&/공장|하차지/.test(l)) continue;
+        if(/상차일|입차시간|차량번호|배차일/.test(l)&&/공장|하차지|수량/.test(l)) continue;
+        const isTabOrMulti=l.includes('\t')||/\s{2,}/.test(l);
+        if(!isTabOrMulti){ leftoverLines.push(l); continue; }
         const cols=(l.includes('\t')?l.split('\t'):l.split(/\s{2,}/)).map(c=>c.trim());
         const rowTxt=cols.join(' ');
-        if(/1공장/.test(rowTxt)&&!/2공장/.test(rowTxt)){ skipped1++; continue; }
-        if(!/2공장/.test(rowTxt)) continue;
+        if(/1\s*공장/.test(rowTxt)&&!/2\s*공장/.test(rowTxt)){ skipped1++; continue; }
+        if(!/2\s*공장/.test(rowTxt)){ leftoverLines.push(l); continue; }
         if(cols.length>=8){
           const dt=parseDt(cols[0]);
-          let car=cols[7]||'', qty=cols[9]||'';
-          if(!/[가-힣]{2}\s*\d{2,3}\s*[가-힣]\s*\d{4}/.test(car)){
-            const carM=l.match(/[가-힣]{2}\s*\d{2,3}\s*[가-힣]\s*\d{4}/);
-            if(carM) car=carM[0].replace(/\s+/g,'');
-          }
-          if(!/\d+(?:[.,]\d+)?\s*(?:KG|kg|T|TON|EA|P(?:LT)?)/i.test(qty)){
-            const qtyM=l.match(/\d+(?:[.,]\d+)?\s*(?:KG|kg|T|TON)\s*\/?\s*\d*\s*P(?:LT)?/i);
-            if(qtyM) qty=qtyM[0].replace(/\s+/g,' ').trim();
-          }
+          let car=extractCarPlate(cols[7]||'')||extractCarPlate(l);
+          let qty=extractDispatchQty(cols[9]||'')||extractDispatchQty(l);
           const parts=[car,qty].filter(Boolean);
           if(parts.length){ items.push({date:dt,target:'outbound',kind:'instruction',text:parts.join(' · ')}); continue; }
         }
         const dt=parseDt(l);
-        const carM=l.match(/[가-힣]{2}\s*\d{2,3}\s*[가-힣]\s*\d{4}/);
-        const qtyM=l.match(/\d+(?:[.,]\d+)?\s*(?:KG|kg|T|TON|EA)\s*\/?\s*\d*\s*P(?:LT)?/i);
-        const car=carM?carM[0].replace(/\s+/g,''):'';
-        const qty=qtyM?qtyM[0].replace(/\s+/g,' ').trim():'';
+        const car=extractCarPlate(l);
+        const qty=extractDispatchQty(l);
         const parts=[car,qty].filter(Boolean);
         if(parts.length) items.push({date:dt,target:'outbound',kind:'instruction',text:parts.join(' · ')});
       }
-      return {items,skipped1};
+      return {items,skipped1,leftoverLines};
     }
     $('czText').addEventListener('input',()=>{
       const msg=$('czMsg'); if(!msg) return;
@@ -7370,23 +7449,25 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           if(!l) return;
           if(/^(?:설명|참고|요약|출력|결과|이미지)\s*[:：]?$/.test(l)) return;
           l=l.replace(/\s{2,}/g,' ');
-          let m=l.match(/^(\d{4})\s*[.\/-]\s*(\d{1,2})\s*[.\/-]\s*(\d{1,2})\.?\s*(?:\([월화수목금토일]\))?\s*\|?\s*(.*)$/);
+          let m=l.match(/^(\d{4})\s*[년.\/-]\s*(\d{1,2})\s*[월.\/-]\s*(\d{1,2})\s*일?\.?\s*(?:\([월화수목금토일]\))?\s*\|?\s*(.*)$/);
           if(m){
-            out.push(m[1]+'-'+String(parseInt(m[2],10)).padStart(2,'0')+'-'+String(parseInt(m[3],10)).padStart(2,'0')+' | '+(m[4]||'').trim());
+            const y=parseInt(m[1],10), mo=parseInt(m[2],10), da=parseInt(m[3],10), rest=(m[4]||'').trim();
+            if(isValidYmd(y,mo,da) && rest) out.push(fmtYmd(y,mo,da)+' | '+rest);
             return;
           }
-          m=l.match(/^(\d{1,2})\s*[.\/-]\s*(\d{1,2})\s*일?\.?\s*(?:\([월화수목금토일]\))?\s*\|?\s*(.*)$/);
+          m=l.match(/^(\d{1,2})\s*[월.\/-]\s*(\d{1,2})\s*일?\.?\s*(?:\([월화수목금토일]\))?\s*\|?\s*(.*)$/);
           if(m){
-            const mo=parseInt(m[1],10), da=parseInt(m[2],10), rest=(m[3]||'').trim();
-            if(mo>=1&&mo<=12&&da>=1&&da<=31) out.push(inferBatchYear(mo)+'-'+String(mo).padStart(2,'0')+'-'+String(da).padStart(2,'0')+' | '+rest);
-            else out.push(l);
+            const mo=parseInt(m[1],10), da=parseInt(m[2],10), rest=(m[3]||'').trim(), y=inferBatchYear(mo);
+            if(isValidYmd(y,mo,da) && rest) out.push(fmtYmd(y,mo,da)+' | '+rest);
+            else if(rest) out.push(l);
             return;
           }
           if(/^\|/.test(l)) l=l.replace(/^\|+\s*/,'');
-          out.push(l);
+          if(l) out.push(l);
         });
         return out.join('\n').trim();
       }
+      window.__jisuCleanGeminiText=cleanGeminiText;
       async function runGeminiExtract(key, dataUrl){
         const b64=dataUrl.split(',')[1];
         const mime=(dataUrl.match(/^data:([^;]+);/)||[])[1]||'image/jpeg';
@@ -7394,70 +7475,93 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         const models=['gemini-3.5-flash-lite','gemini-3.1-flash-lite'];
         let lastErr='';
         for(const md of models){
+          let timer=null;
           try{
+            const ctrl=typeof AbortController==='function'?new AbortController():null;
+            if(ctrl) timer=setTimeout(()=>ctrl.abort(),30000);
             const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+md+':generateContent?key='+encodeURIComponent(key),{
               method:'POST',
               headers:{'Content-Type':'application/json'},
+              signal:ctrl?ctrl.signal:undefined,
               body:JSON.stringify({contents:[{parts:[{text:prompt},{inline_data:{mime_type:mime,data:b64}}]}],generationConfig:{temperature:0.1}})
             });
-            const j=await r.json();
+            let j=null; try{ j=await r.json(); }catch(_){ j=null; }
             if(!r.ok){ lastErr=(j&&j.error&&j.error.message)||('HTTP '+r.status); continue; }
             const raw=(j&&j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts||[]).map(p=>p.text||'').join('').trim();
             const txt=cleanGeminiText(raw);
             if(txt) return txt;
             lastErr='빈 응답';
-          }catch(e){ lastErr=e.message; }
+          }catch(e){ lastErr=(e&&e.name==='AbortError')?'응답 시간 초과(30초)':(e&&e.message||'요청 실패'); }
+          finally{ if(timer) clearTimeout(timer); }
         }
         throw new Error(lastErr||'Gemini 응답 없음');
       }
       window.jisuGeminiReadImage=runGeminiExtract;
+      let ocrSeq=0, activeObjUrl=null;
+      function revokeObjUrl(){ if(activeObjUrl){ try{ URL.revokeObjectURL(activeObjUrl); }catch(_){} activeObjUrl=null; } }
       async function runBatchOcr(file){
-        if(!file||!file.type.startsWith('image/')) return;
+        if(!file||!file.type||!file.type.startsWith('image/')) return;
+        const mySeq=++ocrSeq;
+        revokeObjUrl();
         const url=URL.createObjectURL(file);
+        activeObjUrl=url;
         if(imgThumb) imgThumb.src=url;
         if(imgWrap) imgWrap.style.display='block';
         if(window.jisuResizeImageFile){
-          try{ batchImgData=await window.jisuResizeImageFile(file,1400,0.84); }catch(_){ batchImgData=null; }
+          try{
+            const resized=await window.jisuResizeImageFile(file,1400,0.84);
+            if(mySeq!==ocrSeq) return;
+            batchImgData=resized;
+          }catch(_){ if(mySeq!==ocrSeq) return; batchImgData=null; }
         }
+        renderBatchPreview();
         const gKey=getGemKey();
         if(gKey && batchImgData){
           if(ocrStatus){ ocrStatus.textContent='✨ Gemini AI가 지시서를 읽고 있습니다...'; ocrStatus.style.color='#c4b5fd'; }
           try{
             const gTxt=await runGeminiExtract(gKey,batchImgData);
+            if(mySeq!==ocrSeq) return;
             batchImgTon=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(gTxt):'';
             batchText.value=gTxt;
             renderBatchPreview();
             if(ocrStatus){ ocrStatus.textContent='✅ Gemini AI 분석 완료! 아래 미리보기 확인 후 저장하세요.'; ocrStatus.style.color='#4ade80'; }
             return;
           }catch(ge){
+            if(mySeq!==ocrSeq) return;
             if(ocrStatus){ ocrStatus.textContent='Gemini 오류('+ge.message+') → 기본 OCR로 전환 중...'; ocrStatus.style.color='#fbbf24'; }
           }
         }
         if(ocrStatus){ ocrStatus.textContent='⏳ 무료 OCR로 이미지 읽는 중...'; ocrStatus.style.color='#38bdf8'; }
         try{
           const T=await loadTesseract();
+          if(mySeq!==ocrSeq) return;
           const out=await T.recognize(url,'kor+eng',{
             logger:m=>{
-              if(m.status==='recognizing text'&&ocrStatus){
+              if(mySeq===ocrSeq && m.status==='recognizing text'&&ocrStatus){
                 ocrStatus.textContent='⏳ 표 읽는 중... '+Math.round((m.progress||0)*100)+'%';
               }
             }
           });
+          if(mySeq!==ocrSeq) return;
           const raw=(out&&out.data&&out.data.text||'').trim();
           if(!raw){
             if(ocrStatus){ ocrStatus.textContent='글자를 읽지 못했어요. 직접 입력하거나 이미지를 그대로 첨부해 주세요.'; ocrStatus.style.color='#f87171'; }
+            renderBatchPreview();
             return;
           }
           batchText.value=raw;
           renderBatchPreview();
           if(ocrStatus){ ocrStatus.textContent='✅ 이미지 읽기 완료! 오타가 있으면 위 칸에서 수정 후 저장하세요.'; ocrStatus.style.color='#4ade80'; }
         }catch(err){
+          if(mySeq!==ocrSeq) return;
           if(ocrStatus){ ocrStatus.textContent='OCR 실패: 인터넷 연결을 확인하거나 직접 붙여넣기 해주세요.'; ocrStatus.style.color='#f87171'; }
+          renderBatchPreview();
         }
       }
       imgBtn.addEventListener('click',()=>imgInput.click());
       imgInput.addEventListener('change',()=>{ const f=imgInput.files&&imgInput.files[0]; if(f) runBatchOcr(f); imgInput.value=''; });
       if(imgClear) imgClear.addEventListener('click',()=>{
+        ocrSeq++; revokeObjUrl();
         batchImgData=null; batchImgTon='';
         if(imgWrap) imgWrap.style.display='none';
         if(imgThumb) imgThumb.src='';
@@ -7481,44 +7585,106 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     if(batchBackTopBtn) batchBackTopBtn.addEventListener('click',()=>setBatchView(false));
 
     function inferBatchYear(mo){
-      const now=new Date();
-      const curY=now.getFullYear(), curM=now.getMonth()+1;
+      const p=kstToday().split('-').map(Number);
+      const curY=p[0], curM=p[1];
       return (curM>=10 && mo<=3)?(curY+1):curY;
     }
 
+    function stripDateTailMeta(tr){
+      let s=String(tr||'').trim();
+      /* 닫는 대괄호·괄호 제거 ([11/20] -> 남은 ]) */
+      s=s.replace(/^[\]\)】]+\s*/,'');
+      /* 기간 표기 제거 (~ 모레, ~ 내일) — 날짜 없는 기간은 헤더로만 쓰고 작업 줄로 만들지 않는다 */
+      s=s.replace(/^[~～\-]\s*(?:오늘|금일|내일|명일|모레)\s*/,'');
+      /* 기간 끝날짜 제거 (~ 11/21, ~ 21일, ~ 11월 21일(토)) */
+      s=s.replace(/^[~～\-]\s*(?:\d{2,4}[년.\-/]\s*)?(?:\d{1,2}[월.\-/]\s*)?\d{1,2}일?(?:\s*(?:\([월화수목금토일](?:요일)?\)|[월화수목금토일]요일))?\s*/,'');
+      /* 요일 표기 제거: (금), (금요일), 금요일, 단독 금 */
+      s=s.replace(/^\([월화수목금토일](?:요일)?\)\s*/,'');
+      s=s.replace(/^[월화수목금토일]요일(?:\s+|[:：|\-]|$)/,'');
+      s=s.replace(/^[월화수목금토일](?:\s+|$|[:：|\-])/,'');
+      s=s.replace(/^[\]\)】]+\s*/,'');
+      s=s.replace(/^[\s|:：\-]+/,'').trim();
+      /* 남은 글자가 기간 끝을 가리키는 상대 날짜뿐이면(~ 모레, 모레) 작업 줄로 만들지 않는다 */
+      if(/^[~～\-]?\s*(?:오늘|금일|내일|명일|모레)\s*$/.test(s)) s='';
+      return s;
+    }
+
     function isDateHeader(line){
-      let m=line.match(/^(\d{4})[년.\-/]\s*(\d{1,2})[월.\-/]\s*(\d{1,2})일?(?:\s*\([월화수목금토일]\))?(?:\s*[:：])?\s*(.*)$/i);
-      if(m) return { y:parseInt(m[1],10), m:parseInt(m[2],10), d:parseInt(m[3],10), trailing:(m[4]||'').trim() };
-      m=line.match(/^(\d{1,2})월\s*(\d{1,2})일?(?:\s*\([월화수목금토일]\))?(?:\s*[:：])?\s*(.*)$/i);
-      if(m){ const mo=parseInt(m[1],10); return { y:inferBatchYear(mo), m:mo, d:parseInt(m[2],10), trailing:(m[3]||'').trim() }; }
-      m=line.match(/^(\d{1,2})\s*\/\s*(\d{1,2})일?(?:\s*\([월화수목금토일]\))?(?:\s*[:：])?\s*(.*)$/i);
-      if(m){ const mo=parseInt(m[1],10); return { y:inferBatchYear(mo), m:mo, d:parseInt(m[2],10), trailing:(m[3]||'').trim() }; }
-      m=line.match(/^(\d{1,2})\s*\.\s*(\d{1,2})(?:일|\.|\s*\([월화수목금토일]\)|\s*[:：])\s*(.*)$/i);
-      if(m){ const mo=parseInt(m[1],10); return { y:inferBatchYear(mo), m:mo, d:parseInt(m[2],10), trailing:(m[3]||'').trim() }; }
-      m=line.match(/^(\d{1,2})\.(\d{1,2})$/);
-      if(m && parseInt(m[1],10)>=1 && parseInt(m[1],10)<=12 && parseInt(m[2],10)>=1 && parseInt(m[2],10)<=31){
-        const mo=parseInt(m[1],10);
-        return { y:inferBatchYear(mo), m:mo, d:parseInt(m[2],10), trailing:'' };
+      const raw=String(line||'').trim();
+      if(!raw) return null;
+      /* 선행 이모지·기호·여는 괄호 정리 (■ 11월 20일, [11/20], ▶ 11.22(일), 📅 11/23) */
+      const s=raw.replace(/^(?:📅|📆|🗓️?|📌|✅|✔️?|🔹|🔸|▪️?|▫️?|[■□▶▷►●○◆◇★☆•·\-*※\[\(【])+\s*/u,'').trim();
+      if(!s) return null;
+      /* 상대 날짜 헤더: 오늘, 금일, 내일, 명일, 모레 */
+      let rel=s.match(/^(오늘|금일|내일|명일|모레)(?:[\]\)】])?(?:\s*\([월화수목금토일](?:요일)?\))?(?:\s*[:：|\-~～]|\s+|$)(.*)$/);
+      if(rel){
+        const delta=(rel[1]==='오늘'||rel[1]==='금일')?0:((rel[1]==='내일'||rel[1]==='명일')?1:2);
+        const ymdStr=shiftYmd(kstToday(),delta);
+        const [y,m,d]=ymdStr.split('-').map(Number);
+        return { y, m, d, trailing:stripDateTailMeta(rel[2]||'') };
+      }
+      /* 4자리 연도: 2026-11-20, 2026.11.20, 2026/11/20, 2026년 11월 20일 */
+      let m=s.match(/^(\d{4})\s*[년.\-/]\s*(\d{1,2})\s*[월.\-/]\s*(\d{1,2})일?\.?(.*)$/);
+      if(m){
+        const y=parseInt(m[1],10), mo=parseInt(m[2],10), da=parseInt(m[3],10);
+        if(isValidYmd(y,mo,da)) return { y, m:mo, d:da, trailing:stripDateTailMeta(m[4]||'') };
+        return null;
+      }
+      /* 2자리 연도: 26.11.20, 26-11-20, 26/11/20 */
+      m=s.match(/^(\d{2})\s*[.\-/]\s*(\d{1,2})\s*[.\-/]\s*(\d{1,2})일?\.?(.*)$/);
+      if(m){
+        const y2=parseInt(m[1],10), mo=parseInt(m[2],10), da=parseInt(m[3],10);
+        if(y2>=20 && y2<=49){
+          const y=2000+y2;
+          if(isValidYmd(y,mo,da)) return { y, m:mo, d:da, trailing:stripDateTailMeta(m[4]||'') };
+          return null;
+        }
+      }
+      /* M월 D일 */
+      m=s.match(/^(\d{1,2})\s*월\s*(\d{1,2})\s*일?(.*)$/);
+      if(m){
+        const mo=parseInt(m[1],10), da=parseInt(m[2],10), y=inferBatchYear(mo);
+        if(isValidYmd(y,mo,da)) return { y, m:mo, d:da, trailing:stripDateTailMeta(m[3]||'') };
+        return null;
+      }
+      /* M/D, M-D, M.D (분수 오탐 방지: 1/2호기, 1/2톤, 3/4라인, 1/2개, 1/2대 등 차단) */
+      m=s.match(/^(\d{1,2})\s*([\/\-.])\s*(\d{1,2})(.*)$/);
+      if(m){
+        const mo=parseInt(m[1],10), sep=m[2], da=parseInt(m[3],10), rest=m[4]||'';
+        /* 숫자 뒤가 바로 숫자면(예: 소수점/버전) 거부 */
+        if(/^\d/.test(rest)) return null;
+        /* 분수·설비 단위 뒤따름 차단: 1/2호기, 3/4라인, 1/2톤, 1/2개, 1/2대, 1/2박스, 1/2차, 1/2EA, 1/2KG, 1/2PLT */
+        if(/^(?:호기|라인|동|톤|TON|KG|EA|개|대|박스|백|BAG|PLT|P|SET|차|회|층|조|반|번)/i.test(rest.trim())) return null;
+        /* M.D 뒤에 아무 구분자 없이 한글이 바로 붙으면(예: 1.5배) 차단 — 단 "일"은 허용 */
+        if(sep==='.' && /^[가-힣]/.test(rest) && !/^일/.test(rest)) return null;
+        const cleanRest=rest.replace(/^일\.?/,'').replace(/^\./,'');
+        const y=inferBatchYear(mo);
+        if(isValidYmd(y,mo,da)) return { y, m:mo, d:da, trailing:stripDateTailMeta(cleanRest) };
+        return null;
       }
       return null;
     }
 
     function parseBatch(text,defTarget){
       if(!text||!text.trim()) return [];
-      const lines=text.split(/\r?\n/);
+      const lines=String(text).split(/\r?\n/);
       const ignoreRes=[
+        /^[-=_*~━─═·•.]{3,}$/,
+        /^-{3,}\s*\d{4}년.*-{3,}$/,
+        /^\[?[^\]\n]{1,24}\]?\s*\[(?:오전|오후)\s*\d{1,2}:\d{2}\]$/,
         /주임님|반장님|기장님|팀장님|과장님|차장님|부장님|상무님|책임님|프로님|수석님/,
         /공유\s*드립니다|공유\s*합니다|공지\s*드립니다|전달\s*드립니다|안내\s*드립니다/,
-        /안녕하세요|수고\s*많으십니다|수고하세요|감사합니다/,
+        /안녕하세요|안녕하십니까|수고\s*많으십니다|수고하세요|감사합니다|고생\s*많으십니다/,
+        /^(?:이상입니다\.?\s*)?(?:확인|참고|협조)?\s*부탁\s*드립니다[.!~]?$/,
         /^입니다\.?$/,
         /^이상입니다\.?$/
       ];
       let curDate=null;
-      const fallbackDate=picked||kstToday();
+      const fallbackDate=(picked && /^\d{4}-\d{2}-\d{2}$/.test(picked))?picked:kstToday();
       const groups=new Map();
 
       function addLineItem(d,raw){
-        let clean=raw.replace(/^[-*•·|]+\s*/,'').replace(/^\d+[.)]\s*/,'').trim();
+        let clean=String(raw||'').replace(/^[\-*•·|▶▷►●○■□◆◇★☆※①-⑳]+\s*/u,'').replace(/^\d+[.)]\s*/,'').trim();
         if(!clean) return;
         const tgtDefault=defTarget||'inbound';
         const p=parseLine(clean);
@@ -7526,12 +7692,17 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           groups.get(d).push({target:p.target,kind:p.kind,text:p.text,urgent:!!p.urgent});
         } else {
           let urgent=false, kind=(tgtDefault==='*'?'notice':'instruction');
-          if(/^[!！]/.test(clean)){ urgent=true; clean=clean.replace(/^[!！]+\s*/,''); }
-          /* '공지'/'공지사항'은 어느 버튼을 골라도 전체(*) 공지로 등록한다 (단일 등록·사이드바 공지와 같은 규칙) */
-          if(/^공지(?:사항)?(?:\s*[:：]\s*|\s+|$)/.test(clean)){ kind='notice'; clean=clean.replace(/^공지(?:사항)?(?:\s*[:：]\s*|\s+|$)/,''); }
+          for(let pass=0;pass<3;pass++){
+            let ch=false;
+            if(/^[!！]/.test(clean)){ urgent=true; clean=clean.replace(/^[!！]+\s*/,''); ch=true; }
+            if(/^(?:\[긴급\]|\(긴급\)|【긴급】|긴급(?=[\s:：/\-]))/.test(clean)){ urgent=true; clean=clean.replace(/^(?:\[긴급\]|\(긴급\)|【긴급】|긴급)\s*[:：/\-]?\s*/,''); ch=true; }
+            /* '공지'/'공지사항'은 어느 버튼을 골라도 전체(*) 공지로 등록한다 (단일 등록·사이드바 공지와 같은 규칙) */
+            if(/^(?:\[공지(?:사항)?\]|\(공지(?:사항)?\)|【공지(?:사항)?】|공지(?:사항)?(?=\s*[:：/\-]|\s+|$))/.test(clean)){ kind='notice'; clean=clean.replace(/^(?:\[공지(?:사항)?\]|\(공지(?:사항)?\)|【공지(?:사항)?】|공지(?:사항)?)\s*[:：/\-]?\s*/,''); ch=true; }
+            if(!ch) break;
+          }
           if(!clean) return;
-          /* 배차 지시서 한 줄(차량번호 포함)은 기본 대상과 상관없이 출고로 보낸다 (표 붙여넣기 경로와 같은 규칙) */
-          const carHit=kind!=='notice' && /[가-힣]{2}\s*\d{2,3}\s*[가-힣]\s*\d{4}/.test(clean);
+          /* 배차 지시서 한 줄(구형·신형 차량번호 포함)은 기본 대상과 상관없이 출고로 보낸다 */
+          const carHit=kind!=='notice' && Boolean(extractCarPlate(clean));
           const tgt=(kind==='notice'?'*':(carHit?'outbound':tgtDefault));
           groups.get(d).push({
             target:tgt,
@@ -7545,12 +7716,12 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       for(let raw of lines){
         const line=raw.trim();
         if(!line) continue;
-        if(!/\d+\s*(?:TON|톤|EA|개|BAG|kg|set|박스|파레트|팔레트)/i.test(line) && ignoreRes.some(r=>r.test(line))) continue;
+        if(!/\d+\s*(?:TON|톤|EA|개|BAG|kg|set|PLT|박스|파레트|팔레트|파렛트)/i.test(line) && ignoreRes.some(r=>r.test(line))) continue;
         const dh=isDateHeader(line);
-        if(dh && dh.m>=1 && dh.m<=12 && dh.d>=1 && dh.d<=31){
-          curDate=dh.y+'-'+String(dh.m).padStart(2,'0')+'-'+String(dh.d).padStart(2,'0');
+        if(dh && isValidYmd(dh.y,dh.m,dh.d)){
+          curDate=fmtYmd(dh.y,dh.m,dh.d);
           if(!groups.has(curDate)) groups.set(curDate,[]);
-          if(dh.trailing){ const tr=dh.trailing.replace(/^[\s|:：\-]+/,'').trim(); if(tr) addLineItem(curDate,tr); }
+          if(dh.trailing) addLineItem(curDate,dh.trailing);
           continue;
         }
         if(!curDate){
@@ -7570,18 +7741,27 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       if(!batchPreview||!batchText) return;
       const defTarget=(batchTarget&&batchTarget.value)||'inbound';
       const text=batchText.value;
+      const safePicked=(picked && /^\d{4}-\d{2}-\d{2}$/.test(picked))?picked:kstToday();
       /* AI가 "YYYY-MM-DD | 내용" 형식으로 뽑은 텍스트는 표 파서보다 날짜별 분류를 먼저 쓴다(조건 누락·오분류 방지) */
       const aiDated=/^\d{4}-\d{2}-\d{2}\s*\|/m.test(text);
-      const disp=(!aiDated && typeof parseDispatchRows==='function')?parseDispatchRows(text,picked||kstToday()):null;
+      const disp=(!aiDated && typeof parseDispatchRows==='function')?parseDispatchRows(text,safePicked):null;
       const incImgEl=$('czBatchIncludeImg');
       const useImgOnly=!text.trim() && batchImgData && incImgEl && incImgEl.checked;
       if(useImgOnly){
         const item={target:defTarget,kind:(defTarget==='*'?'notice':'instruction'),text:'배차 지시서'};
         if(batchImgTon) item.tonText=batchImgTon;
-        parsedBatchData=[{date:picked||kstToday(),items:[item]}];
-      } else if(disp&&disp.items.length){
+        parsedBatchData=[{date:safePicked,items:[item]}];
+      } else if(disp && (disp.items.length || disp.skipped1>0)){
         const gMap=new Map();
         disp.items.forEach(x=>{ if(!gMap.has(x.date)) gMap.set(x.date,[]); gMap.get(x.date).push({target:'outbound',kind:'instruction',text:x.text}); });
+        /* 배차표와 일반 작업·공지가 함께 붙여넣어진 경우 나머지 줄도 누락 없이 합친다 (제외된 1공장 행은 다시 넣지 않음) */
+        if(disp.leftoverLines && disp.leftoverLines.length){
+          const extra=parseBatch(disp.leftoverLines.join('\n'),defTarget);
+          extra.forEach(eg=>{
+            if(!gMap.has(eg.date)) gMap.set(eg.date,[]);
+            eg.items.forEach(it=>gMap.get(eg.date).push(it));
+          });
+        }
         parsedBatchData=Array.from(gMap.entries()).map(([date,items])=>({date,items})).sort((a,b)=>a.date.localeCompare(b.date));
       }else{
         parsedBatchData=parseBatch(text,defTarget);
@@ -7606,18 +7786,23 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       }
 
       if(!parsedBatchData.length){
-        batchPreview.innerHTML='<div class="cz-empty" style="color:#f87171;">등록할 수 있는 항목을 찾지 못했습니다. 입력 내용을 확인해 주세요.</div>';
+        const emptyMsg=(disp && disp.skipped1>0)
+          ? ('2공장 배차 내역이 없습니다. (1공장 '+disp.skipped1+'건 자동 제외됨)')
+          : '등록할 수 있는 항목을 찾지 못했습니다. 입력 내용을 확인해 주세요.';
+        batchPreview.innerHTML='<div class="cz-empty" style="color:#f87171;">'+esc(emptyMsg)+'</div>';
         return;
       }
 
       const today=kstToday();
       batchPreview.innerHTML=parsedBatchData.map(g=>{
-        const [y,m,d]=g.date.split('-').map(Number);
-        const dow=DOW[new Date(y,m-1,d).getDay()];
+        const parts=String(g.date||'').split('-').map(Number);
+        const y=parts[0], m=parts[1], d=parts[2];
+        const valid=isValidYmd(y,m,d);
+        const dow=valid?DOW[new Date(y,m-1,d).getDay()]:'-';
         const isPast=g.date<today;
         return '<div class="cz-batch-group">'
           +'<div class="cz-batch-group-title">'
-          +'<b>📅 '+m+'월 '+d+'일 ('+dow+')'+(isPast?' <span style="color:#fbbf24;font-size:10.5px;">⚠️ 지난 날짜(마감 기록)</span>':'')+'</b>'
+          +'<b>📅 '+(valid?(m+'월 '+d+'일 ('+dow+')'):esc(g.date))+(isPast?' <span style="color:#fbbf24;font-size:10.5px;">⚠️ 지난 날짜(마감 기록)</span>':'')+'</b>'
           +'<span>'+g.items.length+'건</span>'
           +'</div>'
           +g.items.map(it=>{
