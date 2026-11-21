@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611211330">
+  <meta name="jisu-build" content="202611211415">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -1347,8 +1347,16 @@
       body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap .cmd-in-card-h{
         padding-right:162px !important;min-height:22px !important;
       }
+      /* 정비완료 버튼: 모바일은 갤러리 첫 카드와 같은 38px(갤러리 사각 버튼 크기 그대로)로 위·아래 라인 정확히 일치 */
       body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper .ob-cmd-wrap .maint-done-wrap{
-        margin-right:162px !important;
+        top:-14px !important; right:162px !important;
+      }
+      body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper .ob-cmd-wrap .maint-done-btn{
+        height:38px !important; min-width:84px !important; padding:0 12px !important;
+        font-size:12.5px !important; gap:5px !important;
+      }
+      body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper .ob-cmd-wrap:has(.maint-done-wrap:not([hidden])) .cmd-slot{
+        padding-top:30px !important;
       }
       body:not(#z1#z2#z3#z4#z5) .ob-stack-btn{
         top:-18px !important;right:102px !important;width:54px !important;height:42px !important;
@@ -1580,7 +1588,7 @@
       padding-right:168px !important;
     }
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-cmd-wrap .maint-done-wrap{
-      margin-right:168px !important;
+      top:-20px !important; right:164px !important;
     }
     @media (max-width:768px){
       body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-photo-sq-btn{
@@ -1593,7 +1601,10 @@
         padding-right:140px !important;
       }
       body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-cmd-wrap .maint-done-wrap{
-        margin-right:140px !important;
+        top:-16px !important; right:138px !important;
+      }
+      body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-cmd-wrap:has(.maint-done-wrap:not([hidden])) .cmd-slot{
+        padding-top:30px !important;
       }
     }
     /* 작업자 모바일 전용 화면(?zone=): 빈 안내 문구가 배경색과 거의 같아 보이지 않던 문제 */
@@ -2647,11 +2658,26 @@
       animation:warnBlink 1.6s ease-in-out infinite !important;
     }
     body:not(#zz) .map-stage button.hotspot-pill[data-toggle-zone].st-warn span{color:inherit !important;}
-    /* 🔧 정비완료: 지금 정비 중인 구역의 자세히보기 카드 상단에만 뜨는 노란 배너 버튼 */
+    /* 🔧 정비완료: 지금 정비 중인 구역의 자세히보기 카드에만 뜨는 노란 버튼 (2026-11-21 지시로 위치 개편)
+       "갤러리 옆에 갤러리 첫번째 사각버튼 크기로 … 가로로 조금 넓혀도 되"
+       → PHOTO(72×72)·사진첩 스택(오른쪽 94px)은 그대로 두고, 스택 왼쪽 끝(오른쪽에서 158px)에서 6px 띄워
+         갤러리 첫 카드(.ob-stack-card.c1 = 44×44, top:-20 / bottom:+24)와 같은 위·아래 라인에 나란히 붙인다.
+         가로만 내용에 맞춰(auto + 좌우 패딩) 컴팩트하게 늘린다. */
     .maint-done-wrap{margin:8px 0 4px;} .maint-done-wrap[hidden]{display:none !important;}
-    /* 금일작업 · 공지 건수 바로 위에 오되, 오른쪽에 떠 있는 PHOTO(72×72)·사진첩 스택 버튼 폭만큼 오른쪽을 비워
-       헤더(.cmd-in-card-h)와 같은 폭으로 맞춘다 → PHOTO/스택 버튼과 겹침 0px (전 구역·전 화면 공통) */
-    body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap .maint-done-wrap{margin-right:168px !important;}
+    body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap .maint-done-wrap{
+      position:absolute !important; top:-20px !important; right:164px !important;
+      margin:0 !important; padding:0 !important; width:auto !important; z-index:5 !important;
+    }
+    body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap .maint-done-btn{
+      width:auto !important; min-width:92px !important; height:44px !important;
+      padding:0 14px !important; gap:6px !important; border-radius:12px !important;
+      font-size:13px !important; white-space:nowrap !important;
+    }
+    /* 버튼이 뜬 구역만 '금일작업 · 공지' 행을 아래로 내려 겹침 0px (정비 없는 구역은 레이아웃 그대로 0 영향)
+       → cmd-slot의 padding-top은 위쪽 흐름(제목·PHOTO·스택 절대위치)을 건드리지 않는다. */
+    body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap:has(.maint-done-wrap:not([hidden])) .cmd-slot{
+      padding-top:30px !important;
+    }
     .maint-done-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:9px 12px;border:1px solid rgba(250,204,21,.6);
       border-radius:11px;background:linear-gradient(180deg,rgba(250,204,21,.96),rgba(234,179,8,.94));color:#1f2937 !important;font-size:13px;font-weight:900;letter-spacing:.2px;
       box-shadow:0 6px 16px rgba(250,204,21,.26),inset 0 1px 0 rgba(255,255,255,.45);cursor:pointer;transition:transform .12s ease,filter .12s ease;}
