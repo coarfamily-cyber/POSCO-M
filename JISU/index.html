@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611212020">
+  <meta name="jisu-build" content="202611220722">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -1201,10 +1201,20 @@
       align-items: center !important;
       gap: 6px !important;
     }
-    .ob-cmd-wrap{position:relative;}
+    .ob-cmd-wrap{position:relative;padding-top:30px;}
+    .ob-cmd-wrap .cmd-slot{margin-top:0;}
     .ob-cmd-wrap .cmd-in-card-h{padding-right:86px !important;min-height:24px !important;margin-bottom:8px !important;gap:22px !important;}
+    /* 2026-11-22 지시: 카드 상단 4요소(PHOTO · 갤러리 첫 카드 · 정비완료 · '금일작업 · 공지')의 아랫선을 0px 일직선으로
+       → wrap 위쪽 여백 30px 안에 버튼을 띄우고, 글자 행은 높이를 고정해 바닥을 그 선에 맞춘다. */
+    body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap .cmd-in-card-h{
+      height:39px !important;min-height:39px !important;
+      display:flex !important;align-items:flex-end !important;justify-content:flex-start !important;
+      gap:8px !important;padding-right:274px !important;padding-bottom:0 !important;
+      margin-top:0 !important;margin-bottom:13px !important;line-height:1 !important;
+    }
+    body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap .cmd-in-card-h span{margin-left:0 !important;}
     body:not(#z1#z2#z3#z4#z5) .ob-photo-sq-btn{
-      position:absolute !important;top:-48px !important;right:0 !important;z-index:4 !important;
+      position:absolute !important;top:0 !important;right:0 !important;z-index:4 !important;
       width:72px !important;height:72px !important;padding:0 8px !important;
       display:inline-flex !important;align-items:center !important;justify-content:center !important;
       border-radius:18px !important;border:0 !important;
@@ -1216,9 +1226,9 @@
       cursor:pointer !important;
     }
     body:not(#z1#z2#z3#z4#z5) .ob-photo-sq-btn:hover{background:rgba(255,255,255,0.36) !important;transform:translateY(-1px);}
-    body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap .cmd-in-card-h{padding-right:168px !important;}
+    body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap .cmd-in-card-h{padding-right:274px !important;}
     body:not(#z1#z2#z3#z4#z5) .ob-stack-btn{
-      position:absolute !important;top:-24px !important;right:94px !important;z-index:4 !important;
+      position:absolute !important;top:24px !important;right:84px !important;z-index:4 !important;
       width:64px !important;height:48px !important;padding:0 !important;border:0 !important;
       background:transparent !important;box-shadow:none !important;outline:none !important;
       -webkit-tap-highlight-color:transparent !important;user-select:none !important;
@@ -1353,25 +1363,24 @@
       body:not(#z1#z2#z3#z4#z5) #pitchLog .pitch-save-btn{
         flex:1 1 90px;min-width:82px;height:38px;
       }
+      /* 2026-11-22: 모바일도 카드 상단 버튼·글자 아랫선을 한 줄로 (PHOTO 56 · 갤러리 카드 38 · 금일작업·공지 행 바닥) */
+      body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap{padding-top:32px !important;}
       body:not(#z1#z2#z3#z4#z5) .ob-photo-sq-btn{
-        top:-32px !important;right:30px !important;width:54px !important;height:54px !important;font-size:12px !important;border-radius:14px !important;
+        top:1px !important;right:30px !important;width:56px !important;height:56px !important;font-size:12px !important;border-radius:14px !important;
       }
       body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap .cmd-in-card-h{
-        padding-right:162px !important;min-height:22px !important;
+        padding-right:162px !important;min-height:22px !important;height:22px !important;margin-bottom:10px !important;
       }
-      /* 정비완료 버튼: 모바일은 갤러리 첫 카드와 같은 38px(갤러리 사각 버튼 크기 그대로)로 위·아래 라인 정확히 일치 */
+      /* 정비완료 버튼: 모바일은 갤러리 첫 카드와 같은 38px(갤러리 사각 버튼 크기 그대로), '금일작업 · 공지' 행 바로 위 */
       body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper .ob-cmd-wrap .maint-done-wrap{
-        top:-14px !important; right:162px !important;
+        top:-12px !important; right:162px !important;
       }
       body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper .ob-cmd-wrap .maint-done-btn{
         height:38px !important; min-width:84px !important; padding:0 12px !important;
         font-size:12.5px !important; gap:5px !important;
       }
-      body:not(#z1#z2#z3#z4#z5) .hotspot-wrapper .ob-cmd-wrap:has(.maint-done-wrap:not([hidden])) .cmd-slot{
-        padding-top:30px !important;
-      }
       body:not(#z1#z2#z3#z4#z5) .ob-stack-btn{
-        top:-18px !important;right:102px !important;width:54px !important;height:42px !important;
+        top:15px !important;right:102px !important;width:54px !important;height:42px !important;
       }
       body:not(#z1#z2#z3#z4#z5) .ob-stack-card{
         width:38px;height:38px;border-radius:9px;
@@ -1594,30 +1603,40 @@
       right:0 !important;
     }
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-stack-btn{
-      right:94px !important;
+      right:84px !important;
     }
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-cmd-wrap .cmd-in-card-h{
-      padding-right:168px !important;
+      padding-right:274px !important;
     }
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-cmd-wrap .maint-done-wrap{
-      top:-20px !important; right:164px !important;
+      top:28px !important; right:154px !important;
     }
     @media (max-width:768px){
       body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-photo-sq-btn{
-        right:0 !important;top:-34px !important;width:58px !important;height:58px !important;
+        right:0 !important;top:-1px !important;width:58px !important;height:58px !important;
       }
       body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-stack-btn{
-        right:78px !important;top:-20px !important;
+        right:78px !important;top:15px !important;
       }
       body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-cmd-wrap .cmd-in-card-h{
         padding-right:140px !important;
       }
       body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-cmd-wrap .maint-done-wrap{
-        top:-16px !important; right:138px !important;
+        top:-12px !important; right:138px !important;
       }
-      body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-cmd-wrap:has(.maint-done-wrap:not([hidden])) .cmd-slot{
-        padding-top:30px !important;
+    }
+    /* 좁은 폰(≤404px, 360px 등)에서는 '금일작업 · 공지' 글자가 두 줄로 접힌다.
+       행 높이를 두 줄에 맞춰 고정하고, PHOTO·갤러리 카드도 같은 아랫선으로 함께 내린다. */
+    @media (max-width:404px){
+      body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap .cmd-in-card-h{
+        height:34px !important; min-height:34px !important;
       }
+      /* 360px에서는 '건수 배지'가 '2 / 건'으로 쫍개지지 않게 — 라벨만 줄바꿈 */
+      body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap .cmd-in-card-h span{ white-space:nowrap !important; flex:0 0 auto !important; }
+      body:not(#z1#z2#z3#z4#z5) .ob-photo-sq-btn{ top:13px !important; }
+      body:not(#z1#z2#z3#z4#z5) .ob-stack-btn{ top:27px !important; }
+      body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-photo-sq-btn{ top:11px !important; }
+      body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone .ob-stack-btn{ top:27px !important; }
     }
     /* 작업자 모바일 전용 화면(?zone=): 빈 안내 문구가 배경색과 거의 같아 보이지 않던 문제 */
     html.worker-zone-only .cmd-empty,
@@ -2670,26 +2689,23 @@
       animation:warnBlink 1.6s ease-in-out infinite !important;
     }
     body:not(#zz) .map-stage button.hotspot-pill[data-toggle-zone].st-warn span{color:inherit !important;}
-    /* 🔧 정비완료: 지금 정비 중인 구역의 자세히보기 카드에만 뜨는 노란 버튼 (2026-11-21 지시로 위치 개편)
+    /* 🔧 정비완료: 지금 정비 중인 구역의 자세히보기 카드에만 뜨는 노란 버튼 (2026-11-22 지시로 위치 개편)
        "갤러리 옆에 갤러리 첫번째 사각버튼 크기로 … 가로로 조금 넓혀도 되"
-       → PHOTO(72×72)·사진첩 스택(오른쪽 94px)은 그대로 두고, 스택 왼쪽 끝(오른쪽에서 158px)에서 6px 띄워
-         갤러리 첫 카드(.ob-stack-card.c1 = 44×44, top:-20 / bottom:+24)와 같은 위·아래 라인에 나란히 붙인다.
-         가로만 내용에 맞춰(auto + 좌우 패딩) 컴팩트하게 늘린다. */
+       → PHOTO(72×72, top 0) · 사진첩 스택(오른쪽 84px, top 24px → 첫 카드 바닥 72px) ·
+         '금일작업 · 공지' 행(높이 39px, 바닥 72px)과 함께 네 요소의 아랫선을 한 줄로 맞춘다.
+         정비완료 버튼도 같은 바닥선(top 28px + 44px). 가로는 내용에 맞춰 컴팩트하게. */
     .maint-done-wrap{margin:8px 0 4px;} .maint-done-wrap[hidden]{display:none !important;}
     body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap .maint-done-wrap{
-      position:absolute !important; top:-20px !important; right:164px !important;
+      position:absolute !important; top:28px !important; right:154px !important; left:auto !important;
       margin:0 !important; padding:0 !important; width:auto !important; z-index:5 !important;
     }
     body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap .maint-done-btn{
-      width:auto !important; min-width:92px !important; height:44px !important;
-      padding:0 14px !important; gap:6px !important; border-radius:12px !important;
+      box-sizing:border-box !important; width:auto !important; min-width:92px !important; height:44px !important;
+      padding:0 12px !important; gap:6px !important; border-radius:12px !important;
       font-size:13px !important; white-space:nowrap !important;
     }
-    /* 버튼이 뜬 구역만 '금일작업 · 공지' 행을 아래로 내려 겹침 0px (정비 없는 구역은 레이아웃 그대로 0 영향)
-       → cmd-slot의 padding-top은 위쪽 흐름(제목·PHOTO·스택 절대위치)을 건드리지 않는다. */
-    body:not(#z1#z2#z3#z4#z5) .ob-cmd-wrap:has(.maint-done-wrap:not([hidden])) .cmd-slot{
-      padding-top:30px !important;
-    }
+    /* 2026-11-22: 정비완료 버튼도 PHOTO·갤러리 카드와 같은 아랫선(바닥 72px)에 앉했으므로
+       '금일작업 · 공지' 행을 따로 밀어내는 :has() padding-top은 더 쓰지 않는다 (행 높이 고정으로 처리). */
     .maint-done-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:9px 12px;border:1px solid rgba(250,204,21,.6);
       border-radius:11px;background:linear-gradient(180deg,rgba(250,204,21,.96),rgba(234,179,8,.94));color:#1f2937 !important;font-size:13px;font-weight:900;letter-spacing:.2px;
       box-shadow:0 6px 16px rgba(250,204,21,.26),inset 0 1px 0 rgba(255,255,255,.45);cursor:pointer;transition:transform .12s ease,filter .12s ease;}
