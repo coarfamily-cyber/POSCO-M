@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611211415">
+  <meta name="jisu-build" content="202611211949">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -4496,7 +4496,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
         <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 flex-shrink-0">
           <span class="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse"></span> LIVE
         </span>
-        <span id="jisuDbBadge" title="Firebase 실시간 DB 연결 상태 (PC ↔ 모바일 동기화)" style="padding:2px 8px;font-size:10.5px;font-weight:800;border-radius:9999px;border:1px solid rgba(148,163,184,0.45);background:rgba(148,163,184,0.12);color:#cbd5e1;white-space:nowrap;flex-shrink:0;">DB 대기</span>
+        <span id="jisuDbBadge" title="Firebase 실시간 DB 연결 상태 (PC ↔ 모바일 동기화)" style="display:none;padding:2px 8px;font-size:10.5px;font-weight:800;border-radius:9999px;border:1px solid rgba(148,163,184,0.45);background:rgba(148,163,184,0.12);color:#cbd5e1;white-space:nowrap;flex-shrink:0;">DB 대기</span>
         <span style="position:relative;display:inline-flex;align-items:center;flex-shrink:0;">
           <button type="button" id="jisuSysInfoBtn" aria-label="자동 저장 및 DB 운영 안내" aria-expanded="false" title="운영 안내 보기" style="width:18px;height:18px;border-radius:9999px;border:1px solid rgba(255,255,255,0.28);background:rgba(255,255,255,0.08);color:#e2e8f0;font-size:11px;font-weight:900;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;">!</button>
         </span>
