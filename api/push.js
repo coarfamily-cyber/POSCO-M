@@ -109,7 +109,16 @@ module.exports = async function handler(req, res) {
       const sub = entry.sub ? entry.sub : entry;
       const ez = String(entry.zone || '*').split(':')[0] || '*';
       if (!sub || !sub.endpoint || seenEndpoints.has(sub.endpoint)) continue;
-      const match = target === '*' || target === 'master' || target === 'all' || ez === '*' || ez === 'master' || ez === target;
+      /* 대상 선택
+         · '*'/'all' : 모두(전체 공지)
+         · 'master'  : 관리자 기기만 — 예전에는 이 경우 평면 구독 전부에 보내져 작업자 폰까지 받았다.
+                       이제 구역이 '*' 또는 'master'(= 관리자 전체 화면으로 구독된 기기)인 구독만 받는다.
+         · 구역명    : 그 구역 + 관리자 */
+      const match = (target === '*' || target === 'all')
+        ? true
+        : (target === 'master'
+            ? (ez === '*' || ez === 'master')
+            : (ez === '*' || ez === 'master' || ez === target));
       if (!match) continue;
       seenEndpoints.add(sub.endpoint);
       targets.push({ delUrl: `${RTDB_FLAT}/${encodeURIComponent(subId)}.json`, sub });

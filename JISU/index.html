@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611210919">
+  <meta name="jisu-build" content="202611210950">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -11115,14 +11115,47 @@ paint()})();</script>
       });
     });
   }
-  function pushPhoto(zone,rec){
+  function pushPhoto(zone,rec,opts){
     if(!zone||!rec||typeof rec.data!=='string'||rec.data.indexOf('data:image')!==0) return;
     if(!ROLE.all && zone!==ROLE.zone) return;   /* 작업자: 다른 구역 사진은 올리지 않음 */
     var id=String(rec.id||rec.key||''); if(!id) return;
+    var notify=!!(opts&&opts.notify);           /* 이 기기가 직접 찍거나 첨부한 사진만 관리자 알림 (다른 기기 사진 동기화·재전송은 알림 없음) */
     var stamp=Date.now();
-    shrinkToLimit(rec.data).then(function(data){
-      return db.ref(ROOT+'/photos/'+zone+'/'+id).set({id:id,zone:zone,day:rec.day||todayKST(),at:rec.at||'',name:rec.name||'',data:data,ts:stamp});
+    return shrinkToLimit(rec.data).then(function(data){
+      return db.ref(ROOT+'/photos/'+zone+'/'+id).set({id:id,zone:zone,day:rec.day||todayKST(),at:rec.at||'',name:rec.name||'',data:data,ts:stamp}).then(function(){
+        if(notify) notifyNewPhoto(zone,id);
+      });
     }).catch(function(e){ console.warn('[jisu-db] 사진 저장 실패:',e&&e.code); });
+  }
+  /* ---------- 4-0) 전 구역 PHOTO 등록 → 관리자(master) 푸시 알림 ----------
+     · 이 기기가 사진을 찍거나 첨부해 DB에 올린 직후에만 한 번 보낸다(같은 사진 id는 세션당 1회).
+     · 다른 기기 사진을 내려받는 insertPhoto/pullPhotos·seedLocalPhotos 경로는 notify 없이 pushPhoto만 쓴다. */
+  var PHOTO_PUSH_URL='https://posco-m.vercel.app/api/push';
+  var PHOTO_ZONE_LABEL={outbound:'출고',inbound:'입고',pitch:'피치',environment:'환경',packaging:'포장 2동','packaging-d':'포장 3동',warehouse:'창고',
+    'production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H'};
+  var notifiedPhoto={};
+  function photoHmKst(){
+    try{ return new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()); }catch(_){ return ''; }
+  }
+  function notifyNewPhoto(zone,id){
+    try{
+      if(!zone||!id) return;
+      var key=String(zone)+':'+String(id);
+      if(notifiedPhoto[key]) return;
+      notifiedPhoto[key]=1;
+      var label=PHOTO_ZONE_LABEL[zone]||zone;
+      var body=photoHmKst()+' · 알림을 누르면 사진을 바로 볼 수 있어요';
+      var url='https://coarfamily-cyber.github.io/POSCO-M/JISU/?openPhoto='+encodeURIComponent(zone+':'+id);
+      var payload={target:'master',payload:{title:'📸 ['+label+'] 새 사진 등록',body:body,url:url,tag:'jisu-photo-'+zone+'-'+id,badge:1}};
+      var send=function(headers){ try{ fetch(PHOTO_PUSH_URL,{method:'POST',headers:headers,body:JSON.stringify(payload)}).catch(function(){}); }catch(_){} };
+      var au=null;
+      try{ if(window.JISU_AUTH_GATE===true&&window.firebase&&firebase.auth) au=firebase.auth().currentUser; }catch(_){ au=null; }
+      if(au&&typeof au.getIdToken==='function'){
+        au.getIdToken().then(function(t){ send({'Content-Type':'application/json','Authorization':'Bearer '+t}); },function(){ send({'Content-Type':'application/json'}); });
+      }else{
+        send({'Content-Type':'application/json'});
+      }
+    }catch(_){}
   }
   function removePhotoRemote(zone,id){
     var upd={};
@@ -11151,7 +11184,7 @@ paint()})();</script>
         if(!photoMuted&&isPhotoStore(this)&&value&&typeof value.data==='string'&&value.data.indexOf('data:image')===0){
           var z=zoneOfStore(this,value);
           /* 예시 사진(demo1·demo2)은 화면용이라 DB로 올리지 않는다 */
-          if(z&&String(value.id).indexOf('demo')!==0&&pulled[String(value.id)]!==value.data) pushPhoto(z,value);
+          if(z&&String(value.id).indexOf('demo')!==0&&pulled[String(value.id)]!==value.data) pushPhoto(z,value,{notify:true});
         }
       }catch(_){}
       return req;
@@ -11394,6 +11427,41 @@ paint()})();</script>
   window.jisuDb={ root:ROOT, ref:function(p){ return db.ref(ROOT+'/'+p); }, push:pushAny, pull:pullPhotos, purge:purgeExpired, status:paint,
     sync:{ mode:function(){ return SYNC_MODE; }, units:function(){ return UNITS.slice(); }, role:function(){ return {all:ROLE.all, zone:ROLE.zone}; },
       debug:function(){ var f=function(o){ return Object.keys(o).filter(function(k){ return o[k]; }); }; return {ready:f(readyKey).length, pushing:f(pushing), dirty:f(dirtyKey), again:f(again)}; } } };
+  /* ---------- 4-9) 알림에서 사진 바로 보기용 연결고리 (JISU_OPEN_PHOTO) ---------- */
+  function photoItemsOf(zone){
+    var t=zoneStore(zone);
+    return idbAll(t.db,t.store).then(function(list){
+      return (list||[]).filter(function(p){ return p&&typeof p.data==='string'&&(!p.zone||p.zone===zone); })
+        .sort(function(a,b){ var x=String(a.id==null?'':a.id), y=String(b.id==null?'':b.id); return x<y?1:(x>y?-1:0); });
+    }).catch(function(){ return []; });
+  }
+  function photoRemoteGet(zone,id){
+    try{
+      return db.ref(ROOT+'/photos/'+zone+'/'+String(id)).once('value').then(function(snap){
+        return (snap&&typeof snap.exists==='function'?snap.exists():Boolean(snap&&snap.val()))?snap.val():null;
+      }).catch(function(){ return null; });
+    }catch(_){ return Promise.resolve(null); }
+  }
+  window.jisuPhotoBridge={
+    available:true,
+    zones:function(){ return photoZones().slice(); },
+    list:photoItemsOf,
+    get:function(zone,id){ var t=zoneStore(zone); return idbGet(t.db,t.store,String(id)).catch(function(){ return null; }); },
+    remote:photoRemoteGet,
+    /* DB에만 있는 사진을 화면용으로 이 기기에 받아 둔다(동기화 저장이라 푸시 알림은 다시 가지 않음) */
+    saveRemote:function(zone,rec){
+      if(!rec||typeof rec.data!=='string') return Promise.resolve(null);
+      rec.id=String(rec.id||'');
+      return insertPhoto(zone,rec).catch(function(){}).then(function(){
+        var t=zoneStore(zone);
+        return idbGet(t.db,t.store,String(rec.id)).catch(function(){ return null; });
+      });
+    },
+    remove:function(zone,id){
+      var t=zoneStore(zone);
+      return idbDel(t.db,t.store,String(id)).catch(function(){}).then(function(){ return photoItemsOf(zone); });
+    }
+  };
   console.log('[jisu-db] 실시간 동기화 시작 · /'+ROOT);
 })();
 </script>
@@ -11483,6 +11551,176 @@ paint()})();</script>
   window.addEventListener('resize', schedule);
   document.addEventListener('DOMContentLoaded', function(){ setTimeout(refresh, 400); setTimeout(refresh, 1800); });
   setInterval(refresh, 4500);
+})();
+</script>
+<script>
+/* ══ 알림 클릭 → 그 사진 바로 보기 ═════════════════════════════════════════════
+   · 경로 2가지: ① ?openPhoto=구역:사진id 로 열릴 때 ② 서비스워커 JISU_OPEN_PHOTO 메시지
+   · 로컬 IndexedDB(jisu-photos·jisu-inbound-photos·jisu-pitch-photos·jisu-zone-photos-v1)에 있으면 즉시,
+     없으면 Firebase RTDB /jisu/photos/{구역}/{id} 1건만 조회해 이 기기에 받아 둔 뒤 연다.
+   · 열린 뒤 주소창의 ?openPhoto= 는 history.replaceState 로 지운다. 다른 확대창·모달과는 동시에 뜨지 않는다. */
+(function(){
+  'use strict';
+  var STORE_OF={outbound:['jisu-photos','outbound'],inbound:['jisu-inbound-photos','inbound'],pitch:['jisu-pitch-photos','pitch']};
+  var ZONE_LABEL={outbound:'출고',inbound:'입고',pitch:'피치',environment:'환경',packaging:'포장 2동','packaging-d':'포장 3동',warehouse:'창고',
+    'production-a':'생산A','production-b':'생산B','production-c':'생산C','production-d':'생산D','production-e':'생산E','production-f':'생산F','production-g':'생산G','production-h':'생산H'};
+  function storeOf(z){ return STORE_OF[z]||['jisu-zone-photos-v1','photos']; }
+  function isImg(u){ return typeof u==='string'&&u.indexOf('data:image')===0; }
+  function openStore(z){
+    var s=storeOf(z);
+    return new Promise(function(res,rej){
+      var r=indexedDB.open(s[0],1);
+      r.onupgradeneeded=function(){ if(!r.result.objectStoreNames.contains(s[1])) r.result.createObjectStore(s[1],{keyPath:'id'}); };
+      r.onsuccess=function(){ res(r.result); }; r.onerror=function(){ rej(r.error); };
+    });
+  }
+  function idbList(z){
+    return openStore(z).then(function(d){
+      return new Promise(function(res,rej){ var q=d.transaction(storeOf(z)[1],'readonly').objectStore(storeOf(z)[1]).getAll(); q.onsuccess=function(){res(q.result||[]);}; q.onerror=function(){rej(q.error);}; })
+        .then(function(v){ d.close(); return v; },function(e){ d.close(); throw e; });
+    });
+  }
+  function idbOne(z,id){
+    return openStore(z).then(function(d){
+      return new Promise(function(res,rej){ var q=d.transaction(storeOf(z)[1],'readonly').objectStore(storeOf(z)[1]).get(String(id)); q.onsuccess=function(){res(q.result||null);}; q.onerror=function(){rej(q.error);}; })
+        .then(function(v){ d.close(); return v; },function(e){ d.close(); throw e; });
+    });
+  }
+  function bridge(){ var b=window.jisuPhotoBridge; return (b&&b.available)?b:null; }
+  function toast(msg){
+    try{
+      var old=document.getElementById('jisuOpenPhotoToast'); if(old) old.remove();
+      var el=document.createElement('div'); el.id='jisuOpenPhotoToast';
+      el.style.cssText='position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:2147483647;max-width:min(90vw,420px);padding:11px 15px;border-radius:14px;background:rgba(15,23,42,0.94);border:1px solid rgba(56,189,248,0.5);box-shadow:0 12px 32px rgba(0,0,0,0.45);color:#f8fafc;font-size:13px;font-weight:700;text-align:center;';
+      el.textContent=msg;
+      document.body.appendChild(el);
+      setTimeout(function(){ if(el.parentNode) el.remove(); },4200);
+    }catch(_){}
+  }
+  /* 다른 확대창·모달과 겹치지 않게: 사진을 열기 전에 달력·상세·쪽지·로그인 창을 닫는다 */
+  function closeOtherOverlays(){
+    try{
+      var dm=document.getElementById('detailModal');
+      if(dm){ dm.classList.add('hidden'); dm.classList.remove('flex'); }
+      var sel=['#calModal','#jisuNote','#loginModal','#perfModal','.rv-modal'];
+      for(var i=0;i<sel.length;i++){
+        var els=document.querySelectorAll(sel[i]);
+        for(var j=0;j<els.length;j++){ if(!els[j].hidden) els[j].hidden=true; }
+      }
+    }catch(_){}
+  }
+  function cleanParam(){
+    try{
+      var u=new URL(location.href);
+      if(!u.searchParams.has('openPhoto')) return;
+      u.searchParams.delete('openPhoto');
+      var q=u.searchParams.toString();
+      history.replaceState(history.state||null,'',u.pathname+(q?'?'+q:'')+u.hash);
+    }catch(_){}
+  }
+  function parseParam(raw){
+    var s=String(raw||'');
+    var i=s.indexOf(':');
+    if(i<=0) return null;
+    var zone=s.slice(0,i).trim().toLowerCase(), id=s.slice(i+1).trim();
+    if(!zone||!id) return null;
+    if(!/^[a-z0-9-]{1,32}$/.test(zone)) return null;
+    return {zone:zone,id:id};
+  }
+  async function resolvePhoto(zone,id){
+    var b=bridge(), rec=null;
+    try{ rec=b?await b.get(zone,id):await idbOne(zone,id); }catch(_){ rec=null; }
+    if(rec&&isImg(rec.data)) return rec;
+    /* 이 기기에 아직 없음 → DB에서 그 사진 1건만 바로 조회 */
+    var remote=null;
+    if(b){ try{ remote=await b.remote(zone,id); }catch(_){ remote=null; } }
+    if(remote&&isImg(remote.data)){
+      remote.id=String(remote.id||id); remote.zone=zone;
+      if(b){ try{ var saved=await b.saveRemote(zone,remote); if(saved&&isImg(saved.data)) return saved; }catch(_){} }
+      return remote;
+    }
+    return null;
+  }
+  async function listFor(zone,rec){
+    var b=bridge(), list=[];
+    try{ list=b?await b.list(zone):await idbList(zone); }catch(_){ list=[]; }
+    list=(list||[]).filter(function(p){ return p&&isImg(p.data)&&(!p.zone||p.zone===zone); });
+    var has=false;
+    for(var i=0;i<list.length;i++){ if(String(list[i].id)===String(rec.id)){ has=true; break; } }
+    if(!has&&rec&&isImg(rec.data)) list.unshift(rec);
+    return list;
+  }
+  async function openOne(zone,id){
+    var lb=document.getElementById('obLightbox');
+    if(!lb||typeof window.jisuOpenGallery!=='function') return false;
+    var rec=await resolvePhoto(zone,id);
+    if(!rec) return false;
+    closeOtherOverlays();
+    var items=await listFor(zone,rec);
+    items=items.map(function(p){
+      return { id:String(p.id), at:p.at||p.day||'', name:p.name||((ZONE_LABEL[zone]||zone)+' 사진'), data:p.data };
+    });
+    var idx=0;
+    for(var i=0;i<items.length;i++){ if(items[i].id===String(id)){ idx=i; break; } }
+    var onDel=async function(cur){
+      var b=bridge();
+      if(b&&b.remove) return await b.remove(zone,cur.id);
+      try{ await new Promise(function(res){ var s=storeOf(zone); var r=indexedDB.open(s[0],1); r.onsuccess=function(){ var d=r.result; var t=d.transaction(s[1],'readwrite'); t.objectStore(s[1]).delete(String(cur.id)); t.oncomplete=function(){ d.close(); res(true); }; t.onerror=function(){ d.close(); res(false); }; }; r.onerror=function(){ res(false); }; }); }catch(_){}
+      return await listFor(zone,null);
+    };
+    return window.jisuOpenGallery(items,idx,onDel)===true;
+  }
+  var queue=[], pumping=false;
+  function requestPhoto(raw){
+    var p=parseParam(raw);
+    if(!p) return;
+    queue.push(p);
+    if(!pumping) pumpQueue();
+  }
+  async function pumpQueue(){
+    if(pumping) return;
+    pumping=true;
+    while(queue.length){
+      var p=queue.shift(), ok=false;
+      /* 사진 동기화·DB 준비를 잠깐 기다리며 최대 6초까지 재시도 */
+      for(var tries=0;tries<6;tries++){
+        try{ ok=await openOne(p.zone,p.id); }catch(e){ ok=false; }
+        if(ok) break;
+        await new Promise(function(r){ setTimeout(r,1000); });
+      }
+      if(!ok) toast('사진을 열지 못했습니다 · 사진이 만료됐거나 삭제됐을 수 있어요');
+    }
+    pumping=false;
+  }
+  function isWorkerView(){
+    try{ return document.body.classList.contains('worker-zone-only')||Boolean(new URLSearchParams(location.search).get('zone')); }catch(_){ return false; }
+  }
+  function boot(){
+    if(isWorkerView()) return;   /* 작업자 ?zone= 화면에서는 관리자용 확대창을 열지 않는다 */
+    /* ② 서비스워커 메시지: 앱이 이미 켜져 있을 때 알림을 누른 경우 */
+    if('serviceWorker' in navigator){
+      try{
+        navigator.serviceWorker.addEventListener('message',function(e){
+          var d=(e&&e.data)||{};
+          if(d.type!=='JISU_OPEN_PHOTO') return;
+          try{ if(e.ports&&e.ports[0]) e.ports[0].postMessage('JISU_OPEN_PHOTO_OK'); }catch(_){}
+          cleanParam();
+          requestPhoto(d.openPhoto);
+        });
+      }catch(_){}
+    }
+    /* ① 주소의 ?openPhoto=구역:사진id : 앱이 꺼져 있다가 알림으로 새로 열린 경우 */
+    var raw='';
+    try{ raw=new URLSearchParams(location.search).get('openPhoto')||''; }catch(_){ raw=''; }
+    if(raw){ cleanParam(); requestPhoto(raw); }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+  window.jisuOpenPhotoById=function(zone,id){
+    var p=parseParam(String(zone||'')+':'+String(id||''));
+    if(!p) return false;
+    requestPhoto(String(zone)+':'+String(id));
+    return true;
+  };
 })();
 </script>
 <script>
