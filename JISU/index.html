@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611211105">
+  <meta name="jisu-build" content="202611211152">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -2911,6 +2911,9 @@
     .env-units .eu-back:focus-visible{outline:2px solid #5eead4;outline-offset:2px;}
     .env-units .eu-sub-head b{margin-left:auto;font-size:13px;font-weight:900;color:#0f172a;}
     .env-units .eu-eq-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+    .env-units .eu-eq-grid[hidden]{display:none !important;}
+    .env-units .eu-sub-head .eu-step-cnt{font-style:normal;margin-left:6px;font-size:11.5px;font-weight:900;color:#0f766e;}
+    .env-units .eu-sub-head .eu-step-cnt[hidden]{display:none !important;}
     .env-units .eu-eq{display:flex;align-items:center;justify-content:center;gap:6px;min-height:62px;padding:12px 6px;border-radius:12px;font-weight:900;font-size:14.5px;color:#0f172a;background:rgba(255,255,255,.34);border:1px solid rgba(255,255,255,.5);box-shadow:0 1px 4px rgba(15,23,42,.08);cursor:pointer;touch-action:manipulation;}
     .env-units .eu-eq i{width:9px;height:9px;border-radius:50%;background:#64748b;flex:0 0 auto;}
     .env-units .eu-eq.work{background:linear-gradient(135deg,#10b981 0%,#059669 100%);border-color:#059669;color:#fff;box-shadow:0 4px 14px rgba(16,185,129,.35);}
@@ -4768,19 +4771,23 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
           <section class="env-units" data-env-units>
             <div class="eu-step" data-env-step="list">
               <div class="eu-h">호기 현황<span data-env-sum></span></div>
-              <div class="env-grid"><button type="button" class="env-unit" data-env-unit="1,2"><i></i>1,2호기<em data-env-cnt hidden></em></button><button type="button" class="env-unit" data-env-unit="3,4"><i></i>3,4호기<em data-env-cnt hidden></em></button><button type="button" class="env-unit" data-env-unit="5,6"><i></i>5,6호기<em data-env-cnt hidden></em></button><button type="button" class="env-unit" data-env-unit="7,8"><i></i>7,8호기<em data-env-cnt hidden></em></button><button type="button" class="env-unit" data-env-unit="9,10"><i></i>9,10호기<em data-env-cnt hidden></em></button><button type="button" class="env-unit" data-env-unit="11,12"><i></i>11,12호기<em data-env-cnt hidden></em></button><button type="button" class="env-unit" data-env-unit="13,14"><i></i>13,14호기<em data-env-cnt hidden></em></button><button type="button" class="env-unit" data-env-unit="메인통로" data-env-direct="1"><i></i>메인통로</button></div>
-              <div class="eu-tip">호기를 누르면 그 호기의 설비 4종이 나옵니다. · 메인통로는 설비 목록 없이 바로 작업중 → 작업완료로 바뀝니다.</div>
+              <div class="env-grid"><button type="button" class="env-unit" data-env-unit="1,2"><i></i>1,2호기<em data-env-cnt hidden></em></button><button type="button" class="env-unit" data-env-unit="3,4"><i></i>3,4호기<em data-env-cnt hidden></em></button><button type="button" class="env-unit" data-env-unit="5,6"><i></i>5,6호기<em data-env-cnt hidden></em></button><button type="button" class="env-unit" data-env-unit="7,8"><i></i>7,8호기<em data-env-cnt hidden></em></button><button type="button" class="env-unit" data-env-unit="9,10"><i></i>9,10호기<em data-env-cnt hidden></em></button><button type="button" class="env-unit" data-env-unit="11,12"><i></i>11,12호기<em data-env-cnt hidden></em></button><button type="button" class="env-unit" data-env-unit="13,14"><i></i>13,14호기<em data-env-cnt hidden></em></button><button type="button" class="env-unit" data-env-unit="메인통로"><i></i>메인통로<em data-env-cnt hidden></em></button></div>
+              <div class="eu-tip">호기를 누르면 그 호기의 설비 4종, 메인통로를 누르면 2호기·3호기가 나옵니다.</div>
             </div>
             <div class="eu-step" data-env-step="unit" hidden>
               <div class="eu-sub-head">
                 <button type="button" class="eu-back" data-env-back>← 호기 목록</button>
-                <b data-env-unit-title>1,2호기 설비</b>
+                <b data-env-unit-title>1,2호기 설비</b><em class="eu-step-cnt" data-env-sub-cnt hidden></em>
               </div>
               <div class="eu-eq-grid" data-env-eq-grid>
                 <button type="button" class="eu-eq" data-env-eq="분체"><i></i><span>분체</span></button>
                 <button type="button" class="eu-eq" data-env-eq="충진기"><i></i><span>충진기</span></button>
                 <button type="button" class="eu-eq" data-env-eq="포장기"><i></i><span>포장기</span></button>
                 <button type="button" class="eu-eq" data-env-eq="소성로"><i></i><span>소성로</span></button>
+              </div>
+              <div class="eu-eq-grid" data-env-aisle-grid hidden>
+                <button type="button" class="eu-eq" data-env-aisle="2호기"><i></i><span>2호기</span></button>
+                <button type="button" class="eu-eq" data-env-aisle="3호기"><i></i><span>3호기</span></button>
               </div>
               <div class="eu-tip">누를 때마다 대기 → 작업중(초록) → 작업완료(파랑) · 완료를 한 번 더 누르면 대기로 돌아갑니다.</div>
             </div>
@@ -6621,18 +6628,23 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       /* [11-20] 환경 설비(분체·충진기·포장기·소성로) 청소 완료도 '오늘 완료'로 함께 본다 */
       let envEv=null, envLog=[]; try{ envEv=JSON.parse(localStorage.getItem('jisu-env-v1')||'null'); envLog=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]'); }catch(e){}
       if(!envEv||typeof envEv!=='object') envEv={}; if(!Array.isArray(envLog)) envLog=[];
-      const ENV_U=['1,2','3,4','5,6','7,8','9,10','11,12','13,14'], ENV_EQ=['분체','충진기','포장기','소성로'], ENV_AISLE='메인통로';
+      const ENV_U=['1,2','3,4','5,6','7,8','9,10','11,12','13,14'], ENV_EQ=['분체','충진기','포장기','소성로'], ENV_AISLE='메인통로', ENV_ASUB=['2호기','3호기'];
       const envName=k=>(k===ENV_AISLE?ENV_AISLE:(k||'')+'호기');
       const envU=(envEv.u&&typeof envEv.u==='object')?envEv.u:{}, envRound=envEv.round||1;
       const envSubs=x=>{ x=(x&&typeof x==='object')?x:{}; if(x.subs&&typeof x.subs==='object') return x.subs; const o={}; if(x.s) ENV_EQ.forEach(e=>{ o[e]={s:x.s,ts:x.ts||'',td:x.td||'',day:x.day||''}; }); return o; };
+      /* [11-21] 메인통로 하위 2호기·3호기 (예전 a.s 한 칸짜리 자료는 2호기 칸으로 옮겨 읽는다) */
+      const envAisle=(envEv.a&&typeof envEv.a==='object')?envEv.a:{};
+      const envAisleSubs=(function(x){ x=(x&&typeof x==='object')?x:{}; if(x.subs&&typeof x.subs==='object'&&Object.keys(x.subs).length) return x.subs;
+        const o={}; ENV_ASUB.forEach(k=>{ o[k]={s:''}; }); if(x.s) o[ENV_ASUB[0]]={s:x.s,ts:x.ts||'',td:x.td||'',day:x.day||''}; return o; })(envAisle);
       const envDoneToday=(function(){ const seen={}, out=[];
         envLog.forEach(x=>{ if(!x||x.day!==todayIso) return; const eq=x.equip||'-', key=[x.unit||'',eq,x.round||'',x.ts||'',x.td||''].join('|'); if(seen[key]) return; seen[key]=1;
           out.push({unit:x.unit||'',equip:eq,round:x.round||'',ts:x.ts||'',td:x.td||'',by:x.by||''}); });
         ENV_U.forEach(k=>{ const sb=envSubs(envU[k]); ENV_EQ.forEach(e=>{ const y=sb[e]||{}; if(y.s!=='done'||y.day!==todayIso) return;
           if(envLog.some(x=>x&&x.unit===k&&x.equip===e&&x.day===todayIso)) return;   /* 기록에 이미 있으면 중복으로 넣지 않는다 */
           out.push({unit:k,equip:e,round:envRound,ts:y.ts||'',td:y.td||'',by:(localStorage.getItem('jisu-user')||'')}); }); });
-        { /* 메인통로: 설비 4종이 없는 직통 항목이라 현재 상태에서 직접 채운다 */ const a=(envEv.a&&typeof envEv.a==='object')?envEv.a:{};
-          if(a.s==='done'&&a.day===todayIso&&!envLog.some(x=>x&&x.unit===ENV_AISLE&&x.day===todayIso)) out.push({unit:ENV_AISLE,equip:'',round:envRound,ts:a.ts||'',td:a.td||'',by:(localStorage.getItem('jisu-user')||'')}); }
+        { /* 메인통로: 하위 2호기·3호기 완료를 기록에 아직 못 넣은 것만 채운다 */ ENV_ASUB.forEach(k=>{ const y=envAisleSubs[k]||{}; if(y.s!=='done'||y.day!==todayIso) return;
+          if(envLog.some(x=>x&&x.unit===ENV_AISLE&&x.equip===k&&x.day===todayIso)) return;
+          out.push({unit:ENV_AISLE,equip:k,round:envRound,ts:y.ts||'',td:y.td||'',by:(localStorage.getItem('jisu-user')||'')}); }); }
         return out.sort((a,b)=>String(a.td||'').localeCompare(String(b.td||''))); })();
       if(!options.skipPrompt && !doneToday.length && !envDoneToday.length && !confirm('오늘 완료된 금일작업·환경 설비가 없습니다.\n그래도 오늘 전체 금일작업 현황을 엑셀로 받을까요?')) return;
       const HEAD=['번호','대상','작업 내용','이동','목표량','완료량','단위','상태','구분','긴급','원래 목표','관리자 판단','작성자','등록 시각','작업 시작','완료 시각'];
@@ -6642,7 +6654,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const fname=options.filename||('금일작업완료_'+y+m+d);
       try{
         const XLSX=await loadLib(); const wb=XLSX.utils.book_new();
-        const rows1=doneToday.map(row).concat(envDoneToday.map(r=>({'번호':0,'대상':'환경 · '+envName(r.unit),'작업 내용':(r.unit===ENV_AISLE?ENV_AISLE:r.equip)+' 청소','이동':'','목표량':'','완료량':'','단위':'','상태':'작업완료','구분':(r.round?(r.round+'회차'):'신규'),'긴급':'','원래 목표':'','관리자 판단':'','작성자':r.by||'','등록 시각':'','작업 시작':r.ts||'','완료 시각':r.td||''})));
+        const envLabel=r=>(r.unit===ENV_AISLE?(ENV_AISLE+(r.equip?' '+r.equip:'')):envName(r.unit));
+        const rows1=doneToday.map(row).concat(envDoneToday.map(r=>({'번호':0,'대상':'환경 · '+envLabel(r),'작업 내용':envLabel(r)+' 청소','이동':'','목표량':'','완료량':'','단위':'','상태':'작업완료','구분':(r.round?(r.round+'회차'):'신규'),'긴급':'','원래 목표':'','관리자 판단':'','작성자':r.by||'','등록 시각':'','작업 시작':r.ts||'','완료 시각':r.td||''})));
         rows1.forEach((o,i)=>{ o['번호']=i+1; });
         const s1=XLSX.utils.json_to_sheet(rows1,{header:HEAD});
         s1['!cols']=COLS;
@@ -6692,8 +6705,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         { let ms=[]; try{ms=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]')}catch(e){} const TAG={handover:'인수인계',extra:'추가작업',issue:'특이사항'}; const s3=XLSX.utils.json_to_sheet(ms.map((x,i)=>({'번호':i+1,'작성 시각':x.at||'','대상':NAMES[x.target]||x.target,'내용':x.text,'작성자':x.by||'','확인':x.ack?('확인 '+(x.ackAt||'')+(x.ackBy?' · '+x.ackBy:'')):'미확인'})),{header:['번호','작성 시각','대상','내용','작성자','확인']}); s3['!cols']=[{wch:5},{wch:14},{wch:10},{wch:44},{wch:10},{wch:22}]; XLSX.utils.book_append_sheet(wb,s3,'특이사항'); }
         { const ST={work:'작업중',done:'작업완료'};
           const eqRows=[]; ENV_U.forEach(k=>{ const sb=envSubs(envU[k]); ENV_EQ.forEach(e=>{ const y=sb[e]||{}; eqRows.push({'번호':eqRows.length+1,'호기':k+'호기','설비':e,'회차':envRound,'상태':ST[y.s]||'대기','작업 시작':y.ts||'','작업완료 시각':y.td||''}); }); });
-          { /* 메인통로는 설비 한 줄 대신 '-' 로 표기하고 상태만 같은 방식으로 보여준다 */ const a=(envEv.a&&typeof envEv.a==='object')?envEv.a:{};
-            eqRows.push({'번호':eqRows.length+1,'호기':ENV_AISLE,'설비':'-','회차':envRound,'상태':ST[a.s]||'대기','작업 시작':a.ts||'','작업완료 시각':a.td||''}); }
+          { /* 메인통로는 설비 자리에 2호기·3호기를 한 줄씩 보여준다 */ ENV_ASUB.forEach(k=>{ const y=envAisleSubs[k]||{};
+            eqRows.push({'번호':eqRows.length+1,'호기':ENV_AISLE,'설비':k,'회차':envRound,'상태':ST[y.s]||'대기','작업 시작':y.ts||'','작업완료 시각':y.td||''}); }); }
           const s4=XLSX.utils.json_to_sheet(eqRows,{header:['번호','호기','설비','회차','상태','작업 시작','작업완료 시각']}); s4['!cols']=[{wch:5},{wch:11},{wch:9},{wch:6},{wch:9},{wch:10},{wch:12}]; XLSX.utils.book_append_sheet(wb,s4,'환경 호기 현재');
           const s5=XLSX.utils.json_to_sheet(envLog.map((x,i)=>({'번호':i+1,'날짜':x.day||'','호기':envName(x.unit),'설비':x.equip||'-','회차':x.round||'','작업 시작':x.ts||'','작업완료':x.td||'','작업자':x.by||''})),{header:['번호','날짜','호기','설비','회차','작업 시작','작업완료','작업자']}); s5['!cols']=[{wch:5},{wch:11},{wch:11},{wch:9},{wch:6},{wch:10},{wch:10},{wch:10}]; XLSX.utils.book_append_sheet(wb,s5,'환경 청소 기록'); }
         if(window.jisuPitchMigration)await window.jisuPitchMigration;const pitchCompleted=options.pitchRecords||await window.jisuPitchArchive.all();
@@ -8285,12 +8298,13 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
   (function(){
     const KEY='jisu-env-v1', LOG='jisu-env-log-v1', box=document.querySelector('[data-env-units]'); if(!box) return;
     const EQ=['분체','충진기','포장기','소성로'], U7=['1,2','3,4','5,6','7,8','9,10','11,12','13,14'], N=U7.length;
-    /* [11-20] 메인통로: 호기와 달리 설비 4종 목록 없이 누를 때마다 대기 → 작업중 → 작업완료로 바로 도는 직통 버튼.
-       상태는 같은 jisu-env-v1 안의 a 키({s,ts,td,day})에 따로 둔다 — 호기 7개·설비 28칸 계산에 섞이지 않아
-       회차 초기화·엑셀 집계가 기존 그대로 맞는다. */
-    const AISLE='메인통로';
+    /* [11-21] 메인통로도 다른 호기처럼 2단계: 누르면 설비 4종 대신 2호기·3호기 두 버튼이 나온다.
+       상태는 같은 jisu-env-v1 안의 a 키({s,ts,td,day,subs:{'2호기':{...},'3호기':{...}}})에 따로 둔다 —
+       호기 7개·설비 28칸 계산에 섞이지 않아 회차 초기화·엑셀 집계가 기존 그대로 맞는다.
+       바깥 버튼은 하위 중 하나라도 청소중이면 초록, 청소중이 없고 하나라도 완료면 파랑(1/2·2/2). */
+    const AISLE='메인통로', ASUB=['2호기','3호기'], NA=ASUB.length;
     const listStep=box.querySelector('[data-env-step="list"]'), unitStep=box.querySelector('[data-env-step="unit"]');
-    const eqBox=box.querySelector('[data-env-eq-grid]'), titleEl=box.querySelector('[data-env-unit-title]'), sumEl=box.querySelector('[data-env-sum]');
+    const eqBox=box.querySelector('[data-env-eq-grid]'), aisleBox=box.querySelector('[data-env-aisle-grid]'), subCntEl=box.querySelector('[data-env-sub-cnt]'), titleEl=box.querySelector('[data-env-unit-title]'), sumEl=box.querySelector('[data-env-sum]');
     let openUnit=null;
     const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
     const now=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false});
@@ -8319,28 +8333,41 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     /* 호기 한 칸의 상태(s·ts·td)는 설비 4종에서 계산해 채운다 — 지도 표시·홈 알림·검색·엑셀이 그대로 읽는다
        [11-20] 색 규칙: 하나라도 청소 중(work)이면 초록, 작업중이 없고 하나라도 작업완료(done)면 파랑, 모두 대기면 회색.
        (예: 소성로만 완료한 1,2호기 = 1/4 이면서 파랑) */
+    /* [11-21] 메인통로 하위 2호기·3호기 — 예전 a.s 한 칸짜리 자료는 2호기 한 칸으로 옮겨 담아
+       외곽 버튼 색(초록/파랑)과 진행 개수가 끊기지 않게 한다. */
+    function aisleSubs(x){ x=(x&&typeof x==='object')?x:{}; if(!x.subs||typeof x.subs!=='object') x.subs={};
+      ASUB.forEach(k=>{ const y=x.subs[k]; if(!y||typeof y!=='object') x.subs[k]={s:''}; }); return x.subs; }
+    function syncAisle(a){ if(!a||typeof a!=='object') a={s:''};
+      const sb=aisleSubs(a); let d=0,w=0,ts='',td='',doneAt=0;
+      ASUB.forEach(k=>{ const y=sb[k]||{}; if(y.s==='done'){ d++; if(y.td&&(!td||y.td>td)) td=y.td; if(typeof y.doneAt==='number'&&y.doneAt>doneAt) doneAt=y.doneAt; }
+        else if(y.s==='work') w++;
+        if(y.s&&y.ts&&(!ts||y.ts<ts)) ts=y.ts; });
+      a.doneCnt=d; a.workCnt=w; a.s=(w>0?'work':(d>0?'done':'')); a.ts=ts; a.td=td; a.doneAt=doneAt;
+      return a; }
+    function aisleLegacy(x){ const a=(x&&typeof x==='object')?x:{}; if(a.subs&&typeof a.subs==='object'&&Object.keys(a.subs).length) return a;
+      const s=(a.s==='work'||a.s==='done')?a.s:''; a.subs={}; ASUB.forEach(k=>{ a.subs[k]={s:''}; });
+      if(s){ a.subs[ASUB[0]]={s,ts:a.ts||'',td:a.td||'',day:a.day||''}; if(typeof a.doneAt==='number') a.subs[ASUB[0]].doneAt=a.doneAt; }
+      return a; }
     function sync(x){ const sb=subsOf(x); let d=0,w=0,ts='',td='';
       EQ.forEach(e=>{ const y=sb[e]||{}; if(y.s==='done'){ d++; if(y.td&&(!td||y.td>td)) td=y.td; } else if(y.s==='work') w++;
         if(y.s&&y.ts&&(!ts||y.ts<ts)) ts=y.ts; });
       x.doneCnt=d; x.workCnt=w; x.s=(w>0?'work':(d>0?'done':'')); x.ts=ts; x.td=td; return x; }
     function load(){ let d; try{ d=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){} if(!d||typeof d!=='object') d={}; if(!d.u||typeof d.u!=='object') d.u={}; if(!d.round) d.round=1; delete d.day; delete d.resetDay;
-      if(!d.a||typeof d.a!=='object') d.a={s:''}; else if(d.a.s!=='work'&&d.a.s!=='done'){ d.a={s:''}; }
+      d.a=aisleLegacy(d.a); syncAisle(d.a);
       Object.keys(d.u).forEach(k=>{ const x=d.u[k]; if(!x||typeof x!=='object'){ delete d.u[k]; return; } sync(x); });
       return d; }
     const save=d=>localStorage.setItem(KEY,JSON.stringify(d));
     const loadLog=()=>{ try{ return JSON.parse(localStorage.getItem(LOG)||'[]'); }catch(e){ return []; } };
     let resetT=null;
     function draw(){ const d=load(); let r=0,dn=0,totalDone=0;
-      box.querySelectorAll('[data-env-unit]').forEach(b=>{ const direct=b.dataset.envDirect==='1';
-        const x=direct?(d.a||{}):(d.u[b.dataset.envUnit]||{});
+      box.querySelectorAll('[data-env-unit]').forEach(b=>{ const isA=(b.dataset.envUnit===AISLE), cap=isA?NA:EQ.length;
+        const x=isA?syncAisle(d.a||{}):(d.u[b.dataset.envUnit]||{});
         b.classList.toggle('work',x.s==='work'); b.classList.toggle('done',x.s==='done'); if(x.s==='work') r++; if(x.s==='done') dn++;
-        if(direct){ b.setAttribute('aria-pressed',x.s?'true':'false');
-          b.title=AISLE+' · '+(x.s==='work'?('청소중'+(x.ts?' '+x.ts:'')):x.s==='done'?('청소완료'+(x.td?' '+x.td:'')):'대기 (누르면 바로 청소 시작)');
-          return; }
-        totalDone+=(x.doneCnt||0);
         const cnt=b.querySelector('[data-env-cnt]'), dc=x.doneCnt||0, wc=x.workCnt||0;
-        if(cnt){ cnt.textContent=dc+'/'+EQ.length; cnt.hidden=!((dc+wc)>0); }
+        if(cnt){ cnt.textContent=dc+'/'+cap; cnt.hidden=!((dc+wc)>0); }
         b.setAttribute('aria-pressed',x.s?'true':'false');
+        if(isA){ b.title=AISLE+' · '+(x.s==='work'?('청소중 '+dc+'/'+cap):x.s==='done'?('청소완료 '+dc+'/'+cap+(x.td?' ('+x.td+')':'')):'대기 (누르면 2호기·3호기)'); return; }
+        totalDone+=(x.doneCnt||0);
         b.title=b.dataset.envUnit+'호기 · '+(x.s==='work'?('설비 청소중 '+dc+'/'+EQ.length):x.s==='done'?('설비 청소완료 '+dc+'/'+EQ.length+(x.td?' ('+x.td+')':'')):'대기 (누르면 설비 4종)'); });
       if(sumEl) sumEl.textContent=(dn||r)?('완료 '+dn+' · 작업중 '+r):'';
       const eb=document.querySelector('[data-toggle-zone="environment"]'); if(eb){ const cut=last18CutoffMs(), recent=recentDoneSince(d,cut);
@@ -8352,12 +8379,20 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         [...ly.children].forEach(c=>{ if(!want.includes(c.dataset.k)) c.remove(); });
         want.forEach(k=>{ if(have.has(k)) return; const el=document.createElement('div'); el.className='env-clean'; el.dataset.k=k; el.style.left=POS[k][0]+'%'; el.style.top=POS[k][1]+'%'; const isA=k===AISLE, nm=isA?AISLE:k+'호기'; const workingEq=isA?[]:EQ.filter(e=>((subsOf(d.u[k])[e]||{}).s==='work')); el.title=nm+' 청소중 ('+(workingEq.join('·')||(isA?'통로':'설비'))+' · 시작 '+(isA?(d.a.ts||''):(d.u[k].ts||''))+')';
           el.innerHTML='<div class="ec-bubble"><b>'+nm+'</b> 청소중<span class="ec-dots"></span></div><div class="ec-emoji ec-person"><svg viewBox=\"0 0 44 50\" aria-hidden=\"true\"><ellipse cx=\"22\" cy=\"47\" rx=\"14\" ry=\"2.4\" fill=\"rgba(0,0,0,.35)\"/><g class=\"ec-dust\"><circle cx=\"36\" cy=\"43\" r=\"1.3\"/><circle cx=\"39\" cy=\"40\" r=\"1\"/><circle cx=\"33\" cy=\"40\" r=\"0.9\"/></g><line x1=\"15\" y1=\"30\" x2=\"12\" y2=\"45\" stroke=\"#1f2937\" stroke-width=\"3.2\" stroke-linecap=\"round\"/><line x1=\"19\" y1=\"30\" x2=\"21\" y2=\"45\" stroke=\"#1f2937\" stroke-width=\"3.2\" stroke-linecap=\"round\"/><rect x=\"11.5\" y=\"15\" width=\"11\" height=\"16\" rx=\"3.5\" fill=\"#f97316\"/><rect x=\"11.5\" y=\"22\" width=\"11\" height=\"2\" fill=\"#fde68a\"/><circle cx=\"17\" cy=\"9\" r=\"5\" fill=\"#fcd5b5\"/><path d=\"M11.6 8.2a5.4 5.4 0 0 1 10.8 0z\" fill=\"#facc15\"/><rect x=\"10.6\" y=\"7.6\" width=\"12.8\" height=\"1.6\" rx=\".8\" fill=\"#eab308\"/><g class=\"ec-broom\"><line x1=\"21\" y1=\"18\" x2=\"27\" y2=\"26\" stroke=\"#fcd5b5\" stroke-width=\"2.8\" stroke-linecap=\"round\"/><line x1=\"25\" y1=\"15\" x2=\"32\" y2=\"40\" stroke=\"#a16207\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><path d=\"M28.5 38.5 L36 37 L39.5 45.5 L27.5 46 Z\" fill=\"#fbbf24\" stroke=\"#92400e\" stroke-width=\"1\" stroke-linejoin=\"round\"/><line x1=\"31\" y1=\"40\" x2=\"30.5\" y2=\"45.5\" stroke=\"#92400e\" stroke-width=\".7\"/><line x1=\"34\" y1=\"39.5\" x2=\"35\" y2=\"45.5\" stroke=\"#92400e\" stroke-width=\".7\"/></g></svg></div>'; ly.appendChild(el); }); } }
-      if(eqBox&&openUnit){ if(titleEl) titleEl.textContent=openUnit+'호기 설비'; const sb=subsOf(d.u[openUnit]);
-        eqBox.querySelectorAll('[data-env-eq]').forEach(b=>{ const y=sb[b.dataset.envEq]||{};
-          b.classList.toggle('work',y.s==='work'); b.classList.toggle('done',y.s==='done'); b.setAttribute('aria-pressed',y.s?'true':'false');
-          b.title=b.dataset.envEq+' · '+(y.s==='done'?('청소완료 '+(y.td||'')):y.s==='work'?('청소중 '+(y.ts||'')):'대기 (누르면 청소 시작)'); }); }
+      if(openUnit){ const isA=(openUnit===AISLE);
+        if(titleEl) titleEl.textContent=isA?AISLE:openUnit+'호기 설비';
+        if(eqBox) eqBox.hidden=isA; if(aisleBox) aisleBox.hidden=!isA;
+        const asb=isA?aisleSubs(d.a||{}):null;
+        if(subCntEl){ subCntEl.hidden=!isA; if(isA){ let dc=0; ASUB.forEach(k=>{ if((asb[k]||{}).s==='done') dc++; }); subCntEl.textContent=dc+'/'+NA; } }
+        if(isA&&aisleBox){ aisleBox.querySelectorAll('[data-env-aisle]').forEach(b=>{ const y=asb[b.dataset.envAisle]||{};
+            b.classList.toggle('work',y.s==='work'); b.classList.toggle('done',y.s==='done'); b.setAttribute('aria-pressed',y.s?'true':'false');
+            b.title=AISLE+' '+b.dataset.envAisle+' · '+(y.s==='done'?('청소완료 '+(y.td||'')):y.s==='work'?('청소중 '+(y.ts||'')):'대기 (누르면 청소 시작)'); }); }
+        else if(eqBox){ const sb=subsOf(d.u[openUnit]);
+          eqBox.querySelectorAll('[data-env-eq]').forEach(b=>{ const y=sb[b.dataset.envEq]||{};
+            b.classList.toggle('work',y.s==='work'); b.classList.toggle('done',y.s==='done'); b.setAttribute('aria-pressed',y.s?'true':'false');
+            b.title=b.dataset.envEq+' · '+(y.s==='done'?('청소완료 '+(y.td||'')):y.s==='work'?('청소중 '+(y.ts||'')):'대기 (누르면 청소 시작)'); }); } }
       /* 28칸(7호기 × 4설비)이 모두 작업완료일 때만 다음 회차로 — 일부만 끝난 파랑 호기는 초기화하지 않는다 */
-      if(totalDone===N*EQ.length && !resetT){ resetT=setTimeout(()=>{ resetT=null; const d2=load(); let tot=0,run=0; Object.keys(d2.u).forEach(k=>{ const y=d2.u[k]||{}; tot+=(y.doneCnt||0); if((y.workCnt||0)>0) run++; }); if(tot===N*EQ.length&&!run){ d2.u={}; d2.a={s:''}; d2.round=(d2.round||1)+1; save(d2); draw(); } },1200); } }
+      if(totalDone===N*EQ.length && !resetT){ resetT=setTimeout(()=>{ resetT=null; const d2=load(); let tot=0,run=0; Object.keys(d2.u).forEach(k=>{ const y=d2.u[k]||{}; tot+=(y.doneCnt||0); if((y.workCnt||0)>0) run++; }); if(tot===N*EQ.length&&!run){ d2.u={}; d2.a={s:'',subs:{}}; d2.round=(d2.round||1)+1; save(d2); draw(); } },1200); } }
     function showList(){ openUnit=null; if(listStep) listStep.hidden=false; if(unitStep) unitStep.hidden=true; draw(); }
     function showUnit(k){ openUnit=k; if(listStep) listStep.hidden=true; if(unitStep) unitStep.hidden=false; draw(); }
     /* 설비 버튼: 대기 → 작업중 → 작업완료 → 대기. 완료로 넘어갈 때만 기록을 남기고, 완료를 되돌리면 그 기록도 지운다 */
@@ -8369,21 +8404,22 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         const lg=loadLog(); for(let i=lg.length-1;i>=0;i--){ const y=lg[i]; if(y&&y.unit===k&&y.equip===e&&(y.round||1)===(d.round||1)){ lg.splice(i,1); break; } }
         localStorage.setItem(LOG,JSON.stringify(lg.slice(-5000))); }
       sync(x); save(d); draw(); if(window.jisuCmdRender) window.jisuCmdRender(); }
-    /* 메인통로: 호기처럼 설비 2단계를 열지 않고, 누를 때마다 대기 → 작업중(초록) → 작업완료(파랑) → 대기로 돈다.
-       완료로 넘어갈 때만 jisu-env-log-v1 에 {day, unit:'메인통로', equip:'', round, ts, td, by} 로 남기고,
+    /* 메인통로 하위 2호기·3호기 버튼: 설비 버튼과 똑같이 대기 → 작업중(초록) → 작업완료(파랑) → 대기로 돈다.
+       완료로 넘어갈 때만 jisu-env-log-v1 에 {day, unit:'메인통로', equip:'2호기'|'3호기', round, ts, td, by} 로 남기고,
        완료를 되돌리면 이번 회차의 그 기록도 지운다(설비와 같은 규칙). */
-    function tapAisle(){ const d=load(), x=d.a||(d.a={s:''});
-      if(!x.s){ x.s='work'; x.ts=now(); x.td=''; x.day=today(); x.doneAt=0; }
-      else if(x.s==='work'){ const td=now(), ts=x.ts||''; x.s='done'; x.ts=ts; x.td=td; x.day=today(); x.doneAt=Date.now();
-        const lg=loadLog(); lg.push({day:today(),unit:AISLE,equip:'',round:d.round||1,ts,td,by:(localStorage.getItem('jisu-user')||'')}); localStorage.setItem(LOG,JSON.stringify(lg.slice(-5000))); }
-      else { x.s=''; x.ts=''; x.td=''; x.day=''; x.doneAt=0;
-        const lg=loadLog(); for(let i=lg.length-1;i>=0;i--){ const y=lg[i]; if(y&&y.unit===AISLE&&(y.round||1)===(d.round||1)){ lg.splice(i,1); break; } }
+    function tapAisleSub(k){ const d=load(), a=d.a||(d.a={s:''}), sb=aisleSubs(a), cur=sb[k]||{};
+      if(!cur.s){ sb[k]={s:'work',ts:now(),day:today()}; }
+      else if(cur.s==='work'){ const td=now(), ts=cur.ts||''; sb[k]={s:'done',ts,td,day:today(),doneAt:Date.now()};
+        const lg=loadLog(); lg.push({day:today(),unit:AISLE,equip:k,round:d.round||1,ts,td,by:(localStorage.getItem('jisu-user')||'')}); localStorage.setItem(LOG,JSON.stringify(lg.slice(-5000))); }
+      else { sb[k]={s:''};
+        const lg=loadLog(); for(let i=lg.length-1;i>=0;i--){ const y=lg[i]; if(y&&y.unit===AISLE&&y.equip===k&&(y.round||1)===(d.round||1)){ lg.splice(i,1); break; } }
         localStorage.setItem(LOG,JSON.stringify(lg.slice(-5000))); }
-      save(d); draw(); if(window.jisuCmdRender) window.jisuCmdRender(); }
+      syncAisle(a); save(d); draw(); if(window.jisuCmdRender) window.jisuCmdRender(); }
     box.addEventListener('click',e=>{
       const back=e.target.closest('[data-env-back]'); if(back){ e.stopPropagation(); showList(); return; }
-      const eq=e.target.closest('[data-env-eq]'); if(eq){ e.stopPropagation(); if(openUnit) tapEq(openUnit,eq.dataset.envEq); return; }
-      const u=e.target.closest('[data-env-unit]'); if(u){ e.stopPropagation(); if(u.dataset.envDirect==='1'){ tapAisle(); } else { showUnit(u.dataset.envUnit); } return; } });
+      const ae=e.target.closest('[data-env-aisle]'); if(ae){ e.stopPropagation(); if(openUnit===AISLE) tapAisleSub(ae.dataset.envAisle); return; }
+      const eq=e.target.closest('[data-env-eq]'); if(eq){ e.stopPropagation(); if(openUnit&&openUnit!==AISLE) tapEq(openUnit,eq.dataset.envEq); return; }
+      const u=e.target.closest('[data-env-unit]'); if(u){ e.stopPropagation(); showUnit(u.dataset.envUnit); return; } });
     window.addEventListener('storage',e=>{ if(e.key===KEY) draw(); });
     /* 18:00(KST)을 넘긴 채 화면이 켜져 있어도 지도 '환경' 필 불빛이 저절로 꺼지게 30초·복귀 시 다시 그린다 */
     document.addEventListener('visibilitychange',()=>{ if(!document.hidden) draw(); });
@@ -9538,14 +9574,26 @@ paint()})();</script>
           });
         });
       });
-      { /* 메인통로: 설비 목록이 없는 직통 항목 따로 */ const a = (env.a && typeof env.a === 'object') ? env.a : {};
-        if(a.s){ const lb = a.s === 'done' ? '작업완료' : '작업중';
+      { /* 메인통로: 2호기·3호기 2단계 — 바깥 요약 한 줄 + 하위 항목 각각 */ const a = (env.a && typeof env.a === 'object') ? env.a : {};
+        const AS = ['2호기','3호기'];
+        const sbOf = x => { x = (x&&typeof x==='object')?x:{}; if(x.subs && typeof x.subs==='object' && Object.keys(x.subs).length) return x.subs;
+          const o = {}; AS.forEach(k=>{ o[k] = { s:'' }; }); if(x.s) o[AS[0]] = { s:x.s, ts:x.ts||'', td:x.td||'', day:x.day||'' }; return o; };
+        const sb = sbOf(a); let adc = 0, awc = 0;
+        AS.forEach(k => { const y = sb[k] || {}; if(y.s === 'done') adc++; else if(y.s === 'work') awc++; });
+        if(adc || awc){ const lb = awc > 0 ? '작업중' : (adc >= AS.length ? '완료' : '작업완료');
           items.push({
-            badge: '환경 통로', cls: 't-cmd', title: '메인통로 · ' + lb,
-            sub: ['환경', '메인통로', a.ts ? ('시작 ' + a.ts) : '', a.td ? ('완료 ' + a.td) : ''].filter(Boolean).join(' · '),
+            badge: '환경 통로', cls: 't-cmd', title: '메인통로 · ' + lb + ' (' + adc + '/' + AS.length + ')',
+            sub: ['환경', '메인통로', adc + '/' + AS.length].filter(Boolean).join(' · '),
             search: ['환경', '메인통로', lb].filter(Boolean).join(' ').toLowerCase(),
             action: { type: 'zone', target: 'environment' }
-          }); } }
+          }); }
+        AS.forEach(k => { const y = sb[k] || {}; if(!y.s) return; const lb = y.s === 'done' ? '작업완료' : '작업중';
+          items.push({
+            badge: '환경 통로', cls: 't-cmd', title: '메인통로 ' + k + ' · ' + lb,
+            sub: ['환경', y.day, '메인통로 ' + k, y.ts ? ('시작 ' + y.ts) : '', y.td ? ('완료 ' + y.td) : ''].filter(Boolean).join(' · '),
+            search: ['환경', '메인통로', k, lb, y.day].filter(Boolean).join(' ').toLowerCase(),
+            action: { type: 'zone', target: 'environment' }
+          }); }); }
     }
 
     return items;
