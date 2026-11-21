@@ -430,6 +430,27 @@ def notify_new(recs: list) -> None:
                     "click": "https://coarfamily-cyber.github.io/POSCO-M/JISU/" + (f"?zone={base}" if base != "*" else "")
                 }, ensure_ascii=False).encode("utf-8")
                 _request("https://ntfy.sh/", "POST", payload, {"Content-Type": "application/json"})
+            # PWA Web Push 연동 (선택적 인증 토큰 지원)
+            try:
+                push_url = os.environ.get("JISU_PUSH_API_URL", "https://posco-m.vercel.app/api/push").strip()
+                if push_url:
+                    push_headers = {"Content-Type": "application/json"}
+                    push_tok = os.environ.get("JISU_PUSH_AUTH_TOKEN", "").strip()
+                    if push_tok:
+                        push_headers["Authorization"] = f"Bearer {push_tok}"
+                    push_body = json.dumps({
+                        "target": base,
+                        "payload": {
+                            "title": title,
+                            "body": msg,
+                            "url": "https://coarfamily-cyber.github.io/POSCO-M/JISU/" + (f"?zone={base}" if base != "*" else ""),
+                            "tag": f"jisu-sched-{rec.get('id', base)}",
+                            "badge": 1,
+                        },
+                    }, ensure_ascii=False).encode("utf-8")
+                    _request(push_url, "POST", push_body, push_headers)
+            except Exception as pe:
+                print(f"[warn] Web Push 발송 실패: {pe}")
         except Exception as e:
             print(f"[warn] ntfy 발송 실패: {e}")
 

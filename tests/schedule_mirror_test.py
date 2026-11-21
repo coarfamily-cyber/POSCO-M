@@ -55,7 +55,7 @@ class FakeDB:
 
     def request(self, url, method="GET", body=None, headers=None):
         self.calls.append((method, url))
-        if "ntfy.sh" in url:
+        if "ntfy.sh" in url or "/api/push" in url:   # 알림(ntfy·Web Push)은 DB가 아니다
             return 200, {}, "{}"
         path = self._path(url)
         if method == "GET":
@@ -109,7 +109,7 @@ class T(unittest.TestCase):
     def test_flow_and_mirror(self):
         db = make_db()
         self.run_with(db)
-        methods = [m for m, u in db.calls if "ntfy" not in u]
+        methods = [m for m, u in db.calls if "ntfy" not in u and "/api/push" not in u]
         self.assertEqual(methods[:2], ["GET", "GET"])
         self.assertIn("PUT", methods)
         self.assertEqual(methods[-1], "PATCH", "구역 복사는 저장 성공 뒤 마지막에")
