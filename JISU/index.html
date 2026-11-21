@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611211949">
+  <meta name="jisu-build" content="202611212002">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -1045,7 +1045,8 @@
       max-width:calc(100vw - 16px) !important;
     }
     body:not(#z1#z2#z3#z4#z5):not(.worker-zone-only) .hotspot-wrapper.is-open .expand-card{
-      height:min(76vh, calc(100dvh - 84px)) !important;
+      /* [11-21] 높이는 내용에 딱 맞춘다(내용이 없으면 짧게). 지금 크기(76vh)는 '최대 높이'로만 쓰고, 넘치면 카드 안에서 스크롤 */
+      height:auto !important;
     }
     .expand-card::before {
       content: none !important;
@@ -1475,7 +1476,7 @@
       body:not(#z1#z2#z3#z4#z5):not(.worker-zone-only) .hotspot-wrapper.is-open .expand-card{
         left:8px !important;right:auto !important;
         width:min(340px, 86vw) !important;
-        height:min(580px, 68dvh) !important;
+        height:auto !important;
         max-height:min(580px, 68dvh) !important;
       }
     }
@@ -1487,7 +1488,7 @@
         left:50% !important;right:auto !important;top:50% !important;bottom:auto !important;
         transform:translate(-50%,-50%) !important;
         width:min(480px, 86vw) !important;max-width:none !important;
-        height:min(640px, 78dvh) !important;
+        height:auto !important;
         max-height:min(640px, 78dvh) !important;margin:0 !important;
         padding:16px 16px 20px !important;border-radius:22px !important;
         z-index:220 !important;overflow-y:auto !important;-webkit-overflow-scrolling:touch;
@@ -6597,7 +6598,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
         const cw=Math.round(Math.min(vw>768?480:340, vw*0.86));
         const ch=Math.round(Math.min(vw>768?640:580, vh*0.68));
         card.style.setProperty('width',cw+'px','important');
-        card.style.setProperty('height',ch+'px','important');
+        card.style.setProperty('height','auto','important'); /* [11-21] 내용에 맞춰 줄어듦(ch는 최대 높이) */
         card.style.setProperty('max-height',ch+'px','important');
         card.style.setProperty('left','0px','important');
         card.style.setProperty('top','0px','important');
@@ -6607,7 +6608,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
         card.style.setProperty('margin','0','important');
         const r=card.getBoundingClientRect();
         const targetLeft=Math.max(8,Math.round((vw-cw)/2));
-        const targetTop=Math.max(12,Math.round((vh-ch)/2));
+        const targetTop=Math.max(12,Math.round((vh-Math.min(ch,r.height||ch))/2));
         card.style.setProperty('left',(targetLeft-r.left)+'px','important');
         card.style.setProperty('top',(targetTop-r.top)+'px','important');
         return;
@@ -6628,13 +6629,15 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
       /* [11-18] 전 구역 자세히보기 크기 통일: 높이를 '입고' 카드 기준 한 값으로 고정하고(내용은 카드 안에서 스크롤),
          버튼 위치에 따라 위/아래로 열린 뒤 화면·지도 밖으로 나가지 않게 좌표만 밀어 넣는다 */
       const H=Math.max(240, Math.min(vh*0.76, vh-84)/z);
-      card.style.setProperty('height', Math.round(H)+'px','important');
+      /* [11-21] 높이는 내용에 딱 맞춘다: H는 '최대 높이'이고, 실제 높이(h)는 내용 길이만큼만(없으면 짧게) */
+      card.style.setProperty('height','auto','important');
       card.style.setProperty('max-height', Math.round(H)+'px','important');
+      const h = Math.min(card.offsetHeight||H, Math.round(H)) * z;
       const vTop=Math.max(VM,sr.top+M), vBottom=Math.min(vh-VM,sr.bottom-M), below=Math.max(0,vBottom-br.bottom-8), above=Math.max(0,br.top-vTop-8);
-      const up = H*z>below && above>below;
+      const up = h>below && above>below;
       if(up){ card.style.setProperty('top','auto','important'); card.style.setProperty('bottom','100%','important'); card.style.marginTop='0'; card.style.marginBottom='8px'; card.classList.add('opens-up'); }
     else { card.style.setProperty('top','100%','important'); card.style.setProperty('bottom','auto','important'); card.style.marginTop='8px'; card.style.marginBottom='0'; card.classList.remove('opens-up'); }
-    const w = card.offsetWidth * z, h = H * z;
+    const w = card.offsetWidth * z;
       const cx = br.left + br.width / 2, cLeft = cx - w / 2, cRight = cx + w / 2;
       const cTop = up ? (br.top - 8 * z - h) : (br.bottom + 8 * z), cBottom = cTop + h;
       const minL = Math.max(VM, Math.min(sr.left + M, vw - VM - w)), maxR = Math.min(vw - VM, Math.max(sr.right - M, VM + w));
