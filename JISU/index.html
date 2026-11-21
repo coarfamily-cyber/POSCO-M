@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611210950">
+  <meta name="jisu-build" content="202611211012">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -10765,7 +10765,7 @@ paint()})();</script>
         if(again[k] || (latest!=null && latest!==lastSent[k])){
           again[k]=false; setTimeout(function(){ pushKey(k,{force:true}); },0);
         }
-      });
+      },false);   /* applyLocally=false: 서버 확정 전 내 값이 내 리스너로 먼저 들어와 병합 기준(lastRemote)을 흐리지 않게 */
     }catch(e){ pushing[k]=false; console.warn('[jisu-db] 저장 예외('+k+'):',e); }
   }
   /* 다른 기기가 먼저 저장한 경우: 서버 값을 버리지 않고 내 변경분을 얹어 다시 올린다 */
@@ -10990,9 +10990,12 @@ paint()})();</script>
           /* 아직 서버에 못 올린 내 변경이 있음 → 서버 값으로 덮지 않고 행 단위로 병합한 뒤 다시 올린다 */
           var localNow=payloadOf(k);
           if(localNow==null){ lastSent[k]=remote; return; }
-          if(localNow!==remote && keyOf(k)==='jisu-inbound-records-v1'){
+          var kk=keyOf(k), isArrKey=(kk==='jisu-commands-v1'||kk==='jisu-memos-v1'||kk==='jisu-schedule-v1'||kk==='jisu-schedules-v1');
+          if(localNow!==remote && (kk==='jisu-inbound-records-v1'||isArrKey)){
+            /* 내 변경(아직 못 올림)과 방금 온 서버 값을 '이 기기가 마지막으로 반영한 서버 값(base)' 기준으로 합친 뒤 다시 올린다.
+               합치지 않고 내 값을 그대로 올리면 다른 기기가 방금 저장한 항목이 지워진다. */
             var mergedNow=remote;
-            try{ mergedNow=mergeInboundJson(base, localNow, remote); }catch(_){ mergedNow=remote; }
+            try{ mergedNow=(kk==='jisu-inbound-records-v1')?mergeInboundJson(base, localNow, remote):mergeArrJson(base==='{}'?'[]':base, localNow, remote); }catch(_){ mergedNow=remote; }
             if(mergedNow!==localNow) applyRemote(k,mergedNow,true);
             lastSent[k]=remote; lastRemote[k]=remote;
             again[k]=true;
@@ -11340,11 +11343,26 @@ paint()})();</script>
     }
     return out;
   }
+  /* 이 기기가 올리는 중인 값이 있으면 끝날 때까지 기다린다(최대 10초).
+     저장은 서버 확정 후에만 이 기기 화면/읽기에 반영되므로, 올리는 중에 전환·되돌리기를 읽으면 그 값이 빠진다. */
+  function waitOwnPushes(ms){
+    var until=Date.now()+(ms||10000);
+    var on=function(o){ return Object.keys(o).some(function(k){ return o[k]; }); };
+    return new Promise(function(res){
+      (function tick(){
+        var busy=on(pushing)||on(again)||on(dirtyKey);
+        if(!busy||Date.now()>until) return res(!busy);
+        setTimeout(tick,100);
+      })();
+    });
+  }
   window.jisuMigrateToV2=function(){
     if(SYNC_MODE!=='state') return Promise.reject(new Error('이미 v2 방식입니다'));
     if(!ROLE.all) return Promise.reject(new Error('관리자만 실행할 수 있습니다'));
     var t=nowStamp(), upd={}, revs={};
-    return Promise.all(STATE_KEYS.map(function(k){ return db.ref(ROOT+'/state/'+k).once('value'); })).then(function(snaps){
+    return waitOwnPushes().then(function(){
+      return Promise.all(STATE_KEYS.map(function(k){ return db.ref(ROOT+'/state/'+k).once('value'); }));
+    }).then(function(snaps){
       snaps.forEach(function(sn,i){
         var k=STATE_KEYS[i], d=sn.val(), v=(d&&typeof d.v==='string')?d.v:null;
         revs[k]=revOf(d);
@@ -11369,7 +11387,7 @@ paint()})();</script>
     if(SYNC_MODE!=='v2') return Promise.reject(new Error('v2 방식이 아닙니다'));
     if(!ROLE.all) return Promise.reject(new Error('관리자만 실행할 수 있습니다'));
     var t=nowStamp();
-    return db.ref(ROOT+'/v2').once('value').then(function(snap){
+    return waitOwnPushes().then(function(){ return db.ref(ROOT+'/v2').once('value'); }).then(function(snap){
       var all=snap.val()||{}, upd={};
       STATE_KEYS.forEach(function(k){
         var v=null;
@@ -11755,7 +11773,7 @@ paint()})();</script>
   var override=''; try{ var qp=new URLSearchParams(location.search).get('weather'); if(qp==='clear'||qp==='rain'||qp==='snow') override=qp; }catch(_){}
   var state='';
   var gotWeather=false;   /* wttr.in 에서 한 번이라도 실제 날씨를 받았는지 (실패 시 기존 비/눈을 덮지 않기 위해) */
-  var ctx=canvas.getContext('2d');
+  var ctx=canvas.getContext('2d');   /* null 일 수 있음(iOS Safari 캔버스 메모리 한도 등). 그림만 건너뛰고 배경 사진 전환은 계속한다 */
   var W=0,H=0,DPR=1,raf=0,lastTs=0,drops=[],flakes=[],ripples=[],sprite=null;
   var reduce=false; try{ reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(_){}
 
@@ -11766,7 +11784,7 @@ paint()})();</script>
     W=Math.max(1,Math.round(r.width)); H=Math.max(1,Math.round(r.height));
     DPR=Math.min(2, window.devicePixelRatio||1);
     canvas.width=Math.round(W*DPR); canvas.height=Math.round(H*DPR);
-    ctx.setTransform(DPR,0,0,DPR,0,0);
+    if(ctx) ctx.setTransform(DPR,0,0,DPR,0,0);
     if(state==='rain'||state==='snow') build();
   }
 
@@ -11798,11 +11816,12 @@ paint()})();</script>
       n=Math.round(Math.min(420,Math.max(150,W*H/5200)));
       for(i=0;i<n;i++) flakes.push(newFlake());
     }
-    ctx.clearRect(0,0,W,H);
+    if(ctx) ctx.clearRect(0,0,W,H);
   }
   function makeSprite(){
     var s=document.createElement('canvas'); s.width=s.height=32;
-    var g=s.getContext('2d'), gr=g.createRadialGradient(16,16,0,16,16,16);
+    var g=s.getContext('2d'); if(!g) return null;
+    var gr=g.createRadialGradient(16,16,0,16,16,16);
     gr.addColorStop(0,'rgba(255,255,255,1)');
     gr.addColorStop(0.38,'rgba(255,255,255,0.9)');
     gr.addColorStop(0.68,'rgba(255,255,255,0.32)');
@@ -11836,7 +11855,7 @@ paint()})();</script>
     }
   }
   function drawSnow(dt,ts){
-    if(!sprite) sprite=makeSprite();
+    if(!sprite){ sprite=makeSprite(); if(!sprite) return; }
     var t=ts/1000,i,p;
     ctx.clearRect(0,0,W,H);
     for(i=0;i<flakes.length;i++){
@@ -11854,13 +11873,14 @@ paint()})();</script>
   function frame(ts){
     raf=0;
     if(state!=='rain'&&state!=='snow') return;
+    if(!ctx){ stop(); return; }   /* 캔버스를 못 만든 기기: 효과 그리기만 생략(비·눈 조감도 사진은 apply()에서 바뀐다) */
     if(!lastTs) lastTs=ts;
     var dt=Math.min(0.05,Math.max(0.001,(ts-lastTs)/1000)); lastTs=ts;
     if(state==='rain'){ ctx.clearRect(0,0,W,H); drawRain(dt); }
     else drawSnow(dt,ts);
     raf=requestAnimationFrame(frame);
   }
-  function start(){ if(raf||reduce) return; lastTs=0; raf=requestAnimationFrame(frame); }
+  function start(){ if(raf||reduce||!ctx) return; lastTs=0; raf=requestAnimationFrame(frame); }
   function stop(){ if(raf){ cancelAnimationFrame(raf); raf=0; } }
 
   /* ── 상태 반영 ───────────────────────────────────────────────── */
@@ -11873,7 +11893,7 @@ paint()})();</script>
     if(next==='snow') stage.classList.add('weather-snow'); else stage.classList.remove('weather-snow');
     if(!W||!H) size();
     if(changed) build();
-    if(next==='clear'||reduce){ stop(); ctx.clearRect(0,0,W,H); }
+    if(next==='clear'||reduce){ stop(); if(ctx) ctx.clearRect(0,0,W,H); }
     else start();
   }
 
