@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611212002">
+  <meta name="jisu-build" content="202611212012">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -12254,7 +12254,7 @@ paint()})();</script>
 </script>
 <script>
 /* ══ 실시간 날씨 효과 ══════════════════════════════════════════════════════
-   · wttr.in(무료·키 없음) 단일 소스(백업 API 없음) → 조감도 사진 3종 + 캔버스 효과
+   · met.no(무료·키 없음) 지점 예보 1순위, 실패 시 wttr.in 보조 → 조감도 사진 3종 + 캔버스 효과
      clear/그 밖  ./assets/plant-map.jpg        (효과 없음·애니메이션 정지 = CPU 0)
      rain        ./assets/plant-map-rain.jpg   (빗줄기 3겹 + 물웅덩이 물방울 파문)
      snow        ./assets/plant-map-snow.jpg   (눈송이 다중 크기 + 구역 버튼 캡슐)
@@ -12273,8 +12273,11 @@ paint()})();</script>
   if(document.documentElement.classList.contains('worker-zone-only')) return;
 
   var PHOTO={ clear:'./assets/plant-map.jpg', rain:'./assets/plant-map-rain.jpg', snow:'./assets/plant-map-snow.jpg' };
-  /* wttr.in(WorldWeatherOnline) 코드·설명 — 눈/비 판정 (유일한 소스) */
+  /* wttr.in(WorldWeatherOnline) 코드·설명 — met.no 를 못 받을 때만 쓰는 보조 판정 */
   var WTTR='https://wttr.in/36.7140,127.1998?format=j1';
+  /* 1순위: met.no(노르웨이 기상청·무료·키 없음·CORS 허용) 지점 예보 — 기상청 동네예보(소정면)와 일치함을 확인.
+     wttr.in(WWO)은 'Patchy heavy snow 0.3mm' 처럼 맑은 날에도 눈/비를 주는 오탐이 있어 met.no 실패 시에만 보조로 쓴다. */
+  var MET='https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=36.7140&lon=127.1998';
   var SNOW_WWO=[179,182,185,227,230,317,320,323,326,329,332,335,338,362,365,368,371,374,377,392,395];
   var RAIN_WWO=[176,263,266,281,284,293,296,299,302,305,308,311,314,353,356,359,386,389];
   var SNOW_WORD=['snow','sleet','blizzard','flurries','ice pellets'];
@@ -12408,7 +12411,7 @@ paint()})();</script>
     else start();
   }
 
-  /* ── 날씨 받아오기 (wttr.in 하나만) ─────────────────────────────── */
+  /* ── 날씨 받아오기 (met.no → 실패 시 wttr.in) ─────────────────────── */
   /* wttr.in 현재 상태 → snow/rain/clear
      강수량만으로는 부족하다(실측): 세종 'Patchy rain nearby'(176)·0.0mm = 비 안 내림,
      대전 'Light snow showers'(368)·0.0mm = 실제 눈 내림, 제주 'Light rain shower'(353)·0.5mm = 비.
@@ -12426,27 +12429,51 @@ paint()})();</script>
       if(kind==='clear' && RAIN_WWO.indexOf(c)>=0) kind='rain';
     }
     if(kind==='clear') return 'clear';
-    if(mm>0) return kind;                     /* 실제로 내리는 양이 있으면 그대로 */
-    for(i=0;i<NEARBY_WORD.length;i++){ if(d.indexOf(NEARBY_WORD[i])>=0) return 'clear'; }
-    if(!d && NEARBY_WWO.indexOf(c)>=0) return 'clear';   /* 설명 없이 예보성 코드만 남은 경우 */
+    /* 'Patchy·nearby·chance' 같은 예보성 표현은 강수량이 1mm 미만(0.1~0.3mm 흔적량 포함)이면 맑음으로 본다
+       (실측 오탐: 'Patchy heavy snow'(335)·0.3mm 인데 기상청·met.no 는 강수 없음) */
+    var nearby=(!d && NEARBY_WWO.indexOf(c)>=0);
+    for(i=0;i<NEARBY_WORD.length && !nearby;i++){ if(d.indexOf(NEARBY_WORD[i])>=0) nearby=true; }
+    if(nearby) return (mm>=1)?kind:'clear';
     return kind;                              /* 'Light snow showers' 처럼 현재 눈/비를 설명하면 표시 */
   }
-  function fetchWithTimeout(url,fail,ms){
+  /* met.no symbol_code(예: lightsnow_night, rainshowers_day) + 다음 1시간 강수량 → snow/rain/clear
+     기호가 눈/비여도 강수량이 0 이면 맑음. 해석할 수 없으면 null(→ wttr.in 보조) */
+  function stateOfMet(j){
+    var ts=j&&j.properties&&j.properties.timeseries;
+    if(!ts||!ts.length) return null;
+    var lim=Date.now()+300000, pick=ts[0], i, t;
+    for(i=0;i<ts.length;i++){ t=Date.parse(ts[i].time); if(t===t && t<=lim) pick=ts[i]; else break; }   /* 지금 시각에 가장 가까운(지나지 않은) 시간대 */
+    var n=pick.data&&pick.data.next_1_hours;
+    if(!n||!n.summary||!n.details) return null;
+    var code=String(n.summary.symbol_code||'').toLowerCase(), mm=Number(n.details.precipitation_amount);
+    if(mm!==mm) return null;
+    if(!(mm>0)) return 'clear';
+    if(code.indexOf('snow')>=0||code.indexOf('sleet')>=0) return 'snow';
+    if(code.indexOf('rain')>=0) return 'rain';
+    return 'clear';
+  }
+  function fetchWithTimeout(url,fail,ms,cacheMode){
     var ctrl=('AbortController' in window)?new AbortController():null;
     var timer=ctrl?setTimeout(function(){ try{ ctrl.abort(); }catch(_){} },ms||8000):0;
-    fetch(url,{ cache:'no-store', signal:ctrl?ctrl.signal:undefined })
+    fetch(url,{ cache:cacheMode||'no-store', signal:ctrl?ctrl.signal:undefined })
       .then(function(r){ return r.ok?r.json():null; })
       .then(function(j){ if(timer) clearTimeout(timer); fail(j); })
       .catch(function(){ if(timer) clearTimeout(timer); fail(null); });
   }
-  /* wttr.in 하나만 쓴다 — 느리거나 어긋나면 3초 간격으로 최대 2번 더 (총 3회) 받는다.
+  /* met.no 가 안 되면 wttr.in 을 쓴다 — 느리거나 어긋나면 3초 간격으로 최대 2번 더 (총 3회) 받는다.
      모두 실패하면 이미 잡아 둔 비/눈 상태는 그대로 두고, 첫 로드부터 실패했을 때만 조용히 기본 화면. */
   var WTTR_MS=12000, WTTR_RETRIES=2, WTTR_RETRY_MS=3000;
   var fetching=false;
+  var MET_MS=10000;
   function fetchWeather(){
     if(override||fetching) return;
     fetching=true;
-    tryWttr(WTTR_RETRIES);
+    /* met.no 먼저(브라우저 기본 캐시 사용 — met.no 가 정한 Expires 를 존중) → 못 받으면 wttr.in 으로 */
+    fetchWithTimeout(MET,function(j){
+      var s=null; try{ s=stateOfMet(j); }catch(_){ s=null; }
+      if(s){ gotWeather=true; fetching=false; apply(s); return; }
+      tryWttr(WTTR_RETRIES);
+    },MET_MS,'default');
   }
   function tryWttr(left){
     fetchWithTimeout(WTTR,function(j){
