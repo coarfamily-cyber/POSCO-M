@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611211234">
+  <meta name="jisu-build" content="202611211302">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -2623,7 +2623,8 @@
     /* 완료된 버튼의 앞 점: 파란색 깜빡임 */
     [data-toggle-zone].st-done .pulse-ring{background:#38bdf8 !important;color:#7dd3fc !important;box-shadow:0 0 8px #38bdf8,0 0 0 2px rgba(255,255,255,.55) !important;animation:workBlink 1s ease-in-out infinite !important;}
     [data-toggle-zone].st-done .pulse-ring::after{animation:none !important;opacity:0 !important;}
-    /* 확인 필요(2순위) = 노란색 깜빡임: 부족 완료(short)나 오늘 특이사항이 남은 구역 버튼.
+    /* 정비 구역 = 노란색 깜빡임(2026-11-21): "정비"가 든 작업지시·공지·달력 예약·미확인 특이사항 중
+       지금 시각에 유효한 정비가 있는 구역 버튼만 깜빡인다(부족 완료·일반 특이사항은 더 이상 깜빡이지 않음).
        상태 배경(완료 파랑·환경·피치 등 !important 규칙)을 이기도록 body:not(#zz) + 클래스로 특이도를 올린다.
        배경 알파와 글씨색을 같은 애니메이션 변수(--warn-a)로 함께 움직여, 노랑이 진해질 때 글씨는 #111827,
        옅을 때는 #f8fafc 로 대비가 깨지지 않는다. 표시등 색은 작업 상태(회색·초록·파랑)를 그대로 둔다. */
@@ -2637,6 +2638,15 @@
       animation:warnBlink 1.6s ease-in-out infinite !important;
     }
     body:not(#zz) .map-stage button.hotspot-pill[data-toggle-zone].st-warn span{color:inherit !important;}
+    /* 🔧 정비완료: 지금 정비 중인 구역의 자세히보기 카드 상단에만 뜨는 노란 배너 버튼 */
+    .maint-done-wrap{margin:8px 0 4px;} .maint-done-wrap[hidden]{display:none !important;}
+    .maint-done-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:9px 12px;border:1px solid rgba(250,204,21,.6);
+      border-radius:11px;background:linear-gradient(180deg,rgba(250,204,21,.96),rgba(234,179,8,.94));color:#1f2937 !important;font-size:13px;font-weight:900;letter-spacing:.2px;
+      box-shadow:0 6px 16px rgba(250,204,21,.26),inset 0 1px 0 rgba(255,255,255,.45);cursor:pointer;transition:transform .12s ease,filter .12s ease;}
+    .maint-done-btn:hover{filter:brightness(1.05);transform:translateY(-1px);}
+    .maint-done-btn:active{transform:translateY(0) scale(.99);}
+    .maint-done-btn:disabled{opacity:.55;cursor:default;transform:none;}
+    .maint-done-btn span{color:inherit !important;}
     /* HS 로고: 다른 버튼과 같은 투명 유리 스타일 (버튼 아님) */
     .hs-logo{background:linear-gradient(180deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.05) 55%,rgba(255,255,255,.02) 100%),rgba(12,18,28,.40);backdrop-filter:blur(6px) saturate(140%);-webkit-backdrop-filter:blur(6px) saturate(140%);color:#fde68a;box-shadow:0 6px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.22);letter-spacing:.5px;text-shadow:0 0 10px rgba(253,230,138,.35);}
   </style>
@@ -2645,7 +2655,7 @@
        작은 버튼은 기존 그대로 12%(기본값)로 커지고, 아래 그룹만 확대폭(--hvs)을 줄인다.
        그림자·떠오름은 그대로라 눌리는 느낌은 유지된다. */
     /* A. 한 줄 전체를 채우는 넓은 버튼(달력 저장·기록 열기 등, 500px 내외) */
-    .cz-save, .ch-toggle, .cz-batch-actions > button { --hvs:1.012; --hvt:-1.5px; }
+    .cz-save, .ch-toggle, .cz-batch-actions > button, .maint-done-btn { --hvs:1.012; --hvt:-1.5px; }
     /* B. 사이드바·모달의 넓은 버튼(160~300px) */
     #cmdSubmit, .cmd-submit, .kiosk-tool-btn, #kioskBtn, .side-tool-btn, .carry-tool-btn,
     #inboundSaveBtn, .inbound-work-btn, .ob-btn, .memo-send, .pitch-save-btn, .env-unit { --hvs:1.02; --hvt:-1.5px; }
@@ -6631,6 +6641,12 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const work=all.filter(x=>x.kind!=='notice'&&x.id!=='demo_dispatch_1');
       const notices=all.filter(x=>x.kind==='notice');
       const doneToday=work.filter(x=>x.completed && String(x.completedAt||'').startsWith(today));
+      /* 🔧 정비완료로 끝낸 정비(공지·예약·특이사항)도 '금일 작업완료'에 1건씩 — 금일작업 정비는 completed로 이미 잡히므로 기록에 없다(중복 0건) */
+      let maintLog=[]; try{ maintLog=JSON.parse(localStorage.getItem('jisu-maint-log-v1')||'[]'); }catch(e){}
+      if(!Array.isArray(maintLog)) maintLog=[];
+      const maintDoneToday=(function(){ const seen={}, out=[];
+        maintLog.forEach(r=>{ if(!r||r.day!==todayIso) return; const id=String(r.id||('m'+r.day+r.zone+r.text+r.at)); if(seen[id]) return; seen[id]=1; out.push(r); });
+        return out.sort((a,b)=>String(a.at||'').localeCompare(String(b.at||''))); })();
       /* [11-20] 환경 설비(분체·충진기·포장기·소성로) 청소 완료도 '오늘 완료'로 함께 본다 */
       let envEv=null, envLog=[]; try{ envEv=JSON.parse(localStorage.getItem('jisu-env-v1')||'null'); envLog=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]'); }catch(e){}
       if(!envEv||typeof envEv!=='object') envEv={}; if(!Array.isArray(envLog)) envLog=[];
@@ -6652,7 +6668,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           if(envLog.some(x=>x&&x.unit===ENV_AISLE&&x.equip===k&&x.day===todayIso)) return;
           out.push({unit:ENV_AISLE,equip:k,round:envRound,ts:y.ts||'',td:y.td||'',by:(localStorage.getItem('jisu-user')||'')}); }); }
         return out.sort((a,b)=>String(a.td||'').localeCompare(String(b.td||''))); })();
-      if(!options.skipPrompt && !doneToday.length && !envDoneToday.length && !confirm('오늘 완료된 금일작업·환경 설비가 없습니다.\n그래도 오늘 전체 금일작업 현황을 엑셀로 받을까요?')) return;
+      if(!options.skipPrompt && !doneToday.length && !envDoneToday.length && !maintDoneToday.length && !confirm('오늘 완료된 금일작업·환경 설비가 없습니다.\n그래도 오늘 전체 금일작업 현황을 엑셀로 받을까요?')) return;
       const HEAD=['번호','대상','작업 내용','이동','목표량','완료량','단위','상태','구분','긴급','원래 목표','관리자 판단','작성자','등록 시각','작업 시작','완료 시각'];
       const COLS=[{wch:5},{wch:16},{wch:32},{wch:16},{wch:8},{wch:8},{wch:6},{wch:9},{wch:9},{wch:7},{wch:9},{wch:28},{wch:10},{wch:13},{wch:13},{wch:13}];
       const row=(x,i)=>{const g=goal(x.text);return {'번호':i+1,'대상':NAMES[x.target]||x.target,'작업 내용':x.text,'이동':(function(){const mv=(x.from&&x.to)?{from:x.from,to:x.to}:(window.jisuMoveOf?window.jisuMoveOf(x):null);return mv?(NAMES[mv.from]||mv.from)+' → '+(NAMES[mv.to]||mv.to):'';})(),'목표량':g.n,'완료량':x.done==null?'':Number(x.done),'단위':g.u,'상태':x.ended?'종료':(x.review==='moved'?'날짜 변경':((x.carried&&!x.short)?'이월':(x.completed?(x.short?'부족 완료':'작업완료'):(x.working?'작업중':'대기')))),'구분':x.carryCount?'이월 '+x.carryCount+'회':'신규','긴급':x.urgent?'긴급':'','원래 목표':x.origGoal!=null?x.origGoal:'','관리자 판단':x.reviewNote?(x.reviewNote+(x.reviewBy?' ('+x.reviewBy+' '+(x.reviewAt||'')+')':'')):(x.review==='pending'?'확인 대기':''),'작성자':x.by||'','등록 시각':x.at||'','작업 시작':x.startedAt||'','완료 시각':x.completedAt||''};};
@@ -6661,7 +6677,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       try{
         const XLSX=await loadLib(); const wb=XLSX.utils.book_new();
         const envLabel=r=>(r.unit===ENV_AISLE?(ENV_AISLE+(r.equip?' '+r.equip:'')):envName(r.unit));
-        const rows1=doneToday.map(row).concat(envDoneToday.map(r=>({'번호':0,'대상':'환경 · '+envLabel(r),'작업 내용':envLabel(r)+' 청소','이동':'','목표량':'','완료량':'','단위':'','상태':'작업완료','구분':(r.round?(r.round+'회차'):'신규'),'긴급':'','원래 목표':'','관리자 판단':'','작성자':r.by||'','등록 시각':'','작업 시작':r.ts||'','완료 시각':r.td||''})));
+        const rows1=doneToday.map(row).concat(envDoneToday.map(r=>({'번호':0,'대상':'환경 · '+envLabel(r),'작업 내용':envLabel(r)+' 청소','이동':'','목표량':'','완료량':'','단위':'','상태':'작업완료','구분':(r.round?(r.round+'회차'):'신규'),'긴급':'','원래 목표':'','관리자 판단':'','작성자':r.by||'','등록 시각':'','작업 시작':r.ts||'','완료 시각':r.td||''})))
+          .concat(maintDoneToday.map(r=>({'번호':0,'대상':NAMES[r.zone]||NAMES[r.target]||r.zone||r.target||'','작업 내용':r.text,'이동':'','목표량':'','완료량':'','단위':'','상태':'정비완료','구분':'정비','긴급':'','원래 목표':'','관리자 판단':'','작성자':r.by||'','등록 시각':r.at||'','작업 시작':'','완료 시각':r.at||''})));
         rows1.forEach((o,i)=>{ o['번호']=i+1; });
         const s1=XLSX.utils.json_to_sheet(rows1,{header:HEAD});
         s1['!cols']=COLS;
@@ -8237,27 +8254,231 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
   })();
   </script>
   <script>
+  /* ===== 정비 표시(노란 깜빡임) + 🔧 정비완료 ====================================================
+     "정비"가 들어간 오늘 작업지시·공지·달력 예약·미확인 특이사항 중 '지금 시각에 유효한 정비'만 활성으로 본다.
+       · 시간 표기 없음            → 종일 활성       ("생산A 정비", "포장 라인 정비")
+       · 시간 범위                 → 그 사이에만     ("14:00~16:00", "14시~16시", "오후 2시~4시", "14시 30분 ~ 15시 30분")
+       · 시작 시각만               → 그 이후         ("14시 시작", "14:30 정비", "오후 2시 정비", "9시반 시작")
+       · "16시까지 정비"           → 그 전까지
+     날짜(11. 21.)·수량(10 TON)·호기(1호기)·동(2동)의 숫자는 시간으로 보지 않는다(시·분·콜론·오전/오후 표기만 매칭).
+     완료(completed)·확인(ack)·정비완료(maintDone)·마감(closed)이면 즉시 꺼지고, 예약 시각이 되면 새로고침 없이 켜진다. */
+  (function(){
+    function arr(k){ try{ const v=JSON.parse(localStorage.getItem(k)||'[]'); return Array.isArray(v)?v:[]; }catch(e){ return []; } }
+    function saveArr(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } }
+    const todayIso=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+    const nowStamp=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
+    const hhmm=()=>new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date());
+    function kstNowMin(){
+      const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()).map(x=>[x.type,x.value]));
+      return (Number(p.hour==='24'?0:p.hour))*60+Number(p.minute);
+    }
+    /* 텍스트에서 시간 표기만 뽑는다: 오전/오후(AM/PM) + 숫자 + (콜론 분 | 시 반 | 시 N분 | 시) */
+    function marks(text){
+      const s=String(text||''), re=/(오전|오후|am|pm)?\s*(\d{1,2})\s*(?::\s*(\d{1,2})|시\s*반|시\s*(\d{1,2})\s*분|시)/gi, out=[];
+      let m, prevPm=null;
+      while((m=re.exec(s))){
+        const mer=String(m[1]||'').toLowerCase();
+        let h=Number(m[2]), mm=m[3]!=null?Number(m[3]):(m[4]!=null?Number(m[4]):0);
+        if(/반/.test(m[0])) mm=30;
+        if(!(h>=0&&h<=24)||!(mm>=0&&mm<=59)) continue;
+        const pm=mer?/오후|pm/.test(mer):prevPm;   /* "오후 2시~4시"처럼 뒤쪽에 오전/오후가 없으면 앞 표기를 따른다 */
+        if(pm!=null){ if(pm){ if(h<12) h+=12; } else if(h===12) h=0; }
+        if(mer) prevPm=/오후|pm/.test(mer);
+        out.push({start:m.index,end:m.index+m[0].length,min:(h%24)*60+mm});
+      }
+      return out;
+    }
+    /* 시작/종료(분) 창을 만든다. 시간 표기가 없으면 null(=종일 활성) */
+    function windowOf(text){
+      const s=String(text||''), mk=marks(s);
+      if(!mk.length) return null;
+      if(mk.length>1){
+        const gap=s.slice(mk[0].end,mk[1].start);
+        if(/[~〜]|[-–—]|부터|에서|\bto\b/i.test(gap)) return {start:mk[0].min,end:mk[1].min};
+      }
+      const tail=s.slice(mk[0].end);
+      if(/까지/.test(tail)&&!/부터/.test(tail)) return {start:null,end:mk[0].min};
+      return {start:mk[0].min,end:null};
+    }
+    function activeNow(text,nowMin){
+      const w=windowOf(text); if(!w) return true;
+      const n=(nowMin==null||isNaN(nowMin))?kstNowMin():Number(nowMin);
+      if(w.start==null) return n<=w.end;
+      if(w.end==null) return n>=w.start;
+      return w.start<=w.end?(n>=w.start&&n<=w.end):(n>=w.start||n<=w.end);
+    }
+    const isMaint=s=>/정비/.test(String(s||''));
+    const zoneOf=t=>String(t||'').split(':')[0];
+    function isToday(r){ if(!r) return false; if(r.day) return String(r.day)===todayIso();
+      const t=todayIso(), md=t.slice(5,7)+'. '+t.slice(8,10)+'.'; return String(r.at||'').startsWith(md); }
+    function schMap(){ const o={}; arr('jisu-schedule-v1').concat(arr('jisu-schedules-v1')).forEach(s=>{ if(s&&s.id!=null) o[String(s.id)]=s; }); return o; }
+    /* 한 구역의 '지금 활성 정비' 목록 */
+    function activeItems(zone){
+      const k=zoneOf(zone); if(!k||k==='*') return [];
+      const td=todayIso(), nm=kstNowMin(), out=[];
+      const cmds=arr('jisu-commands-v1'), schs=schMap(), cmdById={};
+      cmds.forEach(x=>{ if(x&&x.id!=null) cmdById[String(x.id)]=x; });
+      const fromSch=x=>{ const m=String((x&&x.id)||'').match(/^s(.+?)(?:-\d+)?$/); return m?(schs[m[1]]||null):null; };
+      /* a) 오늘 작업지시·공지 — 구역이 특정된 것만(전체 '*' 공지로 개별 구역을 깜빡이지 않는다) */
+      cmds.forEach(x=>{ if(!x||x.id==='demo_dispatch_1') return;
+        if(zoneOf(x.target)!==k) return;
+        if(x.closed||x.completed||x.ended||x.maintDone) return;
+        if(!isMaint(x.text)||!isToday(x)) return;
+        const s=fromSch(x); if(s&&s.maintDone) return;
+        if(!activeNow(x.text,nm)) return;
+        out.push({src:'cmd',id:String(x.id),text:x.text,notice:x.kind==='notice'});
+      });
+      /* b) 오늘 달력 예약 스케줄 — 08시 적용으로 금일작업이 이미 만들어졌으면 그 작업(완료 여부)만 본다 */
+      const seen={};
+      arr('jisu-schedule-v1').concat(arr('jisu-schedules-v1')).forEach(s=>{ if(!s||seen[s.id]) return; seen[s.id]=1;
+        if(zoneOf(s.target)!==k) return;
+        if(String(s.date||'')!==td) return;
+        if(!isMaint(s.text)||s.maintDone) return;
+        if(s.applied&&cmdById['s'+s.id]) return;
+        if(!activeNow(s.text,nm)) return;
+        out.push({src:'sch',id:String(s.id),text:s.text,notice:s.kind==='notice'});
+      });
+      /* c) 오늘 미확인 특이사항 */
+      arr('jisu-memos-v1').forEach(m=>{ if(!m||zoneOf(m.target)!==k) return;
+        if(m.ack||m.closed||m.maintDone) return;
+        if(!isMaint(m.text)||!isToday(m)) return;
+        if(!activeNow(m.text,nm)) return;
+        out.push({src:'memo',id:String(m.id),text:m.text});
+      });
+      return out;
+    }
+    window.jisuKstNowMin=kstNowMin; window.jisuMaintWindow=windowOf; window.jisuMaintActiveNow=activeNow;
+    window.jisuMaintActiveItems=activeItems;
+    window.jisuMaintZoneActive=z=>{ try{ return activeItems(z).length>0; }catch(e){ return false; } };
+    function toast(msg){
+      try{ const old=document.getElementById('jisuMaintToast'); if(old) old.remove();
+        const el=document.createElement('div'); el.id='jisuMaintToast';
+        el.style.cssText='position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:2147483647;max-width:min(90vw,420px);padding:11px 15px;border-radius:14px;background:rgba(15,23,42,0.94);border:1px solid rgba(250,204,21,0.6);box-shadow:0 12px 32px rgba(0,0,0,0.45);color:#fde68a;font-size:13px;font-weight:800;text-align:center;';
+        el.textContent=msg; document.body.appendChild(el); setTimeout(function(){ if(el.parentNode) el.remove(); },4200);
+      }catch(_){}
+    }
+    /* 🔧 정비완료: 이 구역의 '지금 활성 정비'를 모두 끝낸다(금일작업 완료·공지/예약 정비완료 표시·특이사항 확인) */
+    window.jisuMaintComplete=function(zone){
+      const k=zoneOf(zone); if(!k) return {ok:false,n:0};
+      const items=activeItems(k);
+      if(!items.length) return {ok:false,n:0};
+      const td=todayIso(), at=nowStamp(), now=hhmm();
+      let by=''; try{ by=localStorage.getItem('jisu-user')||''; }catch(e){}
+      const ids={cmd:{},sch:{},memo:{}}; items.forEach(i=>{ ids[i.src][i.id]=1; });
+      let n=0, log=[];
+      /* a) 금일작업·공지 — 작업지시는 완료 처리(일일 엑셀 '금일 작업완료'에 그대로 잡힘), 공지는 정비완료 표시 */
+      const cmds=arr('jisu-commands-v1'); let ch1=false;
+      cmds.forEach(x=>{ if(!x||!ids.cmd[String(x.id)]) return;
+        if(x.kind==='notice'){ x.maintDone=at; if(by) x.maintDoneBy=by; ch1=true; n++; return; }
+        x.completed=true; x.working=false; x.completedAt=at; if(by) x.doneBy=by; ch1=true; n++;
+      });
+      /* b) 08시 적용 전인 예약 스케줄 — 지금 정비를 마쳤으므로 금일작업으로 바로 등록해 완료 처리한다
+         (일일 엑셀에 '작업완료' 1건으로 잡히고, 08시 자동 적용에서도 중복 등록되지 않는다) */
+      ['jisu-schedule-v1','jisu-schedules-v1'].forEach(key=>{ const sch=arr(key); let ch=false;
+        sch.forEach(s=>{ if(!s||!ids.sch[String(s.id)]) return;
+          s.maintDone=at; if(by) s.maintDoneBy=by;
+          if(!s.applied){
+            const rid='s'+s.id;
+            if(!cmds.some(c=>c&&c.id===rid)){
+              const rec={id:rid,target:s.target,kind:'instruction',text:s.text,at:at,day:td,sched:td,origDay:td,completed:true,working:false,completedAt:at,maintDone:at};
+              if(s.by) rec.by=s.by;
+              cmds.push(rec); ch1=true;
+            }
+            s.applied=true; s.appliedAt=at;
+          }
+          ch=true; n++;
+        });
+        if(ch) saveArr(key,sch); });
+      if(ch1) saveArr('jisu-commands-v1',cmds);
+      /* c) 미확인 특이사항 — 확인 처리 */
+      const memos=arr('jisu-memos-v1'); let ch3=false;
+      memos.forEach(m=>{ if(!m||!ids.memo[String(m.id)]) return; m.ack=true; m.ackAt=at; if(by) m.ackBy=by; ch3=true; n++; });
+      if(ch3) saveArr('jisu-memos-v1',memos);
+      /* 일일 엑셀용 정비완료 기록: 작업지시·예약은 completed로 이미 '금일 작업완료'에 잡히므로 기록하지 않고,
+         공지·특이사항에서 끝낸 정비만 1건씩 '정비완료' 행으로 남긴다(같은 건 중복 없음). 30일 지난 기록은 정리. */
+      if(n){
+        const keep=(function(){ const d=new Date(td+'T00:00:00+09:00'); d.setDate(d.getDate()-30); return d.toISOString().slice(0,10); })();
+        log=arr('jisu-maint-log-v1').filter(r=>r&&r.day&&r.day>=keep);
+        items.forEach(i=>{
+          const isNotice=(i.src==='cmd'&&i.notice);
+          if(i.src!=='memo'&&!isNotice) return;
+          const id='m'+td.replace(/-/g,'')+'-'+k+'-'+i.src+'-'+i.id;
+          if(log.some(r=>r&&r.id===id)) return;
+          log.push({id:id,day:td,zone:k,target:k,text:i.text,src:i.src,at:at,hhmm:now,by:by});
+        });
+        saveArr('jisu-maint-log-v1',log);
+      }
+      try{ if(window.jisuMemoRender) window.jisuMemoRender(); }catch(e){}
+      try{ if(window.jisuCmdRender) window.jisuCmdRender(); }catch(e){}
+      try{ if(window.jisuStateRefresh) window.jisuStateRefresh(); }catch(e){}
+      try{ if(window.jisuMaintPaint) window.jisuMaintPaint(); }catch(e){}
+      toast('정비완료됨 ('+now+')'+(n>1?' · '+n+'건':''));
+      return {ok:true,n:n};
+    };
+    /* 자세히보기 카드(.expand-card) 상단에 정비완료 버튼 — 지금 정비 중인 구역에만 표시 */
+    window.jisuMaintPaint=function(){
+      const wraps=[].slice.call(document.querySelectorAll('.hotspot-wrapper')).filter(function(w){ return w.querySelector(':scope > .expand-card'); });
+      wraps.forEach(function(w){
+        const card=w.querySelector(':scope > .expand-card'); if(!card) return;
+        const pill=w.querySelector('[data-toggle-zone]'); if(!pill) return;
+        const k=zoneOf(pill.getAttribute('data-toggle-zone')); if(!k) return;
+        let holder=card.querySelector('.maint-done-wrap');   /* 카드 안쪽(ob-cmd-wrap 등)에 넣힐 수 있어 하위 전체에서 찿는다 */
+        let on=false; try{ on=window.jisuMaintZoneActive(k); }catch(e){ on=false; }
+        if(!on){ if(holder) holder.hidden=true; return; }
+        if(!holder){
+          holder=document.createElement('div'); holder.className='maint-done-wrap';
+          const btn=document.createElement('button'); btn.type='button'; btn.className='maint-done-btn'; btn.setAttribute('data-maint-done',k);
+          btn.title='이 구역의 정비를 완료 처리합니다 (일일 엑셀에도 기록)';
+          btn.innerHTML='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94L14.7 6.3z"/></svg><span>정비완료</span>';
+          holder.appendChild(btn);
+          const slot=card.querySelector('.cmd-slot');
+          if(slot&&slot.parentNode) slot.parentNode.insertBefore(holder,slot); else card.appendChild(holder);
+        }
+        holder.hidden=false;
+        const b=holder.querySelector('.maint-done-btn'); if(b) b.disabled=false;
+      });
+    };
+    document.addEventListener('click',function(e){
+      const b=e.target&&e.target.closest?e.target.closest('[data-maint-done]'):null; if(!b) return;
+      e.preventDefault(); e.stopPropagation();
+      const k=b.getAttribute('data-maint-done'); if(!k||b.disabled) return;
+      b.disabled=true;
+      const r=window.jisuMaintComplete(k);
+      if(!r||!r.ok) window.jisuMaintPaint();
+    },true);
+    /* 다른 기기·다른 탭에서 정비 상태가 바뀌면 버튼도 즉시 갱신 */
+    window.addEventListener('storage',function(e){ if(!e||!e.key) return;
+      if(/^jisu-(commands-v1|memos-v1|schedule-v1|schedules-v1|maint-log-v1)$/.test(e.key)) setTimeout(function(){ try{ window.jisuMaintPaint(); }catch(_){ } },60); });
+    window.addEventListener('jisu:remote-sync',function(){ setTimeout(function(){ try{ window.jisuMaintPaint(); }catch(_){ } },80); });
+    try{ window.jisuMaintPaint(); }catch(e){}
+  })();
+  </script>
+  <script>
   /* 버튼 표시등 = 작업 상태: 회색 작업 없음 · 흰색 대기 · 초록 작업중 · 파랑 완료 · 핑크 이월 */
   (function(){
     const KEY='jisu-commands-v1', load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
     const ST=['st-none','st-wait','st-work','st-done','st-carry'];
     function refresh(){ const all=load().filter(x=>!x.closed&&x.kind!=='notice'&&x.id!=='demo_dispatch_1');
-      /* 확인 필요(st-warn, 2026-11-21 2순위): ① 부족 완료(short && completed) 또는 ② 오늘 특이사항(메모)이 남은 구역 → 노란색 깜빡임 */
-      const td=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-      const md=td.slice(5,7)+'. '+td.slice(8,10)+'.';
-      const isToday=r=>!!r&&(r.day?r.day===td:String(r.at||'').startsWith(md));
-      let memos=[]; try{ memos=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]'); }catch(e){}
+      /* 정비 구역(st-warn, 2026-11-21): "정비"가 든 오늘 작업지시·공지·달력 예약·미확인 특이사항 중 지금 시각에 유효한 정비가
+         있는 구역만 노란색 깜빡임. ① 부족 완료(short)와 ② 일반 오늘 특이사항은 더 이상 깜빡이지 않는다.
+         완료·확인·🔧 정비완료·마감이면 즉시 꺼지고, 예약 시각이 되면 30초 갱신으로 저절로 켜진다. */
       const warn={};
-      all.forEach(x=>{ if(x.short===true&&x.completed===true&&isToday(x)) warn[String(x.target||'').split(':')[0]]=1; });
-      memos.forEach(m=>{ if(m&&!m.ack&&!m.closed&&isToday(m)&&m.target&&m.target!=='*') warn[String(m.target).split(':')[0]]=1; });
+      document.querySelectorAll('[data-toggle-zone]').forEach(b=>{ const k=b.getAttribute('data-toggle-zone');
+        if(k in warn) return;
+        let on=false; try{ on=!!(window.jisuMaintZoneActive&&window.jisuMaintZoneActive(k)); }catch(e){ on=false; }
+        warn[k]=on?1:0; });
       document.querySelectorAll('[data-toggle-zone]').forEach(b=>{ const k=b.getAttribute('data-toggle-zone'), w=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(k==='inbound'&&x.target&&x.target.startsWith('inbound:')));
         let st=!w.length?'st-none':(w.some(x=>x.working&&!x.completed)?'st-work':(w.every(x=>x.completed)?'st-done':'st-wait') /* 이월은 점 색이 아니라 분홍 -N 배지로만 표시 */);
         if(k==='pitch'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done'&&(!w.length||w.every(x=>x.completed)))st='st-done';}catch(e){}}
         if(k==='inbound'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done'&&(!w.length||w.every(x=>x.completed)))st='st-done';}catch(e){}}ST.forEach(c=>b.classList.toggle(c,c===st));b.classList.toggle('has-active-work',st==='st-work');
         const sb=document.querySelector('[data-zone-btn="'+k+'"]');if(sb){ST.forEach(c=>sb.classList.toggle(c,c===st));sb.classList.toggle('has-active-work',st==='st-work');}
         const urg=w.some(x=>x.urgent&&!x.completed); let um=b.querySelector('.urgent-mark'); if(urg&&!um){ um=document.createElement('span'); um.className='urgent-mark'; um.textContent='!'; um.title='긴급 작업'; b.appendChild(um); } else if(!urg&&um) um.remove();
-        if(b.classList.contains('hotspot-pill')) b.classList.toggle('st-warn',!!warn[k]); }); }
-    window.jisuStateRefresh=refresh; refresh(); window.addEventListener('storage',e=>{ if(e.key===KEY||e.key==='jisu-memos-v1'||e.key==='jisu-pitch-records-v1'||e.key==='jisu-inbound-records-v1') refresh(); });
+        if(b.classList.contains('hotspot-pill')) b.classList.toggle('st-warn',!!warn[k]); });
+      try{ if(window.jisuMaintPaint) window.jisuMaintPaint(); }catch(e){} }
+    window.jisuStateRefresh=refresh; refresh();
+    /* 화면을 켜 둔 채로도 예약된 정비 시작·종료 시각이 되면 저절로 켜지고 꺼지게 30초마다 다시 계산 */
+    setInterval(function(){ try{ refresh(); }catch(e){} },30000);
+    window.addEventListener('storage',e=>{ if(e.key===KEY||e.key==='jisu-memos-v1'||e.key==='jisu-schedule-v1'||e.key==='jisu-schedules-v1'||e.key==='jisu-maint-log-v1'||e.key==='jisu-pitch-records-v1'||e.key==='jisu-inbound-records-v1') refresh(); });
     const stage=document.getElementById('mapStage'); if(stage){ const lg=document.createElement('div'); lg.className='state-legend'; lg.innerHTML='<span><i class="n"></i>작업 없음</span><span><i class="r"></i>작업중</span><span><i class="d"></i>완료</span><span><i class="c"></i>이월</span>'; stage.appendChild(lg); }
   })();
   </script>
@@ -10558,7 +10779,7 @@ paint()})();</script>
     return (Date.now()>=today18Utc)?today18Utc:(today18Utc-DAY);
   }
   function isPhotoExpired(ts){ return Boolean(ts&&ts<photoCutoffMs()); }
-  var STATE_KEYS=['jisu-commands-v1','jisu-memos-v1','jisu-pitch-records-v1','jisu-inbound-records-v1','jisu-schedule-v1','jisu-schedules-v1','jisu-env-v1','jisu-env-log-v1'];
+  var STATE_KEYS=['jisu-commands-v1','jisu-memos-v1','jisu-pitch-records-v1','jisu-inbound-records-v1','jisu-schedule-v1','jisu-schedules-v1','jisu-env-v1','jisu-env-log-v1','jisu-maint-log-v1'];
   var PHOTO_DB={outbound:{db:'jisu-photos',store:'outbound'},inbound:{db:'jisu-inbound-photos',store:'inbound'},pitch:{db:'jisu-pitch-photos',store:'pitch'}};
   var ZONE_STORE={db:'jisu-zone-photos-v1',store:'photos'};
   var ALL_ZONES=['outbound','inbound','pitch','packaging','packaging-d','environment','warehouse','production-a','production-b','production-c','production-d','production-e','production-f','production-g','production-h'];
@@ -10611,7 +10832,7 @@ paint()})();</script>
   var V2_ZONES=['outbound','inbound','pitch','packaging','packaging-d','environment','production-a','production-b','production-c','production-d','production-e','production-f','production-g','production-h'];
   var V2_PARTS=V2_ZONES.concat(['_admin','_notice']);
   var V2_SPLIT={'jisu-commands-v1':1,'jisu-memos-v1':1};
-  var V2_WHOLE={'jisu-pitch-records-v1':'pitch','jisu-inbound-records-v1':'inbound','jisu-env-v1':'environment','jisu-env-log-v1':'environment','jisu-schedule-v1':'_admin','jisu-schedules-v1':'_admin'};
+  var V2_WHOLE={'jisu-pitch-records-v1':'pitch','jisu-inbound-records-v1':'inbound','jisu-env-v1':'environment','jisu-env-log-v1':'environment','jisu-schedule-v1':'_admin','jisu-schedules-v1':'_admin','jisu-maint-log-v1':'_admin'};
   var SYNC_MODE=(function(){ try{ return lsGet('jisu-sync-mode')==='v2'?'v2':'state'; }catch(_){ return 'state'; } })();
   var ROLE={all:true,zone:''};
   var UNITS=[];
@@ -11123,7 +11344,7 @@ paint()})();</script>
     try{
       var kk=keyOf(k);
       if(kk==='jisu-inbound-records-v1') merged=mergeInboundJson(lastRemote[k]||'{}', mineNow, remote);
-      else if(kk==='jisu-commands-v1'||kk==='jisu-memos-v1'||kk==='jisu-schedule-v1'||kk==='jisu-schedules-v1') merged=mergeArrJson(lastRemote[k]||'[]', mineNow, remote);
+      else if(kk==='jisu-commands-v1'||kk==='jisu-memos-v1'||kk==='jisu-schedule-v1'||kk==='jisu-schedules-v1'||kk==='jisu-maint-log-v1') merged=mergeArrJson(lastRemote[k]||'[]', mineNow, remote);
     }catch(e){ merged=remote; }
     if(merged!==remote){
       console.warn('[jisu-db] 동시 수정 감지 → 병합 반영('+k+')');
@@ -11237,7 +11458,7 @@ paint()})();</script>
           /* 아직 서버에 못 올린 내 변경이 있음 → 서버 값으로 덮지 않고 행 단위로 병합한 뒤 다시 올린다 */
           var localNow=payloadOf(k);
           if(localNow==null){ lastSent[k]=remote; return; }
-          var kk=keyOf(k), isArrKey=(kk==='jisu-commands-v1'||kk==='jisu-memos-v1'||kk==='jisu-schedule-v1'||kk==='jisu-schedules-v1');
+          var kk=keyOf(k), isArrKey=(kk==='jisu-commands-v1'||kk==='jisu-memos-v1'||kk==='jisu-schedule-v1'||kk==='jisu-schedules-v1'||kk==='jisu-maint-log-v1');
           if(localNow!==remote && (kk==='jisu-inbound-records-v1'||isArrKey)){
             /* 내 변경(아직 못 올림)과 방금 온 서버 값을 '이 기기가 마지막으로 반영한 서버 값(base)' 기준으로 합친 뒤 다시 올린다.
                합치지 않고 내 값을 그대로 올리면 다른 기기가 방금 저장한 항목이 지워진다. */
