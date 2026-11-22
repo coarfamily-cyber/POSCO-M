@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611221115">
+  <meta name="jisu-build" content="202611221700">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -4557,6 +4557,536 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
       background: linear-gradient(180deg,#FDF3E0 0%,#FBEFD6 55%,#F6E7C4 100%) !important;
     }
   </style>
+<style id="nuvo-forest">
+/* ════════════════════════════════════════════════════════════════════════════
+   POSCO-M · NUVO 풀글래스 + 숲·트럭 배경  (2026-11-22 정식 적용)
+
+   ① 배경      주변 숲을 넓힌 조감도 한 장(assets/forest-bg.png) + 하단 도로로 들어오는 트럭 2대
+   ② 상단바    어두운 띠 제거 → 숲 위에 뜬 유리 요소(검색바·LIVE 칩·계정 버튼) + 네온 라임 시계
+   ③ 사이드바  숲 위에 뜬 어두운 반투명 유리 카드(안쪽 입력·버튼만 유리 톤)
+   ④ 지도 버튼 NUVO 플로팅 글래스 캡슐 + 왼쪽 상태 점(색은 기존 그대로)
+   ⑤ 상태 범례 데스크탑은 화면 맨 아래, 폰은 지도 카드 바로 아래 한 줄
+
+   · 적용 범위는 관리자 화면까지다. 작업자 화면(?zone= · .worker-zone-only)과 키오스크(?kiosk=1)는
+     배경·배치·범례를 예전 그대로 두므로, 배치 계열 규칙에는 html:not(.kiosk) / body:not(.worker-zone-only)
+     를 붙여 스코프를 지켰다. (지도 버튼 글래스 톤만 어느 화면에서든 같은 모양이라 그대로 둔다.)
+   · 지도 픽셀(assets/plant-map.jpg, 1120×625)은 확대·변형 없이 그대로 두고, 배경 이미지 안의
+     지도 영역과 1:1로 포개지게 배치했다(비·눈 조감도 사진 전환도 그대로 산다).
+   · 상태 점 색: 작업 없음 회색 / 작업중 초록 / 완료 파랑 / 이월 핑크 / 정비(st-warn) 노란 깜빡임.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+:root{
+  --nv-lime1:#DEFF3B;
+  --nv-lime2:#A4FF00;
+  --nv-line:rgba(255,255,255,.22);
+  --nv-hi:inset 0 1px 0 rgba(255,255,255,.20);
+  --nv-shadow:0 30px 70px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.35);
+  --nv-forest:#070d09;
+}
+
+/* ── ① NUVO 플로팅 글래스 — 지도 위 구역 버튼·동 표시 ──────────────────────── */
+
+#mapStage .hotspot-pill,
+#mapStage .bldg-badge{
+  background:rgba(22,29,43,.76) !important;
+  color:#fff !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+  backdrop-filter:blur(10px) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 -1px 0 rgba(0,0,0,.25),
+    0 1px 2px rgba(0,0,0,.40),
+    0 10px 28px rgba(0,0,0,.50) !important;
+  font-weight:800 !important;
+  letter-spacing:.01em;
+  text-shadow:0 1px 2px rgba(0,0,0,.45);
+  border-radius:9999px !important;
+}
+
+#mapStage .hotspot-pill{position:relative;}
+
+/* 외곽 1px 하이라이트 + 상단 유리 반사(rim) — 전역 border-color:transparent !important 를 피해 ::before 로 그린다 */
+#mapStage .hotspot-pill::before,
+#mapStage .bldg-badge::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  border:1px solid rgba(255,255,255,.18);
+  background:linear-gradient(180deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.02) 42%, rgba(255,255,255,0) 60%);
+}
+
+/* 캡슐 크기는 지도 폭(cqw)에 비례 — 작은 화면은 아래 미디어쿼리에서 따로 줄인다 */
+#mapStage .hotspot-pill{
+  font-size:clamp(.88rem, 1.72cqw, 1.40rem) !important;
+  padding:.36em .86em !important;
+  gap:.46em !important;
+  --hvs:1.03;
+}
+#mapStage .bldg-badge{padding:.30em .72em !important;}
+
+/* 상태 점: 왼쪽 둥근 점, 글자 크기에 비례 */
+#mapStage [data-toggle-zone] .pulse-ring{
+  width:.84em;
+  height:.84em;
+  flex:0 0 auto;
+}
+#mapStage [data-toggle-zone].st-none .pulse-ring,
+#mapStage [data-toggle-zone].st-wait .pulse-ring{
+  background:#8ea0b6 !important;
+  color:#cbd5e1 !important;
+  box-shadow:none !important;
+}
+#mapStage [data-toggle-zone].st-work .pulse-ring{
+  background:#22c55e !important;
+  color:#86efac !important;
+  box-shadow:0 0 10px rgba(34,197,94,.95) !important;
+}
+#mapStage [data-toggle-zone].st-done .pulse-ring{
+  background:#38bdf8 !important;
+  color:#bae6fd !important;
+  box-shadow:0 0 10px rgba(56,189,248,.95) !important;
+}
+#mapStage [data-toggle-zone].st-carry .pulse-ring{
+  background:#ec4899 !important;
+  color:#fbcfe8 !important;
+  box-shadow:0 0 10px rgba(236,72,153,.95) !important;
+}
+#mapStage [data-toggle-zone].st-warn .pulse-ring{
+  background:#facc15 !important;
+  color:#fef08a !important;
+  box-shadow:0 0 11px rgba(250,204,21,.95) !important;
+}
+
+/* 상태가 바뀌어도 캡슐은 항상 어두운 글래스(구역 색은 점·배지로만) */
+#mapStage button.hotspot-pill[data-toggle-zone].st-done,
+#mapStage button.hotspot-pill[data-toggle-zone].st-work,
+#mapStage button.hotspot-pill[data-toggle-zone].st-wait,
+#mapStage button.hotspot-pill[data-toggle-zone].st-none,
+#mapStage button.hotspot-pill[data-toggle-zone].st-carry,
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-done,
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-work,
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-carry,
+body:not(#zz) #mapStage .hotspot-pill[data-toggle-zone="pitch"].st-done{
+  background:rgba(22,29,43,.76) !important;
+  color:#fff !important;
+  animation:none !important;
+}
+#mapStage button.hotspot-pill.is-open,
+#mapStage button.hotspot-pill[aria-pressed="true"]{
+  background:rgba(48,61,84,.86) !important;
+}
+
+/* 정비 구역: 어두운 캡슐 유지 + 노란 테두리·글로우가 깜빡임 (기존 노란 깜빡임 유지) */
+@property --nv-warn{
+  syntax:'<number>';
+  inherits:true;
+  initial-value:.15;
+}
+@keyframes nv-warn-glow{
+  0%, 100%{ --nv-warn:.15; }
+  50%     { --nv-warn:1; }
+}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-warn{
+  --nv-warn:.15;
+  background:rgba(22,29,43,.78) !important;
+  color:#fff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 -1px 0 rgba(0,0,0,.25),
+    0 1px 2px rgba(0,0,0,.40),
+    0 10px 28px rgba(0,0,0,.50),
+    0 0 0 calc(var(--nv-warn) * 3px) rgba(250,204,21,calc(var(--nv-warn) * .50)),
+    0 0 30px calc(var(--nv-warn) * 10px) rgba(250,204,21,calc(var(--nv-warn) * .55)) !important;
+  animation:nv-warn-glow 1.6s ease-in-out infinite !important;
+}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-warn::before{
+  border-color:rgba(250,204,21,calc(.2 + var(--nv-warn) * .7)) !important;
+}
+
+/* 동 표시(1~4동·창고): 같은 글래스 캡슐, 점 없음 */
+#mapStage .bldg-badge .status-dot{display:none !important;}
+#mapStage .bldg-badge{font-weight:800 !important;}
+
+/* 생산 A~H: 보조 버튼이라 한 단계 작게, 같은 글래스 */
+#mapStage .prod-grid > .hotspot-wrapper .hotspot-pill{
+  font-size:clamp(12px, 1.16cqw, 16px) !important;
+  padding:.34em .74em !important;
+  gap:.40em !important;
+}
+
+/* ── ② 배경: 어두운 숲 + 원본 지도(무확대) ─────────────────────────────────── */
+
+html:not(.kiosk):not(.worker-zone-only) body:not(.worker-zone-only){
+  background-color:var(--nv-forest) !important;
+  background-image:none !important;
+}
+
+@media (min-width:901px){
+  /* 배경 한 장을 화면 가운데에 두고, 지도는 그 안의 지도 영역(좌 320·상 137)에 정확히 포갠다.
+     1440×900 에서는 예전 값 그대로(배경 0,0 · 지도 320,137)이고, 화면이 더 크거나 작아도
+     둘이 같은 기준으로 함께 움직여 어긋나지 않는다. */
+  html:not(.kiosk):not(.worker-zone-only),
+  html:not(.kiosk):not(.worker-zone-only) body:not(.worker-zone-only){
+    height:100%;
+    overflow:hidden !important;
+    background:var(--nv-forest) url('./assets/forest-bg.png') 50% max(0px, 50%) / 1440px 900px no-repeat fixed !important;
+  }
+  html:not(.kiosk) body:not(.worker-zone-only) > main{padding:0 !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) .cmd-layout{display:block !important; height:0 !important; gap:0 !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) .cmd-map-wrap{display:block !important; height:0 !important;}
+
+  /* 원본 지도: 확대 없이 1120×625 (2048:1143 원본 비율 그대로) */
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage{
+    position:fixed !important;
+    left:calc(50% - 400px) !important;
+    top:max(137px, calc(50% - 313px)) !important;
+    width:1120px !important;
+    height:625px !important;
+    max-width:none !important; max-height:none !important;
+    aspect-ratio:auto !important;
+    margin:0 !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    overflow:visible !important;
+    z-index:1 !important;
+  }
+  /* 지도 사진은 배경과 같은 픽셀·같은 자리에 겹쳐 둔다 → 비·눈 조감도 전환이 그대로 보인다 */
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage > img.map-bg{
+    border-radius:0 !important;
+  }
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage > .weather-fx{border-radius:0 !important;}
+
+  /* 지도 표식은 지도 폭(1120)에 비례해야 겹치지 않는다 — 큰 모니터의 화면 배율(--ui-z)을 따라가지 않게 */
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage .hotspot-wrapper > button,
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage .bldg-badge{zoom:1 !important;}
+}
+
+/* ── ③ 상단바: 어두운 바 제거 → 숲 위에 플로팅 유리 요소 ───────────────────── */
+
+html:not(.kiosk) body:not(.worker-zone-only) > header{
+  background:transparent !important;
+  background-image:none !important;
+  border:0 !important;
+  border-bottom:0 !important;
+  box-shadow:none !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+  padding:14px 16px 10px !important;
+  gap:10px !important;
+  position:relative;
+  z-index:60;
+}
+html:not(.kiosk) body:not(.worker-zone-only) > header h1{
+  font-size:21px !important;
+  font-weight:900 !important;
+  letter-spacing:-.02em !important;
+  color:#fff !important;
+  text-shadow:0 2px 14px rgba(0,0,0,.62), 0 1px 2px rgba(0,0,0,.55);
+}
+html:not(.kiosk) body:not(.worker-zone-only) > header .hs-logo{
+  width:38px !important; height:38px !important;
+  filter:drop-shadow(0 6px 16px rgba(0,0,0,.55));
+}
+/* ● LIVE : 반투명 유리 칩 */
+html:not(.kiosk) body:not(.worker-zone-only) > header h1 + span{
+  background:rgba(255,255,255,.12) !important;
+  border:1px solid rgba(255,255,255,.24) !important;
+  color:#EAFBEA !important;
+  -webkit-backdrop-filter:blur(12px) saturate(150%) !important;
+  backdrop-filter:blur(12px) saturate(150%) !important;
+  box-shadow:var(--nv-hi), 0 6px 18px rgba(0,0,0,.35) !important;
+  padding:4px 10px !important;
+  font-weight:800 !important;
+  letter-spacing:.02em;
+}
+html:not(.kiosk) body:not(.worker-zone-only) > header h1 + span > span{
+  background:#5EE85E !important;
+  box-shadow:0 0 10px rgba(94,232,94,.95) !important;
+}
+html:not(.kiosk) body:not(.worker-zone-only) > header #jisuSysInfoBtn{
+  background:rgba(255,255,255,.12) !important;
+  border:1px solid rgba(255,255,255,.24) !important;
+  color:#eaf2ff !important;
+  -webkit-backdrop-filter:blur(12px) !important;
+  backdrop-filter:blur(12px) !important;
+  width:20px !important; height:20px !important;
+}
+
+/* 가운데: 반투명 유리 검색바 */
+html:not(.kiosk) body:not(.worker-zone-only) .hdr-search-wrap{
+  flex:1 1 auto !important;
+  justify-content:center !important;
+  padding:0 8px !important;
+  min-width:180px !important;
+}
+html:not(.kiosk) body:not(.worker-zone-only):not(#z1#z2#z3#z4#z5) .hdr-search-box{
+  width:min(430px,100%) !important;
+  height:38px !important;
+  border-radius:9999px !important;
+  background:linear-gradient(180deg, rgba(255,255,255,.20) 0%, rgba(255,255,255,.08) 55%, rgba(255,255,255,.04) 100%), rgba(12,18,28,.26) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(160%) !important;
+  backdrop-filter:blur(14px) saturate(160%) !important;
+  border:1px solid rgba(255,255,255,.24) !important;
+  box-shadow:0 8px 22px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.26) !important;
+  padding:0 12px !important;
+}
+html:not(.kiosk) body:not(.worker-zone-only):not(#z1#z2#z3#z4#z5) .hdr-search-box:focus-within{
+  border:1px solid rgba(222,255,59,.55) !important;
+  box-shadow:0 8px 22px rgba(0,0,0,.30), 0 0 0 3px rgba(164,255,0,.16), inset 0 1px 0 rgba(255,255,255,.30) !important;
+}
+html:not(.kiosk) body:not(.worker-zone-only):not(#z1#z2#z3#z4#z5) #hdrSearchInput{font-size:13px !important; color:#fff !important;}
+html:not(.kiosk) body:not(.worker-zone-only):not(#z1#z2#z3#z4#z5) #hdrSearchInput::placeholder{color:rgba(255,255,255,.78) !important;}
+html:not(.kiosk) body:not(.worker-zone-only) .hdr-search-ico{width:15px !important; height:15px !important; color:rgba(255,255,255,.84) !important;}
+
+/* 오른쪽: 네온 라임 글로시 시계 알약 + 반투명 유리 계정 버튼 */
+html:not(.kiosk) body:not(.worker-zone-only) .hdr-tools{gap:8px !important;}
+html:not(.kiosk) body:not(.worker-zone-only) > header #liveClock{
+  background:linear-gradient(135deg, #DEFF3B 0%, #A4FF00 100%) !important;
+  color:#0B1200 !important;
+  border:0 !important;
+  border-radius:9999px !important;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+  letter-spacing:.01em !important;
+  padding:8px 16px !important;
+  box-shadow:0 0 14px rgba(164,255,0,.30), 0 8px 20px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.75) !important;
+  text-shadow:none !important;
+}
+html:not(.kiosk) body:not(.worker-zone-only) > header #loginBtn.login-btn{
+  background:linear-gradient(180deg, rgba(255,255,255,.30) 0%, rgba(255,255,255,.13) 100%), rgba(16,24,38,.22) !important;
+  border:1px solid rgba(255,255,255,.34) !important;
+  color:#fff !important;
+  -webkit-backdrop-filter:blur(14px) saturate(150%) !important;
+  backdrop-filter:blur(14px) saturate(150%) !important;
+  box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.24) !important;
+  padding:6px 14px 6px 11px !important;
+  font-size:12.5px !important;
+}
+html:not(.kiosk) body:not(.worker-zone-only) > header #loginBtn.login-btn:hover{background:rgba(255,255,255,.22) !important;}
+html:not(.kiosk) body:not(.worker-zone-only) > header #loginBtn.login-btn.is-in{
+  background:rgba(222,255,59,.20) !important;
+  border-color:rgba(222,255,59,.55) !important;
+  color:#E9FFA6 !important;
+}
+
+/* ── ④ 사이드바: 숲 위에 뜬 반투명 플로팅 유리 카드 ───────────────────────── */
+
+@media (min-width:901px){
+  html:not(.kiosk) body:not(.worker-zone-only) aside#cmdSide.cmd-side{
+    position:fixed !important;
+    left:16px !important; top:86px !important;
+    width:288px !important; flex:0 0 288px !important;
+    height:calc(100vh - 102px) !important;
+    max-height:none !important;
+    margin:0 !important;
+    padding:14px !important;
+    border-radius:20px !important;
+    border:1px solid var(--nv-line) !important;
+    background:linear-gradient(180deg, rgba(40,54,76,.60) 0%, rgba(14,21,33,.74) 100%), rgba(12,18,28,.30) !important;
+    -webkit-backdrop-filter:blur(20px) saturate(145%) !important;
+    backdrop-filter:blur(20px) saturate(145%) !important;
+    box-shadow:var(--nv-shadow), var(--nv-hi) !important;
+    z-index:50 !important;
+    overflow-y:auto;
+  }
+}
+
+/* 유리 위에서도 읽히도록 내부 입력·버튼만 유리 톤으로 (네온 라임·크림 공지 카드는 그대로) */
+html:not(.kiosk) body:not(.worker-zone-only) #cmdSide select,
+html:not(.kiosk) body:not(.worker-zone-only) #cmdSide textarea{
+  background:rgba(7,13,22,.56) !important;
+  border:1px solid rgba(255,255,255,.20) !important;
+  color:#f1f5f9 !important;
+  -webkit-backdrop-filter:blur(6px) !important;
+  backdrop-filter:blur(6px) !important;
+}
+html:not(.kiosk) body:not(.worker-zone-only) #cmdSide textarea::placeholder{color:rgba(226,232,240,.55) !important;}
+html:not(.kiosk) body:not(.worker-zone-only) #cmdSide select:focus,
+html:not(.kiosk) body:not(.worker-zone-only) #cmdSide textarea:focus{
+  border-color:rgba(222,255,59,.60) !important;
+  box-shadow:0 0 0 3px rgba(164,255,0,.14) !important;
+}
+html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .cmd-kind button{
+  background:rgba(255,255,255,.10) !important;
+  border:1px solid rgba(255,255,255,.18) !important;
+  color:#e2e8f0 !important;
+  -webkit-backdrop-filter:blur(8px) !important;
+  backdrop-filter:blur(8px) !important;
+}
+html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .cmd-kind button[data-cmd-kind="instruction"][aria-pressed="true"]{
+  background:linear-gradient(135deg,#DEFF3B 0%,#A4FF00 100%) !important;
+  border:0 !important;
+  color:#0B1200 !important;
+  box-shadow:0 0 18px rgba(164,255,0,.45), 0 4px 12px rgba(0,0,0,.25) !important;
+}
+html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .cmd-kind button[data-cmd-kind="notice"][aria-pressed="true"]{
+  background:#FBEFD6 !important;
+  color:#4a3208 !important;
+  border:1px solid rgba(255,255,255,.35) !important;
+}
+html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .cmd-attach-btn{
+  background:rgba(255,255,255,.12) !important;
+  border:1px solid rgba(255,255,255,.22) !important;
+  color:#e2e8f0 !important;
+}
+html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .side-tool-btn.kiosk-tool-btn{
+  background:rgba(255,255,255,.10) !important;
+  border:1px solid rgba(255,255,255,.20) !important;
+  color:#e5e7eb !important;
+  -webkit-backdrop-filter:blur(8px) !important;
+  backdrop-filter:blur(8px) !important;
+}
+html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .cmd-item{
+  background:rgba(255,255,255,.07) !important;
+  border:1px solid rgba(255,255,255,.14) !important;
+}
+html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .home-sum{background:rgba(255,255,255,.07) !important;}
+html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .cmd-sum-chip{
+  background:rgba(255,255,255,.10) !important;
+  border-color:rgba(255,255,255,.16) !important;
+}
+html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .side-title-row h2{text-shadow:0 1px 6px rgba(0,0,0,.45);}
+html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,213,225,.55) !important;}
+
+/* ── ⑤ 상태 범례 ──────────────────────────────────────────────────────────── */
+
+/* 데스크탑: 지도 안(1동 아래)에서 화면 맨 아래 숲 영역으로 — 공장 도로·건물을 가리지 않게 */
+@media (min-width:901px){
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage .state-legend{
+    position:fixed !important;
+    left:334px !important;
+    bottom:16px !important;
+    top:auto !important;
+    right:auto !important;
+    z-index:5 !important;
+    padding:7px 14px !important;
+    font-size:11.5px !important;
+    gap:11px !important;
+    border-radius:9999px !important;
+    background:rgba(10,16,24,.60) !important;
+    -webkit-backdrop-filter:blur(10px) saturate(130%) !important;
+    backdrop-filter:blur(10px) saturate(130%) !important;
+    border:1px solid rgba(255,255,255,.13) !important;
+    box-shadow:0 10px 26px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.10) !important;
+  }
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage .state-legend span{gap:5px !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage .state-legend i{width:9px !important; height:9px !important;}
+}
+
+/* 폰: 범례는 스크립트가 지도 카드 바로 아래로 옮기고 이 클래스를 붙인다 */
+.state-legend-below{
+  position:static !important; left:auto !important; right:auto !important;
+  top:auto !important; bottom:auto !important;
+  display:flex !important; flex-wrap:wrap; align-items:center;
+  width:max-content; max-width:calc(100% - 24px);
+  margin:10px 12px 4px !important; padding:7px 13px !important;
+  gap:12px !important;
+  border-radius:9999px !important;
+  background:rgba(12,18,28,.58) !important;
+  -webkit-backdrop-filter:blur(10px) saturate(130%) !important;
+  backdrop-filter:blur(10px) saturate(130%) !important;
+  border:1px solid rgba(255,255,255,.12) !important;
+  box-shadow:0 8px 20px rgba(0,0,0,.40) !important;
+  font-size:10.5px !important; font-weight:700; color:#e5e7eb;
+  pointer-events:none !important;
+  zoom:1 !important;
+}
+.state-legend-below span{gap:5px !important;}
+.state-legend-below i{width:8px; height:8px !important; border-radius:9999px; display:inline-block;}
+
+/* ── ⑥ 모바일: 같은 유리톤 — 숲 배경 위에 유리 카드 + 원래 비율 지도 ──────────── */
+
+@media (max-width:900px){
+  html:not(.kiosk):not(.worker-zone-only),
+  html:not(.kiosk):not(.worker-zone-only) body:not(.worker-zone-only){
+    height:auto !important; min-height:100% !important;
+    overflow-x:hidden !important; overflow-y:auto !important;
+    background:var(--nv-forest) url('./assets/forest-side.png') center top / cover no-repeat fixed !important;
+  }
+  html:not(.kiosk) body:not(.worker-zone-only) > header{padding:10px 10px 6px !important; gap:8px !important; background:transparent !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) > header h1{font-size:12.5px !important; letter-spacing:-.01em !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) > header .hs-logo{width:28px !important; height:28px !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) > header h1 + span{font-size:10px !important; padding:3px 6px !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) .hdr-search-wrap{display:none !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) > header #jisuSysInfoBtn{display:none !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) .hdr-tools .xlsx-btn{display:none !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) > header #liveClock{font-size:10.5px !important; padding:6px 8px !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) > header #loginBtn.login-btn{
+    padding:0 !important; width:28px !important; height:28px !important;
+    border-radius:9999px !important; justify-content:center !important;
+  }
+  html:not(.kiosk) body:not(.worker-zone-only) > header #loginBtn.login-btn #loginLabel{display:none !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) .cmd-layout{gap:0 !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) .cmd-map-wrap{padding:0 !important;}
+
+  html:not(.kiosk) body:not(.worker-zone-only) aside#cmdSide.cmd-side{
+    width:auto !important; flex:none !important;
+    margin:6px 8px 12px !important;
+    height:auto !important; max-height:none !important;
+    border-radius:20px !important;
+    border:1px solid var(--nv-line) !important;
+    background:linear-gradient(180deg, rgba(40,54,76,.60) 0%, rgba(14,21,33,.74) 100%), rgba(12,18,28,.30) !important;
+    -webkit-backdrop-filter:blur(20px) saturate(145%) !important;
+    backdrop-filter:blur(20px) saturate(145%) !important;
+    box-shadow:var(--nv-shadow), var(--nv-hi) !important;
+    padding:14px !important;
+  }
+  /* 모바일 지도는 원래 비율 그대로 (확대 없음) */
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage{
+    width:100% !important;
+    margin:0 auto !important;
+    border-radius:18px !important;
+    border:1px solid rgba(255,255,255,.20) !important;
+    box-shadow:0 22px 46px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.06) !important;
+  }
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage > img.map-bg{border-radius:17px !important;}
+  /* 스크립트가 범례를 못 옮긴 경우를 위한 지도 안 자리(작게) */
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage .state-legend{
+    left:8px !important; bottom:5px !important;
+    font-size:8px !important; padding:3px 8px !important; gap:6px !important;
+  }
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage .state-legend span{gap:3px !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage .state-legend i{width:6px; height:6px !important;}
+}
+
+/* 2동 표시가 위 버튼 줄과 생산A~D 줄 사이에 고르게 들어가도록 라벨만 조금 작게 */
+@media (max-width:600px){
+  #mapStage .hotspot-pill{
+    font-size:9.6px !important;
+    padding:.30em .60em !important;
+    gap:.34em !important;
+  }
+  #mapStage .bldg-badge{
+    font-size:9.0px !important;
+    padding:.26em .54em !important;
+  }
+  #mapStage .prod-grid > .hotspot-wrapper .hotspot-pill{
+    font-size:9.0px !important;
+    padding:.26em .54em !important;
+    gap:.30em !important;
+  }
+  /* 위/아래 줄에서 서로 닿던 버튼을 지도 위에서 살짝만 벌린다(건물 위치는 그대로) */
+  #hotspot-packaging{left:60.9% !important;}
+  #hotspot-pitch{left:72.4% !important;}
+  #hotspot-packaging-d{left:61.0% !important;}
+  #mapStage .bldg-badge[data-bldg="D"]{left:73.2% !important;}
+  #mapStage .bldg-badge[data-bldg="C"]{left:68.6% !important; top:31.5% !important; font-size:8.6px !important; padding:.20em .50em !important;}
+}
+
+/* 360px 폰: 지도 폭이 344px로 더 좁아지므로 표식 글자를 한 단계 더 줄여 겹침을 막는다 */
+@media (max-width:380px){
+  #mapStage .hotspot-pill{font-size:8.8px !important; padding:.28em .54em !important; gap:.30em !important;}
+  #mapStage .bldg-badge{font-size:8.4px !important; padding:.24em .50em !important;}
+  #mapStage .prod-grid > .hotspot-wrapper .hotspot-pill{font-size:8.4px !important; padding:.24em .48em !important;}
+  #hotspot-packaging{left:60.4% !important;}
+  #hotspot-pitch{left:72.0% !important;}
+  #mapStage .bldg-badge[data-bldg="C"]{font-size:8.0px !important;}
+}
+</style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -12755,6 +13285,41 @@ paint()})();</script>
   if('requestIdleCallback' in window) requestIdleCallback(preload,{timeout:4000}); else setTimeout(preload,1200);
   /* 확인용 핸들(화면에는 아무것도 보이지 않는다) */
   window.jisuWeatherFx={ state:function(){ return state; }, apply:apply, photo:function(){ return bg.getAttribute('src'); } };
+})();
+</script>
+<script id="legend-move">
+/* 상태 범례 배치 — 폰(≤900px)에서는 지도 카드 바로 아래 한 줄로 옮기고,
+   데스크탑에서는 다시 지도 안(화면 하단 고정)으로 되돌린다.
+   작업자 화면(?zone=)·키오스크에서는 범례가 원래 숨겨지므로 배치를 바꾸지 않는다. */
+(function(){
+  'use strict';
+  var mq = window.matchMedia('(max-width:900px)');
+  function quiet(){
+    var r = document.documentElement, b = document.body;
+    return r.classList.contains('worker-zone-only') || b.classList.contains('worker-zone-only') || r.classList.contains('kiosk');
+  }
+  function place(){
+    var stage = document.getElementById('mapStage');
+    var lg = document.querySelector('#mapStage .state-legend') || document.querySelector('.state-legend-below');
+    if(!lg || !stage) return false;
+    if(mq.matches && !quiet()){
+      var wrap = document.querySelector('.cmd-map-wrap');
+      if(wrap && wrap.parentNode && lg.parentNode !== wrap.parentNode) wrap.parentNode.insertBefore(lg, wrap.nextSibling);
+      lg.classList.add('state-legend-below');
+    }else{
+      if(lg.parentNode !== stage) stage.appendChild(lg);
+      lg.classList.remove('state-legend-below');
+    }
+    return true;
+  }
+  function boot(){
+    if(!place()){
+      var n = 0, t = setInterval(function(){ if(place() || ++n > 40) clearInterval(t); }, 250);
+    }
+    window.addEventListener('resize', place);
+    if(mq.addEventListener) mq.addEventListener('change', place); else mq.addListener(place);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
 </script>
 </body>
