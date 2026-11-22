@@ -20,6 +20,8 @@ JISU/index.html 안의 달력 자동 적용 로직(apply(), window.JISU_SCHEDULE
 - 08:00 마감: 08:00 이전에 완료된 작업은 closed=true 로 화면에서 내린다.
 - 08:00 초기화: 입고 입력칸(jisu-inbound-records-v1)의 rows 를 모두 archivedRows 로 옮기고 비운다
   (실적·엑셀 자료는 archivedRows·workState 등에 그대로 보존).
+  단 초기화와 요약 알림은 08시 일에만 의미가 있으므로 06:00~09:59 KST 실행에서만 한다
+  — 깃허브 예약(cron)이 몇 시간 늦게 돌아도 낮에 입력칸을 비우지 않는다(예약 반영은 그대로).
 - 반영·마감 뒤 Web Push(요약)와 ntfy(새 카드) 알림을 보낸다. 알림 실패는 반영 결과에 영향 없음.
 - 바뀐 것이 없으면 DB에 아무것도 쓰지 않고 정상 종료한다.
 
@@ -375,6 +377,16 @@ def apply_schedules(sch: list, cmds: list, today: str, now_s: str):
 
 
 # ---------------------------------------------------------------- 08:00 마감·입고 초기화·Web Push
+# 입고 초기화·요약 알림은 '08시' 일에만 의미가 있다. 같은 스크립트가 깃허브 예약(cron)으로
+# 몇 시간 늦게 돌 수 있어서, 이 시간대(KST) 밖이면 입력칸을 비우지 않고 예약 반영만 한다.
+CLOSE_WINDOW_HOURS = (6, 10)      # 06:00 ~ 09:59
+
+
+def in_0800_window(now: datetime) -> bool:
+    a, b = CLOSE_WINDOW_HOURS
+    return a <= now.hour < b
+
+
 def close_completed_before_0800(cmds: list, today: str, now: datetime) -> int:
     """08:00 기준 이전 완료 작업을 화면에서 숨김(closed=True) 초기화한다."""
     cutoff = now.replace(hour=8, minute=0, second=0, microsecond=0)
@@ -491,6 +503,15 @@ def send_push_notifications(added_items: list, cmds: list, dry: bool = False) ->
             print(f"[ok] Web Push({zone}) -> HTTP {status} {text[:100]}")
         except Exception as e:
             print(f"[warn] Web Push({zone}) 발송 실패(무시): {e}")
+
+
+def morning_tail(added_items: list, cmds: list, dry: bool = False, morning: bool = True, v2: bool = False) -> None:
+    """08시 시간대 실행에서만 입고 초기화와 요약 알림을 한다(늦게 도는 백업 실행 보호)."""
+    if not morning:
+        print("[jisu] 08시 시간대 밖 실행 — 입고 초기화·요약 알림은 건너뜀")
+        return
+    cleanup_completed_inputs_0800(dry, v2=v2)
+    send_push_notifications(added_items, cmds, dry)
 
 
 # ---------------------------------------------------------------- 구역 복사본 (index.html ZONE-MIRROR 와 같은 규칙)
@@ -617,6 +638,7 @@ def run_v2(dry: bool = False) -> int:
     """v2: 예약은 v2/_admin, 작업지시는 v2/{묶음}. 새 카드는 해당 묶음에만 조건부로 쓴다."""
     now = kst_now()
     today, now_s = kst_today(now), now_str(now)
+    morning = in_0800_window(now)
     print(f"[jisu] (v2) KST now = {now.isoformat(timespec='seconds')}  today={today}")
     for attempt in range(1, 4):
         sch_path = f"{ROOT}/v2/_admin/{SKEY}"
@@ -644,8 +666,7 @@ def run_v2(dry: bool = False) -> int:
         changed_parts = [pt for pt in V2_PARTS if dump_v(parts[pt][0]) != parts_before[pt]]
         if not new_recs and not sch_changed and not changed_parts:
             print("[jisu] (v2) 반영·초기화할 항목이 없습니다 — DB에 쓰지 않음")
-            cleanup_completed_inputs_0800(dry, v2=True)
-            send_push_notifications([], cmds, dry)
+            morning_tail([], cmds, dry, morning, v2=True)
             return 0
 
         t = int(time.time() * 1000)
@@ -668,8 +689,7 @@ def run_v2(dry: bool = False) -> int:
             if not dry and added > 0:
                 # 지난 날짜 예약을 소급 마킹한 closed 카드는 알리지 않는다 (오늘 실제로 열린 작업만)
                 notify_new([r for r in cmds[-added:] if not r.get("closed")])
-            cleanup_completed_inputs_0800(dry, v2=True)
-            send_push_notifications(added_items, cmds, dry)
+            morning_tail(added_items, cmds, dry, morning, v2=True)
             return 0
         time.sleep(1)
     raise SystemExit("[error] 3회 재시도에도 다른 기기 저장과 겹쳐 반영하지 못했습니다.")
@@ -681,7 +701,9 @@ def run(dry: bool = False) -> int:
         return run_v2(dry)
     now = kst_now()
     today, now_s = kst_today(now), now_str(now)
-    print(f"[jisu] KST now = {now.isoformat(timespec='seconds')}  today={today}  nowStr='{now_s}'")
+    morning = in_0800_window(now)
+    print(f"[jisu] KST now = {now.isoformat(timespec='seconds')}  today={today}  nowStr='{now_s}'"
+          f"  08시 초기화={'함' if morning else '건너뜀(시간대 밖)'}")
 
     for attempt in range(1, 4):
         sch_node, sch_etag = db_get(f"{STATE}/{SKEY}")
@@ -703,8 +725,7 @@ def run(dry: bool = False) -> int:
 
         if not sch_changed and not cmds_changed:
             print("[jisu] 반영·초기화할 항목이 없습니다 — DB에 쓰지 않음")
-            cleanup_completed_inputs_0800(dry)
-            send_push_notifications(added_items, cmds, dry)
+            morning_tail(added_items, cmds, dry, morning)
             return 0
 
         t = int(time.time() * 1000)
@@ -722,8 +743,7 @@ def run(dry: bool = False) -> int:
             if not dry and added > 0:
                 # 지난 날짜 예약을 소급 마킹한 closed 카드는 알리지 않는다 (오늘 실제로 열린 작업만)
                 notify_new([r for r in cmds[-added:] if not r.get("closed")])
-            cleanup_completed_inputs_0800(dry)
-            send_push_notifications(added_items, cmds, dry)
+            morning_tail(added_items, cmds, dry, morning)
             return 0
         time.sleep(1)   # 다른 기기 저장과 겹침 → 다시 읽고 재계산
 

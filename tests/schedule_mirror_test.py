@@ -158,9 +158,13 @@ class T(unittest.TestCase):
         sched._AUTH_CACHE.clear()
         self._orig_push_url = sched.PUSH_API_URL
         sched.PUSH_API_URL = "https://posco-m.vercel.app/api/push"
+        # 실행 시각과 무관하게 08시 마감·초기화·알림을 검사한다 (시간대 동작은 따로 테스트)
+        self._orig_window = sched.in_0800_window
+        sched.in_0800_window = lambda now: True
 
     def tearDown(self):
         sched.PUSH_API_URL = self._orig_push_url
+        sched.in_0800_window = self._orig_window
 
     def run_with(self, db, dry=False):
         orig, orig_open = sched._request, sched.urllib.request.urlopen
@@ -304,6 +308,27 @@ process.stdout.write(JSON.stringify(JSON.parse(process.argv[2]).map(s=>f(s[0], s
         self.assertTrue(push, "대기 안내는 보냄")
         self.assertEqual(push[0]["title"], "⏰ 08시 작업지시 1건 대기", "새 카드가 없으면 대기 안내")
 
+    def test_0800_window_hours(self):
+        mk = lambda h: sched.kst_now().replace(hour=h, minute=0)
+        win = self._orig_window       # setUp 의 고정(항상 true) 대신 실제 시간대 판단
+        for h in (6, 8, 9):
+            self.assertTrue(win(mk(h)), h)
+        for h in (0, 5, 10, 12, 23):
+            self.assertFalse(win(mk(h)), h)
+
+    def test_outside_window_applies_but_keeps_inputs(self):
+        sched.in_0800_window = lambda now: False    # GitHub cron 이 몇 시간 늦게 도는 경우
+        db = make_full_db()
+        self.run_with(db)
+        self.assertIn("s200", [x["id"] for x in state_cmds(db)], "예약 반영은 그대로")
+        inb = state_inbound(db)
+        today = sched.kst_today()
+        self.assertTrue(inb[today]["rows"], "낮에 도는 백업 실행은 입고 입력칸을 비우지 않음")
+        self.assertNotEqual(inb[today]["shiftKey"], today + "-am")
+        summary = [p for u, p in db.posts if "/api/push" in u and isinstance(p, dict) and "zone" in p]
+        self.assertEqual(summary, [], "늦은 요약 알림은 보내지 않음")
+        self.assertTrue(any("ntfy.sh" in u for u, _ in db.posts), "새 카드 알림은 그대로")
+
     def test_dry_run_reads_only(self):
         db = make_full_db()
         before = json.dumps(db.tree, sort_keys=True, ensure_ascii=False)
@@ -383,9 +408,12 @@ class V2(unittest.TestCase):
         sched._AUTH_CACHE.clear()
         self._orig_push_url = sched.PUSH_API_URL
         sched.PUSH_API_URL = "https://posco-m.vercel.app/api/push"
+        self._orig_window = sched.in_0800_window
+        sched.in_0800_window = lambda now: True
 
     def tearDown(self):
         sched.PUSH_API_URL = self._orig_push_url
+        sched.in_0800_window = self._orig_window
 
     def run_with(self, db, dry=False):
         orig, orig_open = sched._request, sched.urllib.request.urlopen
