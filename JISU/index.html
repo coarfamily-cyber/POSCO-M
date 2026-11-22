@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611221750">
+  <meta name="jisu-build" content="202611221755">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -4562,9 +4562,9 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
    POSCO-M · NUVO 풀글래스 + 숲·트럭 배경  (2026-11-22 정식 적용)
 
    ① 배경      주변 숲을 넓힌 조감도 한 장(assets/forest-bg.png) + 하단 도로로 들어오는 트럭 2대
-   ② 상단바    어두운 띠 제거 → 숲 위에 뜬 유리 요소(검색바·LIVE 칩·계정 버튼) + 네온 라임 시계
+   ② 상단바    어두운 띠 제거 → 숲 위에 뜬 유리 요소(검색바·LIVE 칩) + 네온 라임 시계 + 빈 투명 계정 버튼
    ③ 사이드바  숲 위에 뜬 어두운 반투명 유리 카드(안쪽 입력·버튼만 유리 톤)
-   ④ 지도 버튼 NUVO 플로팅 글래스 캡슐 + 왼쪽 상태 점(색은 기존 그대로)
+   ④ 지도 버튼 맑은 투명 유리 캡슐(어두운 색 없음) + 왼쪽 상태 점(색은 기존 그대로)
    ⑤ 상태 범례 데스크탑은 화면 맨 아래, 폰은 지도 카드 바로 아래 한 줄
 
    · 적용 범위는 관리자 화면까지다. 작업자 화면(?zone= · .worker-zone-only)과 키오스크(?kiosk=1)는
@@ -4588,20 +4588,20 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
 
 /* ── ① NUVO 플로팅 글래스 — 지도 위 구역 버튼·동 표시 ──────────────────────── */
 
+/* 지도 버튼은 예전 그대로 '맑은 투명 유리' — 어두운 네이비 채움색 없음 (2026-11-22 수뽕 님 지시:
+   "지도에서 보이는 버튼들 원래 투명으로 해줘") */
 #mapStage .hotspot-pill,
 #mapStage .bldg-badge{
-  background:rgba(22,29,43,.76) !important;
+  background:rgba(255,255,255,.12) !important;
   color:#fff !important;
-  -webkit-backdrop-filter:blur(10px) !important;
-  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) saturate(140%) !important;
+  backdrop-filter:blur(10px) saturate(140%) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.22),
-    inset 0 -1px 0 rgba(0,0,0,.25),
-    0 1px 2px rgba(0,0,0,.40),
-    0 10px 28px rgba(0,0,0,.50) !important;
+    0 8px 24px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.22) !important;
   font-weight:800 !important;
   letter-spacing:.01em;
-  text-shadow:0 1px 2px rgba(0,0,0,.45);
+  text-shadow:0 1px 3px rgba(0,0,0,.65);
   border-radius:9999px !important;
 }
 
@@ -4615,7 +4615,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
   inset:0;
   border-radius:inherit;
   pointer-events:none;
-  border:1px solid rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.26);
   background:linear-gradient(180deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.02) 42%, rgba(255,255,255,0) 60%);
 }
 
@@ -4661,7 +4661,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
   box-shadow:0 0 11px rgba(250,204,21,.95) !important;
 }
 
-/* 상태가 바뀌어도 캡슐은 항상 어두운 글래스(구역 색은 점·배지로만) */
+/* 상태가 바뀌어도 캡슐은 항상 맑은 투명 유리(구역 색은 점·배지로만) */
 #mapStage button.hotspot-pill[data-toggle-zone].st-done,
 #mapStage button.hotspot-pill[data-toggle-zone].st-work,
 #mapStage button.hotspot-pill[data-toggle-zone].st-wait,
@@ -4671,16 +4671,16 @@ body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-done,
 body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-work,
 body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-carry,
 body:not(#zz) #mapStage .hotspot-pill[data-toggle-zone="pitch"].st-done{
-  background:rgba(22,29,43,.76) !important;
+  background:rgba(255,255,255,.12) !important;
   color:#fff !important;
   animation:none !important;
 }
 #mapStage button.hotspot-pill.is-open,
 #mapStage button.hotspot-pill[aria-pressed="true"]{
-  background:rgba(48,61,84,.86) !important;
+  background:rgba(255,255,255,.22) !important;
 }
 
-/* 정비 구역: 어두운 캡슐 유지 + 노란 테두리·글로우가 깜빡임 (기존 노란 깜빡임 유지) */
+/* 정비 구역: 맑은 투명 유리 유지 + 노란 테두리·글로우가 깜빡임 (기존 노란 깜빡임 유지) */
 @property --nv-warn{
   syntax:'<number>';
   inherits:true;
@@ -4692,19 +4692,28 @@ body:not(#zz) #mapStage .hotspot-pill[data-toggle-zone="pitch"].st-done{
 }
 body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-warn{
   --nv-warn:.15;
-  background:rgba(22,29,43,.78) !important;
+  background:rgba(255,255,255,.12) !important;
   color:#fff !important;
   box-shadow:
+    0 8px 24px rgba(0,0,0,.28),
     inset 0 1px 0 rgba(255,255,255,.22),
-    inset 0 -1px 0 rgba(0,0,0,.25),
-    0 1px 2px rgba(0,0,0,.40),
-    0 10px 28px rgba(0,0,0,.50),
     0 0 0 calc(var(--nv-warn) * 3px) rgba(250,204,21,calc(var(--nv-warn) * .50)),
     0 0 30px calc(var(--nv-warn) * 10px) rgba(250,204,21,calc(var(--nv-warn) * .55)) !important;
   animation:nv-warn-glow 1.6s ease-in-out infinite !important;
 }
 body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-warn::before{
   border-color:rgba(250,204,21,calc(.2 + var(--nv-warn) * .7)) !important;
+}
+
+/* 호버·열림 시에만 조금 더 밝은 투명 유리 — 상태 규칙보다 뒤에 두어 특정도·순서 모두 확보 */
+#mapStage .hotspot-pill:hover,
+#mapStage .bldg-badge:hover,
+#mapStage .hotspot-wrapper.is-open > .hotspot-pill,
+#mapStage .hotspot-pill.is-open,
+#mapStage .hotspot-pill[aria-pressed="true"],
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone]:hover,
+body:not(#zz) #mapStage .hotspot-wrapper.is-open > button.hotspot-pill[data-toggle-zone]{
+  background:rgba(255,255,255,.22) !important;
 }
 
 /* 동 표시(1~4동·창고): 같은 글래스 캡슐, 점 없음 */
@@ -4878,21 +4887,23 @@ html:not(.kiosk) body:not(.worker-zone-only) > header #liveClock{
   box-shadow:0 0 14px rgba(164,255,0,.30), 0 8px 20px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.75) !important;
   text-shadow:none !important;
 }
+/* 계정 버튼: 채움색·라임 없이 완전 빈 투명(테두리·흰 글씨만) — 2026-11-22 수뽕 님 지시:
+   "오른쪽 상단에 날짜시간은 나두고 로그인창에 색깔 들어가있는데 빈투명으로 해주고" */
 html:not(.kiosk) body:not(.worker-zone-only) > header #loginBtn.login-btn{
-  background:linear-gradient(180deg, rgba(255,255,255,.30) 0%, rgba(255,255,255,.13) 100%), rgba(16,24,38,.22) !important;
+  background:transparent !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+  box-shadow:none !important;
   border:1px solid rgba(255,255,255,.34) !important;
   color:#fff !important;
-  -webkit-backdrop-filter:blur(14px) saturate(150%) !important;
-  backdrop-filter:blur(14px) saturate(150%) !important;
-  box-shadow:0 8px 20px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.24) !important;
   padding:6px 14px 6px 11px !important;
   font-size:12.5px !important;
 }
-html:not(.kiosk) body:not(.worker-zone-only) > header #loginBtn.login-btn:hover{background:rgba(255,255,255,.22) !important;}
+html:not(.kiosk) body:not(.worker-zone-only) > header #loginBtn.login-btn:hover{background:rgba(255,255,255,.08) !important;}
 html:not(.kiosk) body:not(.worker-zone-only) > header #loginBtn.login-btn.is-in{
-  background:rgba(222,255,59,.20) !important;
-  border-color:rgba(222,255,59,.55) !important;
-  color:#E9FFA6 !important;
+  background:transparent !important;
+  border-color:rgba(255,255,255,.34) !important;
+  color:#fff !important;
 }
 
 /* ── ④ 사이드바: 숲 위에 뜬 반투명 플로팅 유리 카드 ───────────────────────── */
