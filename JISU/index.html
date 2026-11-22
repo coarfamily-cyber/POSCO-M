@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611220819">
+  <meta name="jisu-build" content="202611220935">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -5786,9 +5786,17 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
     function homeMemos(){
       let ms=[]; try{ ms=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]'); }catch(e){}
       const t=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()), md=t.slice(5,7)+'. '+t.slice(8,10)+'.';
-      const today=ms.filter(m=>!m.ack&&!m.closed&&(m.day?m.day===t:String(m.at||'').startsWith(md))).reverse();
+      /* 2026-11-22: 날짜 제한을 없앤다 — 아직 [확인]하지 않은 특이사항은 지난 날짜 것도 사이드바 HOME 에 계속 남는다.
+         마감(08·18시)에도 지워지지 않고, 구역 카드의 [확인] 만이 이 목록에서 빼는 방법이다. */
+      const open=ms.filter(m=>!m.ack&&!m.closed).reverse();
       const hm=s=>{const m=String(s||'').match(/(\d{1,2}:\d{2})/); return m?m[1]:'';};
-      return '<div class="home-memo"><div class="hs-h">오늘 특이사항 <span>'+today.length+'</span></div>'+(today.length?'<div class="hm-list">'+today.slice(0,12).map(m=>'<button type="button" class="hm-item" data-memo-goto="'+esc(m.target)+'"><div class="hm-top"><b>'+esc(NAMES[m.target]||m.target)+'</b><span>'+esc(hm(m.at))+(m.by?' · '+esc(m.by):'')+'</span></div><div class="hm-txt">'+esc(m.text)+'</div></button>').join('')+(today.length>12?'<div class="hs-empty">외 '+(today.length-12)+'건</div>':'')+'</div>':'<div class="hs-empty">오늘 남긴 특이사항이 없어요.</div>')+'</div>';
+      /* 오늘 것 → HH:MM, 지난 날 것 → MM. DD. HH:MM (원본 m.at 표기를 그대로 살린다) */
+      const isToday=m=>{ if(m.day) return String(m.day)===t; const a=String(m.at||''); return /^\d{1,2}\.\s*\d{1,2}\./.test(a)?a.startsWith(md):true; };
+      const when=m=>{ const h=hm(m.at); if(isToday(m)) return h;
+        const d=String(m.at||'').match(/^(\d{1,2}\.\s*\d{1,2}\.)\s*\d{1,2}:\d{2}/); if(d) return d[1]+' '+h;
+        const p=String(m.day||'').split('-'); if(p.length===3) return (+p[1])+'. '+(+p[2])+'. '+h;
+        return h; };
+      return '<div class="home-memo"><div class="hs-h">미확인 특이사항 <span>'+open.length+'</span></div>'+(open.length?'<div class="hm-list">'+open.slice(0,12).map(m=>'<button type="button" class="hm-item" data-memo-goto="'+esc(m.target)+'"><div class="hm-top"><b>'+esc(NAMES[m.target]||m.target)+'</b><span>'+esc(when(m))+(m.by?' · '+esc(m.by):'')+'</span></div><div class="hm-txt">'+esc(m.text)+'</div></button>').join('')+(open.length>12?'<div class="hs-empty">외 '+(open.length-12)+'건</div>':'')+'</div>':'<div class="hs-empty">미확인 특이사항이 없어요.</div>')+'</div>';
     }
     function homeWork(){
       const work=load().filter(x=>!x.closed&&x.kind!=='notice'&&x.id!=='demo_dispatch_1'); if(!work.length) return '<div class="home-sum"><div class="hs-h">오늘 전체 현황</div><div class="hs-empty">오늘 등록된 금일작업이 없어요.</div></div>';
