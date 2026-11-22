@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611221755">
+  <meta name="jisu-build" content="202611222010">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -4792,6 +4792,17 @@ html:not(.kiosk):not(.worker-zone-only) body:not(.worker-zone-only){
   }
   html:not(.kiosk) body:not(.worker-zone-only) #mapStage .bldg-badge{
     font-size:clamp(.66rem, 1.55cqw, 3.1rem) !important;
+  }
+
+  /* 같은 종류 버튼은 글자 폭과 상관없이 같은 크기(11-22):
+     · 동 표시(1동·2동·3동·4동·창고) — 폭을 하나로(창고 기준), 높이는 옆 구역 버튼(포장·입고…)과 같게
+     · 생산 A~H — 알파벳 폭(F·G 등) 차이 없이 8개 모두 같은 폭 */
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage .bldg-badge{
+    min-width:3.4em; box-sizing:border-box; justify-content:center;
+    padding:.42em .72em !important;
+  }
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage .prod-grid > .hotspot-wrapper .hotspot-pill{
+    min-width:5.45em; box-sizing:border-box; justify-content:center;
   }
 }
 
