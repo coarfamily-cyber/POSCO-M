@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611222010">
+  <meta name="jisu-build" content="202611222030">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -4821,6 +4821,18 @@ html:not(.kiosk):not(.worker-zone-only) body:not(.worker-zone-only){
   html:not(.kiosk) body:not(.worker-zone-only) #mapStage .prod-grid > .hotspot-wrapper .hotspot-pill{
     min-width:5.45em; box-sizing:border-box; justify-content:center;
   }
+
+  /* 지도 위 모든 버튼·동 표시를 생산 A~H 버튼과 같은 크기로(11-22 지시: "지도에서 보이는 버튼크기를 생산버튼크기로 모두")
+     글자 크기·안쪽 여백·최소 폭을 생산 버튼 값 그대로 — 환경·출고·입고·포장·피치·1~4동·창고 모두 같은 캡슐 크기 */
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage .hotspot-pill,
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage .bldg-badge{
+    font-size:clamp(12px, 1.16cqw, 2.3rem) !important;
+    padding:.34em .74em !important;
+    gap:.40em !important;
+    min-width:5.45em; box-sizing:border-box; justify-content:center;
+  }
+  /* 동 표시만 투명 1px 테두리가 있어 2px 높았다 → 없애 높이까지 같게(바깥 하이라이트는 ::before 가 그린다) */
+  html:not(.kiosk) body:not(.worker-zone-only) #mapStage .bldg-badge{border-width:0 !important;}
 }
 
 /* ── ③ 상단바: 어두운 바 제거 → 숲 위에 플로팅 유리 요소 ───────────────────── */
