@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611220935">
+  <meta name="jisu-build" content="202611220945">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -2698,8 +2698,17 @@
     .home-memo{margin:0 0 10px;padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.06);}
     .home-memo .hs-h span{display:inline-flex;align-items:center;justify-content:center;min-width:1.5em;height:1.5em;margin-left:4px;padding:0 .4em;border-radius:9999px;background:#8b5cf6;color:#fff;font-size:11px;}
     .hm-list{display:grid;gap:6px;max-height:38vh;overflow:auto;}
-    .hm-item{display:block;width:100%;text-align:left;padding:7px 9px;border-radius:10px;background:rgba(139,92,246,.12);color:#e5e7eb;cursor:pointer;}
-    .hm-item:hover{scale:1 !important;translate:0 0 !important;background:rgba(139,92,246,.22);}
+    /* 2026-11-22: 카드 전체가 버튼이던 것을 본문 버튼(.hm-body) + [확인] 버튼(.hm-ack) 두 형제로 나눈다.
+       버튼 안에 버튼을 넣지 않으려는 것(HTML 규격)이고, 본문을 누르면 구역으로 가고 [확인]은 그 자리에서 확인 처리한다. */
+    .hm-item{display:flex;align-items:center;gap:7px;width:100%;padding:6px 7px 6px 9px;border-radius:10px;background:rgba(139,92,246,.12);color:#e5e7eb;}
+    .hm-item:hover{background:rgba(139,92,246,.22);}
+    .hm-body{flex:1 1 auto;min-width:0;display:block;text-align:left;padding:1px 0;background:none;border:0;color:#e5e7eb;cursor:pointer;--hvs:1;--hvt:0;}
+    .hm-body:hover,.hm-body:focus-visible{scale:1 !important;translate:0 0 !important;box-shadow:none !important;background:none !important;}
+    /* 구역 창 특이사항 [확인] 과 같은 보라색 계열. 좁은 사이드바(300px)에 맞춰 58×34, hover 확대는 2%로 눌러
+       옆 본문·다음 항목을 침범하지 않게 한다(--hvs). */
+    .hm-ack{flex:0 0 auto;align-self:center;min-width:58px;height:34px;padding:0 10px;border:0;border-radius:9px;background:rgba(139,92,246,.72);color:#fff;font-size:12px;font-weight:900;line-height:1;letter-spacing:.2px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;--hvs:1.02;--hvt:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 2px 8px rgba(76,29,149,.35);}
+    .hm-ack:hover{background:rgba(139,92,246,.95);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 3px 10px rgba(76,29,149,.45);}
+    .hm-ack:active{background:rgba(124,58,237,1);}
     .hm-top{display:flex;align-items:center;gap:6px;font-size:11.5px;} .hm-top b{color:#fff;} .hm-top span{margin-left:auto;color:#94a3b8;}
     .hm-txt{margin-top:2px;font-size:12.5px;font-weight:700;color:#f1f5f9;word-break:break-all;}
     .home-memo .hs-h{font-size:12px;font-weight:800;color:#cbd5e1;margin-bottom:6px;} .home-memo .hs-empty{font-size:12.5px;color:#94a3b8;}
@@ -5796,7 +5805,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
         const d=String(m.at||'').match(/^(\d{1,2}\.\s*\d{1,2}\.)\s*\d{1,2}:\d{2}/); if(d) return d[1]+' '+h;
         const p=String(m.day||'').split('-'); if(p.length===3) return (+p[1])+'. '+(+p[2])+'. '+h;
         return h; };
-      return '<div class="home-memo"><div class="hs-h">미확인 특이사항 <span>'+open.length+'</span></div>'+(open.length?'<div class="hm-list">'+open.slice(0,12).map(m=>'<button type="button" class="hm-item" data-memo-goto="'+esc(m.target)+'"><div class="hm-top"><b>'+esc(NAMES[m.target]||m.target)+'</b><span>'+esc(when(m))+(m.by?' · '+esc(m.by):'')+'</span></div><div class="hm-txt">'+esc(m.text)+'</div></button>').join('')+(open.length>12?'<div class="hs-empty">외 '+(open.length-12)+'건</div>':'')+'</div>':'<div class="hs-empty">미확인 특이사항이 없어요.</div>')+'</div>';
+      return '<div class="home-memo"><div class="hs-h">미확인 특이사항 <span>'+open.length+'</span></div>'+(open.length?'<div class="hm-list">'+open.slice(0,12).map(m=>'<div class="hm-item"><button type="button" class="hm-body" data-memo-goto="'+esc(m.target)+'" title="누르면 '+esc(NAMES[m.target]||m.target)+' 창으로 이동"><div class="hm-top"><b>'+esc(NAMES[m.target]||m.target)+'</b><span>'+esc(when(m))+(m.by?' · '+esc(m.by):'')+'</span></div><div class="hm-txt">'+esc(m.text)+'</div></button><button type="button" class="hm-ack" data-memo-ack="'+esc(m.id)+'" title="확인하면 이 목록에서 사라져요 (액셀에는 남음)" aria-label="'+esc(NAMES[m.target]||m.target)+' 특이사항 확인">확인</button></div>').join('')+(open.length>12?'<div class="hs-empty">외 '+(open.length-12)+'건</div>':'')+'</div>':'<div class="hs-empty">미확인 특이사항이 없어요.</div>')+'</div>';
     }
     function homeWork(){
       const work=load().filter(x=>!x.closed&&x.kind!=='notice'&&x.id!=='demo_dispatch_1'); if(!work.length) return '<div class="home-sum"><div class="hs-h">오늘 전체 현황</div><div class="hs-empty">오늘 등록된 금일작업이 없어요.</div></div>';
@@ -6221,7 +6230,18 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
     window.addEventListener('storage',e=>{if(e.key===KEY)render();});
     window.jisuCmdRender=()=>render();
     window.jisuSetTarget=(val)=>{ setTarget(val); render(); };
-    list.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-memo-goto]'); if(!b) return; const k=b.getAttribute('data-memo-goto'); if(!k.startsWith('outbound:')&&!k.startsWith('inbound:')&&![...sel.options].some(o=>o.value===k)) return; setTarget(k); render(); });
+    list.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('[data-memo-ack]')) return; const b=e.target.closest&&e.target.closest('[data-memo-goto]'); if(!b) return; const k=b.getAttribute('data-memo-goto'); if(!k.startsWith('outbound:')&&!k.startsWith('inbound:')&&![...sel.options].some(o=>o.value===k)) return; setTarget(k); render(); });
+    /* 사이드바 HOME '미확인 특이사항' [확인] (2026-11-22): 구역 창으로 가지 않고 그 자리에서 확인 처리.
+       구역 카드 [확인] 과 완전히 같은 경로 — localStorage jisu-memos-v1 의 m.ack/ackAt/ackBy (RTDB 동기화는
+       Storage.prototype.setItem 훅이 STATE_KEYS 로 자동 전송) + 사이드바·구역 창·지도 배지 동시 갱신. */
+    list.addEventListener('click',e=>{ const a=e.target.closest&&e.target.closest('[data-memo-ack]'); if(!a) return; e.preventDefault(); e.stopPropagation();
+      const id=a.getAttribute('data-memo-ack'); let all=[]; try{ all=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]'); }catch(_){ all=[]; }
+      const it=Array.isArray(all)?all.find(x=>x&&String(x.id)===String(id)):null; if(!it||it.ack) return;
+      it.ack=true; it.ackAt=nowStr(); const u=(()=>{try{return localStorage.getItem('jisu-user')||'';}catch(_){return '';}})(); if(u) it.ackBy=u;
+      try{ localStorage.setItem('jisu-memos-v1',JSON.stringify(all)); }catch(_){}
+      try{ if(window.jisuMemoRender) window.jisuMemoRender(); }catch(_){}
+      render(); try{ if(window.jisuStateRefresh) window.jisuStateRefresh(); }catch(_){}
+    });
     window.addEventListener('storage',e=>{ if(e.key==='jisu-memos-v1') render(); });
     list.addEventListener('change',e=>{const id=e.target.getAttribute&&e.target.getAttribute('data-cmd-retarget');if(!id)return;const nt=e.target.value;const all=load();const it=all.find(x=>x.id===id);if(!it)return;it.target=nt;save(all);setTarget(nt);render();});
     /* 사이드바 카드 수정·삭제 (관리자 화면 전용): 수정은 카드 안에서 바로 고치고, 삭제는 기존 data-cmd-del 흐름이 render+renderCards+fillModal까지 처리한다 */
