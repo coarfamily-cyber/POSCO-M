@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611222030">
+  <meta name="jisu-build" content="202611222045">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -4750,7 +4750,7 @@ html:not(.kiosk):not(.worker-zone-only) body:not(.worker-zone-only){
   html:not(.kiosk):not(.worker-zone-only) body:not(.worker-zone-only){
     height:100%;
     overflow:hidden !important;
-    background:var(--nv-forest) url('./assets/forest-bg.jpg?v=202611222030') center center / cover no-repeat fixed !important;
+    background:var(--nv-forest) url('./assets/forest-bg.jpg?v=202611222045') center center / cover no-repeat fixed !important;
   }
   /* 숲 배경과 지도 사이 이음선 제거(11-22): 지도 사진의 위·왼쪽·아래 가장자리 띠를 바깥 숲으로 녹인다.
      · 배경 판(forest-bg*.jpg)에는 그 띠가 지도 → 숲으로 이어지게 그려져 있고(바깥 숲은 원본 그대로)
@@ -4759,11 +4759,11 @@ html:not(.kiosk):not(.worker-zone-only) body:not(.worker-zone-only){
      · 비·눈일 때는 지도 사진이 바뀌므로 같은 날씨로 녹인 배경 판으로 바꿔 낀다(:has 미지원 브라우저는 맑음 판). */
   html:not(.kiosk):not(.worker-zone-only):has(#mapStage > img.map-bg[src*="plant-map-rain"]),
   html:not(.kiosk):not(.worker-zone-only):has(#mapStage > img.map-bg[src*="plant-map-rain"]) body:not(.worker-zone-only){
-    background-image:url('./assets/forest-bg-rain.jpg?v=202611222030') !important;
+    background-image:url('./assets/forest-bg-rain.jpg?v=202611222045') !important;
   }
   html:not(.kiosk):not(.worker-zone-only):has(#mapStage > img.map-bg[src*="plant-map-snow"]),
   html:not(.kiosk):not(.worker-zone-only):has(#mapStage > img.map-bg[src*="plant-map-snow"]) body:not(.worker-zone-only){
-    background-image:url('./assets/forest-bg-snow.jpg?v=202611222030') !important;
+    background-image:url('./assets/forest-bg-snow.jpg?v=202611222045') !important;
   }
   html:not(.kiosk) body:not(.worker-zone-only) > main{padding:0 !important;}
   html:not(.kiosk) body:not(.worker-zone-only) .cmd-layout{display:block !important; height:0 !important; gap:0 !important;}
@@ -4788,8 +4788,8 @@ html:not(.kiosk):not(.worker-zone-only) body:not(.worker-zone-only){
   /* 지도 사진은 배경과 같은 픽셀·같은 자리에 겹쳐 둔다 → 비·눈 조감도 전환이 그대로 보인다 */
   html:not(.kiosk) body:not(.worker-zone-only) #mapStage > img.map-bg{
     border-radius:0 !important;
-    -webkit-mask-image:url('./assets/map-edge-mask.png?v=202611222030');
-    mask-image:url('./assets/map-edge-mask.png?v=202611222030');
+    -webkit-mask-image:url('./assets/map-edge-mask.png?v=202611222045');
+    mask-image:url('./assets/map-edge-mask.png?v=202611222045');
     -webkit-mask-size:100% 100%; mask-size:100% 100%;
     -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
   }
@@ -5160,6 +5160,62 @@ html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,2
   #mapStage .bldg-badge[data-bldg="C"]{font-size:8.0px !important;}
 }
 </style>
+<style id="veh-lights-css">
+/* ── 차량 불빛 연출 (11-22) ─────────────────────────────────────────────
+   조감도 위(z 1, 사진 다음 순서)·날씨 캔버스(z 2)와 버튼 아래. 클릭을 가로막지 않는다.
+   크기 단위 --vu = 지도 사진 1px(원본 2048px 기준) → 어떤 화면에서도 차량 크기에 맞춰 커지고 작아진다.
+   묶음 전체를 screen 으로 합성해 '빛'처럼 사진을 밝힌다.
+   · 트럭: 헤드라이트 2개 + 앞쪽으로 퍼지는 빛줄기, 트레일러 뒤 빨간 후미등
+   · 지게차: 작은 앞등 + 지붕 주황 경광등(천천히 깜빡, 동작 줄이기 설정이면 고정)
+   · 비 사진에는 위쪽 탱크로리 불빛이 이미 그려져 있어 그 3대는 겹치지 않게 숨긴다 */
+#mapStage > .veh-lights{
+  --vu:calc(100cqw / 2048);
+  position:absolute; inset:0; pointer-events:none; z-index:1;
+  mix-blend-mode:screen;
+}
+#mapStage > .veh-lights > i{position:absolute; display:block; font-style:normal;}
+#mapStage .vl{
+  --lw:18; --bw:62; --bl:96; --a:.55;
+  width:0; height:0;
+  transform:rotate(var(--r,0deg));
+  filter:blur(calc(var(--vu) * 1.1));
+}
+#mapStage .vl::before{                 /* 빛줄기: 앞(-y)으로 갈수록 넓고 옅게 */
+  content:''; position:absolute;
+  width:calc(var(--vu) * var(--bw)); height:calc(var(--vu) * var(--bl));
+  left:calc(var(--vu) * var(--bw) / -2); top:calc(var(--vu) * var(--bl) * -1);
+  background:radial-gradient(75% 100% at 50% 100%,
+    rgba(255,240,200,var(--a)) 0%, rgba(255,228,170,calc(var(--a) * .42)) 42%, rgba(255,220,160,0) 78%);
+  clip-path:polygon(calc(50% - var(--vu) * (var(--lw) / 2 + 2)) 100%, calc(50% + var(--vu) * (var(--lw) / 2 + 2)) 100%, 100% 0, 0 0);
+}
+#mapStage .vl::after{                  /* 등 2개 */
+  content:''; position:absolute;
+  width:calc(var(--vu) * (var(--lw) + 12)); height:calc(var(--vu) * 12);
+  left:calc(var(--vu) * (var(--lw) + 12) / -2); top:calc(var(--vu) * -6);
+  background:
+    radial-gradient(calc(var(--vu) * 6) circle at calc(var(--vu) * 6) 50%, #fff 0%, #fff6dc 26%, rgba(255,232,170,.55) 55%, rgba(255,232,170,0) 100%),
+    radial-gradient(calc(var(--vu) * 6) circle at calc(var(--vu) * (var(--lw) + 6)) 50%, #fff 0%, #fff6dc 26%, rgba(255,232,170,.55) 55%, rgba(255,232,170,0) 100%);
+}
+#mapStage .vl-fork{--lw:7; --bw:30; --bl:42; --a:.5;}
+#mapStage .vl-tail{
+  width:calc(var(--vu) * 30); height:calc(var(--vu) * 10);
+  margin:calc(var(--vu) * -5) 0 0 calc(var(--vu) * -15);
+  background:
+    radial-gradient(calc(var(--vu) * 5) circle at calc(var(--vu) * 6) 50%, rgba(255,90,80,.95) 0%, rgba(255,40,40,.45) 45%, rgba(255,0,0,0) 100%),
+    radial-gradient(calc(var(--vu) * 5) circle at calc(var(--vu) * 24) 50%, rgba(255,90,80,.95) 0%, rgba(255,40,40,.45) 45%, rgba(255,0,0,0) 100%);
+  filter:blur(calc(var(--vu) * .8));
+}
+#mapStage .vl-beacon{
+  width:calc(var(--vu) * 14); height:calc(var(--vu) * 14);
+  margin:calc(var(--vu) * -7) 0 0 calc(var(--vu) * -7);
+  border-radius:50%;
+  background:radial-gradient(circle, #fff4c8 0%, #ffb21e 13%, rgba(255,150,20,.5) 32%, rgba(255,140,0,0) 68%);
+  animation:vl-beacon 1.2s ease-in-out infinite;
+}
+@keyframes vl-beacon{ 0%,100%{opacity:.2;} 50%{opacity:1;} }
+@media (prefers-reduced-motion:reduce){ #mapStage .vl-beacon{animation:none; opacity:.85;} }
+#mapStage:has(> img.map-bg[src*="plant-map-rain"]) .vl-top{display:none;}
+</style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
@@ -5335,6 +5391,24 @@ html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,2
     <div class="cmd-map-wrap">
     <div class="map-stage" id="mapStage">
       <img src="./assets/plant-map.jpg" alt="POSCO M 3D 공장 조감도" class="map-bg" />
+      <!-- 차량 불빛(11-22): 트럭 헤드라이트·후미등, 지게차 앞등·주황 경광등 — 지도 % 좌표, 지도와 함께 커지고 작아짐 -->
+      <div class="veh-lights" aria-hidden="true">
+        <i class="vl vl-truck" style="left:34.619%;top:74.103%;--r:180deg"></i>
+        <i class="vl vl-truck" style="left:38.477%;top:74.541%;--r:180deg"></i>
+        <i class="vl vl-truck vl-top" style="left:39.307%;top:18.898%;--r:180deg;--lw:11;--bw:44;--bl:70"></i>
+        <i class="vl vl-truck vl-top" style="left:40.381%;top:18.898%;--r:180deg;--lw:11;--bw:44;--bl:70"></i>
+        <i class="vl vl-truck vl-top" style="left:42.334%;top:17.235%;--r:180deg;--lw:9;--bw:38;--bl:58"></i>
+        <i class="vl vl-fork" style="left:40.332%;top:56.168%;--r:-15deg"></i>
+        <i class="vl vl-fork" style="left:36.523%;top:58.443%;--r:0deg"></i>
+        <i class="vl vl-fork" style="left:49.365%;top:51.881%;--r:-50deg"></i>
+        <i class="vl vl-fork" style="left:50.293%;top:57.305%;--r:0deg"></i>
+        <i class="vl-tail" style="left:34.619%;top:58.705%"></i>
+        <i class="vl-tail" style="left:38.477%;top:59.755%"></i>
+        <i class="vl-beacon" style="left:40.625%;top:57.393%;animation-delay:0s"></i>
+        <i class="vl-beacon" style="left:36.426%;top:59.755%;animation-delay:.45s"></i>
+        <i class="vl-beacon" style="left:50.049%;top:52.668%;animation-delay:.8s"></i>
+        <i class="vl-beacon" style="left:50.293%;top:58.443%;animation-delay:.2s"></i>
+      </div>
       <!-- 실시간 날씨 효과(비·눈) 캔버스: 조감도 위, 구역 버튼·동 표시·이동 동선 아래 -->
       <canvas class="weather-fx" id="weatherFx" aria-hidden="true"></canvas>
 
