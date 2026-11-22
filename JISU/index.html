@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611222150">
+  <meta name="jisu-build" content="202611222200">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -4750,7 +4750,7 @@ html:not(.kiosk):not(.worker-zone-only) body:not(.worker-zone-only){
   html:not(.kiosk):not(.worker-zone-only) body:not(.worker-zone-only){
     height:100%;
     overflow:hidden !important;
-    background:var(--nv-forest) url('./assets/forest-bg.jpg?v=202611222150') center center / cover no-repeat fixed !important;
+    background:var(--nv-forest) url('./assets/forest-bg.jpg?v=202611222200') center center / cover no-repeat fixed !important;
   }
   /* 숲 배경과 지도 사이 이음선 제거(11-22): 지도 사진의 위·왼쪽·아래 가장자리 띠를 바깥 숲으로 녹인다.
      · 배경 판(forest-bg*.jpg)에는 그 띠가 지도 → 숲으로 이어지게 그려져 있고(바깥 숲은 원본 그대로)
@@ -4759,11 +4759,11 @@ html:not(.kiosk):not(.worker-zone-only) body:not(.worker-zone-only){
      · 비·눈일 때는 지도 사진이 바뀌므로 같은 날씨로 녹인 배경 판으로 바꿔 낀다(:has 미지원 브라우저는 맑음 판). */
   html:not(.kiosk):not(.worker-zone-only):has(#mapStage > img.map-bg[src*="plant-map-rain"]),
   html:not(.kiosk):not(.worker-zone-only):has(#mapStage > img.map-bg[src*="plant-map-rain"]) body:not(.worker-zone-only){
-    background-image:url('./assets/forest-bg-rain.jpg?v=202611222150') !important;
+    background-image:url('./assets/forest-bg-rain.jpg?v=202611222200') !important;
   }
   html:not(.kiosk):not(.worker-zone-only):has(#mapStage > img.map-bg[src*="plant-map-snow"]),
   html:not(.kiosk):not(.worker-zone-only):has(#mapStage > img.map-bg[src*="plant-map-snow"]) body:not(.worker-zone-only){
-    background-image:url('./assets/forest-bg-snow.jpg?v=202611222150') !important;
+    background-image:url('./assets/forest-bg-snow.jpg?v=202611222200') !important;
   }
   html:not(.kiosk) body:not(.worker-zone-only) > main{padding:0 !important;}
   html:not(.kiosk) body:not(.worker-zone-only) .cmd-layout{display:block !important; height:0 !important; gap:0 !important;}
@@ -4788,8 +4788,8 @@ html:not(.kiosk):not(.worker-zone-only) body:not(.worker-zone-only){
   /* 지도 사진은 배경과 같은 픽셀·같은 자리에 겹쳐 둔다 → 비·눈 조감도 전환이 그대로 보인다 */
   html:not(.kiosk) body:not(.worker-zone-only) #mapStage > img.map-bg{
     border-radius:0 !important;
-    -webkit-mask-image:url('./assets/map-edge-mask.png?v=202611222150');
-    mask-image:url('./assets/map-edge-mask.png?v=202611222150');
+    -webkit-mask-image:url('./assets/map-edge-mask.png?v=202611222200');
+    mask-image:url('./assets/map-edge-mask.png?v=202611222200');
     -webkit-mask-size:100% 100%; mask-size:100% 100%;
     -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
   }
@@ -4886,11 +4886,11 @@ html:not(.kiosk) body:not(.worker-zone-only) > header #jisuSysInfoBtn{
   width:20px !important; height:20px !important;
 }
 
-/* 가운데: 반투명 유리 검색바 */
+/* 반투명 유리 검색바: 가운데 대신 제목 바로 뒤(왼쪽)에 일정 간격으로 붙인다(11-22) */
 html:not(.kiosk) body:not(.worker-zone-only) .hdr-search-wrap{
   flex:1 1 auto !important;
-  justify-content:center !important;
-  padding:0 8px !important;
+  justify-content:flex-start !important;
+  padding:0 8px 0 clamp(8px, calc((100vw - 900px) * 0.09), 48px) !important;
   min-width:180px !important;
 }
 html:not(.kiosk) body:not(.worker-zone-only):not(#z1#z2#z3#z4#z5) .hdr-search-box{
@@ -5393,7 +5393,7 @@ html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,2
     </aside>
     <div class="cmd-map-wrap">
     <div class="map-stage" id="mapStage">
-      <img src="./assets/plant-map.jpg?v=202611222150" alt="POSCO M 3D 공장 조감도" class="map-bg" />
+      <img src="./assets/plant-map.jpg?v=202611222200" alt="POSCO M 3D 공장 조감도" class="map-bg" />
       <!-- 차량 불빛(11-22): 트럭 헤드라이트·후미등, 지게차 앞등·주황 경광등 — 지도 % 좌표, 지도와 함께 커지고 작아짐 -->
       <div class="veh-lights" aria-hidden="true">
         <i class="vl vl-truck" style="left:34.619%;top:74.103%;--r:180deg"></i>
@@ -13189,7 +13189,7 @@ paint()})();</script>
   /* ?zone= 작업자 전용 화면은 조감도를 감추므로 효과를 켜지 않는다 */
   if(document.documentElement.classList.contains('worker-zone-only')) return;
 
-  var PHOTO={ clear:'./assets/plant-map.jpg?v=202611222150', rain:'./assets/plant-map-rain.jpg', snow:'./assets/plant-map-snow.jpg' };
+  var PHOTO={ clear:'./assets/plant-map.jpg?v=202611222200', rain:'./assets/plant-map-rain.jpg', snow:'./assets/plant-map-snow.jpg' };
   /* wttr.in(WorldWeatherOnline) 코드·설명 — met.no 를 못 받을 때만 쓰는 보조 판정 */
   var WTTR='https://wttr.in/36.7140,127.1998?format=j1';
   /* 1순위: met.no(노르웨이 기상청·무료·키 없음·CORS 허용) 지점 예보 — 기상청 동네예보(소정면)와 일치함을 확인.
