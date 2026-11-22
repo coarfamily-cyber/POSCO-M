@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611220955">
+  <meta name="jisu-build" content="202611221115">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -60,6 +60,9 @@
     const base=t=>String(t==null?'':t)
       .replace(/(\d+(?:[.,]\d+)?)\s*톤(?![가-힣])/g,'$1 TON')
       .replace(/(\d+(?:[.,]\d+)?)\s*개(?![가-힣])/g,'$1 EA')
+      /* 단독 t/T 도 TON (2026-11-22): "50t" "50 T" "12.5T" "1,200t" → "50 TON".
+         PLT·text·th·TB 처럼 다른 영단어 안의 t는 뒤 글자 검사로 걸러낸다. */
+      .replace(/(\d+(?:[.,]\d+)?)\s*[tT](?![A-Za-z0-9가-힣\-])/g,'$1 TON')
       .replace(/(\d+(?:[.,]\d+)?)\s*(ton|ea|set|kg|bag|pcs|ml|mm|cm|g|l)(?![A-Za-z0-9가-힣])/gi,(_,n,u)=>n+' '+u.toUpperCase());
     /* ctx = 대상 값(예: inbound:16kg 파렛트). 대상 자체가 파렛트 품목이면 수량만 적어도 대로 환산한다. */
     function conv(t,ctx){
@@ -4424,6 +4427,10 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
       background: rgba(251,246,211,.14) !important;
       color: #FBF6D3 !important; box-shadow: inset 0 0 0 1px rgba(251,246,211,.42) !important;
     }
+    #calModal .cal-tag.m{
+      background: rgba(124,58,237,.22) !important;
+      color: #E9D5FF !important; box-shadow: inset 0 0 0 1px rgba(167,139,250,.52) !important;
+    }
     #calModal .cal-tag.w{
       background: rgba(255,255,255,.12) !important;
       color: #F8FAFC !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.28) !important;
@@ -5162,7 +5169,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
             <button type="button" id="czImgClear" class="cmd-attach-clear" aria-label="사진 지우기">✕</button>
           </div>
           <div class="cz-quick-batch-prompt" id="czQuickBatchPrompt" style="display:none;">
-            <span>💡 여러 날짜가 감지되었습니다.</span>
+            <span>💡 여러 줄·여러 날짜를 한 번에 등록할 수 있어요.</span>
             <button type="button" id="czQuickBatchBtn">일괄등록으로 전환</button>
           </div>
           <div class="cal-hint">맨 앞에 버튼 이름, 띄우고 내용. 공지는 앞에 "공지". 지시서 표 붙여넣기 시 2공장만 자동 추출됩니다.</div>
@@ -5185,6 +5192,7 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
           <select id="czBatchTarget" class="cz-batch-select">
             <option value="inbound" selected>입고 (기본값)</option>
             <option value="*">전체 공지</option>
+            <option value="memo">특이사항</option>
             <option value="outbound">출고</option>
             <option value="packaging">포장</option>
             <option value="packaging-d">포장(3동)</option>
@@ -5657,7 +5665,8 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
     function goalOf(t){
       const clean=(window.jisuNormUnit?window.jisuNormUnit(t):String(t||'')).replace(/^\[[^\]]+\]\s*/,'');
       const m=clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)/);
-      return m?{n:(window.jisuParseNum?window.jisuParseNum(m[1]):Number(String(m[1]).replace(',','.'))),u:({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()}:null;
+      /* 예전에 저장된 "50t" 도 목표 TON 으로 읽는다 (2026-11-22 단위 통일) */
+      return m?{n:(window.jisuParseNum?window.jisuParseNum(m[1]):Number(String(m[1]).replace(',','.'))),u:({'톤':'TON','개':'EA','T':'TON'})[m[2]]||(m[2]||'').toUpperCase()}:null;
     }
     function dayOf(rec){
       if(!rec) return '';
@@ -5806,10 +5815,17 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
         return h; };
       return '<div class="home-memo"><div class="hs-h">미확인 특이사항 <span>'+open.length+'</span></div>'+(open.length?'<div class="hm-list">'+open.slice(0,12).map(m=>'<div class="hm-item"><button type="button" class="hm-body" data-memo-goto="'+esc(m.target)+'" title="누르면 '+esc(NAMES[m.target]||m.target)+' 창으로 이동"><div class="hm-top"><b>'+esc(NAMES[m.target]||m.target)+'</b><span>'+esc(when(m))+(m.by?' · '+esc(m.by):'')+'</span></div><div class="hm-txt">'+esc(m.text)+'</div></button><button type="button" class="hm-ack" data-memo-ack="'+esc(m.id)+'" title="확인하면 이 목록에서 사라져요 (액셀에는 남음)" aria-label="'+esc(NAMES[m.target]||m.target)+' 특이사항 확인">확인</button></div>').join('')+(open.length>12?'<div class="hs-empty">외 '+(open.length-12)+'건</div>':'')+'</div>':'<div class="hs-empty">미확인 특이사항이 없어요.</div>')+'</div>';
     }
+    /* 이동작업 TON 목표·완료 합계 — 사이드바 HOME 과 달력 '기록' 이 같은 함수를 쓴다 (2026-11-22 기준 통일) */
+    function tonSum(items){
+      let goal=0, got=0;
+      (items||[]).forEach(x=>{ if(!isMoveWork(x)) return; const g=goalOf(x.text); if(!g||!/^(TON|톤)$/i.test(g.u)) return; const n=Number(g.n); if(!(n>0)) return; goal+=n; const d=x.completed&&!x.short&&(x.done==null||x.done==='')?n:Number(x.done)||0; got+=Math.min(Math.max(d,0),n); });
+      return { goal:goal, got:got };
+    }
+    window.jisuTonSum=tonSum;
     function homeWork(){
       const work=load().filter(x=>!x.closed&&x.kind!=='notice'&&x.id!=='demo_dispatch_1'); if(!work.length) return '<div class="home-sum"><div class="hs-h">오늘 전체 현황</div><div class="hs-empty">오늘 등록된 금일작업이 없어요.</div></div>';
       const done=work.filter(x=>x.completed).length, run=work.filter(x=>x.working&&!x.completed).length, carry=work.filter(isCarryover).length;
-      let goal=0, got=0; work.forEach(x=>{ if(!isMoveWork(x)) return; const g=goalOf(x.text); if(!g||!/^(TON|톤)$/i.test(g.u)) return; const n=Number(g.n); if(!(n>0)) return; goal+=n; const d=x.completed&&!x.short&&(x.done==null||x.done==='')?n:Number(x.done)||0; got+=Math.min(Math.max(d,0),n); });
+      const _ts=tonSum(work), goal=_ts.goal, got=_ts.got;
       const r=v=>String(Math.round(v*10)/10), pct=goal?Math.round(got/goal*100):0;
       return '<div class="home-sum"><div class="hs-h">오늘 전체 현황</div>'
         +'<div class="hs-line">오늘 작업 <b>'+work.length+'</b>건 · 완료 <b class="ok">'+done+'</b> · 작업중 <b class="run">'+run+'</b>'+(carry?' · 이월 <b class="carry">'+carry+'</b>':'')+'</div>'
@@ -7080,6 +7096,24 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         }
       }
       if(!s) return {err:'"'+String(line||'').trim()+'" - 내용이 없어요'};
+      /* 특이사항 줄 (2026-11-22): "특이사항 도색 냄새" · "[특이사항] 도색 냄새" · "(특이사항) …"
+         → 일반 작업지시가 아니라 특이사항(jisu-memos-v1)으로 저장한다. 바로 뒤에 구역 이름을 쓰면 그 구역 특이사항이 된다. */
+      const msm=s.match(/^(?:\[\s*특이\s*사항\s*\]|\(\s*특이\s*사항\s*\)|【\s*특이\s*사항\s*】|특이\s*사항)(?=[\s:：/\-]|$)\s*[:：/\-]?\s*(.*)$/);
+      if(msm){
+        let rest=(msm[1]||'').trim(), mUrgent=(urgent||false);
+        for(let k2=0;k2<3;k2++){ if(!/^(?:\[긴급\]|\(긴급\)|【긴급】|[!！]+|긴급(?=[\s:：/\-]))/.test(rest)) break;
+          mUrgent=true; rest=rest.replace(/^(?:\[긴급\]|\(긴급\)|【긴급】|[!！]+|긴급)\s*[:：/\-]?/,'').trim(); }
+        if(!rest) return {err:'"'+String(line||'').trim()+'" - 내용이 없어요'};
+        let mtgt='';
+        const mCompact=rest.replace(/\s+/g,'').toUpperCase();
+        for(const [a,k] of ALIAS){ const ac=a.replace(/\s+/g,'').toUpperCase(); if(!ac||!mCompact.startsWith(ac)) continue;
+          let i=0,j=0; while(i<rest.length && j<ac.length){ if(/\s/.test(rest[i])){i++;continue;} i++; j++; }
+          if(SINGLE_WORD_ZONES.has(ac) && /[가-힣]/.test(rest.slice(i,i+1))) continue;
+          const nxt=rest.slice(i).trim().replace(/^[:：\-/]\s*/,'');
+          if(nxt){ mtgt=k; rest=nxt; }
+          break; }
+        return {target:mtgt,kind:'memo',text:(window.jisuNormUnitFor?window.jisuNormUnitFor(rest,mtgt||'memo'):rest),urgent:mUrgent};
+      }
       const compact=s.replace(/\s+/g,'').toUpperCase();
       if(/^전체(\s|[:：/\-]|공지|$)/.test(s)){ let rest=s.replace(/^전체\s*[:：/\-]?\s*/,'').replace(/^공지(?:사항)?\s*[:：/\-]?\s*/,''); if(/^[!！]/.test(rest)){ urgent=true; rest=rest.replace(/^[!！]+\s*/,''); } if(!rest) return {err:'"'+String(line||'').trim()+'" - 내용이 없어요'}; return {target:'*',kind:'notice',text:rest,urgent}; }
       for(const [a,k] of ALIAS){ const ac=a.replace(/\s+/g,'').toUpperCase(); if(compact.startsWith(ac)){
@@ -7094,7 +7128,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           if(!rest) return {err:'"'+String(line||'').trim()+'" - 내용이 없어요'}; return {target:kind==='notice'?'*':k,kind,text:(window.jisuNormUnitFor?window.jisuNormUnitFor(rest,k):(window.jisuNormUnit?window.jisuNormUnit(rest):rest)),urgent}; } }
       return {err:'"'+String(line||'').trim()+'" - 맨 앞에 버튼 이름(출고, 입고, 생산A…)을 써주세요'};
     }
-    const lineOf=s=>(s.urgent?'!':'')+(s.kind==='notice'?'공지 ':'')+(NAMES[s.target]||s.target)+' '+s.text;
+    const lineOf=s=>(s.urgent?'!':'')+(s.kind==='notice'?'공지 ':(s.kind==='memo'?'특이사항 ':''))+(s.kind==='memo'?(NAMES[s.target]&&NAMES[s.target]!=='전체'?(NAMES[s.target]+' '):''):(NAMES[s.target]||s.target))+' '+s.text;
     /* 지난 기록: 금일작업·공지(jisu-commands-v1)와 특이사항(jisu-memos-v1)을 등록한 날짜로 모아 보기 */
     const MKEY='jisu-memos-v1';
     function dayOf(rec){ if(rec.day) return rec.day; const m=String(rec.at||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); if(!m) return rec.sched||'';
@@ -7132,7 +7166,10 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const {cmds,memos,inb,pitch}=histOf(day), work=cmds.filter(x=>x.kind!=='notice'), notes=cmds.filter(x=>x.kind==='notice');
       const doneN=work.filter(x=>x.completed).length, extraN=(inb?1:0)+(pitch?1:0);
       const total=cmds.length+memos.length+extraN;
-      let tgt=0, got=0; work.forEach(x=>{ const m=String(x.text).match(/(\d+(?:[.,]\d+)?)\s*TON/i); if(m){ const gn=window.jisuParseNum(m[1])||0; tgt+=gn; got+=Math.min(+(x.done||0)||0,gn); } });
+      /* 완료량·목표 TON 은 사이드바 HOME '오늘 전체 현황' 과 같은 함수(이동작업 TON)로 센다 (2026-11-22 기준 통일).
+         오늘은 사이드바처럼 마감(closed)된 항목을 빼고, 지난 날은 그날 기록 그대로 보여준다. */
+      const sumItems=(day===today)?work.filter(x=>!x.closed):work;
+      const _ts=(window.jisuTonSum?window.jisuTonSum(sumItems):{goal:0,got:0}), tgt=_ts.goal, got=_ts.got;
       const histTitle=(day===today?'오늘 기록':'그날 기록');
       const metaBits=[]; if(work.length){ metaBits.push('작업 '+work.length); metaBits.push('완료 '+doneN); } if(notes.length) metaBits.push('공지 '+notes.length); if(memos.length) metaBits.push('특이사항 '+memos.length);
       if(!total){ box.innerHTML='<div class="ch-toggle is-empty" role="status"><span class="ch-tg-tt"><b>'+histTitle+'</b><span class="ch-tg-n">0건</span></span></div><div class="ch-empty-msg">이 날짜에 남은 기록이 없어요.</div>'; return; }
@@ -7199,6 +7236,18 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       });
       return parts.length;
     }
+    /* 예약된 '특이사항'(kind==='memo')을 jisu-memos-v1 로 옮긴다 (2026-11-22 일괄등록 특이사항)
+       · 오늘 것이면 사이드바 미확인 특이사항·해당 구역 카드에 바로 뜨고, 지난 날 것은 마감 기록으로 남긴다. */
+    function schToMemo(s,at,closed){
+      const memos=load(MKEY), rid='m'+s.id;
+      if(memos.some(m=>m&&m.id===rid)) return 1;
+      const rec={id:rid,target:s.target||'*',tag:'issue',text:String(s.text||''),at:at,day:s.date};
+      if(closed) rec.closed=true;
+      if(s.by) rec.by=s.by;
+      if(s.img) rec.img=s.img;
+      memos.push(rec); save(MKEY,memos);
+      return 1;
+    }
     function apply(today, opts){
       today=today||kstToday(); opts=opts||{};
       const allowToday = !!opts.immediateToday || isScheduleApplyTimeReached();
@@ -7206,14 +7255,15 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       sch.forEach(s=>{
         if(s.applied) return;
         if(s.date < today){
-          schToCmds(cmds,s,atOf(s.date),true);
+          if(s.kind==='memo') schToMemo(s,atOf(s.date),true); else schToCmds(cmds,s,atOf(s.date),true);
           s.applied=true; s.appliedAt=nowStr(); changed=true;
         } else if(s.date === today && allowToday){
-          schToCmds(cmds,s,nowStr(),false);
+          if(s.kind==='memo') schToMemo(s,nowStr(),false); else schToCmds(cmds,s,nowStr(),false);
           s.applied=true; s.appliedAt=nowStr(); changed=true;
         }
       });
       if(changed){ save(CKEY,cmds); save(SKEY,sch); if(window.jisuCmdRender) window.jisuCmdRender();
+        try{ if(window.jisuMemoRender) window.jisuMemoRender(); }catch(_){}
         /* 오늘 날짜로 새로 등록된 작업만 알림(Web Push·ntfy) — 다건 일괄등록 시 구역별 1건 요약으로 폭주·레이트리밋 방지 */
         try{
           const todayNew=cmds.slice(before).filter(function(r){ return r&&r.day===today; });
@@ -7253,6 +7303,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       if(!o) return 'c-base';
       if(o.urgent) return 'c-urgent';
       if(o.kind==='notice') return 'c-notice';
+      if(o.kind==='memo') return 'c-memo';   /* 특이사항은 언제나 보라색(#7C3AED, 2026-11-22) */
       const t=String(o.target||'');
       if(t==='outbound'||t.indexOf('outbound:')===0) return 'c-outbound';
       if(t==='inbound'||t.indexOf('inbound:')===0) return 'c-inbound';
@@ -7270,7 +7321,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate(), sch=load(SKEY), cmds=load(CKEY), hc=histCount(), cc=carryCnt();
       /* 칸 안 칩은 등록 시각 순서로 — 시각이 없는 기록은 뒤로 */
       const hmOf=o=>{ const t=String((o&&(o.at||o.created))||'').match(/(\d{1,2}):(\d{2})/); return t?(+t[1])*60+(+t[2]):9999; };
-      const chipOf=(o,done)=>{ const lb=String(NAMES[o.target]||o.target||''); let tx=String(o.text==null?'':o.text);
+      const chipOf=(o,done)=>{ const lb=String(o.kind==='memo'?'특이사항':(NAMES[o.target]||o.target||'')); let tx=String(o.text==null?'':o.text);
         /* 내용이 이미 구역 이름으로 시작하면(예: 대상 생산A · 내용 "생산A 12 TON") 이름을 두 번 적지 않는다 */
         if(lb&&lb!=='전체'&&tx.slice(0,lb.length).toUpperCase()===lb.toUpperCase()) tx=tx.slice(lb.length).replace(/^[\s:：\-]+/,'');
         return '<span class="cal-chip '+zoneClass(o)+(o.kind==='notice'?' n':' w')+(done?' done':'')+'">'+esc(lb)+' '+esc(tx)+'</span>'; };
@@ -7281,7 +7332,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
            예약에서 넘어온 기록은 같은 칩을 두 번 그리지 않고, 완료·마감 표시가 붙은 그 기록 칩 하나로 보여준다. */
         const cmdItems=cmds.filter(c=>c&&c.id!=='demo_dispatch_1'&&dayOf(c)===key);
         const fromSch=s=>cmdItems.some(c=>{ const cid=String(c.id||''); return cid==='s'+s.id||cid.indexOf('s'+s.id+'-')===0; });
-        const cellItems=schItems.filter(s=>!fromSch(s)).map((o,i)=>({o,done:o.kind!=='notice'&&!!o.applied,k:0,t:hmOf(o),i}))
+        const cellItems=schItems.filter(s=>!fromSch(s)).map((o,i)=>({o,done:o.kind!=='notice'&&o.kind!=='memo'&&!!o.applied,k:0,t:hmOf(o),i}))
           .concat(cmdItems.map((o,i)=>({o,done:(o.kind==='notice'?!!o.completed:!!(o.completed||o.closed)),k:1,t:hmOf(o),i})))
           .sort((a,b)=>(a.t-b.t)||(a.k-b.k)||(a.i-b.i));
         html+='<button type="button" class="cal-cell'+(key===today?' is-today':'')+(key===picked?' is-picked':'')+(key<today?' is-past':'')+(dow===0?' sun':'')+(dow===6?' sat':'')+'" data-day="'+key+'"><span class="cal-num">'+d+'</span>'
@@ -7299,7 +7350,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const items=load(SKEY).filter(s=>s.date===picked);
       $('czList').innerHTML=items.length?items.map(s=>{
         if(editing===s.id) return '<div class="cz-item editing"><input class="cz-edit" data-cz-input="'+s.id+'" value="'+esc(lineOf(s))+'"><div class="cz-btns"><button type="button" class="cz-b ok" data-cz-ok="'+s.id+'">저장</button><button type="button" class="cz-b" data-cz-cancel="'+s.id+'">취소</button></div></div>';
-        return '<div class="cz-item'+(s.applied?' done':'')+'"><span class="z-badge '+zoneClass(s)+'">'+esc(NAMES[s.target]||s.target)+'</span>'+(s.urgent?'<span class="urg-tag">긴급</span>':'')+'<span class="cz-t">'+esc(s.text)+'</span>'
+        return '<div class="cz-item'+(s.applied?' done':'')+'"><span class="z-badge '+zoneClass(s)+'">'+esc(NAMES[s.target]||s.target)+'</span>'+(s.kind==='memo'?'<span class="cal-tag m">특이사항</span>':'')+(s.urgent?'<span class="urg-tag">긴급</span>':'')+'<span class="cz-t">'+esc(s.text)+'</span>'
           +(s.applied?'<span class="cz-state">등록됨</span>':'<div class="cz-btns"><button type="button" class="cz-b" data-cz-edit="'+s.id+'">수정</button><button type="button" class="cz-b del" data-cz-del="'+s.id+'">삭제</button></div>')+'</div>'; }).join(''):'<div class="cz-empty">아직 스케줄이 없어요.</div>';
       const addBox=$('czText').closest('.cz-add'); if(addBox) addBox.hidden=past; const note=modal.querySelector('.cal-note'); if(note) note.hidden=past;
       if(past && !items.length) $('czList').innerHTML='';
@@ -7774,6 +7825,32 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       return s;
     }
 
+    /* 날짜 범위 헤더 (2026-11-22): "11/25~11/27" · "11월 25일~27일" · "2026-11-25 ~ 2026-11-27" · "11/25(수)~11/27(금)"
+       → 그 사이 날짜마다 같은 작업을 등록한다. 한 번에 최대 31일까지만 만든다(비정상 대량 생성 방지). */
+    const RANGE_SEP='(?:~|～|〜|∼|–|—|부터|to|-)';
+    const RANGE_MAX_DAYS=31;
+    function isDateRangeHeader(line){
+      const raw=String(line||'').trim();
+      if(!raw) return null;
+      const s=raw.replace(/^(?:📅|📆|🗓️?|📌|✅|✔️?|🔹|🔸|▪️?|▫️?|[■□▶▷►●○◆◇★☆•·\-*※\[\(【])+\s*/u,'').trim();
+      if(!s) return null;
+      const D='(\\d{1,2})\\s*[월.\\-/]\\s*(\\d{1,2})\\s*일?';
+      const re=new RegExp('^((?:\\d{4})\\s*[년.\\-/]\\s*)?'+D+'\\s*(?:\\([월화수목금토일](?:요일)?\\))?\\s*'+RANGE_SEP+'\\s*((?:\\d{4})\\s*[년.\\-/]\\s*)?(?:'+D+'|(\\d{1,2}))\\s*일?');
+      const m=s.match(re);
+      if(!m) return null;
+      const y0=m[1]?parseInt(m[1],10):inferBatchYear(parseInt(m[2],10));
+      const mo0=parseInt(m[2],10), da0=parseInt(m[3],10);
+      const y1=m[4]?parseInt(m[4],10):inferBatchYear(parseInt(m[5]||m[7],10));
+      let mo1=m[5]?parseInt(m[5],10):mo0, da1=parseInt(m[6]||m[7],10);
+      if(!isValidYmd(y0,mo0,da0)||!isValidYmd(y1,mo1,da1)) return null;
+      let start=fmtYmd(y0,mo0,da0), end=fmtYmd(y1,mo1,da1);
+      if(end<start){ const t=start; start=end; end=t; }   /* 거꾸로 쓴 범위도 바로잡는다 */
+      const dates=[];
+      for(let k=0;k<RANGE_MAX_DAYS;k++){ const d=shiftYmd(start,k); dates.push(d); if(d>=end) break; }
+      if(dates.length<2) return null;   /* 같은 날짜면 일반 날짜 헤더로 처리 */
+      return { dates:dates, trailing:stripDateTailMeta(s.slice(m[0].length)) };
+    }
+
     function isDateHeader(line){
       const raw=String(line||'').trim();
       if(!raw) return null;
@@ -7844,18 +7921,22 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         /^입니다\.?$/,
         /^이상입니다\.?$/
       ];
-      let curDate=null;
+      let curDate=null, curDates=null;
       const fallbackDate=(picked && /^\d{4}-\d{2}-\d{2}$/.test(picked))?picked:kstToday();
       const groups=new Map();
 
       function addLineItem(d,raw){
         let clean=String(raw||'').replace(/^[\-*•·|▶▷►●○■□◆◇★☆※①-⑳]+\s*/u,'').replace(/^\d+[.)]\s*/,'').trim();
         if(!clean) return;
-        const tgtDefault=defTarget||'inbound';
-        const p=parseLine(clean);
+        const memoDefault=(defTarget==='memo');   /* 기본 대상 목록에서 '특이사항'을 고른 경우 — 모든 줄을 특이사항으로 */
+        const tgtDefault=(defTarget&&defTarget!=='memo')?defTarget:'inbound';
+        const MEMO_HEAD=/^(?:\[\s*특이\s*사항\s*\]|\(\s*특이\s*사항\s*\)|【\s*특이\s*사항\s*】|특이\s*사항)(?=[\s:：/\-]|$)/;
+        const p=parseLine((memoDefault&&!MEMO_HEAD.test(clean))?('특이사항 '+clean):clean);
         if(p&&!p.err){
-          groups.get(d).push({target:p.target,kind:p.kind,text:p.text,urgent:!!p.urgent});
+          const isMemo=(p.kind==='memo');
+          groups.get(d).push({target:isMemo?(p.target||(memoDefault?'*':tgtDefault)):p.target,kind:p.kind,text:p.text,urgent:!!p.urgent});
         } else {
+          if(MEMO_HEAD.test(clean)) return;   /* "특이사항"만 있고 내용이 없는 줄은 등록하지 않는다 */
           let urgent=false, kind=(tgtDefault==='*'?'notice':'instruction');
           for(let pass=0;pass<3;pass++){
             let ch=false;
@@ -7866,6 +7947,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
             if(!ch) break;
           }
           if(!clean) return;
+          if(memoDefault && kind!=='notice'){ groups.get(d).push({target:'*',kind:'memo',text:(window.jisuNormUnitFor?window.jisuNormUnitFor(clean,'memo'):clean),urgent:urgent}); return; }
           /* 배차 지시서 한 줄(구형·신형 차량번호 포함)은 기본 대상과 상관없이 출고로 보낸다 */
           const carHit=kind!=='notice' && Boolean(extractCarPlate(clean));
           const tgt=(kind==='notice'?'*':(carHit?'outbound':tgtDefault));
@@ -7882,18 +7964,27 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         const line=raw.trim();
         if(!line) continue;
         if(!/\d+\s*(?:TON|톤|EA|개|BAG|kg|set|PLT|박스|파레트|팔레트|파렛트)/i.test(line) && ignoreRes.some(r=>r.test(line))) continue;
+        const rg=isDateRangeHeader(line);
+        if(rg && rg.dates.length){
+          /* 범위 헤더: 시작일~종료일 사이 날짜마다 같은 작업을 등록한다 */
+          curDate=null; curDates=rg.dates;
+          curDates.forEach(d=>{ if(!groups.has(d)) groups.set(d,[]); });
+          if(rg.trailing) curDates.forEach(d=>addLineItem(d,rg.trailing));
+          continue;
+        }
         const dh=isDateHeader(line);
         if(dh && isValidYmd(dh.y,dh.m,dh.d)){
-          curDate=fmtYmd(dh.y,dh.m,dh.d);
+          curDate=fmtYmd(dh.y,dh.m,dh.d); curDates=null;
           if(!groups.has(curDate)) groups.set(curDate,[]);
           if(dh.trailing) addLineItem(curDate,dh.trailing);
           continue;
         }
-        if(!curDate){
+        if(!curDate && !curDates){
           curDate=fallbackDate;
           if(!groups.has(curDate)) groups.set(curDate,[]);
         }
-        addLineItem(curDate,line);
+        if(curDates) curDates.forEach(d=>addLineItem(d,line));
+        else addLineItem(curDate,line);
       }
 
       return Array.from(groups.entries())
@@ -7913,7 +8004,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const incImgEl=$('czBatchIncludeImg');
       const useImgOnly=!text.trim() && batchImgData && incImgEl && incImgEl.checked;
       if(useImgOnly){
-        const item={target:defTarget,kind:(defTarget==='*'?'notice':'instruction'),text:'배차 지시서'};
+        const item={target:(defTarget==='memo'?'*':defTarget),kind:(defTarget==='memo'?'memo':(defTarget==='*'?'notice':'instruction')),text:'배차 지시서'};
         if(batchImgTon) item.tonText=batchImgTon;
         parsedBatchData=[{date:safePicked,items:[item]}];
       } else if(disp && (disp.items.length || disp.skipped1>0)){
@@ -7974,7 +8065,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
             const tgtName=NAMES[it.target]||it.target;
             return '<div class="cz-batch-item">'
               +'<span class="cz-batch-target-tag '+zoneClass(it)+'">'+esc(tgtName)+'</span>'
-              +(it.kind==='notice'?'<span class="cal-tag n">공지</span>':'')
+              +(it.kind==='notice'?'<span class="cal-tag n">공지</span>':(it.kind==='memo'?'<span class="cal-tag m">특이사항</span>':''))
               +(it.urgent?'<span class="urg-tag">긴급</span>':'')
               +'<span>'+esc(it.text)+'</span>'
               +'</div>';
@@ -8020,7 +8111,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
             };
             if(incImg && idx===0) rec.img=batchImgData;
             const itemTon=it.tonText||(window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(it.text):'');
-            if(itemTon||groupTon) rec.tonText=itemTon||groupTon;
+            if(it.kind!=='memo' && (itemTon||groupTon)) rec.tonText=itemTon||groupTon;
             if(it.urgent) rec.urgent=true;
             if(u) rec.by=u;
             sch.push(rec);
@@ -8053,11 +8144,12 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       if(!czT||!quickPrompt) return;
       const val=czT.value;
       const dateHits=val.match(/(?:\d{4}[년.\-/]\s*)?\d{1,2}[월.\-/]\s*\d{1,2}/g);
-      if(dateHits && dateHits.length>=2){
-        quickPrompt.style.display='flex';
-      } else {
-        quickPrompt.style.display='none';
-      }
+      const lineN=val.split(/\r?\n/).filter(s=>s.trim()).length;
+      /* 여러 줄이거나 날짜가 하나라도 있으면 일괄등록으로 넘어갈 수 있게 한다 (모바일 412·360 포함, 2026-11-22) */
+      const need=(dateHits&&dateHits.length>=1)||lineN>=2;
+      quickPrompt.style.display=need?'flex':'none';
+      const lab=quickPrompt.querySelector('span');
+      if(lab) lab.textContent='💡 여러 줄·여러 날짜를 한 번에 등록할 수 있어요.';
     }
     const czTextEl=$('czText');
     if(czTextEl){
