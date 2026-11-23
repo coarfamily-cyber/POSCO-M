@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611232020">
+  <meta name="jisu-build" content="202611232037">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -6464,6 +6464,7 @@ html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,2
         if(p.length >= 3){ s+='<span class="date-tag">'+(+p[1])+'/'+(+p[2])+'</span>'; }
       }
       if(x.short) s+='<span class="short-tag">부족 완료</span>';
+      if(x.autoCarriedDay && x.completed && x.short && x.review==='pending') s+='<span class="pend-tag">이월 · 판단 대기</span>';
       return s;
     }
     function carrySub(x){ return ''; }
@@ -7986,7 +7987,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           if(schMap[x.id]){
             const sDate=schMap[x.id];
             if(x.day!==sDate){ x.day=sDate; x.origDay=sDate; ch=true; }
-            if(sDate<today && !x.closed && (x.completed || x.kind==='notice')){ x.closed=true; ch=true; }
+            /* 부족 완료 + 판단 대기(short·review pending)는 마감하지 않는다 — 이월 창에서 관리자가 판단 (#28279) */
+            if(sDate<today && !x.closed && (x.completed || x.kind==='notice') && !(x.completed && x.short && x.review==='pending')){ x.closed=true; ch=true; }
           }
           if(x.review==='pending' && !x.short){ x.review='ok'; ch=true; }
           if(!x.origDay && x.day && x.day<today){ x.origDay=x.day; ch=true; }
@@ -9084,8 +9086,21 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(d){ const p=d.split('-').map(Number); return new Date(p[0],p[1]-1,p[2],0,0,0,0).getTime(); }
         return 0;
       };
+      /* [11-23 #28279] '부족 완료 + 판단 대기'(completed·short·review='pending')는 18시·08시·자정 마감 어느 쪽에서도
+         closed 로 숨기지 않는다 — 수뽕 님 지시 "자동이월되게 관리자가 보고 판단하도록".
+         다음 날로 넘어와도 이월 창(판단 필요) 에 그대로 남아 [잔량 이월]·[이대로 종료] 로 직접 판단하고,
+         판단(review 변경) 전에는 카드가 사라지지 않는다. 일반 완료(목표 달성)는 아래에서 그대로 마감한다. */
+      const pendingShort=x=>!!(x && x.completed && x.short && x.review==='pending' && x.id!=='demo_dispatch_1');
       all.forEach(x=>{
         if(x.closed) return;
+        if(pendingShort(x)){
+          const d0=dayOf(x);
+          if(d0 && d0<today){   /* 이월되어 온 카드임을 표시 — 사이드바에 '이월 · 판단 대기' 배지 */
+            if(!x.origDay){ x.origDay=d0; changed=true; }
+            if(x.autoCarriedDay!==today){ x.autoCarriedDay=today; changed=true; }
+          }
+          return;
+        }
         if(x.completed && x.id!=='demo_dispatch_1' && parseDoneAt(x)<cutoff.getTime()){
           x.closed=true; changed=true; return;
         }

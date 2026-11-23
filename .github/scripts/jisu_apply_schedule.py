@@ -439,6 +439,10 @@ def close_completed_before_0800(cmds: list, today: str, now: datetime) -> int:
             continue
         if x.get("completed") is not True:
             continue
+        # 부족 완료 + 판단 대기(short·review='pending')는 08시에도 숨기지 않는다 —
+        # 이월 창에서 관리자가 [잔량 이월]·[이대로 종료]로 판단할 때까지 남긴다 (#28279)
+        if x.get("short") is True and str(x.get("review") or "") == "pending":
+            continue
         s = str(x.get("completedAt") or "")
         m = re.search(r"(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{1,2}):(\d{2})", s)
         done_dt = None
