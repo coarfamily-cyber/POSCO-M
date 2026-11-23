@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611231939">
+  <meta name="jisu-build" content="202611232020">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -6793,11 +6793,11 @@ html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,2
       try{ if(window.jisuFitCmdTexts) window.jisuFitCmdTexts(); }catch(_){}
     }
     function update(id,fn){const all=load();const it=all.find(x=>x.id===id);if(!it)return;fn(it);save(all);render();if(modalKey)fillModal(modalKey);}
-    const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
+    const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
     function onChange(e){const id=e.target.getAttribute&&e.target.getAttribute('data-cmd-progress');if(!id)return;e.stopPropagation();const n=window.jisuParseInputNum(e.target.value);update(id,it=>{it.done=n;});}
     function onClick(e){const t=e.target.closest?e.target.closest('[data-cmd-del],[data-cmd-complete],[data-cmd-working],[data-cmd-progress],.work-ctrl'):null;if(!t)return;e.stopPropagation();
       const did=t.getAttribute('data-cmd-del');
-      if(did){save(load().filter(x=>x.id!==did));render();if(modalKey)fillModal(modalKey);return;}
+      if(did){ if(window.jisuCmdDelete){ window.jisuCmdDelete(did); } else { save(load().filter(x=>x.id!==did)); render(); if(modalKey)fillModal(modalKey); } return; }
       const wid=t.getAttribute('data-cmd-working');
       if(wid){update(wid,it=>{if(it.completed){it.completed=false;it.completedAt=null;if(it.short){delete it.short;if(it.review==='pending'&&!it.carryFrom)delete it.review;}if('doneBefore' in it){it.done=it.doneBefore;delete it.doneBefore;}it.working=true;it.startedAt=it.startedAt||nowStr();}else{it.working=!it.working;if(it.working)it.startedAt=it.startedAt||nowStr();}});return;}
       const id=t.getAttribute('data-cmd-complete');if(!id)return;
@@ -6996,7 +6996,13 @@ html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,2
       }
     },true);
     submit.addEventListener('click',()=>{const t=getTarget();if(!t&&kind!=='notice'){sel.focus();return;}let v=text.value.trim();if(!v&&!pendingCmdImg){text.focus();return;}const urg=/^[!！]/.test(v); if(urg) v=v.replace(/^[!！]+\s*/,''); if(!v&&!pendingCmdImg){text.focus();return;}v=v.replace(/[a-z]/g,c=>c.toUpperCase());const all=load();const norm=v?(window.jisuNormUnitFor?window.jisuNormUnitFor(v,t):(window.jisuNormUnit?window.jisuNormUnit(v):v)).replace(/[a-z]/g,c=>c.toUpperCase()):'첨부 이미지';const rec={id:Date.now().toString(36),target:t||'*',kind,text:norm,at:nowStr(),day:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())};if(pendingCmdImg){ rec.img=pendingCmdImg; const autoTon=v&&window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(v):''; if(autoTon) rec.tonText=autoTon; }if(urg) rec.urgent=true;try{const u=localStorage.getItem('jisu-user');if(u)rec.by=u;}catch(_){}const fr=document.getElementById('cmdFrom'),to=document.getElementById('cmdTo');if(fr&&to&&fr.value&&to.value&&fr.value!==to.value){rec.from=fr.value;rec.to=to.value;}const _amPm=(window.jisuAmPmSplitText?window.jisuAmPmSplitText(norm,kind):[norm]);if(_amPm.length>1){rec.text=_amPm[0];all.push(rec);_amPm.slice(1).forEach(function(tx,ix){const c={};Object.keys(rec).forEach(function(k){c[k]=rec[k];});c.id=rec.id+'-'+(ix+1);c.text=tx;delete c.img;delete c.tonText;all.push(c);});}else{all.push(rec);}save(all);if(window.jisuSendNtfy)window.jisuSendNtfy(rec);if(pendingCmdImg&&!rec.tonText&&window.jisuGeminiReadImage){let gk='';try{gk=(localStorage.getItem('jisu-gemini-key')||'').trim();}catch(_){}if(gk){const imgCopy=pendingCmdImg,rid=rec.id;window.jisuGeminiReadImage(gk,imgCopy).then(txt=>{const tt=window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(txt):'';if(tt){const a=load();const it=a.find(x=>x.id===rid);if(it){it.tonText=tt;save(a);render();}}}).catch(()=>{});}}text.value='';if(fr)fr.value='';if(to)to.value='';pendingCmdImg=null;const cw=document.getElementById('cmdImgWrap'),ct=document.getElementById('cmdImgThumb');if(cw)cw.style.display='none';if(ct)ct.src='';render();});
-    list.addEventListener('click',e=>{const id=e.target.getAttribute('data-cmd-del');if(!id)return;save(load().filter(x=>x.id!==id));render();});
+    function cmdDelete(id){
+      /* 수정 중이던 카드를 지우면 수정 상태(editCmdId)도 같이 지운다 — 남아 있으면 같은 id 가 다시 생겼을 때 엉뚱한 카드가 수정 모드로 보인다 */
+      if(editCmdId!==null && editCmdId===id){ editCmdId=null; editCmdDraft=null; }
+      save(load().filter(x=>x.id!==id)); render(); if(modalKey) fillModal(modalKey);
+    }
+    list.addEventListener('click',e=>{const id=e.target.getAttribute('data-cmd-del');if(!id)return;cmdDelete(id);});
+    window.jisuCmdDelete=cmdDelete;
     function goHome(){
       document.querySelectorAll('.hotspot-wrapper.is-open').forEach(w=>w.classList.remove('is-open'));
       document.querySelectorAll('[data-production-btn],[data-warehouse-btn]').forEach(b=>{b.classList.remove('is-selected');b.setAttribute('aria-pressed','false');});
@@ -7012,7 +7018,10 @@ html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,2
     window.addEventListener('storage',e=>{if(e.key===KEY)render();});
     window.jisuCmdRender=()=>render();
     window.jisuSetTarget=(val)=>{ setTarget(val); render(); };
-    list.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('[data-memo-ack]')) return; const b=e.target.closest&&e.target.closest('[data-memo-goto]'); if(!b) return; const k=b.getAttribute('data-memo-goto'); if(!k.startsWith('outbound:')&&!k.startsWith('inbound:')&&![...sel.options].some(o=>o.value===k)) return; setTarget(k); render(); });
+    list.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('[data-memo-ack]')) return; const b=e.target.closest&&e.target.closest('[data-memo-goto]'); if(!b) return; const k=b.getAttribute('data-memo-goto');
+      /* 전체('*') 특이사항: 어느 구역에도 속하지 않으므로 HOME 으로 (예전에는 조건에 걸려 눌러도 아무 일이 없었다) */
+      if(k==='*'||k==='전체'||k===''){ setTarget(''); render(); return; }
+      if(!k.startsWith('outbound:')&&!k.startsWith('inbound:')&&![...sel.options].some(o=>o.value===k)) return; setTarget(k); render(); });
     /* 사이드바 HOME '미확인 특이사항' [확인] (2026-11-22): 구역 창으로 가지 않고 그 자리에서 확인 처리.
        구역 카드 [확인] 과 완전히 같은 경로 — localStorage jisu-memos-v1 의 m.ack/ackAt/ackBy (RTDB 동기화는
        Storage.prototype.setItem 훅이 STATE_KEYS 로 자동 전송) + 사이드바·구역 창·지도 배지 동시 갱신. */
@@ -7180,7 +7189,7 @@ html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,2
       if(camToastTimer){ clearTimeout(camToastTimer); camToastTimer=null; }
       if(text&&ms>0){ camToastTimer=setTimeout(()=>{ ct.hidden=true; camToastTimer=null; },ms); }
     }
-    const stamp=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+    const stamp=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
     const fileStamp=()=>{const d=new Date(Date.now()+9*3600e3).toISOString();return d.slice(0,19).replace(/[-:T]/g,'');};
     function toJpeg(source,w,h){const max=2048,sc=Math.min(1,max/Math.max(w,h));const c=document.createElement('canvas');c.width=Math.round(w*sc);c.height=Math.round(h*sc);c.getContext('2d').drawImage(source,0,0,c.width,c.height);return c.toDataURL('image/jpeg',0.90);}
     const todayDay=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
@@ -7837,7 +7846,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const dt=new Date(p[0],p[1]-1,p[2]+(delta||0));
       return fmtYmd(dt.getFullYear(),dt.getMonth()+1,dt.getDate());
     };
-    const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
+    const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
     const NAMES={}; [...document.querySelectorAll('#cmdTarget option')].forEach(o=>{ if(o.value) NAMES[o.value]=o.textContent; }); Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     try{ Object.assign(NAMES, window.JISU_SUB_LABELS||{}); }catch(_){}
     const ALIAS=[]; Object.keys(NAMES).forEach(k=>{ const n=NAMES[k]; ALIAS.push([n,k]); ALIAS.push([n.replace(/[()\s]/g,''),k]); });
@@ -7889,10 +7898,13 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           /* 복합어 경계 보호: "포장재", "입고예정", "출고일정" 등이 구역명+남은글자로 찢어지지 않게 한다 */
           if(SINGLE_WORD_ZONES.has(ac) && nextCh && /[가-힣]/.test(nextCh) && !s.slice(i).startsWith('공지')) continue;
           let rest=s.slice(i).trim().replace(/^[:：\-/]\s*/,''); if(/^공지(?:사항)?(\s|[:：/\-]|$)/.test(rest)){ kind='notice'; rest=rest.replace(/^공지(?:사항)?\s*[:：/\-]?\s*/,''); }
+          /* 이동작업의 앞 구역은 대상이 아니라 '어디서 어디로'의 출발지다 — 글에서 지우지 않는다
+             ("2동→3동 20 TON" 이 "→3동 20 TON" 으로 잘리던 문제, 대상은 그 구역으로 유지) */
+          let keptForMove=''; if(/^(?:→|->|⇒|>)/.test(rest)) keptForMove=s;
           /* !긴급 · [긴급] · (긴급) · 맨 긴급 단어를 여러 번 겹쳐 써도 한 번에 걷어낸다 */
           for(let k2=0;k2<3;k2++){ if(!/^(?:\[긴급\]|\(긴급\)|【긴급】|[!！]+|긴급(?=[\s:：/\-]))/.test(rest)) break;
             urgent=true; rest=rest.replace(/^(?:\[긴급\]|\(긴급\)|【긴급】|[!！]+|긴급)\s*[:：/\-]?/,'').trim(); }
-          if(!rest) return {err:'"'+String(line||'').trim()+'" - 내용이 없어요'}; return {target:k,kind,text:(window.jisuNormUnitFor?window.jisuNormUnitFor(rest,k):(window.jisuNormUnit?window.jisuNormUnit(rest):rest)),urgent}; } }
+          if(!rest) return {err:'"'+String(line||'').trim()+'" - 내용이 없어요'}; const outText=keptForMove||rest; return {target:k,kind,text:(window.jisuNormUnitFor?window.jisuNormUnitFor(outText,k):(window.jisuNormUnit?window.jisuNormUnit(outText):outText)),urgent}; } }
       /* 구역명 없이 '공지 …' 만 적힌 줄은 전체 공지로 (A-15) */
       if(kind==='notice'){
         let rest=String(s||'').trim().replace(/^[:：\-/]\s*/,'');
@@ -8702,7 +8714,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const groups=new Map();
 
       function addLineItem(d,raw){
-        let clean=String(raw||'').replace(/^[\-*•·|▶▷►●○■□◆◇★☆※①-⑳]+\s*/u,'').replace(/^\d+[.)]\s*/,'').trim();
+        let clean=String(raw||'').replace(/^[\-*•·|▶▷►●○■□◆◇★☆※①-⑳]+\s*/u,'').replace(/^\d{1,2}[.)](?=\s)/,'').replace(/[\s\-–—*•·|▶◀▷◁►◄●○■□◆◇★☆※#~～]+$/u,'').trim();
         if(!clean) return;
         const memoDefault=(defTarget==='memo');   /* 기본 대상 목록에서 '특이사항'을 고른 경우 — 모든 줄을 특이사항으로 */
         const tgtDefault=(defTarget&&defTarget!=='memo')?defTarget:'inbound';
@@ -8739,6 +8751,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       for(let raw of lines){
         const line=raw.trim();
         if(!line) continue;
+        /* 기호만 있는 줄(###, ◆◆◆, ---)은 작업 내용이 아니다 — 예전에는 '###' 이 그대로 카드가 됐다 */
+        if(!/[0-9A-Za-z\uAC00-\uD7A3]/.test(line)) continue;
         if(!/\d+\s*(?:TON|톤|EA|개|BAG|kg|set|PLT|박스|파레트|팔레트|파렛트)/i.test(line) && ignoreRes.some(r=>r.test(line))) continue;
         const rg=isDateRangeHeader(line);
         if(rg && rg.dates.length){
@@ -8959,7 +8973,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const KEY='jisu-memos-v1';
     const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}}, save=v=>localStorage.setItem(KEY,JSON.stringify(v));
     const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
+    const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
     const me=()=>{try{return localStorage.getItem('jisu-user')||''}catch(e){return ''}};
     const wraps=[...document.querySelectorAll('.hotspot-wrapper')].filter(w=>w.id&&w.id.startsWith('hotspot-')&&w.querySelector(':scope > .expand-card'));
     const keyOf=w=>w.id.slice(8);
@@ -9025,7 +9039,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const fmtDay=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
     const kstToday=()=>fmtDay(new Date());
-    const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
+    const nowStr=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
     const me=()=>{try{return localStorage.getItem('jisu-user')||''}catch(e){return ''}};
     const NAMES={}; [...document.querySelectorAll('#cmdTarget option')].forEach(o=>{ if(o.value) NAMES[o.value]=o.textContent; }); Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     try{ Object.assign(NAMES, window.JISU_SUB_LABELS||{}); }catch(_){}
@@ -9288,7 +9302,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     function arr(k){ try{ const v=JSON.parse(localStorage.getItem(k)||'[]'); return Array.isArray(v)?v:[]; }catch(e){ return []; } }
     function saveArr(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } }
     const todayIso=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-    const nowStamp=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
+    const nowStamp=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
     const hhmm=()=>new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date());
     function kstNowMin(){
       const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()).map(x=>[x.type,x.value]));
@@ -9793,7 +9807,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const eqBox=box.querySelector('[data-env-eq-grid]'), aisleBox=box.querySelector('[data-env-aisle-grid]'), subCntEl=box.querySelector('[data-env-sub-cnt]'), titleEl=box.querySelector('[data-env-unit-title]'), sumEl=box.querySelector('[data-env-sum]');
     let openUnit=null;
     const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-    const now=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false});
+    const now=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
     /* [11-20] 지도 '환경' 필 불빛만 18시 마감으로 꺼진다 — 호기·설비·메인통로의 완료(파랑) 상태는 그대로 두고,
        가장 최근 18:00(KST) 이후에 완료된 칸이 하나라도 있을 때만 지도 필에 파란불을 켠다.
        (시각 비교는 doneAt(완료 순간의 ms)으로 하고, 예전 기록은 day+td → 18시 이전/이후로 판정) */
@@ -10182,15 +10196,21 @@ paint()})();</script>
   let kgEditIdx = null;   // 지금 중량 입력칸이 열린 행 번호
   let kgDraft = null;     // 입력 중인 값 (자동 갱신이 와도 유지)
 
+  /* 중량 읽기 (2026-11-23): "1,200" 같은 천 단위 쉼표 문자열도 1200 으로 읽는다.
+     parseFloat("1,200") 은 1 이 되어 합계·엑셀이 1kg 으로 어긋나므로 공용 jisuParseNum 을 거친다. */
+  function kgNum(v) {
+    const n = window.jisuParseNum ? window.jisuParseNum(v) : Number(String(v == null ? "" : v).replace(/,/g, ""));
+    return isFinite(n) && n > 0 ? n : 0;
+  }
   function fmtKgNum(n) {
-    const v = Math.round((parseFloat(n) || 0) * 10) / 10;
+    const v = Math.round((kgNum(n) || 0) * 10) / 10;
     return Number.isInteger(v) ? String(v) : v.toFixed(1);
   }
   function kgHistOf(r) {
     const raw = Array.isArray(r && r.kgHistory) ? r.kgHistory : [];
     return raw.map(h => (h && typeof h === "object")
-        ? { kg: parseFloat(h.kg) || 0, at: String(h.at || "") }
-        : { kg: parseFloat(h) || 0, at: "" })
+        ? { kg: kgNum(h.kg), at: String(h.at || "") }
+        : { kg: kgNum(h), at: "" })
       .filter(h => h.kg > 0);
   }
   function kgHistLabel(r) {
@@ -10213,7 +10233,7 @@ paint()})();</script>
   }
   function kgCellHtml(idx, r) {
     const hist = kgHistOf(r);
-    const has = parseFloat(r.kg) > 0;
+    const has = kgNum(r.kg) > 0;
     const histHtml = hist.length ? `<span class="inb-kg-hist"><b class="inb-kg-round">${hist.length + 1}차&nbsp;</b>(${kgHistLabelHtml(r)})</span>` : "";
     const reweighed = hist.length > 0;
     return `<button type="button" class="inb-kg-btn${reweighed ? " is-reweighed" : ""}" data-kg="${idx}" title="${has ? "눌러서 중량 수정" : "눌러서 중량 입력"}${reweighed ? ` · ${hist.length + 1}차 재계량` : ""}" aria-label="중량 수정">
@@ -10221,7 +10241,7 @@ paint()})();</script>
         </button>${histHtml}`;
   }
   function kgEditorHtml(idx, r) {
-    const v = kgDraft != null ? kgDraft : (parseFloat(r.kg) > 0 ? fmtKgNum(r.kg) : "");
+    const v = kgDraft != null ? kgDraft : (kgNum(r.kg) > 0 ? fmtKgNum(r.kg) : "");
     return `<form class="inb-kg-form" data-kg="${idx}" autocomplete="off">
           <input class="inb-kg-input" type="number" step="0.1" inputmode="decimal" value="${escHtml(v)}" aria-label="중량(kg)">
           <span class="inb-kg-actions"><button type="submit" class="inb-kg-save">저장</button><button type="button" class="inb-kg-cancel">취소</button></span>
@@ -10232,7 +10252,7 @@ paint()})();</script>
     const rec = getTodayRecord();
     const r = (rec.rows || [])[idx];
     if (!r) return;
-    kgDraft = parseFloat(r.kg) > 0 ? fmtKgNum(r.kg) : "";
+    kgDraft = kgNum(r.kg) > 0 ? fmtKgNum(r.kg) : "";
     kgEditIdx = idx;
     renderRows();
   }
@@ -10242,7 +10262,7 @@ paint()})();</script>
     renderRows();
   }
   function commitKg(idx, raw) {
-    const nv = Math.round((parseFloat(raw) || 0) * 10) / 10;
+    const nv = Math.round((kgNum(raw) || 0) * 10) / 10;
     if (!isFinite(nv) || nv <= 0) return false;
     const all = loadAllRecords();
     const rec = all[activeDay] || getTodayRecord();
@@ -10250,7 +10270,7 @@ paint()})();</script>
     rec.rows = rec.rows || [];
     const r = rec.rows[idx];
     if (!r) return false;
-    const prev = parseFloat(r.kg) || 0;
+    const prev = kgNum(r.kg);
     if (prev !== nv) {
       if (prev > 0) {
         r.kgHistory = (Array.isArray(r.kgHistory) ? r.kgHistory.slice() : []).concat([{ kg: prev, at: kstStamp() }]);
@@ -10271,7 +10291,7 @@ paint()})();</script>
     let count = 0;
 
     rows.forEach((r, idx) => {
-      const kgVal = parseFloat(r.kg) || 0;
+      const kgVal = kgNum(r.kg);
       if (kgVal > 0) { totalKg += kgVal; count++; }
 
       const tr = document.createElement("tr");
@@ -10365,7 +10385,7 @@ paint()})();</script>
     try { ensureRowIds(loadAllRecords()); } catch (_) {}
     const ov = ensureDeleteConfirm();
     const bag = String(r.bag == null ? "" : r.bag).trim();
-    const kg = parseFloat(r.kg) > 0 ? fmtKgNum(r.kg) + " kg" : "중량 -";
+    const kg = kgNum(r.kg) > 0 ? fmtKgNum(r.kg) + " kg" : "중량 -";
     const hist = kgHistOf(r);
     ov.querySelector("#inbDeleteConfirmLot").textContent = (r.lot ? String(r.lot) : "LOT 번호 없음");
     ov.querySelector("#inbDeleteConfirmMeta").innerHTML = [
@@ -10781,7 +10801,7 @@ paint()})();</script>
     const st = rec.workState || "idle";
     if (startBtn) startBtn.classList.toggle("is-active-work", st === "work");
     completeBtn.classList.toggle("is-active-done", st === "done");
-    const hasValidRows = (rec.rows || []).some(r => parseFloat(r.kg) > 0);
+    const hasValidRows = (rec.rows || []).some(r => kgNum(r.kg) > 0);
     // 완료(done) 상태에서도 다시 눌러 취소할 수 있도록 열어 둔다.
     completeBtn.disabled = (st !== "done") && !hasValidRows;
     completeBtn.title = (st === "done")
@@ -10884,13 +10904,24 @@ paint()})();</script>
     downloadAgainBtn.addEventListener("click", () => exportInboundExcel());
   }
 
+  let lastShiftTick = currentShiftKey();
   setInterval(() => {
     const d = kstDate();
+    const sk = currentShiftKey();
+    /* 교대 시각(08:00 / 18:00)이 지나면 화면도 스스로 새 교대로 바꿔 준다 —
+       예전에는 날짜만 봐서, 아침에 넣은 중량이 18시가 지나도 입력칸에 그대로 남아 보였다(저장은 비워졌는데 화면만 옛것). */
     if (d !== activeDay) {
       activeDay = d;
+      lastShiftTick = sk;
       refreshDateHeader();
       renderRows();
       renderPhotos();
+      updateWorkflowUI();
+      return;
+    }
+    if (sk !== lastShiftTick) {
+      lastShiftTick = sk;
+      renderRows();      /* getTodayRecord() 가 교대 초기화(rows→archivedRows)까지 처리한다 */
       updateWorkflowUI();
     }
   }, 15000);
@@ -11803,7 +11834,7 @@ paint()})();</script>
       const dateVal=m.querySelector('#qdDate').value;
       const tonVal=(m.querySelector('#qdTon').value||'').trim();
       const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-      const nowStr=()=>{ const q=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()).map(x=>[x.type,x.value])); return q.month+'. '+q.day+'. '+(q.hour==='24'?'00':q.hour)+':'+q.minute; };
+      const nowStr=()=>{ const q=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date()).map(x=>[x.type,x.value])); return q.month+'. '+q.day+'. '+(q.hour==='24'?'00':q.hour)+':'+q.minute; };
       let u=''; try{u=localStorage.getItem('jisu-user')||'';}catch(_){}
       if(!dateVal || dateVal<=today){
         let all=[]; try{all=JSON.parse(localStorage.getItem('jisu-commands-v1')||'[]');}catch(_){}

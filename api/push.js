@@ -34,7 +34,9 @@ function setCors(req, res) {
 
 // 알림 클릭 시 열리는 주소는 이 저장소의 페이지로만 허용한다 (피싱 링크 차단)
 function safeUrl(raw) {
-  const s = String(raw || '');
+  /* 앞뒤 공백·줄바꿈·탭을 먼저 걷어낸다 — "https://.../JISU/?zone=inbound\n" 처럼 제어문자가 붙으면
+     startsWith 가 빗나가 딥링크가 대시보드 첫 화면으로 조용히 바뀌었다. */
+  const s = String(raw == null ? '' : raw).trim().replace(/[\r\n\t]/g, '');
   return s.startsWith(ALLOWED_URL_PREFIX) ? s.slice(0, 300) : DEFAULT_URL;
 }
 
@@ -90,7 +92,8 @@ module.exports = async function handler(req, res) {
   const message = String(p.body || '새 작업/공지가 등록되었습니다.').slice(0, 500);
   const url = safeUrl(p.url);
   const tag = String(p.tag || 'jisu-push').slice(0, 80);
-  const badge = typeof p.badge === 'number' ? p.badge : 1;
+  const badgeNum = Number(p.badge);
+  const badge = Number.isFinite(badgeNum) && badgeNum > 0 ? Math.floor(badgeNum) : 1;   /* 문자열 "2" 도 2 로 (예전엔 1) */
 
   try {
     // 구독 목록은 항상 DB에서 직접 읽는다. 요청 본문의 subscriptions 는 무시한다.
@@ -171,3 +174,6 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ ok: false, error: err && err.message ? err.message : 'Push failed' });
   }
 };
+
+/* 점검용: 알림 클릭 주소 정규화 함수 노출 (동작에는 영향 없음) */
+module.exports.safeUrl = safeUrl;

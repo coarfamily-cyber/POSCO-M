@@ -484,6 +484,85 @@ async function okAsync(name, fn) {
     p.dom.window.close();
   }
 
+  // ─────────────────────────── 2026-11-23 오후 수정 (입고 쉼표·특이사항 이동·카드 삭제·일괄등록 파서)
+  {
+    const fake = makeFakeFirebase();
+    const kst = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    const inbound = { [kst]: { day: kst, shiftKey: kst + '-pm', workState: 'idle', rows: [
+      { rid: 'r1', lot: 'LOT-A', bag: '10', kg: '1,200', loc: '12가3456', worker: '지수' },
+      { rid: 'r2', lot: 'LOT-B', bag: '8', kg: '480', loc: '34나5678', worker: '지수' },
+    ] } };
+    const memos = [
+      { id: 'm1', target: '*', tag: 'issue', text: '전 구역 소음', at: '11. 23. 10:00', day: kst },
+      { id: 'm2', target: 'outbound', tag: 'issue', text: '도색 냄새', at: '11. 23. 10:05', day: kst },
+    ];
+    const cmds = [{ id: 'e1', target: 'outbound', kind: 'instruction', text: '출고 30 TON', at: '11. 23. 09:00', day: kst }];
+    const p = await loadPage({ fake, wait: 1500, seed: {
+      'jisu-inbound-records-v1': JSON.stringify(inbound),
+      'jisu-memos-v1': JSON.stringify(memos),
+      'jisu-commands-v1': JSON.stringify(cmds),
+    } });
+    const w = p.w, doc = w.document;
+    const $ = id => doc.getElementById(id);
+
+    ok('#28145 후속: 입고 "1,200" 중량이 1 이 아니라 1200 으로 집계된다', () => {
+      assert.equal($('inboundSumKg').textContent.replace(/,/g, ''), '1680.0', '합계 = 1200 + 480');
+      const cell = doc.querySelector('#inboundTbody .inb-kg-val');
+      assert.ok(cell && cell.textContent.trim().replace(/\s/g, '') === '1200', '셀 표시: ' + (cell && cell.textContent));
+    });
+
+    ok('#28145 후속: nowStr 계열은 hourCycle h23 을 명시한다 (자정 "24:00" 방지)', () => {
+      const src = fs.readFileSync(FILE, 'utf8');
+      const bad = src.split('\n').filter(l => /const (nowStr|nowStamp|stamp|now|at)=\s*\(\)?\s*=>/.test(l) && /hour12:false/.test(l) && !/hourCycle/.test(l));
+      assert.deepEqual(bad.map(s => s.trim().slice(0, 60)), []);
+    });
+
+    ok('#28145 후속: HOME 전체(*) 특이사항을 누르면 HOME 으로 (죽은 클릭 아님)', () => {
+      const sel = $('cmdTarget');
+      sel.value = 'outbound'; sel.dispatchEvent(new w.Event('change', { bubbles: true }));
+      // HOME 목록은 HOME 일 때만 보이므로, 전체 항목은 HOME 에서 눌러야 한다
+      sel.value = ''; sel.dispatchEvent(new w.Event('change', { bubbles: true }));
+      const row = doc.querySelector('[data-memo-goto="*"]');
+      assert.ok(row, '전체 특이사항 행이 HOME 목록에 있다');
+      row.click();
+      assert.equal($('cmdTarget').value, '', 'HOME 유지');
+    });
+
+    ok('#28145 후속: 수정 중이던 카드를 삭제하면 수정 상태도 지운다', () => {
+      $('cmdTarget').value = 'outbound'; $('cmdTarget').dispatchEvent(new w.Event('change', { bubbles: true }));
+      const edit = doc.querySelector('[data-cmd-edit="e1"]');
+      assert.ok(edit, '수정 버튼');
+      edit.click();
+      assert.ok(doc.querySelector('[data-cmd-edit-in="e1"]'), '수정 입력칸 열림');
+      doc.querySelector('[data-cmd-del="e1"]').click();
+      assert.equal(doc.querySelector('[data-cmd-edit-in]'), null, '수정 입력칸 없음');
+      const left = JSON.parse(w.localStorage.getItem('jisu-commands-v1') || '[]').filter(x => x.id === 'e1');
+      assert.equal(left.length, 0, '카드 삭제');
+    });
+
+    // 일괄등록 파서: 소수점("1.5배")이 목록 번호로 잘리지 않고, 기호만 있는 줄은 카드가 되지 않는다
+    await okAsync('#28145 후속: 일괄등록 "1.5배" 유지 + "###" 무시 + 이동 문장 보존', async () => {
+      assert.ok(w.jisuSetBatchView, 'setBatchView 노출');
+      const ta = $('czBatchText');
+      ta.value = '11/28\n1.5배 증산 10 EA\n###\n2동→3동 20 TON (마지막)';
+      ta.dispatchEvent(new w.Event('input', { bubbles: true }));
+      await sleep(200);
+      const prev = $('czBatchPreview').textContent;
+      assert.ok(prev.includes('1.5배 증산 10 EA'), '1.5배 유지: ' + prev.slice(0, 160));
+      assert.ok(!prev.includes('###'), '### 무시');
+      assert.ok(prev.includes('2동→3동 20 TON'), '이동 문장 보존: ' + prev.slice(0, 200));
+      $('czBatchSaveBtn').click();
+      await sleep(400);
+      const sch = JSON.parse(w.localStorage.getItem('jisu-schedule-v1') || '[]');
+      assert.equal(sch.length, 2, '2건 저장: ' + JSON.stringify(sch.map(s => s.text)));
+      assert.ok(sch.some(s => s.text.includes('1.5배')), '1.5배 저장');
+      assert.ok(sch.some(s => s.text.includes('2동→3동')), '이동 문장 저장');
+    });
+
+    ok('후속 수정 페이지 로드 JS 오류 0', () => assert.deepEqual(p.errors.filter(e => !/Not implemented/.test(e)), []));
+    p.dom.window.close();
+  }
+
   console.log(results.join('\n'));
   const failed = results.filter(r => r.startsWith('FAIL'));
   console.log('\n' + (failed.length ? 'FAILED ' + failed.length + ' / ' : '') + 'TOTAL ' + results.length + ' checks, PASS ' + (results.length - failed.length));

@@ -481,9 +481,18 @@ def cleanup_completed_inputs_0800(dry: bool = False, v2: bool = False) -> None:
             ir = json.loads(inb_node["v"])
             if isinstance(ir, dict):
                 changed = False
+                now_ms = int(time.time() * 1000)
                 for d, rec in ir.items():
                     if isinstance(rec, dict) and rec.get("rows"):
                         rec["archivedRows"] = (rec.get("archivedRows") or []) + rec["rows"]
+                        # 지운/옮긴 행은 gone[rid] 로 표시한다 — 대시보드가 3-way 병합 때
+                        # 서버에서 사라진 행을 다시 살리지 않도록(입고 행 부활 방지).
+                        gone = rec.get("gone") if isinstance(rec.get("gone"), dict) else {}
+                        for r in rec["rows"]:
+                            if isinstance(r, dict) and isinstance(r.get("rid"), str) and r["rid"]:
+                                gone[r["rid"]] = now_ms
+                        if gone:
+                            rec["gone"] = gone
                         rec["rows"] = []
                         rec["workState"] = "idle"
                         rec["shiftKey"] = f"{kst_today()}-am"
