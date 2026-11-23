@@ -8,6 +8,7 @@
 | 예약 스크립트 | `python3 tests/schedule_mirror_test.py` |
 | 화면 통합(지금 방식) | `node tests/integration/run.js JISU/index.html` |
 | 화면 통합(v2 여러 기기) | `node tests/integration/v2.js JISU/index.html` |
+| 2026-11-23 코드감사 수정 회귀(A-1~A-17·#28145) | `node tests/bugfix-20261123.test.js JISU/index.html` |
 | 실제 SDK + 에뮬레이터 종단 간 | `npx firebase emulators:exec --only database,auth --project demo-jisu \"node tests/integration/e2e-emulator.js JISU/index.html\"` |
 | 보안 규칙 | `npx firebase emulators:exec --only database --project demo-jisu \"node --test tests/rules/rules.test.js\"` |
 

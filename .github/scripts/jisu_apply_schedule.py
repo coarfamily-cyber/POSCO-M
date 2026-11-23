@@ -10,6 +10,7 @@ JISU(지수 통합 관제 상황실) 달력 예약 스케줄 자동 반영 — �
 JISU/index.html 안의 달력 자동 적용 로직(apply(), window.JISU_SCHEDULE_APPLY_TIME=08:00)과
 완전히 같은 규칙으로, Firebase Realtime DB 의 jisu-schedule-v1(jisu/state/jisu-schedule-v1)을
 읽어 아직 적용되지 않은 예약을 jisu-commands-v1(금일작업·공지)에 등록하고 applied 로 마킹한다.
+kind == 'memo'(특이사항) 예약은 금일작업이 아니라 jisu-memos-v1 로 보낸다(대시보드 schToMemo 와 같음).
 
 - s.date <  today : 지난 예약 → at "MM. DD. 00:00", closed=true (이월/과거 기록)
 - s.date == today : 오늘 예약 → at "MM. DD. HH:MM"(현재 KST), closed 없음
@@ -57,6 +58,7 @@ ROOT = "jisu"
 STATE = f"{ROOT}/state"
 SKEY = "jisu-schedule-v1"
 CKEY = "jisu-commands-v1"
+MKEY = "jisu-memos-v1"          # 특이사항 (대시보드 schToMemo 와 같은 곳)
 INB = "jisu-inbound-records-v1"
 BY = os.environ.get("JISU_APPLY_BY", "gh-actions-0800")   # 실행 주체 표기(기록용)
 
@@ -317,10 +319,18 @@ def _inline_head(m):
 
 
 # ---------------------------------------------------------------- 반영 규칙
-def apply_schedules(sch: list, cmds: list, today: str, now_s: str):
-    """달력 예약을 금일작업으로 옮긴다. (추가된 카드 수, 마킹 수)"""
-    added, marked = 0, 0
+def apply_schedules(sch: list, cmds: list, today: str, now_s: str, memos: list | None = None):
+    """달력 예약을 금일작업으로 옮긴다. (추가된 카드 수, 마킹 수, 새로 넣은 특이사항 목록)
+
+    kind == 'memo'(특이사항) 예약은 작업지시(cmds)가 아니라 특이사항 목록(jisu-memos-v1)으로 보낸다
+    — 대시보드 index.html 의 schToMemo 와 똑같은 규칙(id 'm'+id, tag 'issue').
+    (예전에는 kind 를 그대로 살려 's'+id 작업 카드로 넣어서, 미래 특이사항이 08시에 유령 작업이 됐다.)
+    """
+    if memos is None:
+        memos = []
+    added, marked, new_memos = 0, 0, []
     have = {c.get("id") for c in cmds if isinstance(c, dict)}
+    have_m = {m.get("id") for m in memos if isinstance(m, dict)}
     for s in sch:
         if not isinstance(s, dict):
             continue
@@ -334,6 +344,34 @@ def apply_schedules(sch: list, cmds: list, today: str, now_s: str):
             at, closed = at_of_midnight(date), True
         else:
             at, closed = now_s, False
+
+        if s.get("kind") == "memo":       # 특이사항은 카드가 아니라 jisu-memos-v1 로
+            rid = "m" + str(s.get("id"))
+            if rid in have_m:
+                print(f"  = 이미 등록된 특이사항 {rid} (마킹만)")
+            else:
+                mem = {
+                    "id": rid,
+                    "target": s.get("target") or "*",
+                    "tag": "issue",
+                    "text": str(s.get("text") or ""),
+                    "at": at,
+                    "day": date,
+                }
+                if closed:
+                    mem["closed"] = True
+                if s.get("by"):
+                    mem["by"] = s["by"]
+                if s.get("img"):
+                    mem["img"] = s["img"]
+                memos.append(mem)
+                have_m.add(rid)
+                new_memos.append(mem)
+                print(f"  + 특이사항 추가 {rid} [{date}] {mem.get('target')} — {mem.get('text')}")
+            s["applied"] = True
+            s["appliedAt"] = now_s
+            marked += 1
+            continue
 
         texts = split_am_pm(s.get("text"), s.get("kind"))
         for idx, txt in enumerate(texts):
@@ -373,7 +411,7 @@ def apply_schedules(sch: list, cmds: list, today: str, now_s: str):
         s["applied"] = True
         s["appliedAt"] = now_s
         marked += 1
-    return added, marked
+    return added, marked, new_memos
 
 
 # ---------------------------------------------------------------- 08:00 마감·입고 초기화·Web Push
@@ -457,7 +495,13 @@ def cleanup_completed_inputs_0800(dry: bool = False, v2: bool = False) -> None:
 
 
 def send_push_notifications(added_items: list, cmds: list, dry: bool = False) -> None:
-    """08시에 새로 추가된 작업지시 또는 미완료 작업이 있으면 Web Push 서버로 알린다."""
+    """08시에 새로 추가된 작업지시 또는 미완료 작업이 있으면 Web Push 서버로 알린다.
+
+    A-8: 구역이 여러 개면 예전에는 구역마다 따로 보내면서 api/push.js 가 매번 관리자(master) 기기까지
+    포함해, 관리자 폰이 구역 수만큼 계속 울렸다. 이제
+      · 구역별 발송에는 skipMaster=true 를 붙여 그 구역 기기에만 보내고
+      · 관리자 기기에는 요약 1건만 따로 보낸다 (전체 공지 '*' 대상이면 그 발송이 모두에게 가므로 따로 안 보냄).
+    """
     active_cmds = [
         c for c in cmds
         if isinstance(c, dict) and not c.get("closed") and not c.get("completed")
@@ -475,24 +519,38 @@ def send_push_notifications(added_items: list, cmds: list, dry: bool = False) ->
         title = f"⏰ 08시 작업지시 {len(active_cmds)}건 대기"
         body = f"미완료 작업지시 {len(active_cmds)}건이 대시보드에 대기 중입니다."
 
-    zones_to_notify = {"master"}
+    targets = set()
     for it in (added_items or active_cmds):
         z = it.get("target")
         if z == "*":
-            zones_to_notify.add("all")
+            targets.add("all")
         elif z:
-            zones_to_notify.add(str(z))
+            targets.add(str(z).split(":")[0])
+    targets.discard("")
+    all_broadcast = "all" in targets
+    zone_list = sorted(targets - {"all", "master"})
 
-    for zone in sorted(zones_to_notify):
+    plan = []            # (발송 대상, 관리자 기기 제외 여부)
+    if all_broadcast:
+        plan.append(("all", True))       # 전체 발송은 모든 기기(관리자 포함)에 한 번만 — 구역별·master 추가 발송 없음
+    else:
+        for z in zone_list:
+            plan.append((z, True))
+        plan.append(("master", True))    # 관리자 기기에는 요약 1건
+
+    for zone, skip_master in plan:
         url = (
             "https://coarfamily-cyber.github.io/POSCO-M/JISU/"
             if zone in ("master", "all")
             else f"https://coarfamily-cyber.github.io/POSCO-M/JISU/?zone={zone}"
         )
         if dry or not PUSH_API_URL:
-            print(f"[dry-run] POST {PUSH_API_URL} ({zone}) — {title}: {body}")
+            print(f"[dry-run] POST {PUSH_API_URL} ({zone}{', skipMaster' if skip_master else ''}) — {title}: {body}")
             continue
-        payload = json.dumps({"zone": zone, "title": title, "body": body, "url": url}, ensure_ascii=False).encode("utf-8")
+        payload_obj = {"zone": zone, "title": title, "body": body, "url": url}
+        if skip_master:
+            payload_obj["skipMaster"] = True
+        payload = json.dumps(payload_obj, ensure_ascii=False).encode("utf-8")
         headers = {"Content-Type": "application/json; charset=utf-8"}
         tok = os.environ.get("JISU_PUSH_AUTH_TOKEN", "").strip()
         if tok:
@@ -648,23 +706,30 @@ def run_v2(dry: bool = False) -> int:
         for pt in V2_PARTS:
             node, etag = db_get(f"{ROOT}/v2/{pt}/{CKEY}")
             parts[pt] = (parse_v(node), etag, node is not None)
+        mem_parts = {}
+        for pt in V2_PARTS:          # 특이사항도 묶음별로 읽는다 (A-3)
+            node, etag = db_get(f"{ROOT}/v2/{pt}/{MKEY}")
+            mem_parts[pt] = (parse_v(node), etag)
+        memos = [x for pt in V2_PARTS for x in mem_parts[pt][0]]
         cmds = [x for pt in V2_PARTS for x in parts[pt][0]]
         before_len = len(cmds)
         before_ids = {c.get("id") for c in cmds if isinstance(c, dict)}
         parts_before = {pt: dump_v(parts[pt][0]) for pt in V2_PARTS}
+        mem_before = {pt: dump_v(mem_parts[pt][0]) for pt in V2_PARTS}
         sch_before = json.dumps(sch, ensure_ascii=False, sort_keys=True)
-        print(f"[jisu] (v2) 시도 {attempt}: 예약 {len(sch)}건 · 금일작업 {before_len}건")
+        print(f"[jisu] (v2) 시도 {attempt}: 예약 {len(sch)}건 · 금일작업 {before_len}건 · 특이사항 {len(memos)}건")
 
         closed_cnt = 0
         for pt in V2_PARTS:      # 08:00 이전 완료 작업은 각 묶음에서 마감
             closed_cnt += close_completed_before_0800(parts[pt][0], today, now)
 
-        added, marked = apply_schedules(sch, cmds, today, now_s)
+        added, marked, new_memos = apply_schedules(sch, cmds, today, now_s, memos)
         new_recs = cmds[before_len:]
         added_items = [c for c in cmds if isinstance(c, dict) and c.get("id") not in before_ids]
         sch_changed = json.dumps(sch, ensure_ascii=False, sort_keys=True) != sch_before
         changed_parts = [pt for pt in V2_PARTS if dump_v(parts[pt][0]) != parts_before[pt]]
-        if not new_recs and not sch_changed and not changed_parts:
+        changed_mem_parts = [pt for pt in V2_PARTS if dump_v(mem_parts[pt][0]) != mem_before[pt]]
+        if not new_recs and not new_memos and not sch_changed and not changed_parts and not changed_mem_parts:
             print("[jisu] (v2) 반영·초기화할 항목이 없습니다 — DB에 쓰지 않음")
             morning_tail([], cmds, dry, morning, v2=True)
             return 0
@@ -673,8 +738,11 @@ def run_v2(dry: bool = False) -> int:
         by_part: dict = {}
         for rec in new_recs:
             by_part.setdefault(v2_bucket_of(rec), []).append(rec)
+        mem_by_part: dict = {}
+        for rec in new_memos:
+            mem_by_part.setdefault(v2_bucket_of(rec), []).append(rec)
         ok = True
-        for pt in V2_PARTS:      # 카드 → 먼저(묶음별 조건부), 예약 마킹 → 나중
+        for pt in V2_PARTS:      # 카드 → 먼저(묶음별 조건부), 특이사항 → 그다음, 예약 마킹 → 나중
             recs = by_part.get(pt) or []
             if not recs and pt not in changed_parts:
                 continue
@@ -682,10 +750,19 @@ def run_v2(dry: bool = False) -> int:
             ok = db_put(f"{ROOT}/v2/{pt}/{CKEY}", {"by": BY, "t": t, "v": dump_v(cur + recs)}, etag, dry)
             if not ok:
                 break
+        if ok:
+            for pt in V2_PARTS:
+                recs = mem_by_part.get(pt) or []
+                if not recs and pt not in changed_mem_parts:
+                    continue
+                cur_m, etag_m = mem_parts[pt]
+                ok = db_put(f"{ROOT}/v2/{pt}/{MKEY}", {"by": BY, "t": t, "v": dump_v(cur_m + recs)}, etag_m, dry)
+                if not ok:
+                    break
         if ok and sch_changed:
             ok = db_put(sch_path, {"by": BY, "t": t, "v": dump_v(sch)}, sch_etag, dry)
         if ok:
-            print(f"[jisu] (v2) 완료 — 완료 초기화 {closed_cnt}건 · 카드 {added}건 추가 · 예약 {marked}건 applied 마킹")
+            print(f"[jisu] (v2) 완료 — 완료 초기화 {closed_cnt}건 · 카드 {added}건 추가 · 특이사항 {len(new_memos)}건 추가 · 예약 {marked}건 applied 마킹")
             if not dry and added > 0:
                 # 지난 날짜 예약을 소급 마킹한 closed 카드는 알리지 않는다 (오늘 실제로 열린 작업만)
                 notify_new([r for r in cmds[-added:] if not r.get("closed")])
@@ -708,36 +785,42 @@ def run(dry: bool = False) -> int:
     for attempt in range(1, 4):
         sch_node, sch_etag = db_get(f"{STATE}/{SKEY}")
         cmd_node, cmd_etag = db_get(f"{STATE}/{CKEY}")
-        sch, cmds = parse_v(sch_node), parse_v(cmd_node)
-        print(f"[jisu] 시도 {attempt}: 예약 {len(sch)}건 · 금일작업 {len(cmds)}건"
+        mem_node, mem_etag = db_get(f"{STATE}/{MKEY}")
+        sch, cmds, memos = parse_v(sch_node), parse_v(cmd_node), parse_v(mem_node)
+        print(f"[jisu] 시도 {attempt}: 예약 {len(sch)}건 · 금일작업 {len(cmds)}건 · 특이사항 {len(memos)}건"
               f" (etag sch={sch_etag} cmd={cmd_etag})")
 
         sch_before = json.dumps(sch, ensure_ascii=False, sort_keys=True)
         cmds_before = json.dumps(cmds, ensure_ascii=False, sort_keys=True)
+        memos_before = json.dumps(memos, ensure_ascii=False, sort_keys=True)
 
         before_ids = {c.get("id") for c in cmds if isinstance(c, dict)}
         closed_cnt = close_completed_before_0800(cmds, today, now)   # 08:00 마감 → 예약 반영
-        added, marked = apply_schedules(sch, cmds, today, now_s)
+        added, marked, new_memos = apply_schedules(sch, cmds, today, now_s, memos)
         added_items = [c for c in cmds if isinstance(c, dict) and c.get("id") not in before_ids]
 
         sch_changed = json.dumps(sch, ensure_ascii=False, sort_keys=True) != sch_before
         cmds_changed = json.dumps(cmds, ensure_ascii=False, sort_keys=True) != cmds_before
+        memos_changed = json.dumps(memos, ensure_ascii=False, sort_keys=True) != memos_before
 
-        if not sch_changed and not cmds_changed:
+        if not sch_changed and not cmds_changed and not memos_changed:
             print("[jisu] 반영·초기화할 항목이 없습니다 — DB에 쓰지 않음")
             morning_tail(added_items, cmds, dry, morning)
             return 0
 
         t = int(time.time() * 1000)
         ok = True
-        if cmds_changed:   # 카드 → 먼저, 스케줄 마킹 → 나중 (중간 실패해도 다음 실행이 복구)
+        if cmds_changed:   # 카드 → 먼저, 특이사항 → 그다음, 스케줄 마킹 → 나중 (중간 실패해도 다음 실행이 복구)
             ok = db_put(f"{STATE}/{CKEY}",
                         {"by": BY, "t": t, "v": dump_v(cmds)}, cmd_etag, dry)
+        if ok and memos_changed:
+            ok = db_put(f"{STATE}/{MKEY}",
+                        {"by": BY, "t": t, "v": dump_v(memos)}, mem_etag, dry)
         if ok and sch_changed:
             ok = db_put(f"{STATE}/{SKEY}",
                         {"by": BY, "t": t, "v": dump_v(sch)}, sch_etag, dry)
         if ok:
-            print(f"[jisu] 완료 — 완료 초기화 {closed_cnt}건 · 카드 {added}건 추가 · 예약 {marked}건 applied 마킹")
+            print(f"[jisu] 완료 — 완료 초기화 {closed_cnt}건 · 카드 {added}건 추가 · 특이사항 {len(new_memos)}건 추가 · 예약 {marked}건 applied 마킹")
             if cmds_changed and not dry:
                 mirror_zones(cmds, t)
             if not dry and added > 0:

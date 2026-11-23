@@ -257,6 +257,72 @@ class T(unittest.TestCase):
         self.assertEqual(sched.split_am_pm("오전 공지 오후 공지", "notice"), ["오전 공지 오후 공지"])
         self.assertEqual(sched.split_am_pm("출고 오전에 하지마"), ["출고 오전에 하지마"])
 
+    # ---------------- A-3: 특이사항(memo) 예약은 작업 카드가 아니라 jisu-memos-v1 로 ----------------
+    def test_memo_schedule_goes_to_memos_not_cmds(self):
+        today = sched.kst_today()
+        past = day_str(-2)[0]
+        sch = [
+            {"id": "500", "date": today, "target": "*", "kind": "memo", "text": "도색 냄새 심함", "by": "김"},
+            {"id": "501", "date": past, "target": "outbound", "kind": "memo", "text": "지난 특이사항"},
+            {"id": "502", "date": today, "target": "pitch", "kind": "instruction", "text": "피치 10 TON"},
+        ]
+        db = make_full_db(sch=sch, inbound={})
+        self.run_with(db)
+        cmds = state_cmds(db)
+        self.assertFalse([c for c in cmds if c["id"] in ("s500", "s501")], "특이사항은 금일작업에 안 들어간다")
+        self.assertTrue(any(c["id"] == "s502" for c in cmds), "일반 예약은 그대로 카드")
+        memos = json.loads(db.tree["jisu"]["state"]["jisu-memos-v1"]["v"])
+        byid = {m["id"]: m for m in memos}
+        self.assertIn("m500", byid)
+        self.assertIn("m501", byid)
+        self.assertEqual(byid["m500"]["target"], "*")
+        self.assertEqual(byid["m500"]["tag"], "issue", "대시보드 schToMemo 와 같은 tag")
+        self.assertEqual(byid["m500"]["text"], "도색 냄새 심함")
+        self.assertEqual(byid["m500"]["day"], today)
+        self.assertNotIn("closed", byid["m500"])
+        self.assertTrue(byid["m501"].get("closed"), "지난 날 특이사항은 마감 기록")
+        self.assertEqual(byid["m501"]["at"], sched.at_of_midnight(past))
+        sch_after = json.loads(db.tree["jisu"]["state"]["jisu-schedule-v1"]["v"])
+        self.assertTrue(all(s.get("applied") for s in sch_after), "세 건 모두 applied 마킹")
+
+    def test_memo_schedule_is_idempotent(self):
+        today = sched.kst_today()
+        sch2 = [{"id": "600", "date": today, "target": "*", "kind": "memo", "text": "한 번만"}]
+        memos = []
+        added, marked, new = sched.apply_schedules(sch2, [], today, "11. 23. 08:00", memos)
+        self.assertEqual((added, len(new), marked), (0, 1, 1))
+        again = [{"id": "600", "date": today, "target": "*", "kind": "memo", "text": "한 번만"}]
+        added2, marked2, new2 = sched.apply_schedules(again, [], today, "11. 23. 08:00", memos)
+        self.assertEqual((added2, len(new2)), (0, 0))
+        self.assertEqual(len([m for m in memos if m["id"] == "m600"]), 1)
+
+    # ---------------- A-8: 08시 푸시에서 관리자(master) 중복 울림 금지 ----------------
+    def test_push_master_notified_once_for_many_zones(self):
+        today = sched.kst_today()
+        sch = [
+            {"id": "700", "date": today, "target": "pitch", "kind": "instruction", "text": "피치 10 TON"},
+            {"id": "701", "date": today, "target": "outbound", "kind": "instruction", "text": "출고 2대"},
+            {"id": "702", "date": today, "target": "inbound", "kind": "instruction", "text": "입고 3대"},
+        ]
+        db = make_full_db(sch=sch, inbound={})
+        self.run_with(db)
+        push = [p for u, p in db.posts if "/api/push" in u and isinstance(p, dict) and "zone" in p]
+        zones = [p["zone"] for p in push]
+        self.assertEqual(zones.count("master"), 1, f"관리자 기기는 1번만: {zones}")
+        self.assertEqual(sorted(z for z in zones if z != "master"), ["inbound", "outbound", "pitch"])
+        for p in push:
+            if p["zone"] in ("pitch", "outbound", "inbound"):
+                self.assertTrue(p.get("skipMaster"), f"구역 발송은 관리자 기기 제외: {p}")
+
+    def test_push_all_broadcast_is_single_request(self):
+        today = sched.kst_today()
+        sch = [{"id": "710", "date": today, "target": "*", "kind": "instruction", "text": "전체 10 TON"},
+               {"id": "711", "date": today, "target": "pitch", "kind": "instruction", "text": "피치 1 TON"}]
+        db = make_full_db(sch=sch, inbound={})
+        self.run_with(db)
+        push = [p for u, p in db.posts if "/api/push" in u and isinstance(p, dict) and "zone" in p]
+        self.assertEqual([p["zone"] for p in push], ["all"], "전체 발송 한 번이면 관리자·모든 구역을 덮는다")
+
     def test_pallet_normalized_on_apply(self):
         today = sched.kst_today()
         sch = [{"id": "300", "date": today, "target": "inbound", "kind": "instruction",

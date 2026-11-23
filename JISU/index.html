@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611231840">
+  <meta name="jisu-build" content="202611231939">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -26,7 +26,69 @@
     if (!s) return null;
     var n = window.jisuParseNum ? window.jisuParseNum(s) : Number(s.replace(',', '.'));
     return isFinite(n) ? n : null;
-  };</script>
+  };
+  /* 목표 수량 읽기 공용 (2026-11-23): 문장 안의 '수량+단위'를 먼저 쓰고, '1동→2동 30 TON 오전'·
+     '2동→3동 20 TON (마지막)' 의 1동·2동처럼 동·호기 번호에 붙은 숫자를 목표로 읽지 않는다.
+     · 단위(TON·KG·EA·개·대·건·박스·파렛트…)가 붙은 수량이 있으면 그중 마지막 것을 쓴다.
+       단 TON 수량이 하나라도 있으면 TON 을 쓴다 ("11 TON (660 KG / 16 P)" 처럼 총 톤수가 앞에 있어도 목표는 TON).
+     · 없으면 동·호기·라인·층·번·차·회 번호를 뺀 마지막 수량을 쓴다.
+     · 1,200,000 처럼 100만 단위 다중 쉼표도 한 수량으로 읽는다.
+     돌려주는 값: { n:숫자, u:단위, index:원문 시작 위치, length, raw:'30 TON', numRaw:'30' } 또는 null
+     · 배차표 한 줄 "660 KG / 16 P" 처럼 팩 수량(kg × p)만 있으면 총 톤수((kg×p)/1000) TON 으로 읽는다 (kp:true).
+       (사이드바 '오늘 목표 TON'·완료율이 배차 카드를 빠짐없이 세도록. TON 수량이 따로 적혀 있으면 그 TON 을 우선) */
+  window.jisuGoalQty = (function () {
+    var NUM = '\\d+(?:,\\d{3})*(?:[.,]\\d+)?';
+    var UNIT = 'TON|톤|KG|kg|EA|ea|PCS|pcs|SET|set|BAG|bag|PLT|T|t|개|대|건|박스|파레트|팔레트';
+    var RE_UNIT = new RegExp('(' + NUM + ')(\\s*)(' + UNIT + ')(?![A-Za-z0-9가-힣])', 'g');
+    var RE_NUM = new RegExp(NUM, 'g');
+    var RE_KP = new RegExp('(' + NUM + ')\\s*KG\\s*\\/\\s*(\\d+)\\s*P(?:LT)?(?![A-Za-z가-힣])', 'gi');
+    function unitName(u) {
+      var s = String(u || '');
+      if (/^(?:톤|t|T)$/.test(s)) return 'TON';
+      if (s === '개') return 'EA';
+      return s.toUpperCase();
+    }
+    return function (t) {
+      var s = String(t == null ? '' : t);
+      var pre = s.match(/^\[[^\]]+\]\s*/), off = pre ? pre[0].length : 0, body = s.slice(off);
+      var m, last = null, lastTon = null;
+      RE_UNIT.lastIndex = 0;
+      while ((m = RE_UNIT.exec(body))) {
+        last = m;
+        if (unitName(m[3]) === 'TON') lastTon = m;      /* TON 수량이 있으면 그것을 목표로 (총 톤수) */
+      }
+      if (lastTon) last = lastTon;
+      if (last && unitName(last[3]) === 'TON') {         /* 명시된 TON 수량이 최우선 */
+        var tn = window.jisuParseNum ? window.jisuParseNum(last[1]) : Number(String(last[1]).replace(/,/g, ''));
+        if (isFinite(tn)) return { n: tn, u: 'TON', index: off + last.index, length: last[0].length, raw: last[0], numRaw: last[1] };
+      }
+      /* 팩 수량만 있는 배차 줄: 660 KG / 16 P → 10.56 TON */
+      RE_KP.lastIndex = 0;
+      var kp = null;
+      while ((m = RE_KP.exec(body))) kp = m;
+      if (kp) {
+        var kg = window.jisuParseNum ? window.jisuParseNum(kp[1]) : Number(String(kp[1]).replace(/,/g, ''));
+        var pc = parseInt(kp[2], 10);
+        if (isFinite(kg) && kg > 0 && pc > 0) {
+          return { n: Math.round((kg * pc) / 10) / 100, u: 'TON', kp: true, index: off + kp.index, length: kp[0].length, raw: kp[0], numRaw: kp[1] };
+        }
+      }
+      if (!last) {                       /* 단위 붙은 수량이 없을 때만: 장소·설비 번호를 뺀 마지막 숫자 */
+        RE_NUM.lastIndex = 0;
+        while ((m = RE_NUM.exec(body))) {
+          var after = body.slice(m.index + m[0].length);
+          if (/^\s*(?:동|호기|라인|층|번|차|회|조|반)/.test(after)) continue;
+          if (/^\s*[가-힣]/.test(after)) continue;
+          last = m;
+        }
+      }
+      if (!last) return null;
+      var numRaw = (last.length > 1 && last[1] != null) ? last[1] : last[0];
+      var n = window.jisuParseNum ? window.jisuParseNum(numRaw) : Number(String(numRaw).replace(/,/g, ''));
+      if (!isFinite(n)) return null;
+      return { n: n, u: (last.length > 3 ? unitName(last[3]) : ''), index: off + last.index, length: last[0].length, raw: last[0], numRaw: numRaw };
+    };
+  })();</script>
   <script>try{if(new URLSearchParams(location.search).get('zone')){document.documentElement.classList.add('worker-zone-only');}}catch(_){}</script>
   <script>/* 출고·입고 하위 품목 이름표 (달력·실적·판단 창에서 내부 키가 그대로 보이지 않도록 공용으로 씀) */
   try{ window.JISU_SUB_LABELS=(function(){ var m={},ob={'RAS-2':'RAS-2','L1':'L1','CP3K':'CP3K','C3B':'C3B','연구요청':'연구요청','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'},ib={'SH':'SH','HH':'HH','16kg 파렛트':'16kg 파렛트','알루미늄 파우치백':'알루미늄 파우치백','사각박스':'사각박스','분진상차':'분진상차','내화물상차':'내화물상차','폐파레트':'폐파레트','2공장→1공장':'공장간이송(2공장→1공장)','1공장→2공장':'공장간이송(1공장→2공장)'};
@@ -44,7 +106,7 @@
     /* 품목명과 수량이 한 문구에 있을 때: "16 KG 파렛트 576 EA" → "16 KG 파렛트 2대" */
     function palInline(t){
       let cnt=0;
-      const out=String(t).replace(/(파렛트|팔레트)([\s\]\)】:：]{0,4})(\d+(?:[.,]\d+)?)\s*(?:EA|PCS|개)(?![A-Za-z0-9가-힣])/gi,(m,w,gap,n)=>{
+      const out=String(t).replace(/(파렛트|팔레트)([\s\]\)】:：]{0,4})(\d+(?:,\d{3})*(?:[.,]\d+)?)\s*(?:EA|PCS|개)(?![A-Za-z0-9가-힣])/gi,(m,w,gap,n)=>{
         const d=toDae(numOf(n)); if(!d) return m; cnt++; return w+gap+d+'대';
       });
       return {text:out,cnt:cnt};
@@ -52,18 +114,18 @@
     /* 대상(품목)이 파렛트라 수량만 적은 경우: "576 EA" → "2대" (첫 수량 하나만) */
     function palHead(t){
       let cnt=0;
-      const out=String(t).replace(/(\d+(?:[.,]\d+)?)\s*(?:EA|PCS|개)(?![A-Za-z0-9가-힣])/i,(m,n)=>{
+      const out=String(t).replace(/(\d+(?:,\d{3})*(?:[.,]\d+)?)\s*(?:EA|PCS|개)(?![A-Za-z0-9가-힣])/i,(m,n)=>{
         const d=toDae(numOf(n)); if(!d) return m; cnt++; return d+'대';
       });
       return {text:out,cnt:cnt};
     }
     const base=t=>String(t==null?'':t)
-      .replace(/(\d+(?:[.,]\d+)?)\s*톤(?![가-힣])/g,'$1 TON')
-      .replace(/(\d+(?:[.,]\d+)?)\s*개(?![가-힣])/g,'$1 EA')
+      .replace(/(\d+(?:,\d{3})*(?:[.,]\d+)?)\s*톤(?![가-힣])/g,'$1 TON')
+      .replace(/(\d+(?:,\d{3})*(?:[.,]\d+)?)\s*개(?![가-힣])/g,'$1 EA')
       /* 단독 t/T 도 TON (2026-11-22): "50t" "50 T" "12.5T" "1,200t" → "50 TON".
          PLT·text·th·TB 처럼 다른 영단어 안의 t는 뒤 글자 검사로 걸러낸다. */
-      .replace(/(\d+(?:[.,]\d+)?)\s*[tT](?![A-Za-z0-9가-힣\-])/g,'$1 TON')
-      .replace(/(\d+(?:[.,]\d+)?)\s*(ton|ea|set|kg|bag|pcs|ml|mm|cm|g|l)(?![A-Za-z0-9가-힣])/gi,(_,n,u)=>n+' '+u.toUpperCase());
+      .replace(/(\d+(?:,\d{3})*(?:[.,]\d+)?)\s*[tT](?![A-Za-z0-9가-힣\-])/g,'$1 TON')
+      .replace(/(\d+(?:,\d{3})*(?:[.,]\d+)?)\s*(ton|ea|set|kg|bag|pcs|ml|mm|cm|g|l)(?![A-Za-z0-9가-힣])/gi,(_,n,u)=>n+' '+u.toUpperCase());
     /* ctx = 대상 값(예: inbound:16kg 파렛트). 대상 자체가 파렛트 품목이면 수량만 적어도 대로 환산한다. */
     function conv(t,ctx){
       const b=base(t); let text=b, cnt=0;
@@ -165,9 +227,8 @@
     function load(k){ try{ var v=JSON.parse(localStorage.getItem(k)||'[]'); return Array.isArray(v)?v:null; }catch(_){ return null; } }
     function backup(k,arr){ try{ var bk=k+'-backup-20261118'; if(!localStorage.getItem(bk)) localStorage.setItem(bk,JSON.stringify(arr)); }catch(_){} }
     function goalOf(t){
-      var c=(window.jisuNormUnit?window.jisuNormUnit(t):String(t||'')).replace(/^\[[^\]]+\]\s*/,'');
-      var m=c.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||c.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)/);
-      return m?(window.jisuParseNum?window.jisuParseNum(m[1]):Number(m[1].replace(',','.'))):null;
+      var q=window.jisuGoalQty?window.jisuGoalQty(t):null;
+      return q?q.n:null;
     }
     function splitRec(x){
       var parts=window.jisuAmPmSplitText(x.text,x.kind);
@@ -5897,9 +5958,9 @@ html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,2
             <option value="production-f">생산F</option>
             <option value="production-g">생산G</option>
             <option value="production-h">생산H</option>
-            <option value="A">1동</option>
-            <option value="C">2동</option>
-            <option value="D">3동</option>
+            <option value="1">1동</option>
+            <option value="2">2동</option>
+            <option value="3">3동</option>
             <option value="4">4동</option>
             <option value="W">창고</option>
           </select>
@@ -6259,13 +6320,25 @@ html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,2
       });
 
       // Live clock & subtle real-time telemetry simulation
+      /* A-13: 상단 시계는 기기 시간대와 상관없이 항상 KST(Asia/Seoul) 기준으로 표시한다. */
       function updateLiveClock() {
-        const now = new Date();
-        const pad = n => String(n).padStart(2, '0');
         const clockEl = document.getElementById('liveClock');
-        if (clockEl) {
-          clockEl.textContent = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+        if (!clockEl) return;
+        const pad = n => String(n).padStart(2, '0');
+        let p = null;
+        try {
+          p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+          }).formatToParts(new Date()).map(x => [x.type, x.value]));
+        } catch (_) { p = null; }
+        if (p) {
+          const hh = String(Number(p.hour) % 24);
+          clockEl.textContent = `${p.year}-${p.month}-${p.day} ${pad(hh)}:${p.minute}:${p.second}`;
+          return;
         }
+        const now = new Date();
+        clockEl.textContent = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
       }
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
@@ -6331,18 +6404,18 @@ html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,2
       for(const l of lines){
         if(/(?:세종\s*)?1\s*공장/.test(l) && !/(?:세종\s*)?2\s*공장/.test(l)) continue;
         if(hasF2 && !/(?:세종\s*)?2\s*공장/.test(l) && !/^\d{4}-\d{2}-\d{2}\s*\|/.test(l)) continue;
-        const kp=l.match(/(\d+(?:[.,]\d+)?)\s*KG\s*\/\s*(\d+)\s*P/i);
+        const kp=l.match(/(\d+(?:,\d{3})*(?:[.,]\d+)?)\s*KG\s*\/\s*(\d+)\s*P/i);
         if(kp){
           const kg=parseFloat(kp[1].replace(/,/g,''));
           const p=parseInt(kp[2],10);
           if(kg>0&&p>0){ tons+=(kg*p)/1000; cnt++; continue; }
         }
-        const tn=l.match(/(\d+(?:[.,]\d+)?)\s*(?:TON|톤)(?!\s*윙)/i);
+        const tn=l.match(/(\d+(?:,\d{3})*(?:[.,]\d+)?)\s*(?:TON|톤)(?!\s*윙)/i);
         if(tn){
           const v=parseFloat(tn[1].replace(/,/g,''));
           if(v>0){ tons+=v; cnt++; continue; }
         }
-        const kgOnly=l.match(/(\d+(?:[.,]\d+)?)\s*KG/i);
+        const kgOnly=l.match(/(\d+(?:,\d{3})*(?:[.,]\d+)?)\s*KG/i);
         if(kgOnly){
           const v=parseFloat(kgOnly[1].replace(/,/g,''));
           if(v>0){ tons+=v/1000; cnt++; }
@@ -6354,10 +6427,9 @@ html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,2
     };
     const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     function goalOf(t){
-      const clean=(window.jisuNormUnit?window.jisuNormUnit(t):String(t||'')).replace(/^\[[^\]]+\]\s*/,'');
-      const m=clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)/);
-      /* 예전에 저장된 "50t" 도 목표 TON 으로 읽는다 (2026-11-22 단위 통일) */
-      return m?{n:(window.jisuParseNum?window.jisuParseNum(m[1]):Number(String(m[1]).replace(',','.'))),u:({'톤':'TON','개':'EA','T':'TON'})[m[2]]||(m[2]||'').toUpperCase()}:null;
+      /* 문장 첫 숫자(1동·2동)를 목표로 읽지 않는다 — 단위 붙은 수량 우선 (2026-11-23, window.jisuGoalQty) */
+      const q=window.jisuGoalQty?window.jisuGoalQty(t):null;
+      return q?{n:q.n,u:q.u}:null;
     }
     function dayOf(rec){
       if(!rec) return '';
@@ -7487,7 +7559,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       "outbound:RAS-2":"출고 · RAS-2","outbound:L1":"출고 · L1","outbound:CP3K":"출고 · CP3K","outbound:C3B":"출고 · C3B","outbound:연구요청":"출고 · 연구요청","outbound:분진상차":"출고 · 분진상차","outbound:내화물상차":"출고 · 내화물상차","outbound:폐파레트":"출고 · 폐파레트","outbound:2공장→1공장":"출고 · 공장간이송(2공장→1공장)","outbound:1공장→2공장":"출고 · 공장간이송(1공장→2공장)","inbound:SH":"입고 · SH","inbound:HH":"입고 · HH","inbound:16kg 파렛트":"입고 · 16kg 파렛트","inbound:알루미늄 파우치백":"입고 · 알루미늄 파우치백","inbound:사각박스":"입고 · 사각박스","inbound:분진상차":"입고 · 분진상차","inbound:내화물상차":"입고 · 내화물상차","inbound:폐파레트":"입고 · 폐파레트","inbound:2공장→1공장":"입고 · 공장간이송(2공장→1공장)","inbound:1공장→2공장":"입고 · 공장간이송(1공장→2공장)"}; Object.defineProperty(NAMES,'*',{value:'전체',enumerable:false,configurable:true});
     const kstParts=()=>{const p=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const g=t=>p.find(x=>x.type===t).value;return {y:g('year'),m:g('month'),d:g('day')};};
     function loadLib(){ if(window.XLSX) return Promise.resolve(window.XLSX); return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';s.onload=()=>res(window.XLSX);s.onerror=()=>rej(new Error('lib'));document.head.appendChild(s);}); }
-    function goal(t){const clean=(window.jisuNormUnit?window.jisuNormUnit(t):String(t||'')).replace(/^\[[^\]]+\]\s*/,'');const m=clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||clean.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/);return m?{n:(window.jisuParseNum?window.jisuParseNum(m[1]):Number(String(m[1]).replace(',','.'))),u:({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()}:{n:'',u:''};}
+    function goal(t){const q=(window.jisuGoalQty?window.jisuGoalQty(t):null);return q?{n:q.n,u:q.u}:{n:'',u:''};}
     async function exportWork(options={}){
       let all=[]; try{all=JSON.parse(localStorage.getItem('jisu-commands-v1')||'[]')}catch(e){}
       const {y,m,d}=kstParts(); const today=m+'. '+d+'.'; const todayIso=y+'-'+m+'-'+d;
@@ -7820,7 +7892,13 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           /* !긴급 · [긴급] · (긴급) · 맨 긴급 단어를 여러 번 겹쳐 써도 한 번에 걷어낸다 */
           for(let k2=0;k2<3;k2++){ if(!/^(?:\[긴급\]|\(긴급\)|【긴급】|[!！]+|긴급(?=[\s:：/\-]))/.test(rest)) break;
             urgent=true; rest=rest.replace(/^(?:\[긴급\]|\(긴급\)|【긴급】|[!！]+|긴급)\s*[:：/\-]?/,'').trim(); }
-          if(!rest) return {err:'"'+String(line||'').trim()+'" - 내용이 없어요'}; return {target:kind==='notice'?'*':k,kind,text:(window.jisuNormUnitFor?window.jisuNormUnitFor(rest,k):(window.jisuNormUnit?window.jisuNormUnit(rest):rest)),urgent}; } }
+          if(!rest) return {err:'"'+String(line||'').trim()+'" - 내용이 없어요'}; return {target:k,kind,text:(window.jisuNormUnitFor?window.jisuNormUnitFor(rest,k):(window.jisuNormUnit?window.jisuNormUnit(rest):rest)),urgent}; } }
+      /* 구역명 없이 '공지 …' 만 적힌 줄은 전체 공지로 (A-15) */
+      if(kind==='notice'){
+        let rest=String(s||'').trim().replace(/^[:：\-/]\s*/,'');
+        if(rest) return {target:'*',kind:'notice',text:(window.jisuNormUnitFor?window.jisuNormUnitFor(rest,'*'):(window.jisuNormUnit?window.jisuNormUnit(rest):rest)),urgent};
+        return {err:'"'+String(line||'').trim()+'" - 내용이 없어요'};
+      }
       return {err:'"'+String(line||'').trim()+'" - 맨 앞에 버튼 이름(출고, 입고, 생산A…)을 써주세요'};
     }
     const lineOf=s=>(s.urgent?'!':'')+(s.kind==='notice'?'공지 ':(s.kind==='memo'?'특이사항 ':''))+(s.kind==='memo'?(NAMES[s.target]&&NAMES[s.target]!=='전체'?(NAMES[s.target]+' '):''):(NAMES[s.target]||s.target))+' '+s.text;
@@ -7845,9 +7923,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const B=(t,label,cls)=>'<button type="button" class="rv-b'+(cls?' '+cls:'')+'" data-ch-act="'+t+'">'+label+'</button>';
       const btns=shortPend?B('carry','잔량 이월','pri')+B('accept','이대로 종료'):(pend?B('ok','계속','pri'):'')+B('move','날짜 변경')+B('qty','수량 수정')+B('end','종료','del');
       let f=''; if(chForm&&chForm.id===x.id){ const t=chForm.type, tm=window.jisuTomorrow?window.jisuTomorrow():'';
-        const cleanX=String(x.text||'').replace(/^\[[^\]]+\]\s*/,'');
-        const g=cleanX.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||cleanX.match(/(\d+(?:[.,]\d+)?)/);
-        const inp=t==='move'?'<input type="date" class="rv-in" min="'+tm+'" value="'+tm+'">':(t==='qty'?'<input type="text" inputmode="decimal" class="rv-in" value="'+(g?esc(g[1]):'')+'" placeholder="새 수량">':'<input type="text" class="rv-in" maxlength="80" placeholder="종료 사유 (예: 주문 취소)">');
+        const g=window.jisuGoalQty?window.jisuGoalQty(x.text):null;
+        const inp=t==='move'?'<input type="date" class="rv-in" min="'+tm+'" value="'+tm+'">':(t==="qty"?'<input type="text" inputmode="decimal" class="rv-in" value="'+(g?esc(String(g.n)):'')+'" placeholder="새 수량">':'<input type="text" class="rv-in" maxlength="80" placeholder="종료 사유 (예: 주문 취소)">');
         f='<div class="rv-form">'+inp+'<button type="button" class="rv-b pri" data-ch-go>'+(t==='move'?'옮기기':(t==='qty'?'바꾸기':'종료하기'))+'</button><button type="button" class="rv-b" data-ch-cancel>취소</button></div>'; }
       return '<div class="ch-acts" data-ch-id="'+esc(x.id)+'"><div class="rv-btns">'+btns+'</div>'+f+(chMsg&&chMsg.id===x.id?'<div class="rv-msg">'+esc(chMsg.t)+'</div>':'')+'</div>';
     }
@@ -7875,7 +7952,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(inb){ const ist=inb.state==='done'?'<span class="ch-st ok">입고완료</span>':(inb.state==='work'?'<span class="ch-st run">입고중</span>':'<span class="ch-st">기록</span>'); html+='<div class="ch-item'+(inb.state==='done'?' done':'')+'"><div class="ch-top"><i class="z-dot c-inbound"></i><b>입고 중량일지</b>'+ist+'</div><div class="ch-txt">'+inb.bags+' BAG · '+inb.ton+' TON ('+Math.round(inb.kg*10)/10+' kg)</div></div>'; }
         if(pitch){ const pst=pitch.state==='done'?'<span class="ch-st ok">작업완료</span>':(pitch.state==='work'?'<span class="ch-st run">작업중</span>':'<span class="ch-st">기록</span>'); html+='<div class="ch-item'+(pitch.state==='done'?' done':'')+'"><div class="ch-top"><i class="z-dot c-pitch"></i><b>피치 작업일지</b>'+pst+'</div><div class="ch-txt">분쇄 현황 '+pitch.grind+' BAG</div></div>'; }
       }
-      if(work.length){ html+='<div class="ch-sec">금일작업</div>'+work.map(x=>{ const m=String(x.text).match(/(\d+(?:[.,]\d+)?)\s*TON/i);
+      if(work.length){ html+='<div class="ch-sec">금일작업</div>'+work.map(x=>{ const m=String(x.text).match(/(\d+(?:,\d{3})*(?:[.,]\d+)?)\s*TON/i);
           const q2=v=>String(Math.round(v*100)/100), mdk=k=>{const p=String(k).split('-');return (+p[1])+'/'+(+p[2]);};
           const dCarry=isCarryover(x);
           const st=x.ended?'<span class="ch-st end">종료</span>':(x.review==='moved'&&x.movedTo?'<span class="ch-st carry">'+mdk(x.movedTo)+'로 변경</span>':((x.carried&&!x.short)?'<span class="ch-st carry">'+(x.origDay?mdk(x.origDay)+' 이월':'이월')+'</span>':(x.completed?'<span class="ch-st '+(x.short?'short':'ok')+'">'+(x.short?'부족 완료 ':'완료 ')+esc((dayOf({at:x.completedAt})!==day?md(x.completedAt):'')+hm(x.completedAt))+'</span>':(x.working?'<span class="ch-st run">작업중</span>':'<span class="ch-st no">'+(dCarry?'이월':'미완료')+'</span>'))));
@@ -8011,6 +8088,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     }
     window.jisuZoneClass=zoneClass;
     function draw(){
+      /* 달력을 한 번도 열지 않고 일괄등록(빠른 등록)만 연 경우 view 가 없다 → 이번 달로 채우고 그린다 (예전엔 예외) */
+      if(!view){ const t0=kstToday().split('-').map(Number); view=[t0[0],t0[1]-1]; }
       if(window.jisuInboundRefresh) window.jisuInboundRefresh();
       const [y,m]=view, today=kstToday(); $('calTitle').textContent=y+'년 '+(m+1)+'월';
       const first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate(), sch=load(SKEY), cmds=load(CKEY), hc=histCount(), cc=carryCnt();
@@ -8083,10 +8162,10 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     function extractDispatchQty(s){
       const str=String(s||'');
       const m1=str.match(/\d{1,3}(?:,\d{3})*(?:\.\d+)?\s*(?:KG|T|TON|EA)\s*\/\s*\d+\s*P(?:LT)?/i)
-        || str.match(/\d+(?:[.,]\d+)?\s*(?:KG|T|TON|EA)\s*\/\s*\d+\s*P(?:LT)?/i);
+        || str.match(/\d+(?:,\d{3})*(?:[.,]\d+)?\s*(?:KG|T|TON|EA)\s*\/\s*\d+\s*P(?:LT)?/i);
       if(m1) return m1[0].replace(/\s+/g,' ').trim();
       const m2=str.match(/\d{1,3}(?:,\d{3})*(?:\.\d+)?\s*(?:KG|TON|톤|EA|PLT)(?![A-Za-z가-힣])/i)
-        || str.match(/\d+(?:[.,]\d+)?\s*(?:KG|TON|톤|EA|PLT)(?![A-Za-z가-힣])/i);
+        || str.match(/\d+(?:,\d{3})*(?:[.,]\d+)?\s*(?:KG|TON|톤|EA|PLT)(?![A-Za-z가-힣])/i);
       if(m2) return m2[0].replace(/\s+/g,' ').trim();
       return '';
     }
@@ -8533,10 +8612,12 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const re=new RegExp('^((?:\\d{4})\\s*[년.\\-/]\\s*)?'+D+'\\s*(?:\\([월화수목금토일](?:요일)?\\))?\\s*'+RANGE_SEP+'\\s*((?:\\d{4})\\s*[년.\\-/]\\s*)?(?:'+D+'|(\\d{1,2}))\\s*일?');
       const m=s.match(re);
       if(!m) return null;
-      const y0=m[1]?parseInt(m[1],10):inferBatchYear(parseInt(m[2],10));
       const mo0=parseInt(m[2],10), da0=parseInt(m[3],10);
-      const y1=m[4]?parseInt(m[4],10):inferBatchYear(parseInt(m[5]||m[7],10));
       let mo1=m[5]?parseInt(m[5],10):mo0, da1=parseInt(m[6]||m[7],10);
+      const y0=m[1]?parseInt(m[1],10):inferBatchYear(mo0);
+      let y1=m[4]?parseInt(m[4],10):inferBatchYear(mo1);
+      /* A-17: 4~9월에 '12/30~1/2' 처럼 해를 넘기는 범위는 끝 연도를 +1년으로 (예전에는 1/2가 같은 해라 범위가 뒤집혀 31일이 만들어졌다) */
+      if(!m[4] && mo1<mo0) y1=y0+1;
       if(!isValidYmd(y0,mo0,da0)||!isValidYmd(y1,mo1,da1)) return null;
       let start=fmtYmd(y0,mo0,da0), end=fmtYmd(y1,mo1,da1);
       if(end<start){ const t=start; start=end; end=t; }   /* 거꾸로 쓴 범위도 바로잡는다 */
@@ -8793,8 +8874,14 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         const sch=load(SKEY);
         let addedCount=0;
         const incImg=$('czBatchIncludeImg')&&$('czBatchIncludeImg').checked&&batchImgData;
+        let imgPlaced=false;   /* A-5: 사진은 범위 전체에서 딱 1개 항목에만 — 예전 idx===0 은 날짜 그룹마다 0으로 되돌아가 사진이 날짜 수만큼 복사됐다 */
         parsedBatchData.forEach(g=>{
-          const groupTon=(g.items.length===1&&window.jisuCalcFactory2Tons)?window.jisuCalcFactory2Tons(g.items[0].text):'';
+          /* 배차표 다건: 이 날짜의 차량 여러 대를 합친 물량. 표 사진이 붙는 첫 카드의 배지는 표 전체 합계로 보여 준다
+             (차량 1대짜리 카드는 그 차량 물량만 — 예전에는 표 전체 사진이 붙은 카드에도 첫 차 1대분만 나왔다).
+             특이사항(memo) 글자는 톤수 합계에서 뺀다. */
+          const groupTon=(window.jisuCalcFactory2Tons && g.items.length>1)
+            ? (window.jisuCalcFactory2Tons(g.items.filter(x=>x.kind!=='memo').map(x=>x.text).join('\n'))||batchImgTon||'')
+            : '';
           g.items.forEach((it,idx)=>{
             const rec={
               id:Date.now().toString(36)+Math.random().toString(36).slice(2,6)+idx,
@@ -8804,9 +8891,11 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
               text:it.text,
               created:nowStr()
             };
-            if(incImg && idx===0) rec.img=batchImgData;
+            const imgCard=incImg && !imgPlaced;
+            if(imgCard){ rec.img=batchImgData; imgPlaced=true; }
             const itemTon=it.tonText||(window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(it.text):'');
-            if(it.kind!=='memo' && (itemTon||groupTon)) rec.tonText=itemTon||groupTon;
+            const ton=imgCard&&groupTon?groupTon:(itemTon||groupTon);
+            if(it.kind!=='memo' && ton) rec.tonText=ton;
             if(it.urgent) rec.urgent=true;
             if(u) rec.by=u;
             sch.push(rec);
@@ -8942,15 +9031,18 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     try{ Object.assign(NAMES, window.JISU_SUB_LABELS||{}); }catch(_){}
     function dayOf(rec){ if(rec.day) return rec.day; const m=String(rec.at||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); if(!m) return rec.sched||'';
       const t=kstToday(), ty=+t.slice(0,4); let k=ty+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); if(k>t) k=(ty-1)+k.slice(4); return k; }
-    const RE_END=/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/, RE_ANY=/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/;
-    /* 품목 접두사("[RAS-2] ")는 목표 수량을 찾기 전에 떼지만, match.index는 뗀 문자열 기준이라
-       원문 위치와 어긋난다. 접두사 길이(off)를 더해 원문 기준 위치로 되돌린다 — withGoal이 이 위치로 글자를 자른다. */
-    const PREFIX_RE=/^\[[^\]]+\]\s*/;
-    const goalM=t=>{ const s=String(t||''), p=s.match(PREFIX_RE), off=p?p[0].length:0, body=s.slice(off), m=body.match(RE_END)||body.match(RE_ANY); if(m) m.index+=off; return m; };
-    const goalN=t=>{ const m=goalM(t); return m?(window.jisuParseNum?window.jisuParseNum(m[1]):Number(String(m[1]).replace(',','.'))):null; };
-    const unitOf=t=>{ const m=goalM(t); return m?(({'톤':'TON','개':'EA'})[m[2]]||(m[2]||'').toUpperCase()):''; };
+    /* 목표 수량·단위·교체는 공용 리더(window.jisuGoalQty) 하나로 읽는다 (2026-11-23 A-6).
+       · '1동→2동 30 TON 오전' → 30 TON (1동·2동을 목표로 읽지 않음)
+       · '2동→3동 20 TON (마지막)' → 20 TON, '포장 12 EA 오후' → 12 EA */
+    const goalQ=t=>{ try{ return window.jisuGoalQty?window.jisuGoalQty(t):null; }catch(_){ return null; } };
+    const goalN=t=>{ const q=goalQ(t); return q?q.n:null; };
+    const unitOf=t=>{ const q=goalQ(t); return q?q.u:''; };
     const fmt=n=>String(Math.round(Number(n)*100)/100);
-    function withGoal(t,n){ t=String(t); const m=goalM(t); if(!m) return t; const s=m.index; return t.slice(0,s)+m[0].replace(m[1],fmt(n))+t.slice(s+m[0].length); }
+    function withGoal(t,n){ const q=goalQ(t); if(!q) return String(t); const s=String(t);
+      /* 배차표 팩 수량(660 KG / 16 P)은 통짜로 "N TON" 으로 바꿔 준다 (숫자만 바꾸면 단위가 깨진다) */
+      if(q.kp) return s.slice(0,q.index)+fmt(n)+' TON'+s.slice(q.index+q.length);
+      return s.slice(0,q.index)+q.raw.replace(q.numRaw,fmt(n))+s.slice(q.index+q.length); }
+    window.jisuGoalWithQty=withGoal;   /* 점검용: 이월·수량 수정이 카드 글자를 어떻게 바꾸는지 */
     const mdOf=day=>{ const p=String(day).split('-'); return (+p[1])+'/'+(+p[2]); };
     const atOf=day=>{ const p=day.split('-'); return p[1]+'. '+p[2]+'. 00:00'; };
     const tomorrow=()=>fmtDay(new Date(new Date(kstToday()+'T12:00:00+09:00').getTime()+864e5));
@@ -9493,7 +9585,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const kst=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
     const today=()=>kst(new Date()), D=k=>new Date(k+'T12:00:00+09:00'), add=(k,n)=>kst(new Date(D(k).getTime()+n*864e5));
     function dayOf(r){ if(r.day) return r.day; const m=String(r.at||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); if(!m) return r.sched||''; const t=today(), y=+t.slice(0,4); let k=y+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); if(k>t) k=(y-1)+k.slice(4); return k; }
-    function goal(t){ const s=(window.jisuNormUnit?window.jisuNormUnit(t):String(t||'')).replace(/^\[[^\]]+\]\s*/,''), m=s.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||s.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/); if(!m) return null; let u=(m[2]||'').toUpperCase(); if(u==='톤') u='TON'; if(u==='개') u='EA'; return {n:(window.jisuParseNum?window.jisuParseNum(m[1]):Number(String(m[1]).replace(',','.'))),u:u||'건'}; }
+    function goal(t){ const q=(window.jisuGoalQty?window.jisuGoalQty(t):null); if(!q) return null; return {n:q.n,u:q.u||'건'}; }
     const doneAmt=(x,g)=>{ const d=(x.completed&&!x.short&&(x.done==null||x.done===''))?g.n:(Number(x.done)||0); return Math.max(0,Math.min(d,g.n)); };
     const r1=v=>String(Math.round(v*10)/10), DOW=['일','월','화','수','목','금','토'], md=k=>(+k.slice(5,7))+'/'+(+k.slice(8,10));
     const CLOSE_KEY='jisu-perf-daily-close-v1';
@@ -9610,14 +9702,22 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const s2=box(2,450000,300000,11292000,680000,'1E293B',para('단위 · 구역별 완료 현황',20,'FFFFFF',true))
         +tbl(3,450000,1150000,5200000,5000000,uRows)
         +tbl(4,5900000,1150000,5842000,5000000,zRows);
-      const dayRows=[['날짜',...(us.length?us:['완료 건수']),'구역별 내역']];
-      d.days.slice(0,14).forEach(k=>{
+      const dayHead=['날짜',...(us.length?us:['완료 건수']),'구역별 내역'];
+      const dayRows=[];
+      d.days.forEach(k=>{
         const det=d.dayDetail[k]?Object.keys(d.dayDetail[k]).map(z=>(NAMES[z]||z)+' '+Object.keys(d.dayDetail[k][z]).map(u=>r1(d.dayDetail[k][z][u])+u).join(',')).join(' / '):'-';
         dayRows.push([md(k),...(us.length?us.map(u=>r1(d.units[u].byDay[k]||0)):[String(d.work.filter(x=>dayOf(x)===k&&x.completed).length)]),det]);
       });
-      const s3=box(2,450000,300000,11292000,680000,'1E293B',para('날짜별 완료 추이 ('+title(d)+')',20,'FFFFFF',true))
-        +tbl(3,450000,1120000,11292000,5200000,dayRows);
-      const slides=[s1,s2,s3];
+      /* A-10: 예전에는 d.days.slice(0,14) 로 15일 이후를 잘라냈다(월간 31일 중 절반 누락).
+         이제 모든 날짜를 넣고, 표가 너무 길어지지 않게 18줄씩 슬라이드를 나누어 이어 붙인다. */
+      const perSlide=18, daySlides=[];
+      const dayGroups=Math.max(1, Math.ceil(dayRows.length/perSlide));
+      for(let gi=0; gi<dayGroups; gi++){
+        const part=dayRows.slice(gi*perSlide,(gi+1)*perSlide);
+        daySlides.push(box(2,450000,300000,11292000,680000,'1E293B',para('날짜별 완료 추이 ('+title(d)+')'+(dayGroups>1?(' · '+(gi+1)+'/'+dayGroups):''),20,'FFFFFF',true))
+          +tbl(3,450000,1120000,11292000,5200000,[dayHead].concat(part)));
+      }
+      const slides=[s1,s2].concat(daySlides);
       const entries=[
         ['[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/><Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/><Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/><Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>'+slides.map((_,i)=>'<Override PartName="/ppt/slides/slide'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>').join('')+'</Types>'],
         ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>'],
@@ -10013,6 +10113,12 @@ paint()})();</script>
           rec.workState = "idle";
           delete rec.startedAt;
           delete rec.completedAt;
+          /* A-1: 이건 정상 교대 초기화(rows → archivedRows)다. 아래 pushKey 의 '빈 입고 저장 차단'
+             가드가 사고로 오해해 되돌리면 150ms 마다 저장·재렌더가 무한 반복하므로,
+             이번 한 번의 저장만 예외로 통과시킨다 (실제 빈 덮어쓰기 사고는 그대로 차단). */
+          window.__jisuAllowEmptyInboundPush = true;
+          clearTimeout(window.__jisuAllowEmptyInboundPushT);
+          window.__jisuAllowEmptyInboundPushT = setTimeout(() => { window.__jisuAllowEmptyInboundPush = false; }, 1500);
         }
         rec.shiftKey = sk;
         saveAllRecords(all);
@@ -10630,30 +10736,40 @@ paint()})();</script>
 
   const isMobInbound = () => document.documentElement.classList.contains("worker-zone-only") || window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || "");
 
+  /* 자동 엑셀 저장 표식 — 완료 버튼과 동기화 수신이 **똑같은 키·형식**을 써야 두 번 받지 않는다 (A-2).
+     키: jisu-inb-auto-xlsx-<교대키>   값: '<교대키>:<done:완료시각:건수 | arch:보관건수>' */
+  function inboundExcelTriggerTag(rec) {
+    if (!rec) return '';
+    const archLen = Array.isArray(rec.archivedRows) ? rec.archivedRows.length : 0;
+    const curLen = Array.isArray(rec.rows) ? rec.rows.length : 0;
+    if (rec.workState === "done") {
+      const totalLen = window.jisuDedupeInboundRows(rec.archivedRows, rec.rows).length;
+      return `done:${rec.completedAt || ""}:${totalLen}`;
+    }
+    if (archLen > 0 && curLen === 0) return `arch:${archLen}`;
+    return '';
+  }
+  function inboundExcelMark(rec) {
+    const tagBase = (rec && (rec.shiftKey || rec.day)) || activeDay;
+    const tag = inboundExcelTriggerTag(rec);
+    if (!tag) return null;
+    return { key: "jisu-inb-auto-xlsx-" + tagBase, tag: `${tagBase}:${tag}` };
+  }
+  window.jisuInboundExcelMark = inboundExcelMark;   /* 점검용: 자동 엑셀 표식 계산 (완료 버튼·동기화 수신 공용) */
+
   function maybeAutoDownloadInboundExcel(rec) {
     if (isMobInbound() || !rec) return;
     const archLen = Array.isArray(rec.archivedRows) ? rec.archivedRows.length : 0;
     const curLen = Array.isArray(rec.rows) ? rec.rows.length : 0;
     if (!archLen && !curLen) return;
 
-    let triggerTag = "";
-    if (rec.workState === "done") {
-      const totalLen = window.jisuDedupeInboundRows(rec.archivedRows, rec.rows).length;
-      triggerTag = `done:${rec.completedAt || ""}:${totalLen}`;
-    } else if (archLen > 0 && curLen === 0) {
-      triggerTag = `arch:${archLen}`;
-    } else {
-      return;
-    }
-
-    const tagBase = rec.shiftKey || activeDay;
-    const keyTag = `${tagBase}:${triggerTag}`;
-    const markKey = "jisu-inb-auto-xlsx-" + tagBase;
-    if (localStorage.getItem(markKey) === keyTag) return;
+    const mark = inboundExcelMark(rec);
+    if (!mark) return;
+    if (localStorage.getItem(mark.key) === mark.tag) return;
 
     exportInboundExcel(rec).then(ok => {
       if (!ok) return;
-      localStorage.setItem(markKey, keyTag);
+      localStorage.setItem(mark.key, mark.tag);
       if (saveStatusEl) saveStatusEl.textContent = `모바일 입고완료 수신 · 엑셀 자동 저장됨! (${rec.completedAt || kstTime()})`;
     }).catch(err => {
       console.warn("[inbound auto-xlsx failed]", err);
@@ -10749,7 +10865,12 @@ paint()})();</script>
       return;
     }
 
-    localStorage.setItem("jisu-inb-auto-xlsx-" + activeDay, rec.completedAt);
+    /* A-2: 완료 버튼이 받은 엑셀도 동기화 수신(maybeAutoDownloadInboundExcel)과 같은 표식을 남긴다.
+       예전에는 키 이름(날짜)·값 형식(완료시각)이 달라 표식이 절대 맞지 않아 동기화 한 번에 또 받았다. */
+    try {
+      const mark = inboundExcelMark(rec);
+      if (mark) localStorage.setItem(mark.key, mark.tag);
+    } catch (_) {}
     completeBtn.disabled = true;
     completeBtn.textContent = "엑셀 생성중…";
     await exportInboundExcel();
@@ -11535,12 +11656,33 @@ paint()})();</script>
           });
         }
       };
-      /* 로그인 게이트가 켜져 있으면 로그인 뒤에 구독한다 (로그인 전 구독은 401로 실패해 잘못된 경고가 뜬다) */
-      let subTried=false;
-      if(window.JISU_AUTH_GATE===true && window.firebase && firebase.auth){
-        firebase.auth().onAuthStateChanged(u=>{ if(u&&u.uid&&!subTried){ subTried=true; runSub(); } });
-      }else{
-        setTimeout(runSub,800);
+      {
+        /* 로그인 게이트가 켜져 있으면 로그인 뒤에 구독한다 (로그인 전 구독은 401로 실패해 잘못된 경고가 뜬다).
+           A-16: 이 스크립트는 Firebase SDK(아래 <script src>)보다 먼저 실행되므로, 여기서 모듈이 없으면
+           SDK 가 준비될 때까지 잠시 기다렸다가 붙인다 (예전에는 게이트를 켜도 else 로 빠져 401 오탐). */
+        let subTried=false;
+        const gateOn=()=>window.JISU_AUTH_GATE===true;
+        const startAuthWait=()=>{
+          if(!gateOn()) return false;
+          if(window.firebase&&firebase.auth){
+            firebase.auth().onAuthStateChanged(u=>{ if(u&&u.uid&&!subTried){ subTried=true; runSub(); } });
+            return true;
+          }
+          return false;
+        };
+        if(!gateOn()){
+          setTimeout(runSub,800);
+        }else if(!startAuthWait()){
+          let waited=0;
+          const timer=setInterval(()=>{
+            waited+=250;
+            if(startAuthWait()){ clearInterval(timer); return; }
+            if(waited>=8000){                     /* SDK 를 끝내 못 받으면 401 오탐을 만들지 않는다 */
+              clearInterval(timer);
+              console.warn('[jisu-db] Firebase SDK 없이 알림 구독을 시작하지 않습니다(로그인 게이트 켜짐)');
+            }
+          },250);
+        }
       }
       return;
     }
@@ -12178,9 +12320,14 @@ paint()})();</script>
         var prev=JSON.parse(lastSent[k]), next=JSON.parse(json), lost=false;
         Object.keys(prev||{}).forEach(function(d){
           var pr=prev[d], nr=next&&next[d];
-          if(pr&&Array.isArray(pr.rows)&&pr.rows.length>0 && (!nr||!Array.isArray(nr.rows)||nr.rows.length===0) && (!nr||nr.workState==='idle')){
-            lost=true;
-          }
+          if(!pr||!Array.isArray(pr.rows)||!pr.rows.length) return;
+          if(nr&&Array.isArray(nr.rows)&&nr.rows.length>0) return;        /* 입력칸에 행이 남아 있음 */
+          if(nr&&nr.workState!=='idle') return;                          /* 작업중·완료 상태는 빈 덮어쓰기 사고가 아니다 */
+          /* A-1: 교대 초기화·08시 초기화처럼 행을 archivedRows 로 옮겨 담았다면 정상 → 통과 */
+          var keepBefore=Array.isArray(pr.archivedRows)?pr.archivedRows.length:0;
+          var keepAfter=Array.isArray(nr&&nr.archivedRows)?nr.archivedRows.length:0;
+          if(keepAfter>=keepBefore+pr.rows.length) return;
+          lost=true;
         });
         if(lost){
           console.warn('[jisu-db] 빈 입고 중량 기록 덮어쓰기 차단');
@@ -12324,6 +12471,123 @@ paint()})();</script>
     });
     return jsonOf(out);
   }
+  /* ---------- A-4: 환경 청소·피치 기록 3-way 병합 ----------
+     예전 reconcile 은 입고·금일작업·예약·특이사항·정비일지만 병합하고
+     jisu-env-v1 / jisu-env-log-v1 / jisu-pitch-records-v1 은 서버 값으로 덮어 버려서,
+     두 작업자가 서로 다른 호기·설비를 거의 같은 순간에 체크하면 한쪽 체크가 사라졌다. */
+  var ENV_EQS=['분체','충진기','포장기','소성로'], ENV_ASUB=['2호기','3호기'];
+  function envRank(s){ return s==='done'?2:(s==='work'?1:0); }
+  /* 설비·하위호기 한 칸: 내가 바꿨으면 내 것, 서버가 바꿨으면 서버 것,
+     둘 다 바꿨으면 더 진행된 단계(완료>작업중>대기) → 같은 단계면 나중 시각 */
+  function pickSubState(b,m,t){
+    if(!m) return t||null; if(!t) return m;
+    var mj=jsonOf(m), tj=jsonOf(t), bj=(b==null?null:jsonOf(b));
+    if(mj===tj) return t;
+    var mc=(mj!==bj), tc=(tj!==bj);
+    if(mc&&!tc) return m;
+    if(tc&&!mc) return t;
+    var rm=envRank(m.s), rt=envRank(t.s);
+    if(rm!==rt) return rm>rt?m:t;
+    var dm=Number(m.doneAt)||0, dt=Number(t.doneAt)||0;
+    if(dm!==dt) return dm>dt?m:t;
+    var km=String(m.td||m.ts||''), kt=String(t.td||t.ts||'');
+    return km>kt?m:t;
+  }
+  function envSyncSubs(o,list){
+    var sb=o.subs||{}, d=0,w=0,ts='',td='',doneAt=0;
+    list.forEach(function(e){ var y=sb[e]||{};
+      if(y.s==='done'){ d++; if(y.td&&(!td||y.td>td)) td=y.td; if(typeof y.doneAt==='number'&&y.doneAt>doneAt) doneAt=y.doneAt; }
+      else if(y.s==='work') w++;
+      if(y.s&&y.ts&&(!ts||y.ts<ts)) ts=y.ts; });
+    o.doneCnt=d; o.workCnt=w; o.s=(w>0?'work':(d>0?'done':'')); o.ts=ts; o.td=td;
+    if(doneAt) o.doneAt=doneAt;
+    return o;
+  }
+  function mergeEnvJson(bj,mj,tj){
+    var b=parseObj(bj)||{}, m=parseObj(mj)||{}, t=parseObj(tj)||{};
+    var out={}; Object.keys(t).forEach(function(k){ out[k]=t[k]; });
+    var ub=b.u||{}, um=m.u||{}, ut=t.u||{}, units={};
+    [ub,um,ut].forEach(function(o){ Object.keys(o).forEach(function(k){ units[k]=1; }); });
+    var uo={};
+    Object.keys(units).forEach(function(unit){
+      var bu=ub[unit]||null, mu=um[unit]||null, tu=ut[unit]||null;
+      if(!mu){ if(tu) uo[unit]=tu; return; }        /* 이 기기에서 지운 호기 → 되살리지 않음 */
+      if(!tu){ uo[unit]=mu; return; }
+      var o={}; Object.keys(tu).forEach(function(k){ o[k]=tu[k]; });
+      Object.keys(mu).forEach(function(k){ if(!(k in o)) o[k]=mu[k]; });
+      var sbu=(bu&&bu.subs)||{}, smu=mu.subs||{}, stu=tu.subs||{}, eqs={};
+      [sbu,smu,stu].forEach(function(o2){ Object.keys(o2||{}).forEach(function(e){ eqs[e]=1; }); });
+      var sub={};
+      Object.keys(eqs).forEach(function(e){ var v=pickSubState(sbu[e],smu[e],stu[e]); if(v) sub[e]=v; });
+      o.subs=sub; uo[unit]=envSyncSubs(o,ENV_EQS);
+    });
+    out.u=uo;
+    /* 메인통로(2호기·3호기)도 같은 규칙 */
+    var ba=b.a||null, ma=m.a||null, ta=t.a||null;
+    if(!ma){ if(ta) out.a=ta; else delete out.a; }
+    else if(!ta){ out.a=ma; }
+    else{
+      var ao={}; Object.keys(ta).forEach(function(k){ ao[k]=ta[k]; });
+      Object.keys(ma).forEach(function(k){ if(!(k in ao)) ao[k]=ma[k]; });
+      var sba=(ba&&ba.subs)||{}, sma=ma.subs||{}, sta=ta.subs||{}, asub={};
+      ENV_ASUB.forEach(function(k){ var v=pickSubState(sba[k],sma[k],sta[k]); if(v) asub[k]=v; });
+      Object.keys(sma).concat(Object.keys(sta)).forEach(function(k){ if(asub[k]==null&&(sma[k]||sta[k])) asub[k]=pickSubState(sba[k],sma[k],sta[k]); });
+      ao.subs=asub; out.a=envSyncSubs(ao,Object.keys(asub).length?Object.keys(asub):ENV_ASUB);
+    }
+    /* 회차는 더 나아간 값 */
+    out.round=Math.max(Number(b.round)||1, Number(m.round)||1, Number(t.round)||1);
+    /* 청소 알림 [확인](ack): 한 칸씩 3-way, 둘 다 바꿨으면 더 나중 날짜 */
+    var ack={}, aks={};
+    [b.ack||{},m.ack||{},t.ack||{}].forEach(function(o){ Object.keys(o||{}).forEach(function(k){ aks[k]=1; }); });
+    Object.keys(aks).forEach(function(k){
+      var bv=(b.ack||{})[k], mv=(m.ack||{})[k], tv=(t.ack||{})[k];
+      if(mv==null){ if(bv!=null&&tv!=null) return; if(tv!=null) ack[k]=tv; return; }
+      if(tv==null){ ack[k]=mv; return; }
+      if(mv===tv){ ack[k]=tv; return; }
+      if(mv!==bv&&tv===bv){ ack[k]=mv; return; }
+      if(tv!==bv&&mv===bv){ ack[k]=tv; return; }
+      ack[k]=String(mv)>String(tv)?mv:tv;
+    });
+    out.ack=ack;
+    return jsonOf(out);
+  }
+  /* 청소 기록(jisu-env-log-v1): 한 칸 = day|unit|equip|round. 지운 기록은 되살리지 않고, 새 기록은 살린다 */
+  function envLogKey(x){ return [x&&x.day,x&&x.unit,x&&x.equip,(x&&x.round==null?'':x.round)].join('\u0001'); }
+  function mergeEnvLogJson(bj,mj,tj){
+    var b=parseArr(bj)||[], m=parseArr(mj)||[], t=parseArr(tj)||[];
+    var bi={}, mi={}, mOrder=[], ti={}, tOrder=[];
+    function index(arr,into,order){ arr.forEach(function(x){ if(!x||typeof x!=='object') return; var k=envLogKey(x); if(!(k in into)){ into[k]=x; if(order) order.push(k); } }); }
+    index(b,bi,null); index(t,ti,tOrder); index(m,mi,mOrder);
+    var out=[], used={};
+    tOrder.forEach(function(k){
+      if(!(k in mi)){ if(k in bi) return; out.push(ti[k]); used[k]=1; return; }   /* 내가 지운 기록 */
+      out.push(ti[k]); used[k]=1;
+    });
+    mOrder.forEach(function(k){ if(used[k]) return; if(k in ti) return; if(k in bi) return; out.push(mi[k]); });
+    return jsonOf(out);
+  }
+  /* 피치 작업일지(jisu-pitch-records-v1): 날짜별 3-way, 둘 다 바꿨으면 완료>작업중>저장, 같으면 savedAt(ts) 나중 것 */
+  function pitchRank(s){ return s==='done'?2:(s==='work'?1:0); }
+  function mergePitchJson(bj,mj,tj){
+    var b=parseObj(bj)||{}, m=parseObj(mj)||{}, t=parseObj(tj)||{};
+    var keys={}, out={};
+    [b,m,t].forEach(function(o){ Object.keys(o||{}).forEach(function(k){ keys[k]=1; }); });
+    Object.keys(keys).sort().forEach(function(k){
+      var bv=b[k], mv=m[k], tv=t[k];
+      if(mv==null){ if(bv!=null&&tv!=null) return; if(tv!=null) out[k]=tv; return; }   /* 이 기기에서 지운 날 */
+      if(tv==null){ out[k]=mv; return; }
+      var mj2=jsonOf(mv), tj2=jsonOf(tv), bj2=(bv==null?null:jsonOf(bv));
+      if(mj2===tj2){ out[k]=tv; return; }
+      if(mj2!==bj2&&tj2===bj2){ out[k]=mv; return; }
+      if(tj2!==bj2&&mj2===bj2){ out[k]=tv; return; }
+      var rm=pitchRank(mv.workState), rt=pitchRank(tv.workState);
+      if(rm!==rt){ out[k]=rm>rt?mv:tv; return; }
+      var sm=Number(mv.savedAt)||0, st=Number(tv.savedAt)||0;
+      out[k]=(sm>st?mv:tv);
+    });
+    return jsonOf(out);
+  }
+  window.jisuMerge = { env: mergeEnvJson, envLog: mergeEnvLogJson, pitch: mergePitchJson };   /* 점검용: 3-way 병합 함수 */
   function reconcile(k, remote, sent){
     var n=(conflicts[k]||0)+1; conflicts[k]=n;
     if(remote==null || n>3){
@@ -12338,6 +12602,9 @@ paint()})();</script>
       var kk=keyOf(k);
       if(kk==='jisu-inbound-records-v1') merged=mergeInboundJson(lastRemote[k]||'{}', mineNow, remote);
       else if(kk==='jisu-commands-v1'||kk==='jisu-memos-v1'||kk==='jisu-schedule-v1'||kk==='jisu-schedules-v1'||kk==='jisu-maint-log-v1') merged=mergeArrJson(lastRemote[k]||'[]', mineNow, remote);
+      else if(kk==='jisu-env-v1') merged=mergeEnvJson(lastRemote[k]||'{}', mineNow, remote);
+      else if(kk==='jisu-env-log-v1') merged=mergeEnvLogJson(lastRemote[k]||'[]', mineNow, remote);
+      else if(kk==='jisu-pitch-records-v1') merged=mergePitchJson(lastRemote[k]||'{}', mineNow, remote);
     }catch(e){ merged=remote; }
     if(merged!==remote){
       console.warn('[jisu-db] 동시 수정 감지 → 병합 반영('+k+')');
@@ -12359,7 +12626,10 @@ paint()})();</script>
   /* 기존 localStorage.setItem 을 감싸기만 하고, 원래 동작은 항상 먼저 수행한다.
      (iOS Safari 포함 전 브라우저에서 동작하도록 Storage 프로토타입 수준에서 감싼다) */
   try{
+    var __origSetItem=Storage.prototype.setItem;
     Storage.prototype.setItem=function(k,v){
+      /* A-14: sessionStorage.setItem 을 불러도 localStorage 로 새던 문제 — 이 저장소(this)에 그대로 쓴다. */
+      if(this!==localStorage) return __origSetItem.call(this,k,v);
       lsSet(k,v);                                   // 기존 동작은 항상 먼저 보장
       try{
         if(STATE_KEYS.indexOf(k)<0) return;
@@ -12622,9 +12892,11 @@ paint()})();</script>
     }catch(_){}
   }
   function removePhotoRemote(zone,id){
+    /* A-12: 구역을 모르면 아무 경로에도 쓰지 않는다. 예전에는 zone=='' 일 때 **전 구역 경로**에 null 을 썼다
+       — 보안 규칙을 배포하면 권한 밖 경로 때문에 한 번의 update 전체가 거부되어 삭제가 서버에 안 붙는다. */
+    if(!zone||!id) return;
     var upd={};
-    if(zone) upd[zone+'/'+id]=null;
-    else photoZones().forEach(function(z){ upd[z+'/'+id]=null; });
+    upd[zone+'/'+id]=null;
     try{ db.ref(ROOT+'/photos').update(upd).catch(function(){}); }catch(_){}
   }
   function isPhotoStore(store){
@@ -12640,6 +12912,13 @@ paint()})();</script>
     }catch(_){}
     return '';
   }
+  /* 통합 사진 저장소(jisu-zone-photos-v1) 레코드의 zone 을 id 별로 기억한다 —
+     사진을 지울 때 그 구역 경로만 지우기 위해서(A-12). P.put·insertPhoto·시작 시 색인이 모두 채운다. */
+  var photoZoneOf={};
+  function indexPhotoZone(rec){ try{ if(rec&&rec.id!=null&&rec.zone) photoZoneOf[String(rec.id)]=String(rec.zone); }catch(_){} }
+  function indexLocalZonePhotos(){
+    idbAll(ZONE_STORE.db,ZONE_STORE.store).then(function(list){ (list||[]).forEach(indexPhotoZone); }).catch(function(){});
+  }
   try{
     var P=IDBObjectStore.prototype, oPut=P.put, oDel=P.delete;
     P.put=function(value,key){
@@ -12647,6 +12926,7 @@ paint()})();</script>
       try{
         if(!photoMuted&&isPhotoStore(this)&&value&&typeof value.data==='string'&&value.data.indexOf('data:image')===0){
           var z=zoneOfStore(this,value);
+          if(z) indexPhotoZone({id:value.id,zone:z});
           /* 예시 사진(demo1·demo2)은 화면용이라 DB로 올리지 않는다 */
           if(z&&String(value.id).indexOf('demo')!==0&&pulled[String(value.id)]!==value.data) pushPhoto(z,value,{notify:true});
         }
@@ -12655,7 +12935,14 @@ paint()})();</script>
     };
     P.delete=function(key){
       var req=oDel.apply(this,arguments);
-      try{ if(!photoMuted&&isPhotoStore(this)) removePhotoRemote(zoneOfStore(this,null),String(key)); }catch(_){}
+      try{
+        if(!photoMuted&&isPhotoStore(this)){
+          var sid=String(key), z=zoneOfStore(this,null);       /* 구역 전용 저장소(outbound/inbound/pitch)는 저장소 이름이 곷 구역 */
+          if(!z) z=photoZoneOf[sid]||'';                        /* 통합 저장소: 레코드의 zone 색인 */
+          if(z) removePhotoRemote(z,sid);                       /* 구역을 알 때만 — 전 구역 null 쓰기 금지 */
+          delete photoZoneOf[sid];
+        }
+      }catch(_){}
       return req;
     };
   }catch(e){ console.warn('[jisu-db] 사진 후크 실패:',e); }
@@ -12669,6 +12956,7 @@ paint()})();</script>
     if(ex&&ex.data===p.data) return;
     var rec={id:id,day:p.day||'',at:p.at||'',name:p.name||'',data:p.data};
     if(zone!=='outbound'&&zone!=='inbound'&&zone!=='pitch') rec.zone=zone;
+    indexPhotoZone(rec);
     photoMuted++; pulled[id]=p.data;
     try{ await idbPut(t.db,t.store,rec); }
     catch(e){ console.warn('[jisu-db] 사진 반영 실패:',e&&e.message); }
@@ -12777,7 +13065,7 @@ paint()})();</script>
         zr.on('child_removed',function(ps){ removePhotoLocal(zone,ps.key); });
       });
     }catch(e){ console.warn('[jisu-db] 사진 구독 실패:',e); }
-    pullPhotos().then(function(){ return seedLocalPhotos(); }).catch(function(e){ console.warn('[jisu-db] 사진 동기화 실패:',e&&e.message); });
+    pullPhotos().then(function(){ return seedLocalPhotos(); }).then(indexLocalZonePhotos).catch(function(e){ console.warn('[jisu-db] 사진 동기화 실패:',e&&e.message); });
     purgeExpired();
     setInterval(purgeExpired,10*60*1000);
   },1500); }
@@ -13449,7 +13737,10 @@ paint()})();</script>
     setInterval(fetchWeather, REFRESH_MS);
     document.addEventListener('visibilitychange',function(){
       if(document.hidden) stop();
-      else if(state==='rain'||state==='snow'){ start(); fetchWeather(); }
+      else {                                  /* A-11: 맑음·흐림으로 돌아와도 날씨를 다시 확인한다 (숨은 사이 비→맑음이면 배경이 그대로였다) */
+        if(state==='rain'||state==='snow') start();
+        fetchWeather();
+      }
     });
   }
   try{

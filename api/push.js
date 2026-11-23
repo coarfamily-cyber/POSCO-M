@@ -38,6 +38,14 @@ function safeUrl(raw) {
   return s.startsWith(ALLOWED_URL_PREFIX) ? s.slice(0, 300) : DEFAULT_URL;
 }
 
+// 정적 서버 토큰 비교 (08시 스크립트 같은 서버 간 발송용) — 길이까지 같을 때만 상수 시간 비교
+function sameToken(a, b) {
+  const x = Buffer.from(String(a || ''), 'utf8');
+  const y = Buffer.from(String(b || ''), 'utf8');
+  if (!x.length || x.length !== y.length) return false;
+  try { return require('crypto').timingSafeEqual(x, y); } catch (_) { return false; }
+}
+
 module.exports = async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -58,16 +66,24 @@ module.exports = async function handler(req, res) {
 
   // 5단계 준비: Vercel 환경변수 PUSH_REQUIRE_AUTH=1 이면 승인된 로그인 사용자만 발송 가능.
   // 설정하지 않으면 지금과 같이 동작한다 (로그인 게이트를 켜기 전에는 설정하지 말 것).
+  // A-9: 08시 스크립트는 Firebase ID 토큰이 아니라 JISU_PUSH_AUTH_TOKEN 을 Bearer 로 보낸다.
+  //      인증을 켜는 순간 그 발송이 401 로 조용히 묻히지 않도록, 정적 토큰(설정된 경우)도 같이 받는다.
   if (String(process.env.PUSH_REQUIRE_AUTH || '') === '1') {
     const m = String((req.headers && req.headers.authorization) || '').match(/^Bearer (.+)$/);
     if (!m) return res.status(401).json({ ok: false, error: '로그인이 필요합니다' });
-    let caller;
-    try { caller = await verifyIdToken(m[1]); } catch (e) { return res.status(e.status || 401).json({ ok: false, error: '인증 실패' }); }
-    if (!(caller.role === 'admin' || caller.approved === true)) return res.status(403).json({ ok: false, error: '승인된 사용자만 가능합니다' });
+    const staticTok = String(process.env.JISU_PUSH_AUTH_TOKEN || '').trim();
+    if (!(staticTok && sameToken(m[1], staticTok))) {
+      let caller;
+      try { caller = await verifyIdToken(m[1]); } catch (e) { return res.status(e.status || 401).json({ ok: false, error: '인증 실패' }); }
+      if (!(caller.role === 'admin' || caller.approved === true)) return res.status(403).json({ ok: false, error: '승인된 사용자만 가능합니다' });
+    }
   }
   // 클라이언트는 { target, payload:{title,body,url,tag,badge} } 형식으로 보낸다.
   // 구형 평면 형식({ target, title, body, ... })도 함께 받는다.
   const p = (body.payload && typeof body.payload === 'object') ? body.payload : body;
+  // A-8: skipMaster=true 면 구역 발송에서 관리자(master) 기기를 빼다 — 08시 스크립트가 구역별로 보낼 때
+  //      관리자 폰이 구역 수만큼 울리지 않게 한다(관리자 기기에는 요약 1건을 따로 보낸다). 기본값은 지금과 같다.
+  const skipMaster = body.skipMaster === true || body.skip_master === true;
 
   const target = String(body.target || body.zone || p.target || '*').split(':')[0] || '*';
   const title = String(p.title || '지수 통합 관제 상황실').slice(0, 120);
@@ -97,8 +113,10 @@ module.exports = async function handler(req, res) {
       }
     };
 
-    if (target === '*') {
+    if (target === '*' || target === 'all') {
       Object.keys(allSubs).forEach(addBucket);
+    } else if (skipMaster) {
+      addBucket(target);                       /* 그 구역 기기에만 */
     } else {
       addBucket(target);
       addBucket('master');
@@ -119,6 +137,8 @@ module.exports = async function handler(req, res) {
         : (target === 'master'
             ? (ez === '*' || ez === 'master')
             : (ez === '*' || ez === 'master' || ez === target));
+      /* skipMaster: 구역 발송에서 관리자(전체/미지정 구독) 기기를 빼다 (A-8) */
+      if (skipMaster && target !== '*' && target !== 'all' && target !== 'master' && (ez === '*' || ez === 'master')) continue;
       if (!match) continue;
       seenEndpoints.add(sub.endpoint);
       targets.push({ delUrl: `${RTDB_FLAT}/${encodeURIComponent(subId)}.json`, sub });
