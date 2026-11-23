@@ -30,7 +30,7 @@ function baseItems() {
   ];
 }
 
-async function loadPage(seed) {
+async function loadPage(seed, serverItems) {
   const errors = [];
   const vc = new VirtualConsole();
   const envOnly = m => /Not implemented: HTMLCanvasElement\.prototype\.getContext/.test(m);
@@ -38,6 +38,7 @@ async function loadPage(seed) {
   vc.on('error', (...a) => errors.push('error: ' + a.map(String).join(' ').slice(0, 200)));
   const fidb = require('fake-indexeddb');
   const fake = makeFakeFirebase();
+  if (serverItems) fake.setServer('jisu/state/' + KEY, { v: JSON.stringify(serverItems), t: Date.now(), by: 'server' });
   const dom = new JSDOM(html, {
     url: 'https://jisu.test/POSCO-M/JISU/index.html',
     runScripts: 'dangerously', pretendToBeVisual: true, virtualConsole: vc,
@@ -124,5 +125,18 @@ test('저장하면 그 구역 점이 녹색으로 10초 깜빡이고, 작업중 
   if (lateErrors.length) console.log('닫힌 페이지의 늦은 거부(무시): ' + lateErrors.length + '건');
   } finally {
     try { w.close(); } catch (_) {}     /* 페이지 타이머를 정리해 테스트 프로세스가 끝나게 한다 */
+  }
+});
+
+test('첫 로드(서버 동기화)로 들어온 자료에는 깜빡이지 않는다', async () => {
+  // 다른 기기가 1초 전에 저장해 둔 항목이 서버에 있는 상태로 이 기기를 새로 켠다 → 과거 자료 재로딩이라 울리면 안 된다
+  const fresh = { id: sid(1000), target: 'outbound', kind: 'instruction', text: '방금 저장된 작업', at: md + ' 21:00', day: today };
+  const p = await loadPage({}, baseItems().concat([fresh]));
+  try {
+    await sleep(600);
+    assert.deepEqual(flashZones(p.w), [], '첫 로드·재동기화에는 울리면 안 된다');
+    assert.equal(p.errors.length, 0, p.errors.join(' | '));
+  } finally {
+    try { p.w.close(); } catch (_) {}
   }
 });

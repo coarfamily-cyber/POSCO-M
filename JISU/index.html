@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611232149">
+  <meta name="jisu-build" content="202611232157">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -14172,7 +14172,9 @@ paint()})();</script>
   });
   window.addEventListener('storage', function(e){
     var k = e && e.key;
-    if(k) fromRemote(k, false);
+    /* 앱이 원격 값을 로컬에 반영할 때도 StorageEvent 를 직접 보낸다(fireStorage).
+       초기 동기화·병합처럼 suppress 상태인 반영은 옛 자료 재로딩이라 울리지 않는다. */
+    if(k) fromRemote(k, window.jisuSuppressAlert === true);
   });
 
   /* ③ 사진: 다른 기기에서 도착한 사진 */
