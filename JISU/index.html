@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611222230">
+  <meta name="jisu-build" content="202611231840">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -3210,6 +3210,16 @@
     .home-env .he-row.late span{color:#fde68a;}
     .home-env .he-row.warn span{color:#fb923c;}
     .home-env .he-row.none span{color:#64748b;}
+    /* 2026-11-23: 환경 청소 알림 각 줄 [확인] — 미확인 특이사항의 .hm-ack 과 같은 모양·크기, 알림 톤에 맞춰 주황 계열.
+       한 줄(1,2호기 · 3일째 청소 안 됨 · 확인)이 288px 사이드바와 412·360px 모바일에서 겹침·줄바꿈 없이 들어가게
+       호기 이름은 왼쪽 고정, 상태 문구는 오른쪽으로 밀고(넘치면 말줄임), 버튼은 줄어들지 않게 한다. */
+    .home-env .he-row{gap:6px;flex-wrap:nowrap;}
+    .home-env .he-row b{flex:0 0 auto;white-space:nowrap;}
+    .home-env .he-row span{flex:0 1 auto;min-width:0;margin-left:auto;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .home-env .he-ack{flex:0 0 auto;min-width:48px;height:30px;padding:0 10px;border:0;border-radius:9px;background:rgba(249,115,22,.78);color:#fff;font-size:12px;font-weight:900;line-height:1;letter-spacing:.2px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 2px 8px rgba(154,52,18,.35);}
+    .home-env .he-ack:hover{background:rgba(249,115,22,.98);}
+    .home-env .he-ack:active{background:#ea580c;}
+    .home-env .he-ack:focus-visible{outline:2px solid #fdba74;outline-offset:1px;}
   </style>
   <style>
     .home-env.alert{background:rgba(251,146,60,.12);box-shadow:inset 0 0 0 1px rgba(251,146,60,.35);}
@@ -6478,8 +6488,12 @@ html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,2
     function homeEnv(){ let lg=[], cur=null; try{ lg=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]'); cur=JSON.parse(localStorage.getItem('jisu-env-v1')||'null'); }catch(e){}
       const U=['1,2','3,4','5,6','7,8','9,10','11,12','13,14','메인통로'], td=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()), dd=(a,b)=>Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/86400000);
       const rows=U.map(k=>{ const last=lg.filter(x=>x.unit===k&&x.day).map(x=>x.day).sort().pop(); const working=k==='메인통로'?(cur&&cur.a&&cur.a.s==='work'):(cur&&cur.u&&cur.u[k]&&cur.u[k].s==='work'); return {k,last,days:last?dd(last,td):null,working}; }).sort((a,b)=>(b.days==null?1e9:b.days)-(a.days==null?1e9:a.days));
-      const line=r=>'<div class="he-row'+(r.working?' run':r.days==null?' none':r.days>=3?' warn':r.days>=1?' late':' ok')+'"><b>'+(r.k==='메인통로'?r.k:(r.k+'호기'))+'</b><span>'+(r.working?'지금 청소중':r.days==null?'청소 기록 없음':r.days===0?'오늘 청소 완료':r.days+'일째 청소 안 됨')+'</span></div>';
-      const late=rows.filter(r=>!r.working&&r.days!=null&&r.days>=3); if(!late.length) return ''; /* 3일 이상 청소 안 된 호기만 알림 */
+      /* [11-23] 오늘 날짜로 [확인]한 호기는 알림에서 빼둔다 — cur.ack[호기] = 'YYYY-MM-DD'(확인한 날).
+         다음 날이 되면 날짜가 달라져 다시 알림에 나오고, 청소 기록(jisu-env-log-v1)은 건드리지 않는다. */
+      const ack=(cur&&cur.ack&&typeof cur.ack==='object')?cur.ack:{};
+      const nm=k=>(k==='메인통로'?k:(k+'호기'));
+      const line=r=>'<div class="he-row'+(r.working?' run':r.days==null?' none':r.days>=3?' warn':r.days>=1?' late':' ok')+'"><b>'+nm(r.k)+'</b><span>'+(r.working?'지금 청소중':r.days==null?'청소 기록 없음':r.days===0?'오늘 청소 완료':r.days+'일째 청소 안 됨')+'</span><button type="button" class="he-ack" data-env-ack="'+esc(r.k)+'" title="확인하면 오늘은 이 알림에서 사라져요 (청소 기록·일일 실적은 그대로 남아요)" aria-label="'+esc(nm(r.k))+' 환경 청소 알림 확인">확인</button></div>';
+      const late=rows.filter(r=>!r.working&&r.days!=null&&r.days>=3&&ack[r.k]!==td); if(!late.length) return ''; /* 3일 이상 청소 안 된 호기만 알림 (오늘 확인한 호기 제외) */
       return '<div class="home-env alert"><div class="hs-h">⚠ 환경 청소 알림 <span>'+late.length+'</span></div>'+late.map(line).join('')+'</div>'; }
     function homeMemos(){
       let ms=[]; try{ ms=JSON.parse(localStorage.getItem('jisu-memos-v1')||'[]'); }catch(e){}
@@ -9787,6 +9801,24 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         const lg=loadLog(); for(let i=lg.length-1;i>=0;i--){ const y=lg[i]; if(y&&y.unit===AISLE&&y.equip===k&&(y.round||1)===(d.round||1)){ lg.splice(i,1); break; } }
         localStorage.setItem(LOG,JSON.stringify(lg.slice(-5000))); }
       syncAisle(a); save(d); draw(); if(window.jisuCmdRender) window.jisuCmdRender(); }
+    /* [11-23] 사이드바 HOME '⚠ 환경 청소 알림' 각 줄 [확인] — 그 호기의 ack 만 오늘 날짜로 남긴다(cur.ack[호기]='YYYY-MM-DD').
+       저장은 이 모듈의 load()/save() 그대로라 localStorage 와 Firebase RTDB(jisu/state/jisu-env-v1)에 함께 올라가고,
+       청소 기록(jisu-env-log-v1)·회차(round)·설비 상태·엑셀 실적은 하나도 건드리지 않는다.
+       다음 날짜가 되면 ack 날짜와 오늘 날짜가 달라져 그 호기가 다시 알림에 올라온다. */
+    function ackAlert(k){ if(!k) return false; const d=load();
+      if(!d.ack||typeof d.ack!=='object') d.ack={};
+      d.ack[k]=today(); save(d); draw();
+      if(window.jisuCmdRender) window.jisuCmdRender();
+      if(window.jisuStateRefresh) window.jisuStateRefresh();
+      return true; }
+    window.jisuEnvAck=ackAlert;
+    /* 사이드바가 다시 그려져도 살아있게 document 위임 — [data-memo-ack] 등 다른 버튼과 겹치지 않는다 */
+    document.addEventListener('click',function(e){ const t=e.target; const b=t&&t.closest&&t.closest('[data-env-ack]'); if(!b) return;
+      e.preventDefault(); e.stopPropagation(); ackAlert(b.getAttribute('data-env-ack')); },true);
+    /* 다른 기기에서 확인·청소가 바뀌면(DB → 로컬) 사이드바 HOME 알림도 같이 새로 그린다 */
+    let envHomeT=null;
+    window.addEventListener('jisu:remote-sync',function(e){ const key=e&&e.detail&&e.detail.key; if(key&&key!=='jisu-env-v1'&&key!=='jisu-env-log-v1') return;
+      if(envHomeT) clearTimeout(envHomeT); envHomeT=setTimeout(function(){ envHomeT=null; if(window.jisuCmdRender) window.jisuCmdRender(); },120); });
     box.addEventListener('click',e=>{
       const back=e.target.closest('[data-env-back]'); if(back){ e.stopPropagation(); showList(); return; }
       const ae=e.target.closest('[data-env-aisle]'); if(ae){ e.stopPropagation(); if(openUnit===AISLE) tapAisleSub(ae.dataset.envAisle); return; }
