@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611232157">
+  <meta name="jisu-build" content="202611240953">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -4316,9 +4316,12 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
     }
     html.kiosk .map-stage > .weather-fx{ border-radius: 0; }
     html.worker-zone-only .map-stage > .weather-fx{ display: none !important; }
-    /* 눈: 흰 눈밭 위에서도 구역 버튼 글씨가 또렷하도록 살짝 어두운 반투명 캡슐 */
-    body:not(#zz) .map-stage.weather-snow .hotspot-pill{ background: rgba(15, 23, 42, 0.62); }
-    body:not(#zz) .map-stage.weather-snow .hotspot-pill:hover{ background: rgba(15, 23, 42, 0.74); }
+    /* 눈: 흰 눈밭 위에서도 구역 버튼 글씨가 또렷하도록 살짝 어두운 반투명 캡슐.
+       11-22 유리 캡슐 규칙(#mapStage button.hotspot-pill[data-toggle-zone].st-*)이 !important 이고 이 블록보다 뒤에 있어
+       특정도까지 올려야 눈일 때만 실제로 적용된다(맑을 때는 그대로 맑은 유리).
+       흰 눈밭 위 흰 글씨: 유리 캡슐 1.1:1 → 어두운 캡슐 5.4:1 */
+    body:not(#zz) #mapStage.weather-snow .hotspot-pill{ background: rgba(15, 23, 42, 0.62) !important; }
+    body:not(#zz) #mapStage.weather-snow .hotspot-pill:hover{ background: rgba(15, 23, 42, 0.74) !important; }
   </style>
   <style id="neon-lime-glossy">
     /* ── 네온 라임 글로시 (2026-11-20 사용자 지정 팔레트) ────────────────────────
@@ -13609,7 +13612,7 @@ paint()})();</script>
 </script>
 <script>
 /* ══ 실시간 날씨 효과 ══════════════════════════════════════════════════════
-   · met.no(무료·키 없음) 지점 예보 1순위, 실패 시 wttr.in 보조 → 조감도 사진 3종 + 캔버스 효과
+   · met.no(무료·키 없음) 지점 예보 1순위, 맑음·실패면 wttr.in 을 함께 봐 눈·비를 교차확인 → 조감도 사진 3종 + 캔버스 효과
      clear/그 밖  ./assets/plant-map.jpg        (효과 없음·애니메이션 정지 = CPU 0)
      rain        ./assets/plant-map-rain.jpg   (빗줄기 3겹 + 물웅덩이 물방울 파문)
      snow        ./assets/plant-map-snow.jpg   (눈송이 다중 크기 + 구역 버튼 캡슐)
@@ -13628,10 +13631,12 @@ paint()})();</script>
   if(document.documentElement.classList.contains('worker-zone-only')) return;
 
   var PHOTO={ clear:'./assets/plant-map.jpg?v=202611222230', rain:'./assets/plant-map-rain.jpg', snow:'./assets/plant-map-snow.jpg' };
-  /* wttr.in(WorldWeatherOnline) 코드·설명 — met.no 를 못 받을 때만 쓰는 보조 판정 */
+  /* wttr.in(WorldWeatherOnline) 코드·설명 — met.no 가 눈/비라고 하면 쓰지 않고, 맑음·실패일 때 교차확인용으로 함께 본다 */
   var WTTR='https://wttr.in/36.7140,127.1998?format=j1';
   /* 1순위: met.no(노르웨이 기상청·무료·키 없음·CORS 허용) 지점 예보 — 기상청 동네예보(소정면)와 일치함을 확인.
-     wttr.in(WWO)은 'Patchy heavy snow 0.3mm' 처럼 맑은 날에도 눈/비를 주는 오탐이 있어 met.no 실패 시에만 보조로 쓴다. */
+     wttr.in(WWO)은 'Patchy heavy snow 0.3mm' 처럼 맑은 날에도 눈/비를 주는 오탐이 있어 그 필터(stateOfWwo)를 그대로 통과한 값만 쓴다.
+     met.no 한 곳만 믿으면 눈을 놓친다(2026-11-24 실측: 세종 2공장에 눈이 내리는데 met.no 는 cloudy 0.0mm = 맑음,
+     wttr.in 은 Moderate snow(332) 0.2mm) — 그래서 met.no 가 맑음·실패일 때는 wttr.in 도 함께 확인해 눈/비를 교차확인한다. */
   var MET='https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=36.7140&lon=127.1998';
   var SNOW_WWO=[179,182,185,227,230,317,320,323,326,329,332,335,338,362,365,368,371,374,377,392,395];
   var RAIN_WWO=[176,263,266,281,284,293,296,299,302,305,308,311,314,353,356,359,386,389];
@@ -13766,7 +13771,7 @@ paint()})();</script>
     else start();
   }
 
-  /* ── 날씨 받아오기 (met.no → 실패 시 wttr.in) ─────────────────────── */
+  /* ── 날씨 받아오기 (met.no 우선 + 맑음·실패면 wttr.in 교차확인) ────────── */
   /* wttr.in 현재 상태 → snow/rain/clear
      강수량만으로는 부족하다(실측): 세종 'Patchy rain nearby'(176)·0.0mm = 비 안 내림,
      대전 'Light snow showers'(368)·0.0mm = 실제 눈 내림, 제주 'Light rain shower'(353)·0.5mm = 비.
@@ -13815,32 +13820,37 @@ paint()})();</script>
       .then(function(j){ if(timer) clearTimeout(timer); fail(j); })
       .catch(function(){ if(timer) clearTimeout(timer); fail(null); });
   }
-  /* met.no 가 안 되면 wttr.in 을 쓴다 — 느리거나 어긋나면 3초 간격으로 최대 2번 더 (총 3회) 받는다.
-     모두 실패하면 이미 잡아 둔 비/눈 상태는 그대로 두고, 첫 로드부터 실패했을 때만 조용히 기본 화면. */
+  /* met.no 가 맑음(또는 실패)이면 wttr.in 도 본다 — 느리거나 어긋나면 3초 간격으로 최대 2번 더 (총 3회) 받는다.
+     둘 다 맑음일 때만 맑음으로 두고, wttr.in 이 눈/비를 주면 그 값을 쓴다.
+     모두 실패해도 met.no 가 맑음이었으면 맑음, 이미 잡아 둔 비/눈은 그대로 두고, 첫 로드부터 둘 다 실패했을 때만 조용히 기본 화면. */
   var WTTR_MS=12000, WTTR_RETRIES=2, WTTR_RETRY_MS=3000;
   var fetching=false;
   var MET_MS=10000;
   function fetchWeather(){
     if(override||fetching) return;
     fetching=true;
-    /* met.no 먼저(브라우저 기본 캐시 사용 — met.no 가 정한 Expires 를 존중) → 못 받으면 wttr.in 으로 */
+    /* met.no 먼저(브라우저 기본 캐시 사용 — met.no 가 정한 Expires 를 존중).
+       눈/비면 바로 적용, 맑음·실패면 wttr.in 도 함께 봐서 눈·비를 교차확인한다. */
     fetchWithTimeout(MET,function(j){
       var s=null; try{ s=stateOfMet(j); }catch(_){ s=null; }
-      if(s){ gotWeather=true; fetching=false; apply(s); return; }
-      tryWttr(WTTR_RETRIES);
+      if(s==='snow'||s==='rain'){ gotWeather=true; fetching=false; apply(s); return; }
+      tryWttr(WTTR_RETRIES, s);                                     /* s = 'clear' 또는 null(met.no 실패) */
     },MET_MS,'default');
   }
-  function tryWttr(left){
+  function tryWttr(left,metState){
     fetchWithTimeout(WTTR,function(j){
       var cur=j&&j.current_condition&&j.current_condition[0];
       if(!cur){                                                     /* 일시적 실패 → 3초 뒤 다시 */
-        if(left>0){ setTimeout(function(){ tryWttr(left-1); },WTTR_RETRY_MS); return; }
+        if(left>0){ setTimeout(function(){ tryWttr(left-1,metState); },WTTR_RETRY_MS); return; }
         fetching=false;
-        if(!gotWeather) apply('clear');                             /* 첫 로드부터 실패 → 기본 조감도 유지 */
+        if(metState==='clear'){ gotWeather=true; apply('clear'); }   /* met.no 맑음 + wttr.in 실패 → 맑음 */
+        else if(!gotWeather) apply('clear');                          /* 첫 로드부터 둘 다 실패 → 기본 조감도 유지 */
         return;
       }
       var desc=cur.weatherDesc&&cur.weatherDesc[0]&&cur.weatherDesc[0].value;
       gotWeather=true; fetching=false;
+      /* 오탐 필터(stateOfWwo)를 통과한 눈/비만 적용한다 — met.no 가 맑음이었어도 이 값이 우선이다.
+         둘 다 맑음이면 clear 로 돌아간다(맑음 → 눈 전환도, 눈 → 맑음 전환도 매번 확인된다) */
       apply(stateOfWwo(cur.weatherCode,desc,cur.precipMM));
     },WTTR_MS);
   }

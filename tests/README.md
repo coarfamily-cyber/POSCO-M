@@ -11,6 +11,7 @@
 | 18시 마감 rollover 회귀(#28279 — 부족 완료·판단 대기 유지) | `node tests/integration/rollover-pending-short.js JISU/index.html` |
 | 2026-11-23 코드감사 수정 회귀(A-1~A-17·#28145) | `node tests/bugfix-20261123.test.js JISU/index.html` |
 | 저장 알림 점(녹색 10초)·작업중 녹색불 제거·범례 회귀 | `node tests/flash-dot.test.js JISU/index.html` |
+| 날씨 눈·비 교차확인(met.no 맑음 + wttr.in 눈/비 · 오탐 필터 유지) | `node tests/weather-crosscheck.test.js JISU/index.html` |
 | 실제 SDK + 에뮬레이터 종단 간 | `npx firebase emulators:exec --only database,auth --project demo-jisu \"node tests/integration/e2e-emulator.js JISU/index.html\"` |
 | 보안 규칙 | `npx firebase emulators:exec --only database --project demo-jisu \"node --test tests/rules/rules.test.js\"` |
 
