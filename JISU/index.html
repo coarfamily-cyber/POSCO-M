@@ -1,7 +1,66 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611251010">
+  <meta name="jisu-build" content="202611251929">
+  <script>/* ==========================================================================
+     저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
+     "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
+     대시보드 전체가 TypeError(예: Cannot read properties of null (reading 'closed'))로
+     멈추고 빈 화면이 됐다. 시작할 때 한 번만 모양을 확인해
+       · 원래 값을 jisu-recover-<키>-<시각> 로 보관해 두고
+       · 앱이 안전하게 다룰 수 있는 모양(빈 배열/빈 객체)으로 되돌린다.
+     정상 값은 건드리지 않는다(배열 안의 null·숫자 같은 잘못된 항목만 걸러낸다).
+     같은 규칙을 window.jisuSanitizeState(키, 값) 로 노출해, 다른 기기에서 온
+     값(Firebase 동기화)을 저장하기 전에도 한 번 거른다.
+     ========================================================================== */
+  (function(){
+    try{
+      var ARR=['jisu-commands-v1','jisu-memos-v1','jisu-schedule-v1','jisu-schedules-v1','jisu-env-log-v1','jisu-maint-log-v1'];
+      var OBJ={'jisu-inbound-records-v1':['rows','archivedRows'],'jisu-pitch-records-v1':null,'jisu-env-v1':null,'jisu-perf-daily-close-v1':null};
+      function isObj(x){ return !!x && typeof x==='object' && !Array.isArray(x); }
+      window.jisuSanitizeState=function(k,raw){
+        if(typeof raw!=='string'||raw==='') return raw;
+        var v; try{ v=JSON.parse(raw); }catch(_){ v=undefined; }
+        if(ARR.indexOf(k)>=0){
+          if(!Array.isArray(v)) return '[]';
+          var f=v.filter(isObj);
+          return f.length===v.length?raw:JSON.stringify(f);
+        }
+        if(Object.prototype.hasOwnProperty.call(OBJ,k)){
+          if(!isObj(v)) return '{}';
+          var listKeys=OBJ[k]; if(!listKeys) return raw;
+          var o=v, changed=false;
+          Object.keys(o).forEach(function(d){
+            if(!isObj(o[d])){ delete o[d]; changed=true; return; }
+            listKeys.forEach(function(f2){
+              var x=o[d][f2];
+              if(x==null) return;
+              if(!Array.isArray(x)){ o[d][f2]=[]; changed=true; return; }
+              var a=x.filter(isObj);
+              if(a.length!==x.length){ o[d][f2]=a; changed=true; }
+            });
+          });
+          return changed?JSON.stringify(o):raw;
+        }
+        return raw;
+      };
+      var ls=window.localStorage; if(!ls) return;
+      var stamp=Date.now();
+      ARR.forEach(function(k){
+        var raw=null; try{ raw=ls.getItem(k); }catch(_){ return; }
+        if(raw==null||raw==='') return;
+        var fixed=window.jisuSanitizeState(k,raw);
+        if(fixed!==raw){ try{ ls.setItem('jisu-recover-'+k+'-'+stamp,raw); ls.setItem(k,fixed); }catch(_){} }
+      });
+      Object.keys(OBJ).forEach(function(k){
+        var raw=null; try{ raw=ls.getItem(k); }catch(_){ return; }
+        if(raw==null||raw==='') return;
+        var fixed=window.jisuSanitizeState(k,raw);
+        if(fixed!==raw){ try{ ls.setItem('jisu-recover-'+k+'-'+stamp,raw); ls.setItem(k,fixed); }catch(_){} }
+      });
+    }catch(_){}
+  })();
+  </script>
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -1644,6 +1703,17 @@
     }
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .map-stage > img{
       display:none !important;
+    }
+    /* 생산 A~H 는 지도에서 4개씩 묶어 놓은 .prod-grid 안에 있어, 작업자 화면에서도 그 격자가
+       absolute·translate 로 남아 카드가 화면 밖(왼쪽 116px·위 -91px)으로 밀리고 가로로 넘쳤다
+       (2026-11-25 ?zone=production-a 실측: 카드 325px·문서 폭 459px > 화면 412px).
+       작업자 화면에서는 격자 틀을 풀어 카드가 화면 폭을 그대로 쓰게 한다. */
+    body.worker-zone-only:not(#z1#z2#z3#z4#z5) #mapStage .prod-grid,
+    body.worker-zone-only:not(#z1#z2#z3#z4#z5) #mapStage .prod-row{
+      position:static !important;left:auto !important;top:auto !important;
+      transform:none !important;display:block !important;
+      width:100% !important;max-width:none !important;min-width:0 !important;
+      height:auto !important;margin:0 !important;padding:0 !important;z-index:auto !important;
     }
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper.is-worker-zone{
       position:static !important;left:auto !important;top:auto !important;transform:none !important;
@@ -11587,10 +11657,18 @@ paint()})();</script>
 /* ?zone=outbound 등 작업자 모바일 전용 자세히보기 단독 모드 */
 (function(){
   try{
-    const z=new URLSearchParams(location.search).get('zone');
+    /* ?zone= 값은 구역 키 하나여야 한다. 'outbound:RAS-2' 처럼 하위 품목이 붙어 오면 구역만 쓴다. */
+    const z=String(new URLSearchParams(location.search).get('zone')||'').split(':')[0];
     if(!z) return;
     const wrap=document.getElementById('hotspot-'+z);
-    if(!wrap) return;
+    if(!wrap){
+      /* 없는 구역(?zone=zzz·?zone=1 등)이면 작업자 화면으로 만들지 않는다.
+         예전에는 html 의 worker-zone-only 클래스만 남아 상단바·사이드바·지도가 모두 숨겨진
+         빈 화면이 됐다(2026-11-25 확인). 그대로 관리자 대시보드를 보여준다. */
+      document.documentElement.classList.remove('worker-zone-only');
+      document.body.classList.remove('worker-zone-only');
+      return;
+    }
     document.body.classList.add('worker-zone-only');
     wrap.classList.add('is-worker-zone','is-open');
     const zTitle=wrap.querySelector('.enscape-title')?.textContent||z.toUpperCase();
@@ -12786,6 +12864,9 @@ paint()})();</script>
   function applyRemote(k,json,suppressAlert){
     lastSent[k]=json;                       // 비교 기준은 DB 원본 값
     lastRemote[k]=json;
+    /* 다른 기기에서 올라온 값이 배열/객체 모양이 아니면(예: "null") 화면이 멈추므로,
+       2026-11-25 부터는 저장하기 전에 한 번 건다 (시작 시 자동 복구와 같은 규칙). */
+    try{ if(window.jisuSanitizeState) json=window.jisuSanitizeState(keyOf(k),json); }catch(_){}
     if(keyOf(k)!==k){                       // v2 묶음: 로컬 키 전체 목록에 이 묶음만 합쳐서 반영
       var mergedLocal=mergeUnitIntoLocal(k,json);
       if(mergedLocal==null) return;
