@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611240953">
+  <meta name="jisu-build" content="202611250906">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -1614,6 +1614,10 @@
     html.worker-zone-only .move-layer,
     html.worker-zone-only #moveLabels,
     html.worker-zone-only .move-labels,
+    /* 2026-11-25 수뽕 님 제보: ?zone= 작업자 화면은 .map-stage 가 static 이라 지도 위 청소중 레이어(#envCleanLayer, absolute·inset:0·z-index:20)가
+       화면 전체를 기준으로 잡혀 '1,2호기 청소중...' 사람·말풍선이 금일작업 카드 위로 떠 보였다. 작업자 화면에서는 다른 지도 레이어와 같이 숨긴다. */
+    html.worker-zone-only #envCleanLayer,
+    html.worker-zone-only .env-clean-layer,
     html.worker-zone-only .map-stage > img,
     html.worker-zone-only .hotspot-wrapper:not(.is-worker-zone),
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) header,
@@ -1624,6 +1628,8 @@
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .move-layer,
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) #moveLabels,
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .move-labels,
+    body.worker-zone-only:not(#z1#z2#z3#z4#z5) #envCleanLayer,
+    body.worker-zone-only:not(#z1#z2#z3#z4#z5) .env-clean-layer,
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper:not(.is-worker-zone){
       display:none !important;
     }
