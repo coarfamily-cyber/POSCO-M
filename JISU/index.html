@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611250906">
+  <meta name="jisu-build" content="202611251010">
   <script>/* 숫자 읽기 공용: 천 단위 쉼표("18,000 KG", "1,200 EA")를 18·1.2로 잘못 읽지 않게 한다. */
   window.jisuParseNum = function (raw) {
     var s = String(raw == null ? '' : raw).trim();
@@ -1618,6 +1618,9 @@
        화면 전체를 기준으로 잡혀 '1,2호기 청소중...' 사람·말풍선이 금일작업 카드 위로 떠 보였다. 작업자 화면에서는 다른 지도 레이어와 같이 숨긴다. */
     html.worker-zone-only #envCleanLayer,
     html.worker-zone-only .env-clean-layer,
+    /* 2026-11-25 수뽕 님 승인(#28809): 같은 이유(.map-stage static)로 지도 위 차량 불빛 연출(.veh-lights, absolute·inset:0)도
+       화면 전체 기준이 되어 금일작업 카드 위에 희미한 빛줄기·깜빡이는 경광등 점으로 떠 보였다. 지도 사진이 숨겨진 작업자 화면에서는 목적이 없는 연출이라 같이 숨긴다. */
+    html.worker-zone-only .veh-lights,
     html.worker-zone-only .map-stage > img,
     html.worker-zone-only .hotspot-wrapper:not(.is-worker-zone),
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) header,
@@ -1630,6 +1633,7 @@
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .move-labels,
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) #envCleanLayer,
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .env-clean-layer,
+    body.worker-zone-only:not(#z1#z2#z3#z4#z5) .veh-lights,
     body.worker-zone-only:not(#z1#z2#z3#z4#z5) .hotspot-wrapper:not(.is-worker-zone){
       display:none !important;
     }
