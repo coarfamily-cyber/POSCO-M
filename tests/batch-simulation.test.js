@@ -170,6 +170,12 @@ test('A. 날짜 헤더·기간·해 넘김·전각/없는 날짜', async () => {
     assert.deepEqual(r.rows.map(x => [x.date, x.text]), [[TODAY, '사각박스 640 EA']]);
     assert.match(r.warn, /없는 날짜/);
 
+    // 기간 뒤에 없는 날짜가 와도 그 기간 날짜들로 복사되지 않는다 (오늘 한 번만)
+    r = preview(w, `${md(D1)}~${md(D3)}\n입고 사각박스 640EA\n11/32\n입고 확인용 10EA`);
+    assert.deepEqual(r.rows.map(x => x.date), [TODAY, D1, D2, D3]);
+    assert.deepEqual(r.rows.filter(x => x.text === '확인용 10 EA').map(x => x.date), [TODAY]);
+    assert.match(r.warn, /없는 날짜/);
+
     // 분수·설비 표기는 날짜가 아니다
     r = preview(w, '1/2호기 청소 09:00');
     assert.deepEqual(r.rows.map(x => x.text), ['1/2호기 청소 09:00']);

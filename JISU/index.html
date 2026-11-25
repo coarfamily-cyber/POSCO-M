@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611252031">
+  <meta name="jisu-build" content="202611252036">
   <script>/* ==========================================================================
      저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
      "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
@@ -9061,13 +9061,13 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         /* 달력에 없는 날짜(11/32, 2027/2/29) — 글자를 작업 내용으로 등록하지 않고, 뒤에 붙은 내용만 오늘 날짜로 */
         const bad=dh?null:looseDateStart(line);
         if(bad && !isValidYmd(bad.y,bad.mo,bad.d)){
-          batchWarnings.push('없는 날짜 '+(bad.mo)+'/'+(bad.d)+' 는 건너뜁니다.');
+          /* 없는 날짜는 날짜만 버리고, 그 아래 내용은 오늘(기준일)로 한 번만 등록한다.
+             (앞의 기간이 살아 있을 때 그 기간 날짜 수만큼 복사되면 안 된다) */
           const rest=stripDateTailMeta(bad.trailing);
-          if(rest){
-            if(!curDate) curDate=fallbackDate;
-            if(!curDates && !groups.has(curDate)) groups.set(curDate,[]);
-            if(curDates) curDates.forEach(d=>addLineItem(d,rest)); else addLineItem(curDate,rest);
-          }
+          batchWarnings.push('없는 날짜 '+(bad.mo)+'/'+(bad.d)+' 는 건너뛰고'+(rest?' 그 내용은 오늘 날짜로 등록합니다.':' 넘어갑니다.'));
+          curDates=null; curDate=fallbackDate;
+          if(!groups.has(curDate)) groups.set(curDate,[]);
+          if(rest) addLineItem(curDate,rest);
           continue;
         }
         if(!curDate && !curDates){
