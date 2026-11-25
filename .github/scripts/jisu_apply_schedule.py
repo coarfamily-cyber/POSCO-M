@@ -220,7 +220,7 @@ def _split_once(s: str):
         after = s[i + 2:]
         if before and not _BOUNDARY_RE.match(before):
             continue
-        if not after[:1].isspace():      # '오전에' 처럼 붙은 말은 라벨이 아니다
+        if not (after[:1].isspace() or after[:1] in ",·;:/|、()~-"):   # '오전에' 처럼 붙은 말은 라벨이 아니다 (쉼표·괄호는 허용 — index.html 과 같은 규칙)
             continue
         marks.append((i, m.group(1)))
     if not marks:

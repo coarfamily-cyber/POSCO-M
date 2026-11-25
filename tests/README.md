@@ -13,6 +13,8 @@
 | 저장 알림 점(녹색 10초)·작업중 녹색불 제거·범례 회귀 | `node tests/flash-dot.test.js JISU/index.html` |
 | 날씨 눈·비 교차확인(met.no 맑음 + wttr.in 눈/비 · 오탐 필터 유지) | `node tests/weather-crosscheck.test.js JISU/index.html` |
 | ?zone= 없는 구역 → 관리자 화면 · 저장값 자동 복구(로컬·DB 수신) · 생산 작업자 화면 격자 해제 (2026-11-25) | `node tests/zone-and-recovery.test.js JISU/index.html` |
+| 일괄등록 집중 시뮬레이션(날짜·구역·톤수·분류·저장·미리보기 체크/구역 변경) 회귀 (2026-11-25) | `node tests/batch-simulation.test.js JISU/index.html` |
+| 일괄등록 미래 예약 → 08시 스크립트 반영(톤수·공지·특이사항·오전/오후·파렛트) (2026-11-25) | `python3 tests/batch_0800_apply_test.py` |
 | 실제 SDK + 에뮬레이터 종단 간 | `npx firebase emulators:exec --only database,auth --project demo-jisu \"node tests/integration/e2e-emulator.js JISU/index.html\"` |
 | 보안 규칙 | `npx firebase emulators:exec --only database --project demo-jisu \"node --test tests/rules/rules.test.js\"` |
 

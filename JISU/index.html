@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611251929">
+  <meta name="jisu-build" content="202611252031">
   <script>/* ==========================================================================
      저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
      "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
@@ -220,7 +220,7 @@
         var before=i>0?s.charAt(i-1):'';
         var after=s.slice(i+2);
         if(!isBoundary(before)) continue;
-        if(!/^\s/.test(after)) continue;   /* '오전에' 처럼 붙은 말은 라벨이 아니다 */
+        if(!/^[\s,·;:/|、()~\-]/.test(after)) continue;   /* '오전에' 처럼 붙은 말은 라벨이 아니다 (쉼표·괄호는 허용) */
         out.push({i:i,label:m[1]});
       }
       return out;
@@ -2676,7 +2676,7 @@
       .cal-box .cal-side{grid-template-columns:1fr !important;}
       .cal-box .cal-side > #czBatchView{display:none !important;padding-left:0;border-left:0;}
       .cal-box .cal-side > #czBatchView.is-open-mobile{display:flex !important;}
-      .cal-box.is-batch-mobile .cal-weekdays,.cal-box.is-batch-mobile .cal-grid,.cal-box.is-batch-mobile #czSingleView{display:none !important;}
+      .cal-box.is-batch-mobile .cal-weekdays,.cal-box.is-batch-mobile .cal-week,.cal-box.is-batch-mobile .cal-grid,.cal-box.is-batch-mobile #czSingleView{display:none !important;}
     }
     /* ===== 이월 색: 핑크 (#EC4899) — 작업중(주황)과 구분, 3회 이상은 빨강 유지 ===== */
     .carry-tag:not(.hot){background:#ec4899 !important;box-shadow:0 0 6px rgba(236,72,153,.55) !important;}
@@ -4015,6 +4015,16 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(37,99,
       flex-direction: column;
       gap: 8px;
     }
+    /* 입력은 읽었지만 일부를 건너뛴 이유(없는 날짜·31일 초과 기간)를 미리보기 맨 위에 알린다 (2026-11-25) */
+    .cz-batch-warn {
+      font-size: 11.5px;
+      line-height: 1.5;
+      color: #fbbf24;
+      background: rgba(251, 191, 36, 0.10);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      border-radius: 8px;
+      padding: 6px 8px;
+    }
     .cz-batch-group {
       background: rgba(30, 41, 59, 0.55);
       border: 1px solid rgba(56, 189, 248, 0.25);
@@ -4043,6 +4053,27 @@ body:not(#zz) #hotspot-pitch .pitch-input:focus{box-shadow:0 0 0 1px rgba(37,99,
       padding: 3px 0;
       border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
     }
+    /* 미리보기에서 항목 빼기·구역 바꾸기 (2026-11-25) — 기존 배지 모양 그대로 */
+    .cz-batch-ck{
+      flex: 0 0 auto; width: 14px; height: 14px; margin: 0 1px 0 0;
+      accent-color: #38bdf8; cursor: pointer;
+    }
+    .cz-batch-item.is-off{ opacity: .42; }
+    .cz-batch-item.is-off .cz-batch-txt{ text-decoration: line-through; }
+    .cz-batch-item.is-off .cz-batch-zone-wrap{ filter: grayscale(.6); }
+    /* 구역 배지는 그대로 두고, 그 위에 투명한 select 를 겹쳐 눌러서 바꾼다 (좁은 화면에서 배지가 글자를 밀어내지 않게) */
+    .cz-batch-zone-wrap{ position: relative; display: inline-flex; flex: 0 0 auto; }
+    .cz-batch-zone{
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      opacity: 0; border: 0; padding: 0; margin: 0; cursor: pointer;
+      font-size: 16px;   /* iOS 확대 방지 */
+    }
+    .cz-batch-caret{
+      font-style: normal; font-size: 8px; line-height: 1; margin-left: 2px;
+      opacity: .8; vertical-align: 1px; pointer-events: none;
+    }
+    .cz-batch-zone-wrap:has(.cz-batch-zone:focus-visible){ outline: 2px solid #7dd3fc; outline-offset: 1px; border-radius: 6px; }
+    .cz-batch-txt{ min-width: 0; overflow-wrap: anywhere; }
     .cz-batch-item:last-child {
       border-bottom: none;
     }
@@ -8041,6 +8072,20 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           break; }
         return {target:mtgt,kind:'memo',text:(window.jisuNormUnitFor?window.jisuNormUnitFor(rest,mtgt||'memo'):rest),urgent:mUrgent};
       }
+      /* 포장1·포장2 — 달력에는 '포장' 구역 하나뿐이라 라인 번호를 '1라인'으로 살려 둔다 (2026-11-25) */
+      s=s.replace(/^(포장)\s*([1-9])(?=\s|$)/,'$1 $2라인');
+      /* 공장간 이송(2공장→1공장 / 1공장→2공장) — 출고·입고의 '공장간이송' 하위 대상으로 등록한다 */
+      const tr=s.match(/^(?:([출입]고)\s*)?([12])\s*공장\s*(?:→|->|⇒|>)\s*([12])\s*공장(?=\s|$|[^\s])(.*)$/);
+      if(tr && tr[2]!==tr[3]){
+        const core=s.slice(tr[1]?tr[1].length:0).trim();
+        const tgt=tr[2]==='2'?'outbound:2공장→1공장':'inbound:1공장→2공장';
+        return {target:tgt,kind,text:(window.jisuNormUnitFor?window.jisuNormUnitFor(core,tgt):core),urgent};
+      }
+      /* 여러 동을 한 줄에(1, 2동 · 2~3동 · 1동, 2동) — 첫 동에 등록하고 글자는 그대로 남긴다(물량을 두 배로 만들지 않는다) */
+      const mb=s.match(/^([1-4])\s*(?:[,·、~～\/]\s*[1-4]\s*|[1-4]?\s*)동\s*[,·、~～\/]\s*[1-4]\s*동(?=\s|$)/) || s.match(/^([1-4])\s*[,·、~～\/]\s*[1-4]\s*동(?=\s|$)/);
+      if(mb){
+        return {target:mb[1],kind,text:(window.jisuNormUnitFor?window.jisuNormUnitFor(s,mb[1]):s),urgent};
+      }
       const compact=s.replace(/\s+/g,'').toUpperCase();
       if(/^전체(\s|[:：/\-]|공지|$)/.test(s)){ let rest=s.replace(/^전체\s*[:：/\-]?\s*/,'').replace(/^공지(?:사항)?\s*[:：/\-]?\s*/,''); if(/^[!！]/.test(rest)){ urgent=true; rest=rest.replace(/^[!！]+\s*/,''); } if(!rest) return {err:'"'+String(line||'').trim()+'" - 내용이 없어요'}; return {target:'*',kind:'notice',text:rest,urgent}; }
       for(const [a,k] of ALIAS){ const ac=a.replace(/\s+/g,'').toUpperCase(); if(compact.startsWith(ac)){
@@ -8471,6 +8516,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const quickPrompt=$('czQuickBatchPrompt'), quickBtn=$('czQuickBatchBtn');
 
     let parsedBatchData=[];
+    /* 미리보기에서 사람이 바꾼 값: 체크 해제(_off)·구역 변경(target). 줄 내용을 키로 삼아 다시 그려도 유지된다 (2026-11-25) */
+    let batchRowState=new Map();
 
     function setBatchView(show){
       if(!singleView || !batchView) return;
@@ -8744,10 +8791,88 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       return (curM>=10 && mo<=3)?(curY+1):curY;
     }
 
+    /* 줄 정리 (2026-11-25): 메신저에서 복사한 글은 전각 숫자·전각 슬래시·탭·연속 공백이 섞여 온다.
+       "１１／２６" 이 날짜로, "입고<TAB>사각박스" 가 구역+품목으로 인식되게 일반 문자·한 칸으로 맞춘다.
+       (①② 같은 원문자 번호는 NFKC 로 바꾸면 '2' 가 되어 불릿 판별이 깨지므로 전각 ASCII 만 직접 변환한다) */
+    function batchNormLine(raw){
+      let s=String(raw==null?'':raw);
+      s=s.replace(/[\uFF01-\uFF5E]/g,ch=>String.fromCharCode(ch.charCodeAt(0)-0xFEE0)).replace(/\u3000/g,' ');
+      s=s.replace(/[ \t]+/g,' ').replace(/\s+$/,'');
+      return s;
+    }
+
+    /* 머리 기호 정리: 이모지·불릿(###, •, ▶)·번호(1. ①) 접두, 맨 앞 요일 표기((목) 등)를 걷어낸다.
+       "1. 11/26 입고 …" 이 '1월 11일'로 잘못 읽히거나, "### 공지 …" 가 그대로 작업 글자가 되던 문제(2026-11-25) */
+    function stripBatchLead(s,withBracket){
+      let t=String(s==null?'':s).trim();
+      const sym=withBracket
+        ? /^(?:📅|📆|🗓️?|📌|✅|✔️?|🔹|🔸|▪️?|▫️?|[■□▶▷►●○◆◇★☆•·\-*#※\[【])+\s*/u
+        : /^(?:📅|📆|🗓️?|📌|✅|✔️?|🔹|🔸|▪️?|▫️?|[■□▶▷►●○◆◇★☆•·\-*#※])+\s*/u;
+      for(let i=0;i<5;i++){
+        const before=t;
+        t=t.replace(/^[\u{1F300}-\u{1FAFF}\u2600-\u27BF\u2B00-\u2BFF\uFE0F]+\s*/u,'');                            /* 이모지 불릿 */
+        t=t.replace(/^(?:\uD83D[\uDC00-\uDFFF]|\uD83C[\uDC00-\uDFFF]|\uD83E[\uDC00-\uDFFF])+\s*/u,'');
+        t=t.replace(sym,'');
+        /* "11.26" 의 '11.' 을 번호로 걷어내면 날짜가 깨진다 — 번호는 뒤에 공백이 있을 때만 ("1. 11/26") */
+        t=t.replace(/^(?:\d{1,2}[.)](?=\s)|[①-⑳➀-➉])\s*/u,'');
+        t=t.replace(/^\([월화수목금토일](?:요일)?\)\s*/,'');
+        t=t.replace(/^[월화수목금토일]요일[\s,·:：\-]+/,'');
+        if(t===before) break;
+      }
+      return t.trim();
+    }
+    /* 요일만 적힌 줄 — 날짜 헤더가 아니라 꾸밈 표기다. 작업으로 등록하지 않는다. */
+    function isWeekdayOnlyLine(line){
+      const s=String(line==null?'':line).trim();
+      return /^(?:\(?[월화수목금토일](?:요일)?\)?|[월화수목금토일]요일)$/.test(s);
+    }
+    /* 날짜처럼 보이지만 달력에 없는 값(11/32, 2027/2/29, 2월 30일) 판별 — 오늘 작업으로 둔갑하지 않게 */
+    function looseDateStart(line){
+      const s=stripBatchLead(line,true);
+      let m=s.match(/^(\d{4})\s*[년.\-/]\s*(\d{1,2})\s*[월.\-/]\s*(\d{1,2})\s*일?\s*(?:[\(\uFF08]\s*[월화수목금토일](?:요일)?\s*[\)\uFF09])?\s*[:：|\-]?\s*(.*)$/);
+      if(m) return {y:parseInt(m[1],10),mo:parseInt(m[2],10),d:parseInt(m[3],10),trailing:m[4]||''};
+      m=s.match(/^(\d{1,2})\s*월\s*(\d{1,2})\s*일?\s*(?:[\(\uFF08]\s*[월화수목금토일](?:요일)?\s*[\)\uFF09])?\s*[:：|\-]?\s*(.*)$/);
+      if(m) return {y:inferBatchYear(parseInt(m[1],10)),mo:parseInt(m[1],10),d:parseInt(m[2],10),trailing:m[3]||''};
+      m=s.match(/^(\d{1,2})\s*[\/.\-]\s*(\d{1,2})(?![0-9])\s*(?:[\(\uFF08]\s*[월화수목금토일](?:요일)?\s*[\)\uFF09])?\s*(.*)$/);
+      if(m){
+        const mo=parseInt(m[1],10), da=parseInt(m[2],10), rest=m[3]||'';
+        /* 분수·설비 표기(1/2호기, 16.5 TON, 3/4라인)는 날짜가 아니다 */
+        if(mo<1||mo>12) return null;
+        if(rest && !/^[\s:：|\-]/.test(rest) && !/^일/.test(rest)) return null;
+        if(/^(?:호기|라인|동|톤|TON|KG|EA|개|대|박스|백|BAG|PLT|P|SET|차|회|층|조|반|번)/i.test(rest.trim())) return null;
+        return {y:inferBatchYear(mo),mo,d:da,trailing:rest.replace(/^일\.?/,'').replace(/^[\s:：|\-]+/,'')};
+      }
+      return null;
+    }
+    /* "11/26, 11/27" · "11/26·11/27" · "11월 26일, 27일" 처럼 한 줄에 여러 날짜 */
+    function isMultiDateHeader(line){
+      const s=stripBatchLead(line,true);
+      if(!s) return null;
+      const HEAD=/^(?:(\d{4})\s*[년.\-/]\s*)?(\d{1,2})\s*(?:월\s*(\d{1,2})\s*일?|[\/.\-]\s*(\d{1,2}))\s*(?:[\(\uFF08]\s*[월화수목금토일](?:요일)?\s*[\)\uFF09])?/;
+      const m=s.match(HEAD);
+      if(!m) return null;
+      const mo0=parseInt(m[2],10), d0=parseInt(m[3]||m[4],10), y0=m[1]?parseInt(m[1],10):inferBatchYear(mo0);
+      if(!isValidYmd(y0,mo0,d0)) return null;
+      let pos=m[0].length;
+      const dates=[fmtYmd(y0,mo0,d0)];
+      const MORE=/^\s*[,·、]\s*(?:(\d{4})\s*[년.\-/]\s*)?(\d{1,2})\s*(?:월\s*(\d{1,2})\s*일?|[\/.\-]\s*(\d{1,2}))\s*(?:[\(\uFF08]\s*[월화수목금토일](?:요일)?\s*[\)\uFF09])?/;
+      for(let k=0;k<10;k++){
+        const r=s.slice(pos).match(MORE);
+        if(!r) break;
+        const mo=parseInt(r[2],10), da=parseInt(r[3]||r[4],10), y=r[1]?parseInt(r[1],10):inferBatchYear(mo);
+        if(!isValidYmd(y,mo,da)) break;
+        dates.push(fmtYmd(y,mo,da)); pos+=r[0].length;
+      }
+      if(dates.length<2) return null;
+      return {dates:Array.from(new Set(dates)),trailing:stripDateTailMeta(s.slice(pos))};
+    }
+
     function stripDateTailMeta(tr){
       let s=String(tr||'').trim();
       /* 닫는 대괄호·괄호 제거 ([11/20] -> 남은 ]) */
       s=s.replace(/^[\]\)】]+\s*/,'');
+      /* 기간 꼬리: "11월 28일까지" 의 "까지", "부터" 잔여물 — 작업 줄로 만들지 않는다 (2026-11-25) */
+      s=s.replace(/^[~～\-]?\s*(?:까지|부터)\s*/,'');
       /* 기간 표기 제거 (~ 모레, ~ 내일) — 날짜 없는 기간은 헤더로만 쓰고 작업 줄로 만들지 않는다 */
       s=s.replace(/^[~～\-]\s*(?:오늘|금일|내일|명일|모레)\s*/,'');
       /* 기간 끝날짜 제거 (~ 11/21, ~ 21일, ~ 11월 21일(토)) */
@@ -8768,9 +8893,8 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const RANGE_SEP='(?:~|～|〜|∼|–|—|부터|to|-)';
     const RANGE_MAX_DAYS=31;
     function isDateRangeHeader(line){
-      const raw=String(line||'').trim();
-      if(!raw) return null;
-      const s=raw.replace(/^(?:📅|📆|🗓️?|📌|✅|✔️?|🔹|🔸|▪️?|▫️?|[■□▶▷►●○◆◇★☆•·\-*※\[\(【])+\s*/u,'').trim();
+      if(!String(line||'').trim()) return null;
+      const s=stripBatchLead(line,true);
       if(!s) return null;
       const D='(\\d{1,2})\\s*[월.\\-/]\\s*(\\d{1,2})\\s*일?';
       const re=new RegExp('^((?:\\d{4})\\s*[년.\\-/]\\s*)?'+D+'\\s*(?:\\([월화수목금토일](?:요일)?\\))?\\s*'+RANGE_SEP+'\\s*((?:\\d{4})\\s*[년.\\-/]\\s*)?(?:'+D+'|(\\d{1,2}))\\s*일?');
@@ -8788,14 +8912,14 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const dates=[];
       for(let k=0;k<RANGE_MAX_DAYS;k++){ const d=shiftYmd(start,k); dates.push(d); if(d>=end) break; }
       if(dates.length<2) return null;   /* 같은 날짜면 일반 날짜 헤더로 처리 */
-      return { dates:dates, trailing:stripDateTailMeta(s.slice(m[0].length)) };
+      const truncated=dates[dates.length-1]<end;
+      return { dates:dates, trailing:stripDateTailMeta(s.slice(m[0].length)), end:end, truncated:truncated };
     }
 
     function isDateHeader(line){
-      const raw=String(line||'').trim();
-      if(!raw) return null;
-      /* 선행 이모지·기호·여는 괄호 정리 (■ 11월 20일, [11/20], ▶ 11.22(일), 📅 11/23) */
-      const s=raw.replace(/^(?:📅|📆|🗓️?|📌|✅|✔️?|🔹|🔸|▪️?|▫️?|[■□▶▷►●○◆◇★☆•·\-*※\[\(【])+\s*/u,'').trim();
+      if(!String(line||'').trim()) return null;
+      /* 선행 이모지·기호·번호·요일 정리 (■ 11월 20일, [11/20], ▶ 11.22(일), 📅 11/23, 1. 11/26, (목) 11/26) */
+      const s=stripBatchLead(line,true);
       if(!s) return null;
       /* 상대 날짜 헤더: 오늘, 금일, 내일, 명일, 모레 */
       let rel=s.match(/^(오늘|금일|내일|명일|모레)(?:[\]\)】])?(?:\s*\([월화수목금토일](?:요일)?\))?(?:\s*[:：|\-~～]|\s+|$)(.*)$/);
@@ -8839,7 +8963,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(/^(?:호기|라인|동|톤|TON|KG|EA|개|대|박스|백|BAG|PLT|P|SET|차|회|층|조|반|번)/i.test(rest.trim())) return null;
         /* M.D 뒤에 아무 구분자 없이 한글이 바로 붙으면(예: 1.5배) 차단 — 단 "일"은 허용 */
         if(sep==='.' && /^[가-힣]/.test(rest) && !/^일/.test(rest)) return null;
-        const cleanRest=rest.replace(/^일\.?/,'').replace(/^\./,'');
+        const cleanRest=rest.replace(/^일\.?/,'').replace(/^[.\/|:：\-]+\s*/,'');
         const y=inferBatchYear(mo);
         if(isValidYmd(y,mo,da)) return { y, m:mo, d:da, trailing:stripDateTailMeta(cleanRest) };
         return null;
@@ -8847,9 +8971,12 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       return null;
     }
 
+    /* 미리보기 경고(없는 날짜·31일 초과 기간·중복) — parseBatch 가 채우고 renderBatchPreview 가 보여 준다 */
+    let batchWarnings=[];
     function parseBatch(text,defTarget){
+      batchWarnings=[];
       if(!text||!text.trim()) return [];
-      const lines=String(text).split(/\r?\n/);
+      const lines=String(text).split(/\r?\n/).map(batchNormLine);
       const ignoreRes=[
         /^[-=_*~━─═·•.]{3,}$/,
         /^-{3,}\s*\d{4}년.*-{3,}$/,
@@ -8866,7 +8993,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const groups=new Map();
 
       function addLineItem(d,raw){
-        let clean=String(raw||'').replace(/^[\-*•·|▶▷►●○■□◆◇★☆※①-⑳]+\s*/u,'').replace(/^\d{1,2}[.)](?=\s)/,'').replace(/[\s\-–—*•·|▶◀▷◁►◄●○■□◆◇★☆※#~～]+$/u,'').trim();
+        let clean=stripBatchLead(String(raw||'')).replace(/[\s\-–—*•·|▶◀▷◁►◄●○■□◆◇★☆※#~～]+$/u,'').trim();
         if(!clean) return;
         const memoDefault=(defTarget==='memo');   /* 기본 대상 목록에서 '특이사항'을 고른 경우 — 모든 줄을 특이사항으로 */
         const tgtDefault=(defTarget&&defTarget!=='memo')?defTarget:'inbound';
@@ -8905,12 +9032,22 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         if(!line) continue;
         /* 기호만 있는 줄(###, ◆◆◆, ---)은 작업 내용이 아니다 — 예전에는 '###' 이 그대로 카드가 됐다 */
         if(!/[0-9A-Za-z\uAC00-\uD7A3]/.test(line)) continue;
+        /* 요일만 적힌 줄((목), 목요일)은 꾸밈 표기 — 작업으로 등록하지 않는다 (2026-11-25) */
+        if(isWeekdayOnlyLine(line)) continue;
         if(!/\d+\s*(?:TON|톤|EA|개|BAG|kg|set|PLT|박스|파레트|팔레트|파렛트)/i.test(line) && ignoreRes.some(r=>r.test(line))) continue;
+        const md=isMultiDateHeader(line);
+        if(md && md.dates.length){
+          curDate=null; curDates=md.dates;
+          curDates.forEach(d=>{ if(!groups.has(d)) groups.set(d,[]); });
+          if(md.trailing) curDates.forEach(d=>addLineItem(d,md.trailing));
+          continue;
+        }
         const rg=isDateRangeHeader(line);
         if(rg && rg.dates.length){
           /* 범위 헤더: 시작일~종료일 사이 날짜마다 같은 작업을 등록한다 */
           curDate=null; curDates=rg.dates;
           curDates.forEach(d=>{ if(!groups.has(d)) groups.set(d,[]); });
+          if(rg.truncated) batchWarnings.push('기간이 '+RANGE_MAX_DAYS+'일을 넘어 '+rg.dates[0].slice(5).replace('-','/')+'부터 '+rg.dates[rg.dates.length-1].slice(5).replace('-','/')+'까지만 등록합니다.');
           if(rg.trailing) curDates.forEach(d=>addLineItem(d,rg.trailing));
           continue;
         }
@@ -8919,6 +9056,18 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           curDate=fmtYmd(dh.y,dh.m,dh.d); curDates=null;
           if(!groups.has(curDate)) groups.set(curDate,[]);
           if(dh.trailing) addLineItem(curDate,dh.trailing);
+          continue;
+        }
+        /* 달력에 없는 날짜(11/32, 2027/2/29) — 글자를 작업 내용으로 등록하지 않고, 뒤에 붙은 내용만 오늘 날짜로 */
+        const bad=dh?null:looseDateStart(line);
+        if(bad && !isValidYmd(bad.y,bad.mo,bad.d)){
+          batchWarnings.push('없는 날짜 '+(bad.mo)+'/'+(bad.d)+' 는 건너뜁니다.');
+          const rest=stripDateTailMeta(bad.trailing);
+          if(rest){
+            if(!curDate) curDate=fallbackDate;
+            if(!curDates && !groups.has(curDate)) groups.set(curDate,[]);
+            if(curDates) curDates.forEach(d=>addLineItem(d,rest)); else addLineItem(curDate,rest);
+          }
           continue;
         }
         if(!curDate && !curDates){
@@ -8969,8 +9118,26 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         parsedBatchData=parsedBatchData.map(function(g){ return {date:g.date,items:window.jisuExpandAmPmItems(g.items)}; });
       }
 
+      /* 같은 날짜·구역·종류·내용이 한 붙여넣기 안에 두 번 있으면 한 번만 (저장 결과와 미리보기 건수를 맞춘다) */
+      if(parsedBatchData.length){
+        const seenKey=new Set(); let dupInBatch=0;
+        parsedBatchData=parsedBatchData.map(g=>({date:g.date,items:g.items.filter(it=>{
+          const k=[g.date,it.target,it.kind,it.text].join('\u0001');
+          if(seenKey.has(k)){ dupInBatch++; return false; }
+          seenKey.add(k); return true;
+        })})).filter(g=>g.items.length);
+        if(dupInBatch) batchWarnings.push('같은 내용 '+dupInBatch+'건은 한 번만 등록합니다.');
+      }
+
+      /* 미리보기에서 체크를 풀었거나 구역을 바꾼 항목을 반영한다 */
+      parsedBatchData=parsedBatchData.map(g=>({date:g.date,items:g.items.map(it=>{
+        const k=[g.date,it.target,it.kind,it.text].join('\u0001');
+        const st=batchRowState.get(k)||{};
+        return Object.assign({},it,{_k:k,_off:!!st.off,target:st.target||it.target});
+      })}));
+
       let totalCount=0;
-      parsedBatchData.forEach(g=>{ totalCount+=g.items.length; });
+      parsedBatchData.forEach(g=>{ totalCount+=g.items.filter(it=>!it._off).length; });
       if(batchCountBadge) batchCountBadge.textContent=totalCount+'건';
       if(batchSaveBtn){
         batchSaveBtn.disabled=totalCount===0;
@@ -8983,16 +9150,19 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         return;
       }
 
+      const warnHtml=batchWarnings.length
+        ? '<div class="cz-batch-warn">'+batchWarnings.map(w=>'⚠️ '+esc(w)).join('<br>')+'</div>'
+        : '';
       if(!parsedBatchData.length){
         const emptyMsg=(disp && disp.skipped1>0)
           ? ('2공장 배차 내역이 없습니다. (1공장 '+disp.skipped1+'건 자동 제외됨)')
           : '등록할 수 있는 항목을 찾지 못했습니다. 입력 내용을 확인해 주세요.';
-        batchPreview.innerHTML='<div class="cz-empty" style="color:#f87171;">'+esc(emptyMsg)+'</div>';
+        batchPreview.innerHTML=warnHtml+'<div class="cz-empty" style="color:#f87171;">'+esc(emptyMsg)+'</div>';
         return;
       }
 
       const today=kstToday();
-      batchPreview.innerHTML=parsedBatchData.map(g=>{
+      batchPreview.innerHTML=warnHtml+parsedBatchData.map(g=>{
         const parts=String(g.date||'').split('-').map(Number);
         const y=parts[0], m=parts[1], d=parts[2];
         const valid=isValidYmd(y,m,d);
@@ -9001,19 +9171,44 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         return '<div class="cz-batch-group">'
           +'<div class="cz-batch-group-title">'
           +'<b>📅 '+(valid?(m+'월 '+d+'일 ('+dow+')'):esc(g.date))+(isPast?' <span style="color:#fbbf24;font-size:10.5px;">⚠️ 지난 날짜(마감 기록)</span>':'')+'</b>'
-          +'<span>'+g.items.length+'건</span>'
+          +'<span>'+g.items.filter(it=>!it._off).length+'건</span>'
           +'</div>'
           +g.items.map(it=>{
             const tgtName=NAMES[it.target]||it.target;
-            return '<div class="cz-batch-item">'
-              +'<span class="cz-batch-target-tag '+zoneClass(it)+'">'+esc(tgtName)+'</span>'
+            const opts=Object.keys(NAMES).map(k=>'<option value="'+esc(k)+'"'+(k===it.target?' selected':'')+'>'+esc(NAMES[k])+'</option>').join('');
+            return '<div class="cz-batch-item'+(it._off?' is-off':'')+'">'
+              +'<input type="checkbox" class="cz-batch-ck" data-bk="'+esc(it._k)+'"'+(it._off?'':' checked')+' title="이 항목 빼고 저장" aria-label="이 항목 포함">'
+              +'<span class="cz-batch-zone-wrap"><span class="cz-batch-target-tag '+zoneClass(it)+'">'+esc(tgtName)+'<i class="cz-batch-caret">▾</i></span>'
+              +'<select class="cz-batch-zone" data-zk="'+esc(it._k)+'" title="구역 바꾸기" aria-label="'+esc(tgtName)+' 구역 바꾸기">'+opts+'</select></span>'
               +(it.kind==='notice'?'<span class="cal-tag n">공지</span>':(it.kind==='memo'?'<span class="cal-tag m">특이사항</span>':''))
               +(it.urgent?'<span class="urg-tag">긴급</span>':'')
-              +'<span>'+esc(it.text)+'</span>'
+              +'<span class="cz-batch-txt">'+esc(it.text)+'</span>'
               +'</div>';
           }).join('')
           +'</div>';
       }).join('');
+    }
+
+    /* 점검용: 미리보기 결과·경고를 구조 그대로 읽는다 (tests/batch-simulation.test.js) */
+    window.jisuBatchPreviewData=()=>{ try{ return JSON.parse(JSON.stringify(parsedBatchData||[])); }catch(_){ return []; } };
+    window.jisuBatchWarnings=()=>batchWarnings.slice();
+
+    /* 미리보기 안에서 체크 해제·구역 변경 → 바로 다시 그린다 (저장 버튼 건수도 함께 바뀐다) */
+    if(batchPreview){
+      batchPreview.addEventListener('change',e=>{
+        const t=e.target;
+        if(!t) return;
+        const bk=t.getAttribute&&t.getAttribute('data-bk');
+        const zk=t.getAttribute&&t.getAttribute('data-zk');
+        if(bk){
+          const st=batchRowState.get(bk)||{};
+          st.off=!t.checked; batchRowState.set(bk,st); renderBatchPreview(); return;
+        }
+        if(zk){
+          const st=batchRowState.get(zk)||{};
+          st.target=t.value; batchRowState.set(zk,st); renderBatchPreview(); return;
+        }
+      });
     }
 
     if(batchText){
@@ -9033,22 +9228,33 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         const today=kstToday();
         const pastGroups=parsedBatchData.filter(g=>g.date<today);
         if(pastGroups.length){
-          const pastCnt=pastGroups.reduce((s,g)=>s+g.items.length,0);
+          const pastCnt=pastGroups.reduce((s,g)=>s+g.items.filter(it=>!it._off).length,0);
           if(!confirm('지난 날짜('+pastCnt+'건)가 포함되어 있습니다. 마감 기록으로 저장할까요?')) return;
         }
         let u=''; try{u=localStorage.getItem('jisu-user')||'';}catch(e){}
         const sch=load(SKEY);
-        let addedCount=0;
+        let addedCount=0, dupCount=0;
+        /* 이미 (아직 적용 전인) 같은 날짜·구역·종류·내용으로 예약돼 있거나, 같은 붙여넣기 안에 같은 줄이 두 번 있으면
+           두 번 저장하지 않는다. 오늘/지난 날짜로 이미 적용된 기록은 같은 작업을 다시 할 수 있으므로 중복으로 보지 않는다. */
+        const seen=new Set(sch.filter(x=>x&&!x.applied).map(x=>[x.date,x.target,x.kind,x.text].join('\u0001')));
+        const isDup=(rec)=>{
+          const k=[rec.date,rec.target,rec.kind,rec.text].join('\u0001');
+          if(seen.has(k)) return true;
+          seen.add(k);
+          return false;
+        };
         const incImg=$('czBatchIncludeImg')&&$('czBatchIncludeImg').checked&&batchImgData;
         let imgPlaced=false;   /* A-5: 사진은 범위 전체에서 딱 1개 항목에만 — 예전 idx===0 은 날짜 그룹마다 0으로 되돌아가 사진이 날짜 수만큼 복사됐다 */
         parsedBatchData.forEach(g=>{
           /* 배차표 다건: 이 날짜의 차량 여러 대를 합친 물량. 표 사진이 붙는 첫 카드의 배지는 표 전체 합계로 보여 준다
              (차량 1대짜리 카드는 그 차량 물량만 — 예전에는 표 전체 사진이 붙은 카드에도 첫 차 1대분만 나왔다).
              특이사항(memo) 글자는 톤수 합계에서 뺀다. */
-          const groupTon=(window.jisuCalcFactory2Tons && g.items.length>1)
-            ? (window.jisuCalcFactory2Tons(g.items.filter(x=>x.kind!=='memo').map(x=>x.text).join('\n'))||batchImgTon||'')
+          const liveItems=g.items.filter(x=>!x._off);   /* 미리보기에서 뺀 항목은 묶음 합계에서도 뺀다 */
+          const groupTon=(window.jisuCalcFactory2Tons && liveItems.length>1)
+            ? (window.jisuCalcFactory2Tons(liveItems.filter(x=>x.kind!=='memo').map(x=>x.text).join('\n'))||batchImgTon||'')
             : '';
           g.items.forEach((it,idx)=>{
+            if(it._off) return;   /* 미리보기에서 체크를 푼 항목은 저장하지 않는다 */
             const rec={
               id:Date.now().toString(36)+Math.random().toString(36).slice(2,6)+idx,
               date:g.date,
@@ -9060,10 +9266,13 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
             const imgCard=incImg && !imgPlaced;
             if(imgCard){ rec.img=batchImgData; imgPlaced=true; }
             const itemTon=it.tonText||(window.jisuCalcFactory2Tons?window.jisuCalcFactory2Tons(it.text):'');
-            const ton=imgCard&&groupTon?groupTon:(itemTon||groupTon);
-            if(it.kind!=='memo' && ton) rec.tonText=ton;
+            /* 2026-11-25: 날짜 묶음 전체 톤수를 모든 카드에 붙이면 사각박스·공지 카드까지 '13.2 TON' 이 됐다.
+               표 사진이 붙는 카드(합계 배지)에만 묶음 합계를 붙이고, 나머지는 그 카드 자신의 물량만 쓴다. */
+            const ton=imgCard&&groupTon?groupTon:itemTon;
+            if(it.kind!=='memo' && it.kind!=='notice' && ton) rec.tonText=ton;
             if(it.urgent) rec.urgent=true;
             if(u) rec.by=u;
+            if(isDup(rec)){ dupCount++; return; }
             sch.push(rec);
             addedCount++;
           });
@@ -9072,7 +9281,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
           if(batchMsg){ batchMsg.textContent='저장 공간이 부족해요. 사진 첨부를 빼거나 오래된 기록을 정리해 주세요.'; batchMsg.className='cz-msg err'; }
           return;
         }
-        batchText.value=''; batchImgData=null; batchImgTon='';
+        batchText.value=''; batchImgData=null; batchImgTon=''; batchRowState=new Map();
         if($('czBatchImgWrap')) $('czBatchImgWrap').style.display='none';
         if($('czBatchImgThumb')) $('czBatchImgThumb').src='';
         if($('czBatchOcrStatus')){ $('czBatchOcrStatus').textContent='입력창에서 Ctrl+V로 이미지 바로 붙여넣기 가능'; $('czBatchOcrStatus').style.color='#94a3b8'; }
@@ -9083,7 +9292,9 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         setBatchView(false);
         const msg=$('czMsg');
         if(msg){
-          msg.textContent='일괄 저장 '+addedCount+'건이 달력에 등록되었습니다!';
+          msg.textContent=addedCount
+            ? ('일괄 저장 '+addedCount+'건이 달력에 등록되었습니다!'+(dupCount?' (이미 예약된 '+dupCount+'건은 건너뜀)':''))
+            : ('이미 예약된 '+dupCount+'건이라 새로 저장하지 않았습니다.');
           msg.className='cz-msg ok';
         }
       });

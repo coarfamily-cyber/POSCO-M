@@ -8,7 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert/strict');
-const { test } = require('node:test');
+const { test: nodeTest } = require('node:test');
 const { JSDOM, VirtualConsole } = require('jsdom');
 const { makeFakeFirebase } = require('./integration/fakefb');
 
@@ -28,7 +28,28 @@ function closeWin(w){
     (w.__jisuTimers || new Set()).clear();
   }catch(_){}
 }
-test.after(async () => { opened.forEach(closeWin); await sleep(200); opened.forEach(w => { try { w.close(); } catch (_) {} }); await sleep(400); });
+/* node 18.4 처럼 test.after 가 없는 러너에서도 파일이 실패하지 않게 (있으면 그대로 사용)
+   — 없는 러너에서는 마지막 테스트가 끝났을 때 창을 닫아 프로세스가 스스로 끝나게 한다. */
+const finish = async () => { opened.forEach(closeWin); await sleep(200); opened.forEach(w => { try { w.close(); } catch (_) {} }); await sleep(400); };
+if (typeof nodeTest.after === 'function') {
+  nodeTest.after(finish);
+  const test = nodeTest;
+  global.__jisuTest = test;
+} else {
+  let running = 0, timer = null;
+  global.__jisuTest = function test(name, fn) {
+    return nodeTest(name, async (...args) => {
+      running++;
+      try { return await fn(...args); }
+      finally {
+        running--;
+        clearTimeout(timer);
+        timer = setTimeout(() => { if (running === 0) finish(); }, 400);
+      }
+    });
+  };
+}
+const test = global.__jisuTest;
 
 async function loadPage(query, seed, server) {
   const errors = [];
