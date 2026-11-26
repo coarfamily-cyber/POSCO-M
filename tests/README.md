@@ -11,6 +11,7 @@
 | 18시 마감 rollover 회귀(#28279 — 부족 완료·판단 대기 유지) | `node tests/integration/rollover-pending-short.js JISU/index.html` |
 | 2026-11-23 코드감사 수정 회귀(A-1~A-17·#28145) | `node tests/bugfix-20261123.test.js JISU/index.html` |
 | 저장 알림 점(녹색 10초)·작업중 녹색불 제거·범례 회귀 | `node tests/flash-dot.test.js JISU/index.html` |
+| 지도 '환경' 파란불 기준 = 가장 최근 08:00/18:00(KST) 마감 (07:59·08:00·12:20·17:59·18:00·20:43 경계) (2026-11-26) | `node tests/env-shift-cutoff.test.js JISU/index.html` |
 | 날씨 눈·비 교차확인(met.no 맑음 + wttr.in 눈/비 · 오탐 필터 유지) | `node tests/weather-crosscheck.test.js JISU/index.html` |
 | ?zone= 없는 구역 → 관리자 화면 · 저장값 자동 복구(로컬·DB 수신) · 생산 작업자 화면 격자 해제 (2026-11-25) | `node tests/zone-and-recovery.test.js JISU/index.html` |
 | 일괄등록 집중 시뮬레이션(날짜·구역·톤수·분류·저장·미리보기 체크/구역 변경) 회귀 (2026-11-25) | `node tests/batch-simulation.test.js JISU/index.html` |

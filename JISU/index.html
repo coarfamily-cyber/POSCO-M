@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611252215">
+  <meta name="jisu-build" content="202611261241">
   <script>/* ==========================================================================
      저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
      "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
@@ -10261,12 +10261,15 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     let openUnit=null;
     const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
     const now=()=>new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
-    /* [11-20] 지도 '환경' 필 불빛만 18시 마감으로 꺼진다 — 호기·설비·메인통로의 완료(파랑) 상태는 그대로 두고,
-       가장 최근 18:00(KST) 이후에 완료된 칸이 하나라도 있을 때만 지도 필에 파란불을 켠다.
-       (시각 비교는 doneAt(완료 순간의 ms)으로 하고, 예전 기록은 day+td → 18시 이전/이후로 판정) */
-    function last18CutoffMs(){ const DAY=24*60*60*1000, kstNow=Date.now()+9*3600*1000, d=new Date(kstNow);
-      const today18Utc=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),18,0,0,0)-9*3600*1000;
-      return (Date.now()>=today18Utc)?today18Utc:(today18Utc-DAY); }
+    /* [11-20 → 11-26] 지도 '환경' 필 불빛만 교대 마감으로 꺼진다 — 호기·설비·메인통로의 완료(파랑) 상태는 그대로 두고,
+       가장 최근 마감 시각 이후에 완료된 칸이 하나라도 있을 때만 지도 필에 파란불을 켠다.
+       마감 시각은 08:00 · 18:00(KST) 두 번 — 08:00~17:59 는 오늘 08:00, 18:00~23:59 는 오늘 18:00,
+       00:00~07:59 는 어제 18:00. (수뽕 님 지시 11-26 "저녁18시 오전08시로")
+       (시각 비교는 doneAt(완료 순간의 ms)으로 하고, 예전 기록은 day+td → 마감 이전/이후로 판정) */
+    function lastShiftCutoffMs(){ const DAY=24*60*60*1000, H=3600*1000, kstNow=Date.now()+9*H, d=new Date(kstNow);
+      const dayStartUtc=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),0,0,0,0)-9*H;
+      if(d.getUTCHours()<8) return dayStartUtc-6*H;          /* 00:00~07:59 → 어제 18:00 */
+      return dayStartUtc+(d.getUTCHours()<18?8:18)*H; }      /* 08~17 → 오늘 08:00 · 18~23 → 오늘 18:00 */
     function parseDayMs(day,td){ const m=String(day||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m) return 0;
       const raw=String(td||''), tm=raw.match(/(\d{1,2})\s*[:시]\s*(\d{1,2})/); let h=tm?parseInt(tm[1],10):0; const mi=tm?parseInt(tm[2],10):0;
       if(/오후|\bPM\b/i.test(raw)&&h<12) h+=12; else if(/오전|\bAM\b/i.test(raw)&&h===12) h=0;
@@ -10323,7 +10326,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         totalDone+=(x.doneCnt||0);
         b.title=b.dataset.envUnit+'호기 · '+(x.s==='work'?('설비 청소중 '+dc+'/'+EQ.length):x.s==='done'?('설비 청소완료 '+dc+'/'+EQ.length+(x.td?' ('+x.td+')':'')):'대기 (누르면 설비 4종)'); });
       if(sumEl) sumEl.textContent=(dn||r)?('완료 '+dn+' · 작업중 '+r):'';
-      const eb=document.querySelector('[data-toggle-zone="environment"]'); if(eb){ const cut=last18CutoffMs(), recent=recentDoneSince(d,cut);
+      const eb=document.querySelector('[data-toggle-zone="environment"]'); if(eb){ const cut=lastShiftCutoffMs(), recent=recentDoneSince(d,cut);
         eb.classList.toggle('env-run',r>0); eb.classList.toggle('env-all',r===0&&recent); const bd=eb.querySelector('.env-badge'); if(bd) bd.remove(); }
       { /* 지도 위 청소중 표시 (C·D동 박스 위치) */ const stage=document.getElementById('mapStage'); if(stage){ let ly=document.getElementById('envCleanLayer'); if(!ly){ ly=document.createElement('div'); ly.id='envCleanLayer'; ly.className='env-clean-layer'; stage.appendChild(ly); }
         const POS={'1,2':[65.0,30.2],'3,4':[69.4,30.2],'5,6':[73.4,30.2],'7,8':[77.5,30.2],'9,10':[67.9,73.4],'11,12':[72.5,73.4],'13,14':[76.8,73.4],'메인통로':[72.2,51.6]}; /* C동(위)=1~8호기, D동(아래)=9~14호기 · 메인통로=C·D동 사이 통로 */
@@ -10392,13 +10395,13 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const eq=e.target.closest('[data-env-eq]'); if(eq){ e.stopPropagation(); if(openUnit&&openUnit!==AISLE) tapEq(openUnit,eq.dataset.envEq); return; }
       const u=e.target.closest('[data-env-unit]'); if(u){ e.stopPropagation(); showUnit(u.dataset.envUnit); return; } });
     window.addEventListener('storage',e=>{ if(e.key===KEY) draw(); });
-    /* 18:00(KST)을 넘긴 채 화면이 켜져 있어도 지도 '환경' 필 불빛이 저절로 꺼지게 30초·복귀 시 다시 그린다 */
+    /* 08:00·18:00(KST) 마감을 넘긴 채 화면이 켜져 있어도 지도 '환경' 필 불빛이 저절로 꺼지게 30초·복귀 시 다시 그린다 */
     document.addEventListener('visibilitychange',()=>{ if(!document.hidden) draw(); });
     window.addEventListener('focus',()=>draw());
     setInterval(draw,30000); if(listStep) listStep.hidden=false; if(unitStep) unitStep.hidden=true; draw();
     window.jisuEnvDraw=draw; window.jisuEnvShowUnit=showUnit; window.jisuEnvShowList=showList;
-    /* 점검용: 현재 지도 필의 초록(작업중)/파랑(18시 이후 완료) 판정 상태 */
-    window.jisuEnvPillState=function(){ const d=load(), cut=last18CutoffMs(), recent=recentDoneSince(d,cut);
+    /* 점검용: 현재 지도 필의 초록(작업중)/파랑(최근 08·18시 마감 이후 완료) 판정 상태 */
+    window.jisuEnvPillState=function(){ const d=load(), cut=lastShiftCutoffMs(), recent=recentDoneSince(d,cut);
       let r=0,dn=0; Object.keys(d.u||{}).forEach(k=>{ const s=(d.u[k]||{}).s; if(s==='work') r++; else if(s==='done') dn++; });
       const as=(d.a||{}).s; if(as==='work') r++; else if(as==='done') dn++;
       return {work:r,done:dn,recentDone:recent,cutoffMs:cut,green:r>0,blue:(r===0&&recent)}; };
