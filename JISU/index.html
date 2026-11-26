@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611262152">
+  <meta name="jisu-build" content="202611262305">
   <script>/* ==========================================================================
      저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
      "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
@@ -10081,7 +10081,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     #perfModal .perf-slide{width:100%;max-width:none !important;padding:0 !important;background:transparent !important;}
 
     /* Unified Warm Paper Deck Sheets */
-    .jpr-deck{display:flex;flex-direction:column;gap:18px;font-family:"Noto Sans KR",-apple-system,sans-serif;color:#1A1918;}
+    .jpr-deck{display:flex;flex-direction:column;gap:18px;font-family:"Noto Sans KR",-apple-system,sans-serif;color:#1A1918;word-break:keep-all;overflow-wrap:anywhere;}
     .jpr-sheet{background:#F1EBE0;border:1px solid #D8CEBE;border-radius:6px;padding:20px 32px 22px;box-shadow:0 8px 24px rgba(62,52,38,.09);}
     .jpr-sheet.is-cover{
       background:#191613;color:#F1EBE0;border:1px solid #2F2A25;border-left:7px solid #D96B43;
@@ -10113,7 +10113,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     .jpr-hi-foot.forest{color:#3A6648;}
 
     .jpr-grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-    .jpr-panel{background:#E6DECF;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;justify-content:space-between;}
+    .jpr-panel{background:#E6DECF;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;}
     .jpr-ptitle{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px;font-weight:800;color:#1A1918;margin:0 0 12px;}
     .jpr-units{display:inline-flex;gap:4px;flex-wrap:wrap;}
     .jpr-units button{border:1px solid #C8BFAF;background:#F1EBE0;color:#4F4A44;border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:700;cursor:pointer;}
@@ -10140,12 +10140,80 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     .jpr-tbl{width:100%;border-collapse:collapse;font-size:13px;text-align:left;}
     .jpr-tbl th{background:#E6DECF;color:#4F4A44;font-size:12px;font-weight:700;padding:9px 10px;border-bottom:1.5px solid rgba(26,25,24,.22);white-space:nowrap;}
     .jpr-tbl th.focus{background:#D96B43;color:#fff;}
-    .jpr-tbl td{padding:9px 10px;border-bottom:1px solid rgba(110,103,95,.18);color:#3F3B36;}
+    .jpr-tbl td{padding:9px 10px;border-bottom:1px solid rgba(110,103,95,.18);color:#3F3B36;vertical-align:top;}
     .jpr-tbl tr:nth-child(even) td{background:rgba(230,222,207,.45);}
     .jpr-tbl td.focus{background:rgba(217,107,67,.10);color:#B54E28;font-weight:800;}
     .jpr-tbl th.num,.jpr-tbl td.num{text-align:right;white-space:nowrap;}
     .jpr-foot{margin-top:12px;font-size:11.5px;color:#6E675F;}
     .jpr-empty{padding:24px 10px;text-align:center;color:#6E675F;font-size:13px;}
+
+    /* ── 확장 시트(차트·표) 2026-11-26 ── */
+    .jpr-svg{display:block;width:100%;height:auto;}
+    .jpr-chartbox{background:#E6DECF;border-radius:12px;padding:12px 14px 10px;}
+    .jpr-note{font-size:11.5px;color:#6E675F;margin-top:8px;line-height:1.5;}
+    .jpr-badge{display:inline-flex;align-items:center;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:800;color:#fff;background:#3A6648;margin-right:6px;white-space:nowrap;}
+    .jpr-badge.c1{background:#D96B43;}
+    .jpr-badge.c2{background:#3A6648;}
+    .jpr-badge.c3{background:#E07A50;}
+    .jpr-badge.c4{background:#8A8279;}
+    .jpr-badge.na{background:#B5AFA8;}
+
+    .jpr-stackbar{display:flex;height:44px;border-radius:8px;overflow:hidden;background:#DBD2C2;}
+    .jpr-seg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:11.5px;font-weight:800;min-width:0;overflow:hidden;white-space:nowrap;box-shadow:inset -1px 0 0 rgba(241,235,224,.8);}
+    .jpr-seg.dark{color:#4F4A44;}
+    .jpr-legend{display:flex;flex-wrap:wrap;gap:9px 20px;margin-top:12px;font-size:12px;color:#3F3B36;}
+    .jpr-legend span{display:inline-flex;align-items:center;white-space:nowrap;}
+    .jpr-legend i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:6px;flex:none;}
+    .jpr-legend b{color:#1A1918;margin-left:5px;}
+
+    .jpr-stack{display:flex;align-items:stretch;gap:12px;height:250px;padding:6px 2px 0;}
+    .jpr-stackcol{flex:1;min-width:0;display:flex;flex-direction:column;height:100%;}
+    .jpr-stackval{font-size:12.5px;font-weight:800;text-align:center;color:#1A1918;margin-bottom:4px;white-space:nowrap;}
+    .jpr-stackbody{flex:1;min-height:0;display:flex;flex-direction:column-reverse;justify-content:flex-start;}
+    .jpr-stackbody .jpr-seg{width:100%;}
+    .jpr-stacklbl{font-size:11.5px;color:#6E675F;text-align:center;margin-top:6px;white-space:nowrap;}
+    .jpr-stacklbl.on{color:#1A1918;font-weight:800;}
+
+    .jpr-cmp{display:flex;align-items:flex-end;justify-content:center;gap:44px;height:220px;padding:16px 6px 0;box-shadow:inset 0 -1px 0 #C8BFAF;}
+    .jpr-cmpcol{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;width:96px;min-width:0;}
+    .jpr-cmpval{font-size:13px;font-weight:800;color:#1A1918;margin-bottom:6px;white-space:nowrap;}
+    .jpr-cmpbar{width:66px;max-width:100%;border-radius:8px 8px 0 0;background:#B5AFA8;}
+    .jpr-cmpbar.hi{background:#D96B43;}
+    .jpr-cmplbl{font-size:11.5px;color:#6E675F;margin-top:8px;text-align:center;line-height:1.35;}
+    .jpr-cmplbl.on{color:#1A1918;font-weight:800;}
+
+    .jpr-down{display:flex;align-items:flex-start;gap:14px;height:210px;padding:0 2px;box-shadow:inset 0 2px 0 #B5AFA8;}
+    .jpr-downcol{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;align-items:center;}
+    .jpr-downbar{width:100%;max-width:78px;background:#B5AFA8;border-radius:0 0 8px 8px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;color:#fff;font-size:13px;font-weight:800;min-height:3px;overflow:hidden;}
+    .jpr-downbar.hi{background:#D96B43;}
+    .jpr-downbar.zero{background:#C8BFAF;color:transparent;}
+    .jpr-downlbl{font-size:11.5px;color:#6E675F;margin-top:8px;text-align:center;line-height:1.35;}
+    .jpr-downlbl.on{color:#1A1918;font-weight:800;}
+
+    .jpr-bal{display:flex;align-items:flex-start;gap:16px;padding:6px 2px 0;}
+    .jpr-balcol{flex:1;min-width:0;display:flex;flex-direction:column;}
+    .jpr-balup{height:190px;display:flex;align-items:flex-end;justify-content:center;box-shadow:inset 0 -1px 0 #B5AFA8;}
+    .jpr-baldn{height:72px;display:flex;align-items:flex-start;justify-content:center;}
+    .jpr-balbar{width:72%;max-width:56px;border-radius:8px 8px 0 0;background:#D96B43;position:relative;}
+    .jpr-balbar.forest{background:#3A6648;}
+    .jpr-balbar.dn{border-radius:0 0 8px 8px;background:#B5AFA8;}
+    .jpr-balbar b{position:absolute;top:-21px;left:50%;transform:translateX(-50%);font-size:12.5px;font-weight:800;color:#B54E28;white-space:nowrap;}
+    .jpr-balbar.dn b{top:auto;bottom:-21px;color:#3F3B36;}
+    .jpr-ballbl{text-align:center;font-size:12px;color:#6E675F;margin-top:24px;font-weight:700;}
+    .jpr-ballbl.on{color:#1A1918;font-weight:800;}
+
+    .jpr-stand{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#F1EBE0;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#3F3B36;margin-top:8px;box-shadow:inset 0 -1px 0 rgba(110,103,95,.15);}
+    .jpr-stand b{color:#B54E28;font-weight:800;white-space:nowrap;}
+
+    .jpr-crewrow{display:grid;grid-template-columns:150px minmax(0,1fr) 96px;align-items:center;gap:12px;margin-bottom:14px;}
+    .jpr-crewrow .jpr-ptrack{height:26px;}
+    .jpr-crewnum{font-size:11.5px;color:#4F4A44;text-align:right;white-space:nowrap;}
+    .jpr-crewnum b{color:#B54E28;}
+    .jpr-cols.jpr-prod i{max-width:120px;}
+    .jpr-stackbody{width:74%;margin:0 auto;}
+    .jpr-zone-h{display:flex;align-items:baseline;gap:6px;}
+    .jpr-zone-h b{font-size:13.5px;font-weight:800;color:#1A1918;}
+    .jpr-zone-h i{font-style:normal;font-size:10.5px;letter-spacing:.04em;color:#8A8279;text-transform:uppercase;}
 
     @media (max-width:860px){
       .jpr-sheet{padding:16px 16px 18px;}
@@ -10153,6 +10221,49 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       .jpr-hi4{grid-template-columns:repeat(2,minmax(0,1fr));}
       .jpr-grid2{grid-template-columns:minmax(0,1fr);}
       .jpr-prow{grid-template-columns:108px minmax(0,1fr);}
+      .jpr-stack{height:210px;gap:8px;}
+      .jpr-cmp{gap:24px;height:190px;}
+      .jpr-cmpcol{width:76px;}
+    }
+    @media (max-width:600px){
+      .jpr-hi-val{font-size:21px;}
+      .jpr-ck-lbl{font-size:11px;line-height:1.3;}
+      .jpr-cov-title{font-size:20px;}
+      .jpr-cov-author{font-size:13px;}
+      .jpr-ck-val{font-size:27px;}
+      .jpr-ck-sub{font-size:11px;}
+      .jpr-hi4{gap:10px;}
+      .jpr-hi-card{padding:0 10px 12px;}
+      .jpr-hi-bar{margin:0 -10px 10px;}
+      .jpr-prow{grid-template-columns:minmax(72px,96px) minmax(0,1fr);}
+      .jpr-plbl{text-align:left;}
+      .jpr-crewrow{grid-template-columns:minmax(76px,104px) minmax(0,1fr);gap:8px;}
+      .jpr-crewnum{grid-column:2;text-align:right;font-size:10.5px;}
+      .jpr-cols.jpr-prod i{max-width:44px;}
+      .jpr-stackbody{width:82%;}
+      .jpr-stack{height:180px;gap:5px;}
+      .jpr-stackval{font-size:10.5px;}
+      .jpr-stacklbl{font-size:9.5px;}
+      .jpr-cmp{gap:14px;}
+      .jpr-cmpcol{width:64px;}
+      .jpr-cmpbar{width:52px;}
+      .jpr-cmpval{font-size:11px;}
+      .jpr-down{gap:6px;height:180px;}
+      .jpr-downbar{font-size:11px;}
+      .jpr-downlbl{font-size:9.5px;}
+      .jpr-bal{gap:8px;}
+      .jpr-balup{height:150px;}
+      .jpr-baldn{height:56px;}
+      .jpr-balbar b{font-size:10.5px;}
+      .jpr-ballbl{font-size:10px;margin-top:20px;}
+      .jpr-legend{font-size:11px;gap:7px 12px;}
+      .jpr-stand{font-size:11.5px;padding:8px 10px;}
+      .jpr-tbl.cards thead{display:none;}
+      .jpr-tbl.cards tr{display:block;background:#EAE2D4;border-radius:9px;margin-bottom:9px;padding:8px 10px;}
+      .jpr-tbl.cards tr:nth-child(even) td{background:transparent;}
+      .jpr-tbl.cards td{display:block;padding:3px 0;box-shadow:none;background:transparent !important;}
+      .jpr-tbl.cards td::before{content:attr(data-l);display:block;font-size:10.5px;font-weight:800;letter-spacing:.04em;color:#8A8279;margin-bottom:1px;}
+      .jpr-tbl.cards td.focus{color:#B54E28;font-weight:800;}
     }
 
     /* ── 테두리 보정 (2026-11-26) — 이 앱은 전역 규칙(:is(#nb#nb#nb#nb,*))이 모든 border 색을 transparent !important 로
@@ -10163,18 +10274,9 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     .jpr-top{box-shadow:inset 0 -1px 0 #D8CEBE;}
     .jpr-tbl th{box-shadow:inset 0 -1.5px 0 rgba(26,25,24,.22);}
     .jpr-tbl td{box-shadow:inset 0 -1px 0 rgba(110,103,95,.18);}
-
-    /* 폰(≤600px)에서 30일 막대 그래프·진행바가 카드 밖으로 가로로 넘치지 않게 — 칸 수가 많은(15칸~) 막대는 날짜·값 글자를 숨기고 막대만 남긴다 */
-    @media (max-width:600px){
-      .jpr-grid2{grid-template-columns:minmax(0,1fr);}
-      .jpr-panel{min-width:0;}
-      .jpr-prow{grid-template-columns:minmax(76px,104px) minmax(0,1fr);}
-      .jpr-plbl{text-align:left;}
-      .jpr-cols{gap:3px;padding:10px 2px 4px;}
-      .jpr-cols:has(.jpr-col:nth-child(15)) .jpr-col em,
-      .jpr-cols:has(.jpr-col:nth-child(15)) .jpr-col span{display:none;}
-      .jpr-cols:has(.jpr-col:nth-child(15)){height:108px;}
-    }
+    .jpr-hi-foot{box-shadow:inset 0 1px 0 rgba(110,103,95,.22);}
+    .jpr-cov-kpi:first-child{box-shadow:inset -1px 0 0 rgba(255,255,255,.14);}
+    .jpr-stackbar{box-shadow:inset 0 0 0 1px #D8CEBE;}
   </style>
   <div id="perfModal" class="cal-modal" hidden><div class="cal-box perf-box" role="dialog" aria-label="실적">
     <div class="perf-top"><div class="perf-seg"><button type="button" data-pf-mode="week" class="on">주간</button><button type="button" data-pf-mode="month">월간</button></div>
@@ -10185,7 +10287,9 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     <div class="perf-dots" id="pfDots"></div>
   </div></div>
   <script>
-  /* 주간·월간 실적: 종이 질감 시트 리포트 + PPT 다운로드 (등록된 기록만 사용) */
+  /* 주간·월간 실적: 페이퍼 덱 리포트 11시트(표지 00 ~ 핵심 구역 표 10) + 같은 디자인의 PPT(.pptx)
+     · 모든 숫자는 대시보드에 등록된 기록(jisu-commands-v1 · jisu-memos-v1 · 입고 중량일지 · 피치 · 환경)만 집계한다.
+     · 조·라인·주차에 기록이 없으면 0 또는 '기록 없음'으로 표시하고, 샘플 숫자를 만들지 않는다. */
   (function(){
     const btn=document.getElementById('perfBtn'), modal=document.getElementById('perfModal'); if(!btn||!modal) return;
     const $=id=>document.getElementById(id), CK='jisu-commands-v1', MK='jisu-memos-v1';
@@ -10195,10 +10299,13 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     try{ Object.assign(NAMES, window.JISU_SUB_LABELS||{}); }catch(_){}
     const kst=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
     const today=()=>kst(new Date()), D=k=>new Date(k+'T12:00:00+09:00'), add=(k,n)=>kst(new Date(D(k).getTime()+n*864e5));
-    function dayOf(r){ if(r.day) return r.day; const m=String(r.at||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); if(!m) return r.sched||''; const t=today(), y=+t.slice(0,4); let k=y+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); if(k>t) k=(y-1)+k.slice(4); return k; }
+    const DOW=['일','월','화','수','목','금','토'], md=k=>(+k.slice(5,7))+'/'+(+k.slice(8,10)), p2=n=>String(n).padStart(2,'0');
+    const r1=v=>String(Math.round((+v||0)*10)/10);
+    const num=v=>{ const n=Math.round((+v||0)*10)/10; return Math.abs(n)>=1000?n.toLocaleString('en-US',{maximumFractionDigits:1}):String(n); };
+    const pctOf=(a,b)=>b>0?Math.round(a/b*1000)/10:0;
+    function dayOf(r){ if(!r) return ''; if(r.day) return r.day; const m=String(r.at||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); if(!m) return r.sched||''; const t=today(), y=+t.slice(0,4); let k=y+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); if(k>t) k=(y-1)+k.slice(4); return k; }
     function goal(t){ const s=(window.jisuNormUnit?window.jisuNormUnit(t):String(t||'')).replace(/^\[[^\]]+\]\s*/,''), m=s.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||s.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/); if(!m) return null; let u=(m[2]||'').toUpperCase(); if(u==='톤') u='TON'; if(u==='개') u='EA'; return {n:(window.jisuParseNum?window.jisuParseNum(m[1]):Number(String(m[1]).replace(',','.'))),u:u||'건'}; }
     const doneAmt=(x,g)=>{ const d=(x.completed&&!x.short&&(x.done==null||x.done===''))?g.n:(Number(x.done)||0); return Math.max(0,Math.min(d,g.n)); };
-    const r1=v=>String(Math.round(v*10)/10), DOW=['일','월','화','수','목','금','토'], md=k=>(+k.slice(5,7))+'/'+(+k.slice(8,10));
     const CLOSE_KEY='jisu-perf-daily-close-v1';
     const kstHour=()=>Number(new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',hour:'2-digit',hour12:false}).format(new Date()))%24;
     function authorName(){
@@ -10208,14 +10315,37 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       }catch(_){}
       return '김지수';
     }
+    const PROD=['production-a','production-b','production-c','production-d','production-e','production-f','production-g','production-h'];
+    const PROD_LBL=['A','B','C','D','E','F','G','H'];
+    const CREW_KEYS=['1조','2조','3조','4조','미지정'];
+    const zoneOf=t=>String(t||'').split(':')[0];
+    const itemOf=t=>String(t||'').split(':')[1]||'';
+    const isWork=x=>!!(x&&x.kind!=='notice'&&x.id!=='demo_dispatch_1'&&x.review!=='moved'&&!x.ended);
+    const isCarry=(x)=>!!(x&&((x.carryCount>0)||(x.origDay&&x.origDay<dayOf(x))));
+    function qtyOf(x){
+      if(!x) return null;
+      try{ const q=window.jisuGoalQty?window.jisuGoalQty(x.text):null; if(q&&q.n>0) return {n:q.n,u:q.u||'건'}; }catch(_){}
+      const g=goal(x.text);
+      if(g&&g.u==='건') return null;   /* 단위 없는 숫자(회·번 등)를 수량으로 읽지 않는다 */
+      return g;
+    }
+    function recTon(x){
+      if(!x) return 0;
+      let v=0; const g=qtyOf(x);
+      if(g&&g.u==='TON') v=doneAmt(x,g);
+      const tt=String(x.tonText||'').match(/(\d+(?:,\d{3})*(?:[.,]\d+)?)\s*(?:TON|톤|t)(?![A-Za-z가-힣])/i);
+      if(tt){ const n=window.jisuParseNum?window.jisuParseNum(tt[1]):Number(String(tt[1]).replace(/,/g,'')); if(isFinite(n)&&n>v) v=n; }
+      return v>0?v:0;
+    }
     function reportTitleText(d){
       const base=shift===0?today():d.e;
       const y=+base.slice(0,4), m=+base.slice(5,7), day=+base.slice(8,10);
-      if(mode==='week'){
-        const wk=Math.ceil(day/7);
-        return y+'년 '+m+'월 '+day+'일 '+wk+'째주 보고서';
-      }
+      if(mode==='week'){ const wk=Math.ceil(day/7); return y+'년 '+m+'월 '+day+'일 '+wk+'째주 보고서'; }
       return (+d.s.slice(0,4))+'년 '+(+d.s.slice(5,7))+'월 월간 보고서';
+    }
+    function deckTitle(d){
+      if(mode==='week'){ const y=+d.e.slice(0,4), m=+d.e.slice(5,7), day=+d.e.slice(8,10); return y+'년 '+m+'월 '+Math.ceil(day/7)+'주'; }
+      return (+d.s.slice(0,4))+'년 '+(+d.s.slice(5,7))+'월';
     }
     function syncDailyClose18(){
       const t=today();
@@ -10236,11 +10366,12 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     window.jisuDailyClose18=()=>{ const ok=syncDailyClose18(); if(!modal.hidden) draw(); return ok; };
     syncDailyClose18();
     setInterval(()=>{ const had=!!(JSON.parse(localStorage.getItem(CLOSE_KEY)||'{}')[today()]); const nowClosed=syncDailyClose18(); if(nowClosed&&!had&&!modal.hidden) draw(); },30000);
-    let mode='week', shift=0, selDay=null, unit=null;
+    let mode='week', shift=0;
+
     function rangeFor(sh){ const t=today(); if(mode==='week'){ const dw=(D(t).getUTCDay()+6)%7; const s=add(add(t,-dw),sh*7); return [s,add(s,6)]; }
       let y=+t.slice(0,4), m=+t.slice(5,7)-1+sh; y+=Math.floor(m/12); m=((m%12)+12)%12; const s=y+'-'+String(m+1).padStart(2,'0')+'-01'; const e=kst(new Date(Date.UTC(y,m+1,0,3))); return [s,e]; }
     function dataFor(sh){ const [s,e]=rangeFor(sh), days=[]; for(let k=s;k<=e;k=add(k,1)) days.push(k);
-      const work=load(CK).filter(x=>x.kind!=='notice'&&x.id!=='demo_dispatch_1'&&x.review!=='moved'&&!x.ended&&dayOf(x)>=s&&dayOf(x)<=e&&(x.closed||dayOf(x)<today())), memos=load(MK).filter(x=>dayOf(x)>=s&&dayOf(x)<=e);
+      const work=load(CK).filter(x=>isWork(x)&&dayOf(x)>=s&&dayOf(x)<=e&&(x.closed||dayOf(x)<today())), memos=load(MK).filter(x=>dayOf(x)>=s&&dayOf(x)<=e);
       const units={}; const dayDetail={};
       const addDayZone=(d,z,u,amt)=>{ if(!dayDetail[d]) dayDetail[d]={}; if(!dayDetail[d][z]) dayDetail[d][z]={}; dayDetail[d][z][u]=(dayDetail[d][z][u]||0)+amt; };
       work.forEach(x=>{ const g=goal(x.text); if(!g) return; const u=units[g.u]||(units[g.u]={goal:0,done:0,byDay:{}}); if(!(x.carried&&!x.short)) u.goal+=g.n; const a=doneAmt(x,g); u.done+=a; const d=dayOf(x); u.byDay[d]=(u.byDay[d]||0)+a; if(a>0) addDayZone(d,x.target,g.u,a); });
@@ -10248,91 +10379,462 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       try{ const ir=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}'); Object.keys(ir).forEach(d=>{ if(d<s||d>e) return; const r=ir[d]; if(!r) return; const rows=window.jisuDedupeInboundRows(r.archivedRows,r.workState==='done'?r.rows:[]); if(!rows.length) return; const ton=rows.reduce((sum,x)=>sum+(window.jisuParseNum(x.kg)||0),0)/1000; if(ton>0){ const u=units['TON']||(units['TON']={goal:0,done:0,byDay:{}}); u.done+=ton; u.byDay[d]=(u.byDay[d]||0)+ton; addDayZone(d,'inbound','TON',ton); } if(rows.length){ const u=units['BAG']||(units['BAG']={goal:0,done:0,byDay:{}}); u.done+=rows.length; u.byDay[d]=(u.byDay[d]||0)+rows.length; addDayZone(d,'inbound','BAG',rows.length); } const z=Z('inbound'); z.n++; z.done++; }); }catch(_){}
       try{ const pr=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}'); Object.keys(pr).forEach(d=>{ if(d<s||d>e) return; const r=pr[d]; if(!r) return; const g=(parseFloat(r.grind1)||0)+(parseFloat(r.grind2)||0); if(!g&&(!r.workState||r.workState==='idle')) return; if(g>0){ const u=units['BAG']||(units['BAG']={goal:0,done:0,byDay:{}}); u.done+=g; u.byDay[d]=(u.byDay[d]||0)+g; addDayZone(d,'pitch','BAG',g); } const z=Z('pitch'); z.n++; if(r.workState==='done') z.done++; }); }catch(_){}
       let envDone=0; try{ envDone=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]').filter(x=>x.day>=s&&x.day<=e).length; }catch(_){}
-      return {s,e,days,work,memos,units,zones,dayDetail,envDone,done:work.filter(x=>x.completed).length,carry:work.filter(x=>x.carryCount&&x.carryFrom).length}; }
-    function title(d){ if(mode==='week') return (shift===0?'이번 주':(shift===-1?'지난 주':md(d.s)+' 주'))+' · '+md(d.s)+' ~ '+md(d.e); return (+d.s.slice(0,4))+'년 '+(+d.s.slice(5,7))+'월'+(shift===0?' (이번 달)':''); }
-    function diffStr(cur,prev,suf){ const df=Math.round((cur-prev)*10)/10; const lbl=mode==='week'?'전주 대비':'전월 대비'; if(df>0) return '+'+df+(suf||'')+' '+lbl; if(df<0) return df+(suf||'')+' '+lbl; return lbl+' 동일'; }
-    function unitChips(d){ const us=Object.keys(d.units); if(us.length<2) return ''; return '<div class="jpr-units">'+us.map(u=>'<button type="button" data-pf-unit="'+esc(u)+'" class="'+(u===unit?'on':'')+'">'+esc(u)+'</button>').join('')+'</div>'; }
-    function tipText(d,k){ if(!k) return '막대를 누르면 날짜별 구역 실적이 표시돼요.'; const det=d.dayDetail[k]; if(!det) return md(k)+' · 완료 수량 기록 없음'; const parts=Object.keys(det).map(z=>{ const us=Object.keys(det[z]).map(u=>r1(det[z][u])+' '+u).join(', '); return (NAMES[z]||z)+' '+us; }); return md(k)+' ('+DOW[D(k).getUTCDay()]+') · '+parts.join(' / '); }
-    function renderDash(d, prev){
-      const pct=d.work.length?Math.round(d.done/d.work.length*1000)/10:0;
-      const prevPct=prev.work.length?Math.round(prev.done/prev.work.length*1000)/10:0;
-      const us=Object.keys(d.units);
-      if(!unit||!d.units[unit]) unit=us.includes('TON')?'TON':(us[0]||null);
-      const mainUnit=us.includes('TON')?'TON':(us[0]||'TON');
-      const mainAmt=d.units[mainUnit]?r1(d.units[mainUnit].done):'0';
-      const prevAmt=prev.units[mainUnit]?prev.units[mainUnit].done:0;
-      const curAmt=d.units[mainUnit]?d.units[mainUnit].done:0;
-      const rTitle=reportTitleText(d);
-      const author=authorName();
+      return {s,e,days,work,memos,units,zones,dayDetail,envDone,done:work.filter(x=>x.completed).length,carry:work.filter(x=>x.carryCount&&x.carryFrom).length};
+    }
 
-      /* Sheet 00: Dark Espresso Cover (Title + Author on one line, 2 centered KPIs, no count block) */
-      const s0='<section class="jpr-sheet is-cover">'
-        +'<div class="jpr-cov-hd"><h2 class="jpr-cov-title">'+esc(rTitle)+'</h2><span class="jpr-cov-author">작성자 : '+esc(author)+'</span></div>'
+    /* ── 물량(출고·입고·기타) 집계: 기간 안에서 18시 마감·지난 날짜로 확정된 기록만 ── */
+    function inboundLog(s,e){
+      const out={};
+      try{
+        const ir=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}');
+        Object.keys(ir).forEach(day=>{ if(!day||day<s||day>e) return; const r=ir[day]; if(!r) return;
+          const rows=window.jisuDedupeInboundRows(r.archivedRows, r.workState==='done'?r.rows:[]); if(!rows.length) return;
+          const ton=rows.reduce((sum,x)=>sum+(window.jisuParseNum(x.kg)||0),0)/1000;
+          if(ton>0) out[day]={ton:ton,bag:rows.length,by:(r.by||'')};
+        });
+      }catch(_){}
+      return out;
+    }
+    function volumeBetween(s,e){
+      const t=today(), by={}, ob={}, ib={};
+      const addDay=day=>by[day]||(by[day]={out:0,inCmd:0,other:0,in:0});
+      load(CK).forEach(x=>{
+        if(!isWork(x)) return; const day=dayOf(x); if(!day||day<s||day>e) return; if(!(x.closed||day<t)) return;
+        const z=zoneOf(x.target), item=itemOf(x.target), ton=recTon(x); if(!(ton>0)) return;
+        const b=addDay(day);
+        if(z==='outbound'){ b.out+=ton; const k=item||'기타'; ob[k]=(ob[k]||0)+ton; }
+        else if(z==='inbound'){ b.inCmd+=ton; const k=item||'기타'; ib[k]=(ib[k]||0)+ton; }
+        else if(PROD.indexOf(z)>=0||z==='packaging'||z==='packaging-d'||z==='pitch'){ b.other+=ton; }
+      });
+      const logs=inboundLog(s,e); Object.keys(logs).forEach(day=>{ addDay(day); });
+      let out=0,inT=0,other=0;
+      Object.keys(by).forEach(day=>{ const b=by[day], lg=logs[day]; b.in=(lg&&lg.ton>0)?lg.ton:b.inCmd; out+=b.out; inT+=b.in; other+=b.other; });
+      return {s:s,e:e,by:by,out:out,inT:inT,other:other,total:out+inT+other,flow:out+inT,ob:ob,ib:ib,log:logs};
+    }
+    function carryBetween(s,e){
+      return load(CK).filter(x=>{ if(!isWork(x)) return false; const day=dayOf(x); if(!day||day<s||day>e) return false; return isCarry(x)&&!x.completed; });
+    }
+    function weekBuckets(d){
+      const t=today(), out=[];
+      if(mode==='month'){
+        const y=+d.s.slice(0,4), m=+d.s.slice(5,7), last=+d.e.slice(8,10), nW=Math.ceil(last/7);
+        for(let w=1;w<=nW;w++){
+          const from=y+'-'+p2(m)+'-'+p2((w-1)*7+1), to=y+'-'+p2(m)+'-'+p2(Math.min(w*7,last));
+          out.push({label:m+'월 '+w+'주', short:m+'월 '+w+'주', from:from, to:to, week:w});
+        }
+      }else{
+        for(let i=3;i>=0;i--){ const s0=add(d.s,-7*i), e0=add(s0,6); out.push({label:md(s0)+'~'+md(e0), short:i===0?'이번 주':md(s0)+' 주', from:s0, to:e0}); }
+      }
+      return out;
+    }
+    function crewOf(x){
+      const s=String((x&&(x.by||x.doneBy||x.completedBy||x.crew||x.worker))||'');
+      const m=s.match(/([1-4])\s*조/);
+      return m?m[1]+'조':'미지정';
+    }
+    function crewStats(d){
+      const map={}; CREW_KEYS.forEach(k=>{ map[k]={key:k,n:0,done:0,carry:0,zones:{}}; });
+      d.work.forEach(x=>{
+        const c=crewOf(x), m=map[c]||(map[c]={key:c,n:0,done:0,carry:0,zones:{}});
+        m.n++; if(x.completed) m.done++; if(x.carryCount&&x.carryFrom) m.carry++;
+        const z=zoneOf(x.target); m.zones[z]=(m.zones[z]||0)+1;
+      });
+      return CREW_KEYS.map(k=>map[k]).filter(c=>c.n>0||c.key!=='미지정');
+    }
+    function lineStats(d){
+      return PROD.map((z,i)=>{
+        const recs=d.work.filter(x=>zoneOf(x.target)===z);
+        const n=recs.length, done=recs.filter(x=>x.completed).length, carry=recs.filter(x=>x.carryCount&&x.carryFrom).length;
+        return {z:z,name:NAMES[z]||('생산'+PROD_LBL[i]),short:PROD_LBL[i],n:n,done:done,carry:carry,pct:pctOf(done,n)};
+      });
+    }
+    const GROUPS=[
+      {key:'outbound',label:'출고',en:'OUTBOUND',test:z=>z==='outbound'},
+      {key:'inbound',label:'입고',en:'INBOUND',test:z=>z==='inbound'},
+      {key:'production',label:'생산 A~H',en:'PRODUCTION A-H',test:z=>PROD.indexOf(z)>=0},
+      {key:'packaging',label:'포장 2·3동',en:'PACKAGING',test:z=>z==='packaging'||z==='packaging-d'},
+      {key:'pitch',label:'피치',en:'PITCH',test:z=>z==='pitch'},
+      {key:'environment',label:'환경',en:'ENVIRONMENT',test:z=>z==='environment'}
+    ];
+    function groupStats(d){
+      const out=[];
+      GROUPS.forEach(g=>{
+        let n=0,done=0,carry=0;
+        Object.keys(d.zones).forEach(z=>{ if(!g.test(zoneOf(z))) return; const x=d.zones[z]; n+=x.n; done+=x.done; carry+=x.carry; });
+        out.push({key:g.key,label:g.label,en:g.en,n:n,done:done,carry:carry,pct:pctOf(done,n),test:g.test});
+      });
+      return out;
+    }
+    function zoneRecs(d,g){ return d.work.filter(x=>g.test(zoneOf(x.target))); }
+    function lastAuthor(recs){
+      const arr=recs.filter(x=>x.by).slice().sort((a,b)=>((dayOf(b)||'')+(b.completedAt||b.at||'')).localeCompare((dayOf(a)||'')+(a.completedAt||a.at||'')));
+      const x=arr[0]; if(!x) return {name:'기록 없음',crew:''};
+      const raw=String(x.by).trim();
+      const crew=crewOf(x);
+      const name=raw.replace(/[1-4]\s*조/g,'').replace(/[()\[\]]/g,' ').trim()||raw;
+      return {name:name,crew:crew};
+    }
+    function memoOf(d,test){
+      const ms=d.memos.filter(m=>test(zoneOf(m.target))).slice().sort((a,b)=>String((b.day||'')+(b.at||'')).localeCompare(String((a.day||'')+(a.at||''))));
+      return ms.length?String(ms[0].text||''):'특이사항 없음';
+    }
+    function itemsSummary(recs){
+      if(!recs.length) return '기록 없음';
+      const byItem={}, byUnit={};
+      const amtOf=(x,g)=>{ if(!g) return 0; const v=(x.completed&&!x.short&&(x.done==null||x.done===''))?g.n:(Number(x.done)||0); return Math.max(0,Math.min(v,g.n)); };
+      recs.forEach(x=>{
+        const it=itemOf(x.target), g=qtyOf(x), ton=recTon(x);
+        if(it){ const c=byItem[it]||(byItem[it]={ton:0,amt:0,u:''}); c.ton+=ton; if(g&&g.u!=='TON'){ c.amt+=amtOf(x,g); c.u=g.u; } }
+        else if(g){ const u=g.u||'건'; const c=byUnit[u]||(byUnit[u]={amt:0,n:0}); c.n++; c.amt+=(u==='TON'?ton:amtOf(x,g)); }
+      });
+      const parts=[];
+      Object.keys(byItem).sort((a,b)=>(byItem[b].ton+byItem[b].amt)-(byItem[a].ton+byItem[a].amt)).slice(0,3).forEach(k=>{
+        const c=byItem[k];
+        parts.push(k+' '+(c.ton>0? r1(c.ton)+' TON' : r1(c.amt)+' '+(c.u||'건')));
+      });
+      Object.keys(byUnit).forEach(u=>{ const c=byUnit[u]; if(c.amt>0.005) parts.push(r1(c.amt)+' '+u); });
+      return (parts.length?parts.join(' · '):recs.length+'건')+' (완료 '+recs.filter(x=>x.completed).length+'/'+recs.length+'건)';
+    }
+
+    /* ── 숫자 → 문장 ── */
+    function deltaPct(cur,prev){ if(!(prev>0)) return null; return Math.round((cur/prev-1)*1000)/10; }
+    function deltaTon(cur,prev){ return Math.round((cur-prev)*10)/10; }
+    function pctText(cur,prev,suf){
+      if(!(prev>0)) return '이전 기간 기록 없음';
+      const df=Math.round((cur-prev)*10)/10;
+      if(df>0) return '+'+r1(df)+(suf||'')+' 상승';
+      if(df<0) return r1(df)+(suf||'')+' 하락';
+      return '변동 없음';
+    }
+    function chgText(c,unitLabel){
+      if(c==null) return '비교 기록 없음';
+      return (c>0?'+':'')+r1(c)+(unitLabel||'%');
+    }
+    const periodWord=()=>mode==='week'?'전주':'전월';
+
+    /* ── SVG 막대(추세선·0선·양방향) ── */
+    function niceMax(m){
+      if(!(m>0)) return 10;
+      const p=Math.pow(10,Math.floor(Math.log10(m)));
+      const cand=[1,1.2,1.5,2,2.5,3,4,5,6,8,10].map(k=>k*p);
+      for(let i=0;i<cand.length;i++) if(cand[i]>=m*1.15) return cand[i];
+      return 10*p;
+    }
+    const tickLbl=v=>{ const n=Math.round(v*100)/100; return Math.abs(n)>=1000?n.toLocaleString('en-US',{maximumFractionDigits:1}):String(n); };
+    function svgTrend(items,opt){
+      opt=opt||{};
+      const narrow=(typeof window!=='undefined'&&window.innerWidth<=620);
+      const W=narrow?430:760,H=narrow?300:320,L=narrow?34:58,R=narrow?14:22,T=narrow?42:48,B=narrow?50:58;
+      const FS=narrow?0.82:1;
+      const vals=items.map(it=>+it.value||0), mx=niceMax(Math.max(1,...vals));
+      const pw=W-L-R, ph=H-T-B, n=Math.max(1,items.length), slot=pw/n;
+      const bw=Math.max(14,Math.min(72,slot*0.52));
+      const y=v=>T+ph-(Math.max(0,v)/mx)*ph, base=T+ph;
+      let s='<svg class="jpr-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(opt.aria||'물량 추이')+'">';
+      [0,.25,.5,.75,1].forEach(f=>{
+        const v=mx*f, yy=y(v);
+        s+='<line x1="'+L+'" y1="'+r1(yy)+'" x2="'+(W-R)+'" y2="'+r1(yy)+'" stroke="#D8CEBE" stroke-width="1"'+(f?' stroke-dasharray="3 6"':'')+'/>';
+        s+='<text x="'+(L-6)+'" y="'+r1(yy+5)+'" text-anchor="end" font-size="'+r1(15*FS)+'" fill="#8B8378">'+esc(tickLbl(v))+'</text>';
+      });
+      const pts=[];
+      items.forEach((it,i)=>{
+        const cx=L+slot*(i+0.5), v=Math.max(0,+it.value||0), last=i===items.length-1;
+        const h=Math.max(v>0?5:2,(v/mx)*ph), yy=base-h;
+        s+='<rect x="'+r1(cx-bw/2)+'" y="'+r1(yy)+'" width="'+r1(bw)+'" height="'+r1(h)+'" rx="8" fill="'+(last?'#D96B43':'#B5AFA8')+'"/>';
+        s+='<text x="'+r1(cx)+'" y="'+r1(yy-10)+'" text-anchor="middle" font-size="'+r1(17*FS)+'" font-weight="700" fill="#1A1918">'+esc(it.top!=null?it.top:num(v))+'</text>';
+        s+='<text x="'+r1(cx)+'" y="'+(base+30)+'" text-anchor="middle" font-size="'+r1(16*FS)+'" font-weight="'+(last?'700':'400')+'" fill="'+(last?'#1A1918':'#6E675F')+'">'+esc(it.label)+'</text>';
+        pts.push([cx,y(v)]);
+      });
+      if(opt.trend&&pts.length>1){
+        s+='<polyline points="'+pts.map(p=>r1(p[0])+','+r1(p[1])).join(' ')+'" fill="none" stroke="#D96B43" stroke-width="2.5" stroke-dasharray="8 6"/>';
+        pts.forEach(p=>{ s+='<circle cx="'+r1(p[0])+'" cy="'+r1(p[1])+'" r="5.5" fill="#D96B43"/>'; });
+      }
+      if(opt.badge) s+='<text x="'+(W-R-2)+'" y="'+(T-18)+'" text-anchor="end" font-size="'+r1(18*FS)+'" font-weight="800" fill="'+(opt.badgeColor||'#B54E28')+'">'+esc(opt.badge)+'</text>';
+      s+='</svg>';
+      return s;
+    }
+    function svgDown(items,opt){
+      opt=opt||{};
+      const narrow=(typeof window!=='undefined'&&window.innerWidth<=620);
+      const W=narrow?430:760,H=narrow?280:300,L=narrow?30:54,R=narrow?14:22,T=26,B=narrow?46:54;
+      const FS=narrow?0.82:1;
+      const vals=items.map(it=>+it.value||0), mx=niceMax(Math.max(1,...vals));
+      const pw=W-L-R, ph=H-T-B, n=Math.max(1,items.length), slot=pw/n;
+      const bw=Math.max(16,Math.min(88,slot*0.56));
+      let s='<svg class="jpr-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(opt.aria||'이월 추이')+'">';
+      s+='<line x1="'+L+'" y1="'+T+'" x2="'+(W-R)+'" y2="'+T+'" stroke="#8B8378" stroke-width="1.5"/>';
+      [0,.5,1].forEach(f=>{ const yy=T+ph*f; s+='<text x="'+(L-6)+'" y="'+r1(yy+5)+'" text-anchor="end" font-size="'+r1(15*FS)+'" fill="#8B8378">'+esc(tickLbl(mx*f))+'</text>'; });
+      items.forEach((it,i)=>{
+        const cx=L+slot*(i+0.5), v=Math.max(0,+it.value||0), last=i===items.length-1;
+        const h=Math.max(v>0?6:2,(v/mx)*ph);
+        s+='<rect x="'+r1(cx-bw/2)+'" y="'+T+'" width="'+r1(bw)+'" height="'+r1(h)+'" rx="8" fill="'+(last?'#D96B43':'#B5AFA8')+'"/>';
+        if(v>0) s+='<text x="'+r1(cx)+'" y="'+r1(T+h-12)+'" text-anchor="middle" font-size="'+r1(17*FS)+'" font-weight="700" fill="#FFFFFF">'+esc(num(v))+'건</text>';
+        else s+='<text x="'+r1(cx)+'" y="'+(T+22)+'" text-anchor="middle" font-size="'+r1(15*FS)+'" font-weight="700" fill="#8B8378">0건</text>';
+        s+='<text x="'+r1(cx)+'" y="'+(T+ph+30)+'" text-anchor="middle" font-size="'+r1(16*FS)+'" font-weight="'+(last?'700':'400')+'" fill="'+(last?'#1A1918':'#6E675F')+'">'+esc(it.label)+'</text>';
+      });
+      s+='</svg>';
+      return s;
+    }
+    function svgBalance(items,opt){
+      opt=opt||{};
+      const narrow=(typeof window!=='undefined'&&window.innerWidth<=620);
+      const W=narrow?430:760,H=narrow?320:372,L=narrow?36:58,R=narrow?14:22,T=30,UP=narrow?160:188,DN=narrow?64:72,B=30;
+      const FS=narrow?0.82:1;
+      const pw=W-L-R, n=Math.max(1,items.length), slot=pw/n, bw=Math.max(16,Math.min(64,slot*0.46));
+      const zero=T+UP;
+      let s='<svg class="jpr-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(opt.aria||'완료율·이월률 균형')+'">';
+      [[100,'100%',zero-UP],[50,'50%',zero-UP/2],[0,'0%',zero],[-10,'-10%',zero+DN]].forEach(t=>{
+        const yy=t[2];
+        s+='<line x1="'+L+'" y1="'+r1(yy)+'" x2="'+(W-R)+'" y2="'+r1(yy)+'" stroke="#D8CEBE" stroke-width="1"'+(t[0]!==0?' stroke-dasharray="3 6"':'')+'/>';
+        s+='<text x="'+(L-6)+'" y="'+r1(yy+5)+'" text-anchor="end" font-size="'+r1(15*FS)+'" fill="#8B8378">'+esc(t[1])+'</text>';
+      });
+      items.forEach((it,i)=>{
+        const cx=L+slot*(i+0.5), up=Math.max(0,Math.min(1,(+it.up||0)/100)), dn=Math.max(0,Math.min(1,(+it.down||0)/10));
+        const uh=Math.max(4,up*UP), dh=Math.max(3,dn*DN);
+        s+='<rect x="'+r1(cx-bw/2)+'" y="'+r1(zero-uh)+'" width="'+r1(bw)+'" height="'+r1(uh)+'" rx="8" fill="'+(it.forest?'#3A6648':'#D96B43')+'"/>';
+        s+='<rect x="'+r1(cx-bw/2)+'" y="'+zero+'" width="'+r1(bw)+'" height="'+r1(dh)+'" rx="8" fill="#B5AFA8"/>';
+        s+='<text x="'+r1(cx)+'" y="'+r1(zero-uh-10)+'" text-anchor="middle" font-size="'+r1(17*FS)+'" font-weight="800" fill="#B54E28">'+esc(r1(it.up))+'%</text>';
+        if((+it.down||0)>0) s+='<text x="'+r1(cx)+'" y="'+r1(zero+Math.max(dh,3)+22)+'" text-anchor="middle" font-size="'+r1(16*FS)+'" font-weight="700" fill="#3F3B36">'+esc(r1(it.down))+'%</text>';
+        s+='<text x="'+r1(cx)+'" y="'+(H-12)+'" text-anchor="middle" font-size="'+r1(16*FS)+'" font-weight="700" fill="#1A1918">'+esc(it.label)+'</text>';
+      });
+      s+='</svg>';
+      return s;
+    }
+
+    /* ── 시트 조립 ── */
+    function topLine(n){ return '<div class="jpr-top"><span>'+esc(deckTitle({s:lastCur?lastCur.s:today(),e:lastCur?lastCur.e:today()}))+' 보고서 | <span class="jpr-pg">'+n+'</span></span><span style="color:#D96B43;font-weight:800;letter-spacing:.08em;">POSCO-M</span></div>'; }
+    function sheet(n,title,gov,body,foot){
+      return '<section class="jpr-sheet">'+topLine(n)+'<h3 class="jpr-h2">'+title+'</h3>'+(gov?'<p class="jpr-gov">'+gov+'</p>':'')+body+(foot?'<div class="jpr-foot">'+foot+'</div>':'')+'</section>';
+    }
+    function pills(items,opt){
+      opt=opt||{};
+      if(!items.length) return '<div class="jpr-empty">구역별 기록이 없습니다.</div>';
+      let bi=-1, bs=-1;
+      items.forEach((it,i)=>{ const sc=it.pct*1000+Math.min(999,it.n); if(it.pct>0&&sc>bs){ bs=sc; bi=i; } });
+      return '<div class="jpr-pills">'+items.map((it,i)=>{
+        const hi=(i===bi), w=Math.max(6,Math.min(88,it.pct*0.86));
+        return '<div class="jpr-prow"><span class="jpr-plbl">'+esc(it.label)+(it.n?'':' <i style="font-style:normal;color:#B5AFA8;font-size:10.5px;">기록 없음</i>')+'</span><div class="jpr-ptrack"><div class="jpr-pbar'+(hi?' hi':'')+'" style="width:'+w+'%"></div><span class="jpr-pval'+(hi?' hi':'')+'">'+r1(it.pct)+'%</span></div></div>';
+      }).join('')+'</div>';
+    }
+
+    function renderDash(d,prev){
+      const R=reportTitleText(d), pct=pctOf(d.done,d.work.length), prevPct=pctOf(prev.done,prev.work.length);
+      const curV=volumeBetween(d.s,d.e), prevV=volumeBetween(prev.s,prev.e);
+      const buckets=weekBuckets(d);
+      const bkVol=buckets.map(b=>volumeBetween(b.from,b.to));
+      const started=buckets.filter((b,i)=>b.from<=today());
+      const stVol=bkVol.filter((b,i)=>buckets[i].from<=today());
+      const groups=groupStats(d);
+      const crews=crewStats(d);
+      const lines=lineStats(d);
+      const monthTotal=curV.total;
+      const prevMonthTotal=prevV.total;
+      const sumWeeks=bkVol.reduce((a,v)=>a+v.total,0);
+      const firstTot=stVol.length?stVol[0].total:0, lastTot=stVol.length?stVol[stVol.length-1].total:0;
+      const wChg=(mode==='week')?deltaPct(curV.total,prevV.total):deltaPct(lastTot,firstTot);
+      const wChgLabel=(mode==='week')?'전주':(started.length?started[0].short+' ':'');
+      const firstLabel=started.length?started[0].short:'';
+      const author=authorName();
+      const zoneCount=groups.filter(g=>g.n>0).length;
+      const crewCount=crews.filter(c=>c.n>0&&c.key!=='미지정').length;
+      const prodDone=lines.reduce((a,l)=>a+l.done,0);
+
+      /* 00 표지 */
+      const cover='<section class="jpr-sheet is-cover">'
+        +'<div class="jpr-cov-hd"><h2 class="jpr-cov-title">'+esc(R)+'</h2><span class="jpr-cov-author">작성자 : '+esc(author)+'</span></div>'
         +'<div class="jpr-cov-kpis">'
-          +'<div class="jpr-cov-kpi"><div class="jpr-ck-lbl">전 구역 평균 목표 달성률</div><div class="jpr-ck-val">'+pct+'%</div><div class="jpr-ck-sub">'+esc(diffStr(pct,prevPct,'%p'))+'</div></div>'
-          +'<div class="jpr-cov-kpi"><div class="jpr-ck-lbl">'+(mode==='week'?'주간':'월간')+' 합산 물량 ('+esc(mainUnit)+')</div><div class="jpr-ck-val">'+esc(mainAmt)+' '+esc(mainUnit)+'</div><div class="jpr-ck-sub">'+esc(diffStr(curAmt,prevAmt,' '+mainUnit))+'</div></div>'
+          +'<div class="jpr-cov-kpi"><div class="jpr-ck-lbl">전 구역 평균 목표 달성률</div><div class="jpr-ck-val">'+r1(pct)+'%</div><div class="jpr-ck-sub">'+esc(periodWord()+' '+(prev.work.length?r1(prevPct):'-')+'% 대비 '+((pct-prevPct)>=0?'+':'')+r1(pct-prevPct)+'%p')+'</div></div>'
+          +'<div class="jpr-cov-kpi"><div class="jpr-ck-lbl">'+(mode==='week'?'주간':'월간')+' 출·입고 물량 (TON)</div><div class="jpr-ck-val">'+esc(num(curV.flow))+'t</div><div class="jpr-ck-sub">'+esc('출고 '+r1(curV.out)+' · 입고 '+r1(curV.inT))+'</div></div>'
         +'</div></section>';
 
-      /* Sheet 01: 4-Column Highlights (no author in header) */
-      const s1='<section class="jpr-sheet">'
-        +'<div class="jpr-top"><span>'+esc(rTitle)+' | <span class="jpr-pg">01</span></span></div>'
-        +'<h3 class="jpr-h2">'+(mode==='week'?'주간':'월간')+' 실적 하이라이트</h3>'
-        +'<p class="jpr-gov">'+esc(title(d))+' 기간 동안 전 구역 평균 목표 달성률 '+pct+'%, 주요 물량 '+esc(mainAmt)+' '+esc(mainUnit)+'이 집계되었습니다.</p>'
-        +'<div class="jpr-hi4">'
-          +'<div class="jpr-hi-card"><div><div class="jpr-hi-bar forest"></div><div class="jpr-hi-lbl">평균 목표 달성률</div></div><div class="jpr-hi-val">'+pct+'%</div><div class="jpr-hi-sub">이전 '+prevPct+'% 대비</div><div class="jpr-hi-foot forest">'+esc(diffStr(pct,prevPct,'%p'))+'</div></div>'
-          +'<div class="jpr-hi-card"><div><div class="jpr-hi-bar"></div><div class="jpr-hi-lbl">합산 물량 ('+esc(mainUnit)+')</div></div><div class="jpr-hi-val">'+esc(mainAmt)+' '+esc(mainUnit)+'</div><div class="jpr-hi-sub">목표 '+(d.units[mainUnit]?r1(d.units[mainUnit].goal):'0')+' '+esc(mainUnit)+'</div><div class="jpr-hi-foot">'+esc(diffStr(curAmt,prevAmt,' '+mainUnit))+'</div></div>'
-          +'<div class="jpr-hi-card"><div><div class="jpr-hi-bar forest"></div><div class="jpr-hi-lbl">환경 점검 완료</div></div><div class="jpr-hi-val">'+d.envDone+'회</div><div class="jpr-hi-sub">기간 내 순찰 기록</div><div class="jpr-hi-foot forest">'+esc(diffStr(d.envDone,prev.envDone,'회'))+'</div></div>'
-          +'<div class="jpr-hi-card"><div><div class="jpr-hi-bar"></div><div class="jpr-hi-lbl">이월 · 특이사항</div></div><div class="jpr-hi-val">('+d.carry+' / '+d.memos.length+')</div><div class="jpr-hi-sub">이월 건수 / 특이사항</div><div class="jpr-hi-foot">'+esc(diffStr(d.carry,prev.carry,'건'))+'</div></div>'
+      /* 01 실적 하이라이트 */
+      const gov1='전 구역 목표 달성률이 '+r1(pct)+'%'+(prev.work.length?'('+periodWord()+' '+r1(prevPct)+'% 대비 '+((pct-prevPct)>=0?'+':'')+r1(pct-prevPct)+'%p)':'')+'로 집계되었습니다. '
+        +zoneCount+'개 구역'+(crewCount?'과 '+crewCount+'개 조':'')+'의 '+(mode==='week'?'주간':'월간')+' 출·입고 물량은 '+num(curV.flow)+' TON이며, 이월·인계는 '+d.carry+'건입니다.';
+      const s1=sheet('01',esc(deckTitle(d))+' 실적 하이라이트',esc(gov1),
+        '<div class="jpr-hi4">'
+        +'<div class="jpr-hi-card"><div><div class="jpr-hi-bar forest"></div><div class="jpr-hi-lbl">평균 목표 달성률</div></div><div class="jpr-hi-val">'+r1(pct)+'%</div><div class="jpr-hi-sub">'+esc(periodWord()+' '+(prev.work.length?r1(prevPct):'-')+'% 대비')+'</div><div class="jpr-hi-foot forest">'+esc(pctText(pct,prevPct,'%p'))+'</div></div>'
+        +'<div class="jpr-hi-card"><div><div class="jpr-hi-bar"></div><div class="jpr-hi-lbl">'+(mode==='week'?'주간':'월간')+' 출·입고 물량</div></div><div class="jpr-hi-val">'+esc(num(curV.flow))+'t</div><div class="jpr-hi-sub">'+esc('출고 '+r1(curV.out)+' · 입고 '+r1(curV.inT))+'</div><div class="jpr-hi-foot">'+esc(chgText(wChg)+' '+wChgLabel+' 대비')+'</div></div>'
+        +'<div class="jpr-hi-card"><div><div class="jpr-hi-bar forest"></div><div class="jpr-hi-lbl">'+(mode==='week'?'주간':'월간')+' 누적 물량</div></div><div class="jpr-hi-val">'+esc(num(monthTotal))+'t</div><div class="jpr-hi-sub">'+esc('출고 '+r1(curV.out)+' · 입고 '+r1(curV.inT)+' · 기타 '+r1(curV.other))+'</div><div class="jpr-hi-foot forest">'+esc(deltaTon(monthTotal,prevMonthTotal)>0?'+':'')+esc(r1(deltaTon(monthTotal,prevMonthTotal)))+'t '+esc(periodWord()+' 대비')+'</div></div>'
+        +'<div class="jpr-hi-card"><div><div class="jpr-hi-bar"></div><div class="jpr-hi-lbl">이월 · 인계 건수</div></div><div class="jpr-hi-val">('+d.carry+'건)</div><div class="jpr-hi-sub">'+esc('완료 '+d.done+'건 · 이월 '+d.carry+'건 인계')+'</div><div class="jpr-hi-foot">'+esc((d.carry-prev.carry>0?'+':'')+r1(d.carry-prev.carry)+'건 '+periodWord()+' 대비')+'</div></div>'
+        +'</div>',
+        esc('단위: TON · 건 · % | 지수 대시보드 08:00 · 18:00 자동 마감 누적 데이터 기준 (샘플 없음)'));
+
+      /* 02 물량 추이 */
+      const trendItems=(mode==='week')
+        ? d.days.filter(k=>k<=today()).map(k=>{ const v=volumeBetween(k,k).total; return {label:md(k)+'('+DOW[D(k).getUTCDay()]+')',value:v,top:num(v)+'t'}; })
+        : started.map((b,i)=>({label:b.short,value:stVol[i].total,top:num(stVol[i].total)+'t'}));
+      const s2body='<div class="jpr-chartbox">'
+        +(trendItems.length?svgTrend(trendItems,{trend:true,badge:wChg!=null?chgText(wChg):'',aria:'물량 추이'})
+          :'<div class="jpr-empty">이 기간에 집계된 물량 기록이 없습니다.</div>')
         +'</div>'
-        +'<div class="jpr-foot">매일 08:00 · 18:00 자동 마감 연동 데이터 기준</div>'
-      +'</section>';
+        +'<div class="jpr-legend" style="justify-content:space-between;margin-top:14px;">'
+          +'<span>'+esc((mode==='week'?'주간':'월간')+' 누적')+'<b>'+esc(num(monthTotal))+'t</b></span>'
+          +'<span>출고<b>'+esc(num(curV.out))+'t</b></span><span>입고<b>'+esc(num(curV.inT))+'t</b></span><span>기타<b>'+esc(num(curV.other))+'t</b></span>'
+        +'</div>';
+      const s2=sheet('02',esc(mode==='week'?'일자별 물량 추이':'주차별 물량 추이'),esc(deckTitle(d)+' 물량은 '+(wChg!=null?wChgLabel+' 대비 '+chgText(wChg):'비교 기록 없음')+'이며, 최근 구간 '+num(lastTot)+' TON을 기록했습니다.'),
+        s2body,
+        esc('막대 = 해당 '+(mode==='week'?'날짜':'주차')+' 완료 물량(TON) · 점선 = 추세 · 18시 마감 이후 확정 기록만'));
 
-      /* Sheet 02: Daily Bar Chart + Zone Achievement Pill Bars */
-      let chartHtml='<div class="jpr-empty">수량이 적힌 완료 기록이 없습니다.</div>';
-      if(unit && d.units[unit]){
-        const u=d.units[unit], vals=d.days.map(k=>u.byDay[k]||0), mx=Math.max(1,...vals), many=d.days.length>10, t=today();
-        if(!selDay||selDay<d.s||selDay>d.e) selDay=d.days.includes(t)?t:d.days[d.days.length-1];
-        chartHtml='<div class="jpr-cols">'+d.days.map(k=>{
-          const v=u.byDay[k]||0;
-          return '<div class="jpr-col pf-col'+(k===t?' today':'')+(k===selDay?' on':'')+'" data-pf-day="'+k+'"><em>'+(v?r1(v):'')+'</em><i style="height:'+Math.max(3,Math.round(v/mx*100))+'%"></i><span>'+(many?(+k.slice(8,10)):md(k))+'</span></div>';
-        }).join('')+'</div><div class="jpr-tip" id="pfTip"><span>'+esc(tipText(d,selDay))+'</span></div>';
-      }
-      const zs=Object.keys(d.zones).filter(z=>d.zones[z].n).sort((a,b)=>d.zones[b].n-d.zones[a].n);
-      const pillsHtml=zs.length?'<div class="jpr-pills">'+zs.slice(0,8).map((z,idx)=>{
-        const x=d.zones[z], p=Math.round(x.done/x.n*100), hi=p>=95||idx===0;
-        return '<div class="jpr-prow"><span class="jpr-plbl">'+esc(NAMES[z]||z)+'</span><div class="jpr-ptrack"><div class="jpr-pbar'+(hi?' hi':'')+'" style="width:'+Math.max(6,Math.min(82,Math.round(p*0.82)))+'%"></div><span class="jpr-pval'+(hi?' hi':'')+'">'+p+'%</span></div></div>';
-      }).join('')+'</div>':'<div class="jpr-empty">구역별 기록이 없습니다.</div>';
+      /* 03 구역별 달성률 + 물량 비중 */
+      const gp=groups.slice().sort((a,b)=>a.pct-b.pct);
+      const bestG=groups.filter(g=>g.pct>0).slice().sort((a,b)=>(b.pct-a.pct)||(b.n-a.n))[0];
+      const slices=(function(){
+        const ob=Object.keys(curV.ob).map(k=>({k:k,v:curV.ob[k]})).sort((a,b)=>b.v-a.v);
+        const out=[], top=ob.slice(0,2), colors=['#D96B43','#E07A50','#EFA98A'];
+        top.forEach((o,i)=>{ out.push({label:'출고 '+o.k,v:o.v,color:colors[i]}); });
+        const rest=ob.slice(2).reduce((a,c)=>a+c.v,0); if(rest>0.005) out.push({label:'출고 기타',v:rest,color:'#EFA98A'});
+        if(curV.inT>0){
+          const ibTop=Object.keys(curV.ib).map(k=>({k:k,v:curV.ib[k]})).filter(o=>o.k&&o.k!=='기타').sort((a,b)=>b.v-a.v).slice(0,2).map(o=>o.k);
+          out.push({label:'입고'+(ibTop.length?' '+ibTop.join('·'):''),v:curV.inT,color:'#F3C9B6'});
+        }
+        if(curV.other>0.005) out.push({label:'생산·포장',v:curV.other,color:'#B5AFA8'});
+        return out;
+      })();
+      const sliceTotal=slices.reduce((a,c)=>a+c.v,0);
+      const alloc=slices.length?'<div class="jpr-stackbar">'+slices.map(sl=>{ const p=sliceTotal?sl.v/sliceTotal*100:0; return '<div class="jpr-seg'+(sl.color==='#F3C9B6'||sl.color==='#B5AFA8'?' dark':'')+'" style="width:'+r1(Math.max(0,p))+'%;background:'+sl.color+'">'+(p>=9?r1(p)+'%':'')+'</div>'; }).join('')+'</div>'
+        +'<div class="jpr-legend">'+slices.map(sl=>{ const p=sliceTotal?sl.v/sliceTotal*100:0; return '<span><i style="background:'+sl.color+'"></i>'+esc(sl.label)+'<b>'+r1(p)+'%</b></span>'; }).join('')+'</div>'
+        :'<div class="jpr-empty">출·입고 물량 기록이 없습니다.</div>';
+      const s3=sheet('03','구역별 목표 달성률 및 출·입고 물량 비중',
+        esc(zoneCount+'개 구역이 집계되었고, '+(bestG?'가장 높은 구역은 '+bestG.label+'('+r1(bestG.pct)+'%)입니다.':'기록이 없습니다.')+' 출·입고 물량 비중은 '+esc(num(curV.flow))+' TON 기준입니다.'),
+        '<div class="jpr-grid2">'
+        +'<div class="jpr-panel"><div class="jpr-ptitle"><span>구역별 목표 달성률</span></div>'+pills(gp)+'</div>'
+        +'<div class="jpr-panel"><div class="jpr-ptitle"><span>출·입고 물량 비중 ('+esc(num(curV.flow))+' TON 기준)</span></div>'+alloc
+          +'<div class="jpr-legend" style="margin-top:10px;font-size:11.5px;color:#6E675F;">출고 '+esc(num(curV.out))+'t · 입고 '+esc(num(curV.inT))+'t'+(curV.other>0?' · 기타 '+esc(num(curV.other))+'t':'')+'</div></div>'
+        +'</div>',
+        esc('단위: TON · % | 지수 대시보드 18시 마감 누적 데이터 · 샘플 없음'));
 
-      const s2='<section class="jpr-sheet">'
-        +'<div class="jpr-top"><span>'+esc(rTitle)+' | <span class="jpr-pg">02</span></span></div>'
-        +'<h3 class="jpr-h2">날짜별 물량 추이 및 구역별 목표 달성률</h3>'
-        +'<p class="jpr-gov">날짜 막대를 누르면 해당 일자의 구역별 상세 실적이 하단에 표시됩니다.</p>'
-        +'<div class="jpr-grid2">'
-          +'<div class="jpr-panel"><div class="jpr-ptitle"><span>날짜별 완료량'+(unit?' ('+esc(unit)+')':'')+'</span>'+unitChips(d)+'</div>'+chartHtml+'</div>'
-          +'<div class="jpr-panel"><div class="jpr-ptitle"><span>구역별 목표 달성률</span></div>'+pillsHtml+'</div>'
-        +'</div>'
-      +'</section>';
+      /* 04 주차별 누적 물량 (스택) */
+      const stackMax=Math.max(1,...bkVol.map(v=>v.total));
+      const stackHtml=buckets.map((b,i)=>{
+        const v=bkVol[i], last=i===buckets.length-1, dim=b.from>today();
+        const segs=(function(){
+          const arr=[{v:v.out,c:'#D96B43'},{v:v.inT,c:'#E88C64'},{v:v.other,c:'#F3C9B6'}].filter(s=>s.v>0.005);
+          return arr.map(s=>'<div class="jpr-seg'+(s.c==='#F3C9B6'?' dark':'')+'" style="height:'+r1(s.v/stackMax*100)+'%;background:'+s.c+';'+(s.v/stackMax*100<9?'font-size:0;':'')+'">'+r1(s.v)+'t</div>').join('');
+        })();
+        return '<div class="jpr-stackcol"><div class="jpr-stackval" style="'+(dim?'color:#B5AFA8;':'')+'">'+(dim?'-':num(v.total)+'t')+'</div><div class="jpr-stackbody">'+segs+'</div><div class="jpr-stacklbl'+(last&&!dim?' on':'')+'">'+esc(b.label)+'</div></div>';
+      }).join('');
+      const s4=sheet('04',esc(mode==='week'?'최근 4주 구역별 출·입고 누적 물량 추이':'월간 1~'+buckets.length+'주차 구역별 출·입고 누적 물량 추이'),
+        esc('출고가 전체 물량의 '+(curV.total>0?r1(curV.out/curV.total*100):0)+'%를 차지하며, '+(firstLabel||'첫 구간')+' '+num(firstTot)+' TON에서 '+num(lastTot)+' TON까지 '+(wChg!=null?chgText(wChg):'기록 없음')+' 흐름을 보였습니다.'),
+        '<div class="jpr-panel" style="background:#E6DECF;">'
+        +'<div class="jpr-ptitle"><span>'+(mode==='week'?'주차별':'월간 주차별')+' 출·입고 누적 물량</span><span style="font-size:11.5px;color:#6E675F;">단위 TON</span></div>'
+        +'<div class="jpr-stack">'+stackHtml+'</div>'
+        +'<div class="jpr-legend" style="margin-top:12px;"><span><i style="background:#D96B43"></i>출고</span><span><i style="background:#E88C64"></i>입고</span><span><i style="background:#F3C9B6"></i>기타(생산·포장)</span><span style="margin-left:auto;color:#6E675F;">'+(mode==='week'?'4주 누적':'월간 누적')+' '+esc(num(sumWeeks))+'t</span></div>'
+        +'</div>',
+        esc('주차 = 1일~7일, 8일~14일 … · 아직 오지 않은 주차는 -'));
 
-      /* Sheet 03: Zone Breakdown Table with Terracotta Focus Column */
-      const tRows=zs.length?zs.map(z=>{
-        const x=d.zones[z], p=Math.round(x.done/x.n*100);
-        return '<tr><td><b>'+esc(NAMES[z]||z)+'</b></td><td class="num">'+x.done+' / '+x.n+'</td><td class="num focus">'+p+'%</td><td class="num">'+x.carry+'건</td><td class="num">'+x.memo+'건</td></tr>';
+      /* 05 출고 물량·이월 비교 */
+      const cmpMax=Math.max(1,prevV.out,curV.out);
+      const carryMax=Math.max(1,prev.carry,d.carry);
+      const cmpBars=(function(){
+        const arr=[{label:periodWord()+' ('+md(prev.s)+'~'+md(prev.e)+')',v:prevV.out,hi:false},{label:(mode==='week'?'이번 주':'이번 달')+' ('+md(d.s)+'~'+md(d.e)+')',v:curV.out,hi:true}];
+        return '<div class="jpr-cmp">'+arr.map(a=>'<div class="jpr-cmpcol"><div class="jpr-cmpval">'+r1(a.v)+'t</div><div class="jpr-cmpbar'+(a.hi?' hi':'')+'" style="height:'+Math.max(3,Math.round(a.v/cmpMax*100))+'%"></div><div class="jpr-cmplbl'+(a.hi?' on':'')+'">'+esc(a.label)+'</div></div>').join('')+'</div>';
+      })();
+      const cmpCarry=(function(){
+        const arr=[{label:periodWord(),v:prev.carry,hi:false},{label:(mode==='week'?'이번 주':'이번 달'),v:d.carry,hi:true}];
+        return '<div class="jpr-cmp" style="height:150px;gap:26px;">'+arr.map(a=>'<div class="jpr-cmpcol"><div class="jpr-cmpval">'+a.v+'건</div><div class="jpr-cmpbar'+(a.hi?' hi':'')+'" style="height:'+Math.max(3,Math.round(a.v/carryMax*100))+'%;width:52px;"></div><div class="jpr-cmplbl'+(a.hi?' on':'')+'">'+esc(a.label)+'</div></div>').join('')+'</div>';
+      })();
+      const s5=sheet('05','출고 물량 및 이월 감소폭 '+periodWord()+' 비교',
+        esc('출고 물량은 '+periodWord()+' 대비 '+chgText(deltaPct(curV.out,prevV.out))+'한 '+num(curV.out)+' TON을 기록했으며, 미완료 이월 건수는 '+prev.carry+'건에서 '+d.carry+'건으로 '+(d.carry<=prev.carry?'줄었습니다.':'늘었습니다.')),
+        '<div class="jpr-grid2">'
+        +'<div class="jpr-panel"><div class="jpr-ptitle"><span>출고 물량 비교 (TON)</span></div>'+cmpBars
+          +'<div class="jpr-legend" style="justify-content:space-between;margin-top:10px;font-size:11.5px;">'+esc(periodWord()+' '+r1(prevV.out)+'t')+'<b style="color:#B54E28;">'+esc(chgText(deltaPct(curV.out,prevV.out)))+'</b></div></div>'
+        +'<div class="jpr-panel"><div class="jpr-ptitle"><span>미완료 이월 건수 비교</span></div>'+cmpCarry
+          +'<div class="jpr-legend" style="justify-content:space-between;margin-top:10px;font-size:11.5px;">이월 = 이월 표시가 있고 아직 완료되지 않은 건<b style="color:#B54E28;">'+(d.carry-prev.carry>0?'+':'')+r1(d.carry-prev.carry)+'건</b></div></div>'
+        +'</div>',
+        esc('단위: TON · 건 | 출고 = 출고 구역 완료 톤수 합계'));
+
+      /* 06 이월 추이 + 현장 입력 표준 */
+      const carryItems=started.map((b,i)=>({label:b.short,value:carryBetween(b.from,b.to).length}));
+      const s6=sheet('06',esc(mode==='week'?'주차별 미완료 이월 건수 추이 (최근 4주)':'주차별 미완료 이월 건수 추이'),
+        esc('기간 내 미완료 이월은 '+d.carry+'건이며, 구역별 정량 실적과 한 줄 인수인계로 자동 집계됩니다.'),
+        '<div class="jpr-chartbox">'+(carryItems.length?svgDown(carryItems,{aria:'이월 건수 추이'}):'<div class="jpr-empty">이월 기록이 없습니다.</div>')+'</div>'
+        +'<div style="margin-top:16px;"><div class="jpr-ptitle" style="margin-bottom:2px;"><span>현장 입력 표준 및 자동 마감 요약</span></div>'
+          +'<div class="jpr-stand"><span>1. 구역별 정량 실적 입력</span><b>TON · 대 · Bag</b></div>'
+          +'<div class="jpr-stand"><span>2. 상태 및 한 줄 인수인계</span><b>완료 · 작업중 · 이월</b></div>'
+          +'<div class="jpr-stand"><span>3. 08:00 · 18:00 자동 마감</span><b>누적 집계 · 보고서 반영</b></div>'
+        +'</div>',
+        esc('완료 '+d.done+' / '+d.work.length+'건 · 평균 '+r1(pct)+'% · 이월 '+d.carry+'건'));
+
+      /* 07 4조 2교대 */
+      const crewMaxN=Math.max(1,...crews.map(c=>c.n));
+      const crewRows=crews.length?crews.map((c,i)=>{
+        const zs=Object.keys(c.zones).sort((a,b)=>c.zones[b]-c.zones[a]).slice(0,2).map(z=>NAMES[z]||z);
+        const label=(c.key==='미지정'?'미지정':c.key)+(zs.length?' · '+zs.join('·'):'');
+        const w=Math.max(4,Math.min(86,Math.round(c.done/crewMaxN*100)));
+        const hi=c.done===crewMaxN&&c.n>0;
+        return '<div class="jpr-crewrow"><span class="jpr-plbl">'+esc(label)+'</span><div class="jpr-ptrack"><div class="jpr-pbar'+(hi?' hi':'')+'" style="width:'+w+'%"></div><span class="jpr-pval'+(hi?' hi':'')+'">'+c.done+'건 완료</span></div><span class="jpr-crewnum">'+c.n+'건 · <b>'+r1(pctOf(c.done,c.n))+'%</b></span></div>';
+      }).join(''):'<div class="jpr-empty">작성자 기록이 없습니다.</div>';
+      const crewDetail=crews.length?'<div class="jpr-legend" style="margin-top:14px;">'+crews.map(c=>'<span>'+esc(c.key)+'<b>'+c.done+' / '+c.n+'건 · '+r1(pctOf(c.done,c.n))+'%</b></span>').join('')+'</div>':'';
+      const s7=sheet('07','4조 2교대(1조~4조) 등록 비중 및 완료·이월 균형',
+        esc(crews.length?'작성자에 조 정보가 있는 기록은 조별로 집계하고, 조 표기가 없는 기록은 미지정으로 정확히 표시합니다.':'작성자 정보가 있는 기록이 아직 없습니다.'),
+        '<div class="jpr-panel"><div class="jpr-ptitle"><span>근무조별 등록·완료 건수</span><span style="font-size:11.5px;color:#6E675F;">단위 건</span></div>'
+        +crewRows+crewDetail
+        +'<div class="jpr-legend" style="justify-content:space-between;margin-top:16px;box-shadow:inset 0 1px 0 #C8BFAF;padding-top:12px;">'
+          +'<span>기간 합계</span><b style="color:#B54E28;">총 '+d.work.length+'건</b><span style="color:#6E675F;">완료 '+d.done+'건 · 이월 '+d.carry+'건 인계</span></div>'
+        +'</div>',
+        esc('조 정보 = 작성자 이름의 1조~4조 표기 · 없으면 미지정'));
+
+      /* 08 조별 완료율/이월률 균형 */
+      const bal=crews.map(c=>({label:c.key,up:pctOf(c.done,c.n),down:c.n?Math.round(c.carry/c.n*1000)/10:0,forest:pctOf(c.done,c.n)>=97}));
+      const s8=sheet('08','근무조별 완료율(+) 및 이월률(-) 균형',
+        esc(crews.length?crews.map(c=>c.key+' '+r1(pctOf(c.done,c.n))+'%').join(' · '):'조별 기록이 없습니다.'),
+        '<div class="jpr-chartbox">'+(bal.length?svgBalance(bal,{aria:'완료율·이월률 균형'}):'<div class="jpr-empty">조별 기록이 없습니다.</div>')+'</div>'
+        +'<div class="jpr-legend" style="margin-top:10px;"><span><i style="background:#D96B43"></i>완료율(+)</span><span><i style="background:#B5AFA8"></i>이월률(-)</span><span style="margin-left:auto;color:#6E675F;">완료율 = 완료 건 / 등록 건 · 이월률 = 이월 건 / 등록 건</span></div>',
+        esc('조 정보가 없는 기록은 미지정으로 따로 셉니다'));
+
+      /* 09 생산 A~H */
+      const prodMax=Math.max(1,...lines.map(l=>Math.max(l.n,l.done)));
+      const lineBars=lines.map((l,i)=>{
+        const p=l.n?l.done/l.n*100:0;
+        const col=p>=100?'#3A6648':(p>=85?'#D96B43':(p>0?'#B54E28':'#B5AFA8'));
+        return '<div class="jpr-col"><em>'+(l.n?l.done:'-')+'</em><i style="height:'+Math.max(3,Math.round(l.done/prodMax*100))+'%;background:'+col+';"></i><span>'+l.short+'</span></div>';
+      }).join('');
+      const prodFull=lines.filter(l=>l.n>0&&l.done>=l.n).length;
+      const s9=sheet('09','생산 A~H 8개 라인 세부 실적 및 운영 요약',
+        esc('생산 8개 라인 중 '+prodFull+'개 라인이 100%를 달성했으며, 완료 '+prodDone+'건 · 이월 '+lines.reduce((a,l)=>a+l.carry,0)+'건입니다.'),
+        '<div class="jpr-panel"><div class="jpr-ptitle"><span>생산 A~H 라인별 완료 건수 (등록 건수 기준)</span><span style="font-size:11.5px;color:#6E675F;">단위 건</span></div>'
+        +'<div class="jpr-cols jpr-prod" style="height:230px;">'+lineBars+'</div>'
+        +'<div class="jpr-legend" style="margin-top:12px;">'+lines.map(l=>'<span>'+esc(l.short)+' 라인<b>'+l.done+' / '+l.n+'건'+(l.carry?' · 이월 '+l.carry:'')+'</b></span>').join('')+'</div>'
+        +'</div>',
+        esc('색: 100% 초록 · 85% 이상 주황 · 미달 빨강 · 기록 없음 회색'));
+
+      /* 10 핵심 구역 표 */
+      const rows=groups.filter(g=>g.n>0).map(g=>{
+        const recs=zoneRecs(d,g);
+        const au=lastAuthor(recs);
+        const mem=memoOf(d,g.test);
+        return {g:g,recs:recs,au:au,mem:mem};
+      });
+      const prodRecs=zoneRecs(d,GROUPS[2]);
+      const lastRow=rows.length?rows.map(r=>{
+        const badge=r.au.crew?('<span class="jpr-badge '+(r.au.crew==='미지정'?'na':(r.au.crew==='1조'?'c1':(r.au.crew==='2조'?'c2':(r.au.crew==='3조'?'c3':'c4'))))+'">'+esc(r.au.crew)+'</span>'):'';
+        return '<tr data-zone="'+r.g.key+'"><td data-l="구역"><div class="jpr-zone-h"><b>'+esc(r.g.label)+'</b><i>'+esc(r.g.en)+'</i></div></td>'
+          +'<td data-l="핵심 실적">'+esc(r.g.key==='production'?('8개 라인 합산 '+prodRecs.length+'건 중 '+prodRecs.filter(x=>x.completed).length+'건 완료 (이월 '+r.g.carry+'건)'):itemsSummary(r.recs))+'</td>'
+          +'<td class="focus" data-l="달성률">'+r1(r.g.pct)+'%</td>'
+          +'<td data-l="최근 작성자">'+badge+esc(r.au.name)+'</td>'
+          +'<td data-l="특이사항">'+esc(r.mem)+'</td></tr>';
       }).join(''):'<tr><td colspan="5" style="text-align:center;color:#6E675F;">등록된 구역 실적이 없습니다.</td></tr>';
+      const s10=sheet('10',esc(rows.length+'대 핵심 구역 버튼별 '+(mode==='week'?'주간':'월간')+' 실적 및 작성자 현황'),
+        '각 구역 버튼에 등록한 품목·수량·특이사항이 저장된 작성자 이름·조와 함께 자동 정리됩니다.',
+        '<div style="overflow-x:auto;"><table class="jpr-tbl cards"><thead><tr><th>구역 버튼</th><th>핵심 실적 (품목 · 수량)</th><th class="focus">달성률</th><th>최근 작성자</th><th>특이사항 및 인수인계</th></tr></thead><tbody>'+lastRow+'</tbody></table></div>',
+        esc('작성자 = 그 구역에 마지막으로 기록을 남긴 사람 · 조 표기가 있을 때만 조 배지 표시'));
 
-      const s3='<section class="jpr-sheet">'
-        +'<div class="jpr-top"><span>'+esc(rTitle)+' | <span class="jpr-pg">03</span></span></div>'
-        +'<h3 class="jpr-h2">구역 버튼별 세부 실적 현황</h3>'
-        +'<p class="jpr-gov">각 구역의 완료 비율과 이월·특이사항 기록을 한 표로 정리했습니다.</p>'
-        +'<div style="overflow-x:auto;"><table class="jpr-tbl"><thead><tr><th>구역 버튼</th><th class="num">완료 / 전체</th><th class="num focus">달성률</th><th class="num">이월</th><th class="num">특이사항</th></tr></thead><tbody>'+tRows+'</tbody></table></div>'
-      +'</section>';
-
-      return '<div class="jpr-deck">'+s0+s1+s2+s3+'</div>';
+      return '<div class="jpr-deck">'+cover+s1+s2+s3+s4+s5+s6+s7+s8+s9+s10+'</div>';
     }
+
     let lastCur=null, lastPrev=null;
-    function draw(){ const d=dataFor(shift), prev=dataFor(shift-1); lastCur=d; lastPrev=prev; $('pfRange').textContent=title(d); const el=$('pfSlide'); el.innerHTML=renderDash(d,prev); el.classList.add('in');
-      modal.querySelectorAll('[data-pf-mode]').forEach(b=>b.classList.toggle('on',b.dataset.pfMode===mode)); }
-    /* 순수 JS OOXML(.pptx) 생성 및 다운로드 — 종이 질감 베이지 & 다크 표지 테마 */
+    function draw(){
+      const d=dataFor(shift), prev=dataFor(shift-1);
+      lastCur=d; lastPrev=prev;
+      $('pfRange').textContent=title(d);
+      const el=$('pfSlide'); el.innerHTML=renderDash(d,prev); el.classList.add('in');
+      modal.querySelectorAll('[data-pf-mode]').forEach(b=>b.classList.toggle('on',b.dataset.pfMode===mode));
+    }
+    function title(d){ if(mode==='week') return (shift===0?'이번 주':(shift===-1?'지난 주':md(d.s)+' 주'))+' · '+md(d.s)+' ~ '+md(d.e); return (+d.s.slice(0,4))+'년 '+(+d.s.slice(5,7))+'월'+(shift===0?' (이번 달)':''); }
+    /* ── PPT(.pptx): 웹 리포트와 같은 페이퍼 덱 디자인 11장(직접 OOXML 생성) ──
+       #191613 다크 표지 · #F1EBE0 종이 슬라이드 · #E6DECF 패널 · #D96B43/#3A6648/#B5AFA8 차트/표 */
     function downloadPptReport(d, prev){
+      const cur=d;
       const te=new TextEncoder();
       const crcTable=(()=>{const t=new Uint32Array(256);for(let i=0;i<256;i++){let c=i;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[i]=c;}return t;})();
       const crc32=u8=>{let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=crcTable[(c^u8[i])&0xFF]^(c>>>8);return(c^0xFFFFFFFF)>>>0;};
@@ -10357,58 +10859,359 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         return new Blob([...parts,...cds,eo],{type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
       }
       const xEsc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-      const box=(id,x,y,w,h,fill,paras,lnClr)=>'<p:sp><p:nvSpPr><p:cNvPr id="'+id+'" name="b'+id+'"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="'+x+'" y="'+y+'"/><a:ext cx="'+w+'" cy="'+h+'"/></a:xfrm><a:prstGeom prst="roundRect"><a:avLst><a:gd name="adj" fmla="val 5000"/></a:avLst></a:prstGeom><a:solidFill><a:srgbClr val="'+fill+'"/></a:solidFill>'+(lnClr?'<a:ln w="9525"><a:solidFill><a:srgbClr val="'+lnClr+'"/></a:solidFill></a:ln>':'<a:ln><a:noFill/></a:ln>')+'</p:spPr><p:txBody><a:bodyPr wrap="square" lIns="120000" rIns="120000" tIns="90000" bIns="90000" anchor="ctr"/><a:lstStyle/>'+paras+'</p:txBody></p:sp>';
-      const para=(txt,sz,clr,bold,al)=>'<a:p><a:pPr algn="'+(al||'l')+'"/><a:r><a:rPr lang="ko-KR" sz="'+(sz*100)+'" b="'+(bold?1:0)+'"><a:solidFill><a:srgbClr val="'+clr+'"/></a:solidFill><a:latin typeface="Malgun Gothic"/><a:ea typeface="Malgun Gothic"/></a:rPr><a:t>'+xEsc(txt)+'</a:t></a:r></a:p>';
-      const tbl=(id,x,y,w,h,rows,focusCol)=>{
-        const cw=Math.floor(w/rows[0].length), rh=Math.min(460000,Math.floor(h/rows.length));
+      /* 도형: 둥근 사각형(차트 막대·카드) */
+      const box=(id,x,y,w,h,fill,paras,lnClr,adj)=>'<p:sp><p:nvSpPr><p:cNvPr id="'+id+'" name="b'+id+'"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="'+Math.round(x)+'" y="'+Math.round(y)+'"/><a:ext cx="'+Math.round(w)+'" cy="'+Math.round(h)+'"/></a:xfrm><a:prstGeom prst="roundRect"><a:avLst><a:gd name="adj" fmla="val '+(adj==null?6000:adj)+'"/></a:avLst></a:prstGeom><a:solidFill><a:srgbClr val="'+fill+'"/></a:solidFill>'+(lnClr?'<a:ln w="9525"><a:solidFill><a:srgbClr val="'+lnClr+'"/></a:solidFill></a:ln>':'<a:ln><a:noFill/></a:ln>')+'</p:spPr><p:txBody><a:bodyPr wrap="square" lIns="80000" rIns="80000" tIns="20000" bIns="20000" anchor="ctr"/><a:lstStyle/>'+(paras||'<a:p/>')+'</p:txBody></p:sp>';
+      const bar=(id,x,y,w,h,fill)=>'<p:sp><p:nvSpPr><p:cNvPr id="'+id+'" name="c'+id+'"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="'+Math.round(x)+'" y="'+Math.round(y)+'"/><a:ext cx="'+Math.round(w)+'" cy="'+Math.round(h)+'"/></a:xfrm><a:prstGeom prst="roundRect"><a:avLst><a:gd name="adj" fmla="val 14000"/></a:avLst></a:prstGeom><a:solidFill><a:srgbClr val="'+fill+'"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr></p:sp>';
+      const txt=(id,x,y,y2,w,h,paras,anchor)=>'<p:sp><p:nvSpPr><p:cNvPr id="'+id+'" name="t'+id+'"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="'+Math.round(x)+'" y="'+Math.round(y)+'"/><a:ext cx="'+Math.round(w)+'" cy="'+Math.round(h)+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr><p:txBody><a:bodyPr wrap="square" lIns="0" rIns="0" tIns="0" bIns="0" anchor="'+(anchor||'t')+'"/><a:lstStyle/>'+paras+'</p:txBody></p:sp>';
+      const para=(s2,sz,clr,bold,al,italic)=>'<a:p><a:pPr algn="'+(al||'l')+'"/><a:r><a:rPr lang="ko-KR" sz="'+Math.round(sz*100)+'" b="'+(bold?1:0)+'" i="'+(italic?1:0)+'"><a:solidFill><a:srgbClr val="'+clr+'"/></a:solidFill><a:latin typeface="Malgun Gothic"/><a:ea typeface="Malgun Gothic"/></a:rPr><a:t>'+xEsc(s2)+'</a:t></a:r></a:p>';
+      const line=(id,x1,y1,x2,y2,clr,w,dash)=>{
+        const w2=Math.max(1,Math.round(Math.abs(x2-x1))), h2=Math.abs(Math.round(y2-y1));
+        const fl=(x2<x1?' flipH="1"':'')+(y2<y1?' flipV="1"':'');
+        return '<p:cxnSp><p:nvCxnSpPr><p:cNvPr id="'+id+'" name="l'+id+'"/><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr><p:spPr><a:xfrm'+fl+'><a:off x="'+Math.round(Math.min(x1,x2))+'" y="'+Math.round(Math.min(y1,y2))+'"/><a:ext cx="'+w2+'" cy="'+h2+'"/></a:xfrm><a:prstGeom prst="line"><a:avLst/></a:prstGeom><a:ln w="'+(w||12700)+'"><a:solidFill><a:srgbClr val="'+clr+'"/></a:solidFill>'+(dash?'<a:prstDash val="'+dash+'"/>':'')+'</a:ln></p:spPr></p:cxnSp>';
+      };
+      const vline=(id,y,x1,x2,clr,w,dash)=>'<p:cxnSp><p:nvCxnSpPr><p:cNvPr id="'+id+'" name="l'+id+'"/><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr><p:spPr><a:xfrm><a:off x="'+Math.round(x1)+'" y="'+Math.round(y)+'"/><a:ext cx="'+Math.round(x2-x1)+'" cy="0"/></a:xfrm><a:prstGeom prst="line"><a:avLst/></a:prstGeom><a:ln w="'+(w||9525)+'"><a:solidFill><a:srgbClr val="'+clr+'"/></a:solidFill>'+(dash?'<a:prstDash val="'+dash+'"/>':'')+'</a:ln></p:spPr></p:cxnSp>';
+      const oval=(id,cx,cy,r,fill)=>'<p:sp><p:nvSpPr><p:cNvPr id="'+id+'" name="o'+id+'"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="'+Math.round(cx-r)+'" y="'+Math.round(cy-r)+'"/><a:ext cx="'+Math.round(r*2)+'" cy="'+Math.round(r*2)+'"/></a:xfrm><a:prstGeom prst="ellipse"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="'+fill+'"/></a:solidFill><a:ln><a:noFill/></a:ln></p:spPr></p:sp>';
+      const tbl=(id,x,y,w,h,rows,focusCol,opt)=>{
+        opt=opt||{};
+        const wt=opt.weights||rows[0].map(()=>1), sumW=wt.reduce((a,c)=>a+c,0);
+        const cws=wt.map(v=>Math.floor(w*v/sumW));
+        const rh=opt.rowH||Math.min(420000,Math.floor(h/rows.length));
+        const al=opt.align||[];
+        const fs=opt.font||(rows.length>6?9.5:11);
         const trs=rows.map((r,ri)=>'<a:tr h="'+rh+'">'+r.map((c,ci)=>{
           const isFocus=ci===focusCol;
-          const bg=ri===0?(isFocus?'D96B43':'E6DECF'):(isFocus?'F2DFD5':(ri%2?'F1EBE0':'EAE2D4'));
+          const bg=ri===0?(isFocus?'D96B43':'E6DECF'):(isFocus?'F3DED4':(ri%2?'F1EBE0':'EAE2D4'));
           const fg=ri===0?(isFocus?'FFFFFF':'4F4A44'):(isFocus?'B54E28':'1A1918');
-          return '<a:tc><a:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/>'+para(c,ri===0?12:11,fg,ri===0||isFocus,'ctr')+'</a:txBody><a:tcPr><a:solidFill><a:srgbClr val="'+bg+'"/></a:solidFill></a:tcPr></a:tc>';
+          const a2=al[ci]||'l';
+          return '<a:tc><a:txBody><a:bodyPr anchor="ctr" lIns="54000" rIns="54000"/><a:lstStyle/>'+para(c,ri===0?fs+0.5:fs,fg,ri===0||isFocus,a2)+'</a:txBody><a:tcPr><a:solidFill><a:srgbClr val="'+bg+'"/></a:solidFill><a:ln><a:noFill/></a:ln></a:tcPr></a:tc>';
         }).join('')+'</a:tr>').join('');
-        return '<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="'+id+'" name="t'+id+'"/><p:cNvGraphicFramePr><a:graphicFrameLocks noGrp="1"/></p:cNvGraphicFramePr><p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x="'+x+'" y="'+y+'"/><a:ext cx="'+w+'" cy="'+(rh*rows.length)+'"/></a:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table"><a:tbl><a:tblPr firstRow="1" bandRow="1"/><a:tblGrid>'+rows[0].map(()=>'<a:gridCol w="'+cw+'"/>').join('')+'</a:tblGrid>'+trs+'</a:tbl></a:graphicData></a:graphic></p:graphicFrame>';
+        return '<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="'+id+'" name="t'+id+'"/><p:cNvGraphicFramePr><a:graphicFrameLocks noGrp="1"/></p:cNvGraphicFramePr><p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x="'+Math.round(x)+'" y="'+Math.round(y)+'"/><a:ext cx="'+Math.round(w)+'" cy="'+(rh*rows.length)+'"/></p:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table"><a:tbl><a:tblPr firstRow="1" bandRow="1"/><a:tblGrid>'+cws.map(v=>'<a:gridCol w="'+v+'"/>').join('')+'</a:tblGrid>'+trs+'</a:tbl></a:graphicData></a:graphic></p:graphicFrame>';
       };
       const slideXml=(shapes,bgHex)=>'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:bg><p:bgPr><a:solidFill><a:srgbClr val="'+(bgHex||'F1EBE0')+'"/></a:solidFill><a:effectLst/></p:bgPr></p:bg><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>'+shapes+'</p:spTree></p:cSld></p:sld>';
-      const pct=d.work.length?Math.round(d.done/d.work.length*1000)/10:0;
-      const prevPct=prev.work.length?Math.round(prev.done/prev.work.length*1000)/10:0;
-      const us=Object.keys(d.units), mainUnit=us.includes('TON')?'TON':(us[0]||'TON');
-      const curAmt=d.units[mainUnit]?d.units[mainUnit].done:0, prevAmt=prev.units[mainUnit]?prev.units[mainUnit].done:0;
-      const rTitle=reportTitleText(d), author=authorName();
 
-      /* Slide 1: Dark Espresso Cover */
-      const s1=box(2,0,0,120000,6858000,'D96B43','')
-        +box(3,650000,1250000,7400000,900000,'191613',para(rTitle,28,'F1EBE0',true,'l'))
-        +box(4,8200000,1300000,3400000,800000,'191613',para('작성자 : '+author,18,'E6C37A',true,'r'))
-        +box(5,650000,2650000,5300000,2600000,'24201C',para('전 구역 평균 목표 달성률',14,'A8A199',false,'ctr')+para(pct+'%',44,'D96B43',true,'ctr')+para(diffStr(pct,prevPct,'%p'),14,'639672',true,'ctr'))
-        +box(6,6250000,2650000,5300000,2600000,'24201C',para((mode==='week'?'주간':'월간')+' 합산 물량 ('+mainUnit+')',14,'A8A199',false,'ctr')+para(r1(curAmt)+' '+mainUnit,44,'D96B43',true,'ctr')+para(diffStr(curAmt,prevAmt,' '+mainUnit),14,'639672',true,'ctr'));
+      const SW=12192000, SH=6858000, M=620000;
+      let uid=10; const nid=()=>++uid;
+      /* 공통 머리: 왼쪽 리포트 제목 + 페이지 번호 / 오른쪽 POSCO-M / 얇은 구분선 */
+      function head(pg,dark){
+        const c1=dark?'A8A199':'6E675F', c2='D96B43';
+        let s='';
+        s+=txt(nid(),M,300000,0,SW-2*M,300000,para(deckTitle(cur)+' 보고서  |  '+pg,11,dark?'A8A199':'8B8378',false,'l'),'ctr');
+        s+=txt(nid(),SW-M-1600000,300000,0,1600000,300000,para('POSCO-M',11,c2,true,'r'),'ctr');
+        if(!dark) s+=vline(nid(),640000,M,SW-M,'D8CEBE',9525);
+        return s;
+      }
+      function titleBlock(title,gov){
+        let s='';
+        s+=txt(nid(),M,780000,0,SW-2*M,620000,para(title,27,'1A1918',true,'l'),'t');
+        s+=txt(nid(),M,1480000,0,SW-2*M,420000,para(gov,13,'3F3B36',false,'l',true),'t');
+        return s;
+      }
+      function footNote(t){
+        return txt(nid(),M,SH-430000,0,SW-2*M,300000,para(t,10.5,'6E675F',false,'l',true),'ctr');
+      }
 
-      /* Slide 2: 4-Card Paper Highlights (no author in header) */
-      const s2=box(2,500000,280000,11192000,520000,'F1EBE0',para(rTitle+'  |  01',12,'6E675F',false))
-        +box(3,500000,820000,11192000,720000,'F1EBE0',para((mode==='week'?'주간':'월간')+' 실적 하이라이트',24,'1A1918',true))
-        +box(4,500000,1800000,2600000,3800000,'E6DECF',para('평균 목표 달성률',13,'3F3B36',true,'ctr')+para(pct+'%',34,'1A1918',true,'ctr')+para(diffStr(pct,prevPct,'%p'),12,'3A6648',true,'ctr'))
-        +box(5,3360000,1800000,2600000,3800000,'E6DECF',para('합산 물량 ('+mainUnit+')',13,'3F3B36',true,'ctr')+para(r1(curAmt)+' '+mainUnit,32,'1A1918',true,'ctr')+para(diffStr(curAmt,prevAmt,' '+mainUnit),12,'B54E28',true,'ctr'))
-        +box(6,6220000,1800000,2600000,3800000,'E6DECF',para('환경 점검 완료',13,'3F3B36',true,'ctr')+para(d.envDone+'회',34,'1A1918',true,'ctr')+para(diffStr(d.envDone,prev.envDone,'회'),12,'3A6648',true,'ctr'))
-        +box(7,9080000,1800000,2600000,3800000,'E6DECF',para('이월 · 특이사항',13,'3F3B36',true,'ctr')+para('('+d.carry+' / '+d.memos.length+')',30,'1A1918',true,'ctr')+para(diffStr(d.carry,prev.carry,'건'),12,'B54E28',true,'ctr'));
+      const R=reportTitleText(cur), pct=pctOf(cur.done,cur.work.length), prevPct=pctOf(prev.done,prev.work.length);
+      const curV=volumeBetween(cur.s,cur.e), prevV=volumeBetween(prev.s,prev.e);
+      const buckets=weekBuckets(cur), bkVol=buckets.map(b=>volumeBetween(b.from,b.to));
+      const started=buckets.filter(b=>b.from<=today()), stVol=bkVol.filter((v,i)=>buckets[i].from<=today());
+      const groups=groupStats(cur), crews=crewStats(cur), lines=lineStats(cur);
+      const firstTot=stVol.length?stVol[0].total:0, lastTot=stVol.length?stVol[stVol.length-1].total:0;
+      const wChg=(mode==='week')?deltaPct(curV.total,prevV.total):deltaPct(lastTot,firstTot), firstLabel=started.length?started[0].short:'';
+      const wChgLabel=(mode==='week')?'전주':(firstLabel?firstLabel+' ':'');
+      const sumWeeks=bkVol.reduce((a,v)=>a+v.total,0);
+      const author=authorName();
+      const zoneCount=groups.filter(g=>g.n>0).length, prodDone=lines.reduce((a,l)=>a+l.done,0);
 
-      /* Slide 3: Zone Table with Terracotta Focus Column */
-      const zs=Object.keys(d.zones).filter(z=>d.zones[z].n).sort((a,b)=>d.zones[b].n-d.zones[a].n).slice(0,10);
-      const zRows=[['구역 버튼','완료 / 전체','달성률','이월','특이사항'],...(zs.length?zs.map(z=>{const x=d.zones[z];return[NAMES[z]||z,x.done+' / '+x.n,Math.round(x.done/x.n*100)+'%',x.carry+'건',x.memo+'건'];}):[['기록 없음','-','-','-','-']])];
-      const s3=box(2,500000,280000,11192000,520000,'F1EBE0',para(rTitle+'  |  02',12,'6E675F',false))
-        +box(3,500000,820000,11192000,660000,'F1EBE0',para('구역 버튼별 세부 실적 현황',24,'1A1918',true))
-        +tbl(4,500000,1620000,11192000,4600000,zRows,2);
+      /* 1) 다크 표지 */
+      let s1='';
+      s1+=box(nid(),0,0,SW,SH,'191613','<a:p/>');
+      s1+=box(nid(),0,0,190000,SH,'D96B43','<a:p/>',null,0);
+      s1+=box(nid(),SW-3300000,-900000,3400000,3400000,'D96B43','<a:p/>',null,50000);
+      s1+=box(nid(),SW-3000000,4200000,3000000,3000000,'3A2A21','<a:p/>',null,50000);
+      s1+=txt(nid(),M,1150000,0,SW-4200000,900000,para(deckTitle(cur)+' 실적 보고서',40,'F1EBE0',true,'l'),'t');
+      s1+=txt(nid(),M,2150000,0,SW-4200000,420000,para((mode==='week'?'주간':'월간')+' 실적 · 페이퍼 덱',18,'E6C37A',true,'l'),'t');
+      s1+=txt(nid(),M,2750000,0,SW-4200000,360000,para(title(cur),12.5,'A8A199',false,'l'),'t');
+      s1+=txt(nid(),M,SH-900000,0,SW-4200000,360000,para('작성자 : '+author+'   ·   POSCO-M 지수 통합 관제 상황실',12.5,'A8A199',false,'l'),'t');
+      const rightX=SW-M-2900000, rightW=2900000;
+      const kv=(id,y,lbl,val,sub)=>box(nid(),rightX,y,rightW,1250000,'24201C',para(lbl,11,'A8A199',false,'ctr')+para(val,30,'D96B43',true,'ctr')+para(sub,10.5,'639672',true,'ctr'),'3A332C');
+      s1+=kv(nid(),1450000,'평균 목표 달성률',r1(pct)+'%',periodWord()+' '+(prev.work.length?r1(prevPct):'-')+'% 대비 '+((pct-prevPct)>=0?'+':'')+r1(pct-prevPct)+'%p');
+      s1+=kv(nid(),2950000,(mode==='week'?'주간':'월간')+' 출·입고 물량',num(curV.flow)+'t','출고 '+r1(curV.out)+' · 입고 '+r1(curV.inT));
+      s1+=kv(nid(),4450000,'이월 · 인계 건수','('+cur.carry+'건)','완료 '+cur.done+'건 · 이월 '+cur.carry+'건');
 
-      /* Slide 4: Daily Trend Table */
-      const dayRows=[['날짜',...(us.length?us:['완료 건수']),'구역별 내역']];
-      d.days.slice(0,12).forEach(k=>{
-        const det=d.dayDetail[k]?Object.keys(d.dayDetail[k]).map(z=>(NAMES[z]||z)+' '+Object.keys(d.dayDetail[k][z]).map(u=>r1(d.dayDetail[k][z][u])+u).join(',')).join(' / '):'-';
-        dayRows.push([md(k),...(us.length?us.map(u=>r1(d.units[u].byDay[k]||0)):[String(d.work.filter(x=>dayOf(x)===k&&x.completed).length)]),det]);
+      /* 2) 실적 하이라이트: KPI 카드 4장 */
+      let s2=head('02');
+      s2+=titleBlock(deckTitle(cur)+' 실적 하이라이트','전 구역 목표 달성률 '+r1(pct)+'%, '+zoneCount+'개 구역 출·입고 '+num(curV.flow)+' TON, 이월 '+cur.carry+'건으로 집계되었습니다.');
+      const cardY=2200000, cardH=2700000, gap=150000, cardW=Math.floor((SW-2*M-gap*3)/4);
+      [['평균 목표 달성률',r1(pct)+'%',periodWord()+' '+(prev.work.length?r1(prevPct):'-')+'% 대비',pctText(pct,prevPct,'%p'),'3A6648'],
+       [(mode==='week'?'주간':'월간')+' 출·입고 물량',num(curV.flow)+'t','출고 '+r1(curV.out)+' · 입고 '+r1(curV.inT),chgText(wChg)+' '+wChgLabel+' 대비','D96B43'],
+       [(mode==='week'?'주간':'월간')+' 누적 물량',num(curV.total)+'t','출고 '+r1(curV.out)+' · 입고 '+r1(curV.inT),((curV.total-prevV.total)>=0?'+':'')+r1(curV.total-prevV.total)+'t '+periodWord()+' 대비','3A6648'],
+       ['이월 · 인계 건수','('+cur.carry+'건)','완료 '+cur.done+'건 · 이월 '+cur.carry+'건 인계',((cur.carry-prev.carry)>=0?'+':'')+r1(cur.carry-prev.carry)+'건 '+periodWord()+' 대비','D96B43']
+      ].forEach((c,i)=>{
+        const x=M+i*(cardW+gap);
+        s2+=box(nid(),x,cardY,cardW,cardH,'E6DECF','<a:p/>','D8CEBE');
+        s2+=bar(nid(),x,cardY,cardW,90000,c[4]);
+        s2+=txt(nid(),x+120000,cardY+260000,0,cardW-240000,300000,para(c[0],12,'3F3B36',true,'ctr'),'ctr');
+        s2+=txt(nid(),x+80000,cardY+700000,0,cardW-160000,620000,para(c[1],26,'1A1918',true,'ctr'),'ctr');
+        s2+=txt(nid(),x+80000,cardY+1360000,0,cardW-160000,300000,para(c[2],10,'6E675F',false,'ctr'),'ctr');
+        s2+=vline(nid(),cardY+cardH-460000,x+140000,x+cardW-140000,'C8BFAF');
+        s2+=txt(nid(),x+80000,cardY+cardH-400000,0,cardW-160000,300000,para(c[3],10.5,'B54E28',true,'ctr'),'ctr');
       });
-      const s4=box(2,500000,280000,11192000,520000,'F1EBE0',para(rTitle+'  |  03',12,'6E675F',false))
-        +box(3,500000,820000,11192000,660000,'F1EBE0',para('날짜별 완료 추이 ('+title(d)+')',24,'1A1918',true))
-        +tbl(4,500000,1620000,11192000,4600000,dayRows,1);
+      s2+=footNote('단위: TON · 건 · %  |  지수 대시보드 08:00 · 18:00 자동 마감 누적 데이터 기준 (샘플 없음)');
 
-      const slides=[[s1,'191613'],[s2,'F1EBE0'],[s3,'F1EBE0'],[s4,'F1EBE0']];
+      /* 3) 물량 추이: 막대 + 점선 추세 */
+      const pptTrend=(mode==='week')
+        ? cur.days.filter(k=>k<=today()).map(k=>({label:md(k),value:volumeBetween(k,k).total}))
+        : started.map((b,i)=>({label:b.short,value:stVol[i].total}));
+      let s3=head('03');
+      s3+=titleBlock(mode==='week'?'일자별 물량 추이':'주차별 물량 추이',deckTitle(cur)+' 물량은 '+(wChg!=null?wChgLabel+' 대비 '+chgText(wChg):'비교 기록 없음')+'이며, 최근 구간 '+num(lastTot)+' TON을 기록했습니다.');
+      s3+=box(nid(),M,2250000,SW-2*M,3550000,'E6DECF','<a:p/>','D8CEBE');
+      (function(){
+        const x0=M+700000, x1=SW-M-500000, y0=2650000, y1=5250000;
+        const mx=niceMax(Math.max(1,...pptTrend.map(v=>v.value)));
+        const n=Math.max(1,pptTrend.length), slot=(x1-x0)/n, bw=Math.min(700000,slot*0.5);
+        [0,.25,.5,.75,1].forEach(f=>{
+          const yy=y1-(y1-y0)*f;
+          s3+=vline(nid(),yy,x0,x1,'D8CEBE',9525,f?'dash':null);
+          s3+=txt(nid(),x0-800000,yy-130000,0,700000,260000,para(tickLbl(mx*f),9,'8B8378',false,'r'),'ctr');
+        });
+        const pts=[];
+        pptTrend.forEach((v,i)=>{
+          const cx=x0+slot*(i+0.5), vv=Math.max(0,v.value), h=Math.max(60000,(vv/mx)*(y1-y0)), last=i===pptTrend.length-1;
+          s3+=bar(nid(),cx-bw/2,y1-h,bw,h,last?'D96B43':'B5AFA8');
+          s3+=txt(nid(),cx-bw/2,y1-h-360000,0,bw,320000,para(num(vv)+'t',13,'1A1918',true,'ctr'),'ctr');
+          s3+=txt(nid(),cx-slot/2,y1+120000,0,slot,300000,para(v.label,10,last?'1A1918':'6E675F',last,'ctr'),'ctr');
+          pts.push([cx,y1-(vv/mx)*(y1-y0)]);
+        });
+        for(let i=1;i<pts.length;i++) s3+=line(nid(),pts[i-1][0],pts[i-1][1],pts[i][0],pts[i][1],'D96B43',22000,'dash');
+        pts.forEach(p=>{ s3+=oval(nid(),p[0],p[1],70000,'D96B43'); });
+        if(wChg!=null) s3+=txt(nid(),x1-1500000,y0-520000,0,1500000,320000,para(chgText(wChg),13,'B54E28',true,'r'),'ctr');
+      })();
+      s3+=footNote('막대 = 해당 '+(mode==='week'?'날짜':'주차')+' 완료 물량(TON) · 점선 = 추세 · 18시 마감 이후 확정 기록만');
+
+      /* 4) 구역별 목표 달성률 + 물량 비중 */
+      let s4=head('04');
+      s4+=titleBlock('구역별 목표 달성률 및 출·입고 물량 비중',zoneCount+'개 구역이 집계되었고, 출·입고 물량 비중은 '+num(curV.flow)+' TON 기준입니다.');
+      s4+=box(nid(),M,2250000,(SW-2*M)*0.46,3550000,'E6DECF','<a:p/>','D8CEBE');
+      s4+=box(nid(),M+(SW-2*M)*0.46+180000,2250000,(SW-2*M)*0.54-180000,3550000,'E6DECF','<a:p/>','D8CEBE');
+      (function(){
+        const lx=M+260000, ly=2380000, lw=(SW-2*M)*0.46-520000;
+        s4+=txt(nid(),lx,ly,0,lw,320000,para('구역별 목표 달성률',12.5,'1A1918',true,'l'),'ctr');
+        const gp=groups.slice().sort((a,b)=>a.pct-b.pct);
+        const bestG=groups.filter(g=>g.pct>0).slice().sort((a,b)=>(b.pct-a.pct)||(b.n-a.n))[0];
+        const mxp=Math.max(1,...gp.map(g=>g.pct));
+        gp.forEach((g,i)=>{
+          const yy=ly+520000+i*520000;
+          const tw=Math.round(lw*0.62), bx=lx+lw-tw-900000;
+          s4+=txt(nid(),lx,yy-110000,0,lw-tw-1000000,300000,para(g.label,10.5,'3F3B36',true,'r'),'ctr');
+          s4+=box(nid(),bx,yy,tw,240000,'DBD2C2','<a:p/>',null,50000);
+          const w=Math.max(80000,tw*(g.pct/mxp));
+          const isBest=!!(bestG&&g.key===bestG.key);
+          s4+=box(nid(),bx,yy,w,240000,isBest?'D96B43':'B5AFA8','<a:p/>',null,50000);
+          s4+=txt(nid(),bx+tw+80000,yy-60000,0,820000,300000,para(r1(g.pct)+'%',10.5,isBest?'B54E28':'4F4A44',true,'l'),'ctr');
+        });
+      })();
+      (function(){
+        const rx=M+(SW-2*M)*0.46+460000, rw=(SW-2*M)*0.54-920000;
+        s4+=txt(nid(),rx,2380000,0,rw,300000,para('출·입고 물량 비중 ('+num(curV.flow)+' TON 기준)',12.5,'1A1918',true,'l'),'ctr');
+        const ob=Object.keys(curV.ob).map(k=>({k:k,v:curV.ob[k]})).sort((a,b)=>b.v-a.v);
+        const sl=[], colors=['D96B43','E07A50','EFA98A'];
+        ob.slice(0,2).forEach((o,i)=>{ sl.push({label:'출고 '+o.k,v:o.v,color:colors[i]}); });
+        const rest=ob.slice(2).reduce((a,c)=>a+c.v,0); if(rest>0.005) sl.push({label:'출고 기타',v:rest,color:'EFA98A'});
+        if(curV.inT>0){ const ibTop=Object.keys(curV.ib).map(k=>({k:k,v:curV.ib[k]})).filter(o=>o.k&&o.k!=='기타').sort((a,b)=>b.v-a.v).slice(0,2).map(o=>o.k); sl.push({label:'입고'+(ibTop.length?' '+ibTop.join('·'):''),v:curV.inT,color:'F3C9B6'}); }
+        if(curV.other>0.005) sl.push({label:'생산·포장',v:curV.other,color:'B5AFA8'});
+        const tot=sl.reduce((a,c)=>a+c.v,0);
+        let cx2=rx; const barY=3050000, barH=420000;
+        sl.forEach(sl2=>{
+          const w=tot?Math.max(20000,(rw*sl2.v/tot)):0;
+          s4+=box(nid(),cx2,barY,w,barH,sl2.color,'<a:p/>',null,0);
+          const p=tot?sl2.v/tot*100:0;
+          if(p>=9) s4+=txt(nid(),cx2,barY+60000,0,w,300000,para(r1(p)+'%',10.5,sl2.color==='F3C9B6'||sl2.color==='B5AFA8'?'4F4A44':'FFFFFF',true,'ctr'),'ctr');
+          cx2+=w;
+        });
+        sl.forEach((sl2,i)=>{
+          const yy=barY+barH+260000+Math.floor(i/2)*420000, xx=rx+(i%2)*(rw/2);
+          s4+=box(nid(),xx,yy+70000,170000,170000,sl2.color,'<a:p/>',null,0);
+          s4+=txt(nid(),xx+260000,yy,0,rw/2-300000,300000,para(sl2.label+' '+r1(tot?sl2.v/tot*100:0)+'%',10,'3F3B36',false,'l'),'ctr');
+        });
+        s4+=txt(nid(),rx,barY+barH+1900000,0,rw,300000,para('출고 '+num(curV.out)+'t · 입고 '+num(curV.inT)+'t'+(curV.other>0?' · 기타 '+num(curV.other)+'t':''),10,'6E675F',false,'l'),'ctr');
+      })();
+      s4+=footNote('단위: TON · %  |  지수 대시보드 18시 마감 누적 데이터  |  샘플 없음');
+
+      /* 5) 주차별 누적 물량 스택 */
+      let s5=head('05');
+      s5+=titleBlock(mode==='week'?'최근 4주 구역별 출·입고 누적 물량 추이':'월간 1~'+buckets.length+'주차 구역별 출·입고 누적 물량 추이','출고가 전체 물량의 '+(curV.total>0?r1(curV.out/curV.total*100):0)+'%를 차지하며, '+(firstLabel||'첫 구간')+' '+num(firstTot)+' TON에서 '+num(lastTot)+' TON까지 '+(wChg!=null?chgText(wChg):'기록 없음')+' 흐름을 보였습니다.');
+      s5+=box(nid(),M,2250000,SW-2*M,3500000,'E6DECF','<a:p/>','D8CEBE');
+      (function(){
+        const x0=M+500000, x1=SW-M-400000, baseY=5150000, topY=2700000;
+        const mx=Math.max(1,...bkVol.map(v=>v.total)), n=Math.max(1,buckets.length), slot=(x1-x0)/n, bw=Math.round(slot*0.5);
+        buckets.forEach((b,i)=>{
+          const v=bkVol[i], cx=x0+slot*(i+0.5), dim=b.from>today(), last=i===buckets.length-1;
+          if(dim){ s5+=txt(nid(),cx-bw/2,topY,0,bw,300000,para('-',11,'B5AFA8',true,'ctr'),'ctr'); }
+          else s5+=txt(nid(),cx-bw/2,topY-260000,0,bw,300000,para(num(v.total)+'t',11,'1A1918',true,'ctr'),'ctr');
+          let yy=baseY;
+          [['out',v.out,'D96B43'],['in',v.inT,'E88C64'],['other',v.other,'F3C9B6']].forEach(seg=>{
+            if(!(seg[1]>0.005)) return;
+            const h=Math.max(30000,(seg[1]/mx)*(baseY-topY));
+            yy-=h;
+            s5+=box(nid(),cx-bw/2,yy,bw,h,seg[2],'<a:p/>',null,0);
+            if(h>=260000) s5+=txt(nid(),cx-bw/2,yy+h/2-150000,0,bw,300000,para(r1(seg[1])+'t',9.5,seg[2]==='F3C9B6'?'4F4A44':'FFFFFF',true,'ctr'),'ctr');
+          });
+          s5+=txt(nid(),cx-slot/2,baseY+120000,0,slot,300000,para(b.label,9.5,last?'1A1918':'6E675F',last,'ctr'),'ctr');
+        });
+        const lgY=baseY+520000;
+        [['출고','D96B43'],['입고','E88C64'],['기타(생산·포장)','F3C9B6']].forEach((l,i)=>{
+          const xx=x0+i*1900000;
+          s5+=box(nid(),xx,lgY+60000,170000,170000,l[1],'<a:p/>',null,0);
+          s5+=txt(nid(),xx+260000,lgY,0,1500000,300000,para(l[0],10,'3F3B36',false,'l'),'ctr');
+        });
+        s5+=txt(nid(),x1-2300000,lgY,0,2300000,300000,para('4주 누적 '+num(sumWeeks)+'t',10,'6E675F',true,'r'),'ctr');
+      })();
+      s5+=footNote('주차 = 1일~7일, 8일~14일 …  ·  아직 오지 않은 주차는 -');
+
+      /* 6) 출고 물량·이월 비교 */
+      let s6=head('06');
+      s6+=titleBlock('출고 물량 및 이월 감소폭 '+periodWord()+' 비교','출고 물량은 '+periodWord()+' 대비 '+chgText(deltaPct(curV.out,prevV.out))+'한 '+num(curV.out)+' TON이며, 미완료 이월은 '+prev.carry+'건에서 '+cur.carry+'건으로 '+(cur.carry<=prev.carry?'줄었습니다.':'늘었습니다.'));
+      s6+=box(nid(),M,2250000,(SW-2*M)*0.48,3500000,'E6DECF','<a:p/>','D8CEBE');
+      s6+=box(nid(),M+(SW-2*M)*0.48+180000,2250000,(SW-2*M)*0.52-180000,3500000,'E6DECF','<a:p/>','D8CEBE');
+      (function(){
+        const lw=(SW-2*M)*0.48-520000, lx=M+260000, baseY=5000000, topY=2950000;
+        s6+=txt(nid(),lx,2380000,0,lw,300000,para('출고 물량 비교 (TON)',12.5,'1A1918',true,'l'),'ctr');
+        const mx=Math.max(1,prevV.out,curV.out), bw=Math.min(850000,lw*0.28);
+        [[periodWord()+' ('+md(prev.s)+'~'+md(prev.e)+')',prevV.out,'B5AFA8',false],[(mode==='week'?'이번 주':'이번 달')+' ('+md(cur.s)+'~'+md(cur.e)+')',curV.out,'D96B43',true]].forEach((a,i)=>{
+          const cx=lx+lw*(i?0.72:0.28), h=Math.max(60000,(a[1]/mx)*(baseY-topY));
+          s6+=bar(nid(),cx-bw/2,baseY-h,bw,h,a[2]);
+          s6+=txt(nid(),cx-bw/2,baseY-h-380000,0,bw,320000,para(r1(a[1])+'t',13,'1A1918',true,'ctr'),'ctr');
+          s6+=txt(nid(),cx-bw*0.95,baseY+120000,0,bw*1.9,340000,para(a[0],9,a[3]?'1A1918':'6E675F',a[3],'ctr'),'ctr');
+        });
+        s6+=vline(nid(),baseY,lx,lx+lw,'B5AFA8');
+        s6+=txt(nid(),lx,baseY+560000,0,lw,300000,para(periodWord()+' '+r1(prevV.out)+'t  →  '+r1(curV.out)+'t  ('+chgText(deltaPct(curV.out,prevV.out))+')',10,'B54E28',true,'ctr'),'ctr');
+      })();
+      (function(){
+        const rw=(SW-2*M)*0.52-520000, rx=M+(SW-2*M)*0.48+460000, baseY=5000000, topY=3250000;
+        s6+=txt(nid(),rx,2380000,0,rw,300000,para('미완료 이월 건수 비교',12.5,'1A1918',true,'l'),'ctr');
+        const mx=Math.max(1,prev.carry,cur.carry), bw=Math.min(750000,rw*0.24);
+        [[periodWord(),prev.carry,'B5AFA8',false],[(mode==='week'?'이번 주':'이번 달'),cur.carry,'D96B43',true]].forEach((a,i)=>{
+          const cx=rx+rw*(i?0.72:0.28), h=Math.max(60000,(a[1]/mx)*(baseY-topY));
+          s6+=bar(nid(),cx-bw/2,baseY-h,bw,h,a[2]);
+          s6+=txt(nid(),cx-bw/2,baseY-h-360000,0,bw,300000,para(a[1]+'건',13,'1A1918',true,'ctr'),'ctr');
+          s6+=txt(nid(),cx-bw*0.9,baseY+120000,0,bw*1.8,300000,para(a[0],9.5,a[3]?'1A1918':'6E675F',a[3],'ctr'),'ctr');
+        });
+        s6+=vline(nid(),baseY,rx,rx+rw,'B5AFA8');
+        s6+=txt(nid(),rx,baseY+560000,0,rw,300000,para('이월 = 이월 표시가 있고 아직 완료되지 않은 건  ('+((cur.carry-prev.carry)>=0?'+':'')+r1(cur.carry-prev.carry)+'건)',9.5,'6E675F',false,'ctr'),'ctr');
+      })();
+      s6+=footNote('단위: TON · 건  |  출고 = 출고 구역 완료 톤수 합계');
+
+      /* 7) 이월 추이 + 현장 입력 표준 */
+      let s7=head('07');
+      s7+=titleBlock(mode==='week'?'주차별 미완료 이월 건수 추이 (최근 4주)':'주차별 미완료 이월 건수 추이','기간 내 미완료 이월은 '+cur.carry+'건이며, 구역별 정량 실적과 한 줄 인수인계로 자동 집계됩니다.');
+      s7+=box(nid(),M,2250000,SW-2*M,2350000,'E6DECF','<a:p/>','D8CEBE');
+      (function(){
+        const x0=M+600000, x1=SW-M-400000, ty=2650000, maxH=1500000;
+        const items=started.map((b,i)=>({label:b.short,v:carryBetween(b.from,b.to).length}));
+        const mx=niceMax(Math.max(1,...items.map(i=>i.v))), n=Math.max(1,items.length), slot=(x1-x0)/n, bw=Math.min(800000,slot*0.5);
+        s7+=vline(nid(),ty,x0,x1,'8B8378',12700);
+        items.forEach((it,i)=>{
+          const cx=x0+slot*(i+0.5), last=i===items.length-1, h=Math.max(it.v>0?70000:20000,(it.v/mx)*maxH);
+          s7+=bar(nid(),cx-bw/2,ty,bw,h,last?'D96B43':'B5AFA8');
+          s7+=txt(nid(),cx-bw/2,ty+h+80000,0,bw,300000,para(it.v+'건',11,it.v>0?'1A1918':'8B8378',it.v>0,'ctr'),'ctr');
+          s7+=txt(nid(),cx-slot/2,ty+h+400000,0,slot,280000,para(it.label,9.5,last?'1A1918':'6E675F',last,'ctr'),'ctr');
+        });
+      })();
+      s7+=txt(nid(),M,4780000,0,SW-2*M,300000,para('현장 입력 표준 및 자동 마감 요약',12.5,'1A1918',true,'l'),'ctr');
+      [['1. 구역별 정량 실적 입력','TON · 대 · Bag'],['2. 상태 및 한 줄 인수인계','완료 · 작업중 · 이월'],['3. 08:00 · 18:00 자동 마감','누적 집계 · 보고서 반영']].forEach((a,i)=>{
+        const yy=5130000+i*380000;
+        s7+=box(nid(),M,yy,SW-2*M,320000,'EAE2D4','<a:p/>','D8CEBE');
+        s7+=txt(nid(),M+160000,yy+30000,0,(SW-2*M)*0.6,300000,para(a[0],11,'3F3B36',false,'l'),'ctr');
+        s7+=txt(nid(),SW-M-2400000,yy+30000,0,2240000,300000,para(a[1],11,'B54E28',true,'r'),'ctr');
+      });
+      s7+=footNote('완료 '+cur.done+' / '+cur.work.length+'건  ·  평균 '+r1(pct)+'%  ·  이월 '+cur.carry+'건');
+
+      /* 8) 4조 2교대 등록 비중 */
+      let s8=head('08');
+      s8+=titleBlock('4조 2교대(1조~4조) 등록 비중 및 완료·이월 균형',crews.length?'작성자에 조 정보가 있는 기록은 조별로 집계하고, 조 표기가 없는 기록은 미지정으로 정확히 표시합니다.':'작성자 정보가 있는 기록이 아직 없습니다.');
+      s8+=box(nid(),M,2250000,SW-2*M,3300000,'E6DECF','<a:p/>','D8CEBE');
+      (function(){
+        const rows=crews.length?crews:[];
+        const lx=M+260000, lw=SW-2*M-520000, maxN=Math.max(1,...rows.map(c=>c.n));
+        s8+=txt(nid(),lx,2380000,0,lw,300000,para('근무조별 등록·완료 건수',12.5,'1A1918',true,'l'),'ctr');
+        rows.forEach((c,i)=>{
+          const yy=2830000+i*470000;
+          const zs=Object.keys(c.zones).sort((a,b)=>c.zones[b]-c.zones[a]).slice(0,2).map(z=>NAMES[z]||z);
+          s8+=txt(nid(),lx,yy-80000,0,1700000,320000,para(c.key+(zs.length?' · '+zs.join('·'):''),10.5,'3F3B36',true,'l'),'ctr');
+          const tw=lw-2600000, bx=lx+1800000;
+          s8+=box(nid(),bx,yy,tw,230000,'DBD2C2','<a:p/>',null,50000);
+          const w=Math.max(90000,tw*(c.done/maxN));
+          s8+=box(nid(),bx,yy,w,230000,c.done===maxN?'D96B43':'E07A50','<a:p/>',null,50000);
+          s8+=txt(nid(),bx+80000,yy+20000,0,w,200000,para(c.done+'건 완료',9.5,'FFFFFF',true,'l'),'ctr');
+          s8+=txt(nid(),bx+tw+120000,yy-80000,0,900000,320000,para(c.n+'건 ('+r1(pctOf(c.done,c.n))+'%)',10,'4F4A44',true,'l'),'ctr');
+        });
+        s8+=vline(nid(),4700000,lx,lx+lw,'C8BFAF');
+        s8+=txt(nid(),lx,4780000,0,2400000,300000,para('기간 합계',10.5,'6E675F',false,'l'),'ctr');
+        s8+=txt(nid(),lx+2400000,4780000,0,2400000,300000,para('총 '+cur.work.length+'건',10.5,'B54E28',true,'ctr'),'ctr');
+        s8+=txt(nid(),lx+lw-2600000,4780000,0,2600000,300000,para('완료 '+cur.done+'건 · 이월 '+cur.carry+'건 인계',10.5,'6E675F',false,'r'),'ctr');
+      })();
+      s8+=footNote('조 정보 = 작성자 이름의 1조~4조 표기  ·  없으면 미지정');
+
+      /* 9) 조별 완료율/이월률 균형 */
+      let s9=head('09');
+      s9+=titleBlock('근무조별 완료율(+) 및 이월률(-) 균형',crews.length?crews.map(c=>c.key+' '+r1(pctOf(c.done,c.n))+'%').join(' · '):'조별 기록이 없습니다.');
+      s9+=box(nid(),M,2250000,SW-2*M,3300000,'E6DECF','<a:p/>','D8CEBE');
+      (function(){
+        const x0=M+900000, x1=SW-M-500000, zero=4350000, upH=1450000, dnH=560000;
+        const n=Math.max(1,crews.length), slot=(x1-x0)/n, bw=Math.min(650000,slot*0.42);
+        [[100,'100%',zero-upH],[50,'50%',zero-upH/2],[0,'0%',zero],[-10,'-10%',zero+dnH]].forEach(t=>{
+          s9+=vline(nid(),t[2],x0,x1,'D8CEBE',9525,t[0]!==0?'dash':null);
+          s9+=txt(nid(),x0-160000,t[2]-140000,0,1400000,280000,para(t[1],9,'8B8378',false,'r'),'ctr');
+        });
+        crews.forEach((c,i)=>{
+          const cx=x0+slot*(i+0.5), up=Math.min(1,pctOf(c.done,c.n)/100), dn=Math.min(1,c.n?(c.carry/c.n):0);
+          const uh=Math.max(40000,up*upH), dh=Math.max(30000,dn*dnH);
+          s9+=bar(nid(),cx-bw/2,zero-uh,bw,uh,pctOf(c.done,c.n)>=97?'3A6648':'D96B43');
+          s9+=bar(nid(),cx-bw/2,zero,bw,dh,'B5AFA8');
+          s9+=txt(nid(),cx-bw/2,zero-uh-340000,0,bw,300000,para(r1(pctOf(c.done,c.n))+'%',11,'B54E28',true,'ctr'),'ctr');
+          s9+=txt(nid(),cx-bw/2,zero+dnH+90000,0,bw,280000,para((c.carry?'-'+r1(c.carry/c.n*100):'0')+'%',9.5,'3F3B36',true,'ctr'),'ctr');
+          s9+=txt(nid(),cx-slot/2,zero+dnH+420000,0,slot,280000,para(c.key,10,'1A1918',true,'ctr'),'ctr');
+        });
+      })();
+      s9+=footNote('완료율 = 완료 건 / 등록 건  ·  이월률 = 이월 건 / 등록 건  ·  조 정보가 없는 기록은 미지정으로 따로 셉니다');
+
+      /* 10) 생산 A~H */
+      let s10=head('10');
+      s10+=titleBlock('생산 A~H 8개 라인 세부 실적 및 운영 요약','생산 8개 라인 중 '+lines.filter(l=>l.n>0&&l.done>=l.n).length+'개 라인이 100%를 달성했으며, 완료 '+prodDone+'건 · 이월 '+lines.reduce((a,l)=>a+l.carry,0)+'건입니다.');
+      s10+=box(nid(),M,2250000,SW-2*M,3400000,'E6DECF','<a:p/>','D8CEBE');
+      (function(){
+        const x0=M+700000, x1=SW-M-400000, baseY=5150000, topY=3300000;
+        const n=8, slot=(x1-x0)/n, bw=Math.min(620000,slot*0.5);
+        const mx=Math.max(1,...lines.map(l=>Math.max(l.n,l.done)));
+        s10+=txt(nid(),M+260000,2380000,0,(SW-2*M)*0.7,300000,para('생산 A~H 라인별 완료 건수 (등록 건수 기준)',12.5,'1A1918',true,'l'),'ctr');
+        vline(nid(),baseY,x0,x1,'B5AFA8');
+        lines.forEach((l,i)=>{
+          const cx=x0+slot*(i+0.5), p=l.n?l.done/l.n*100:0, col=p>=100?'3A6648':(p>=85?'D96B43':(p>0?'B54E28':'B5AFA8'));
+          const h=Math.max(60000,(l.done/mx)*(baseY-topY));
+          s10+=bar(nid(),cx-bw/2,baseY-h,bw,h,col);
+          s10+=txt(nid(),cx-bw/2,baseY-h-360000,0,bw,300000,para(l.n?String(l.done):'-',13,'1A1918',true,'ctr'),'ctr');
+          s10+=txt(nid(),cx-slot/2,baseY+120000,0,slot,300000,para(l.short,11,'1A1918',true,'ctr'),'ctr');
+          s10+=txt(nid(),cx-slot/2,baseY+430000,0,slot,280000,para('등록 '+l.n,9,'6E675F',false,'ctr'),'ctr');
+        });
+      })();
+      s10+=footNote('색: 100% 초록 · 85% 이상 주황 · 미달 빨강 · 기록 없음 회색');
+
+      /* 11) 핵심 구역 표 */
+      let s11=head('11');
+      s11+=titleBlock(zoneCount+'대 핵심 구역 버튼별 '+(mode==='week'?'주간':'월간')+' 실적 및 작성자 현황','각 구역 버튼에 등록한 품목·수량·특이사항이 저장된 작성자 이름·조와 함께 자동 정리됩니다.');
+      (function(){
+        const rows=[['구역 버튼','핵심 실적 (품목 · 수량)','달성률','최근 작성자','특이사항 및 인수인계']];
+        groups.filter(g=>g.n>0).forEach(g=>{
+          const recs=zoneRecs(cur,g), au=lastAuthor(recs);
+          const mem=memoOf(cur,g.test); const memShort=mem.length>44?mem.slice(0,42)+'…':mem;
+          rows.push([g.label, g.key==='production'?('8개 라인 합산 '+recs.length+'건 중 '+recs.filter(x=>x.completed).length+'건 완료 (이월 '+g.carry+'건)'):itemsSummary(recs), r1(g.pct)+'%', (au.crew?au.crew+' ':'')+au.name, memShort]);
+        });
+        if(rows.length===1) rows.push(['기록 없음','-','-','-','-']);
+        s11+=tbl(nid(),M,2250000,SW-2*M,3400000,rows,2,{weights:[1.25,3.5,0.95,1.6,3.0],rowH:455000,align:['ctr','l','ctr','l','l'],font:9.5});
+        s11+=txt(nid(),M,5880000,0,SW-2*M,300000,para('작성자 = 그 구역에 마지막으로 기록을 남긴 사람  ·  조 표기가 있을 때만 조 이름을 함께 표시',9.5,'6E675F',false,'l',true),'ctr');
+      })();
+
+      const slides=[[s1,'191613'],[s2,'F1EBE0'],[s3,'F1EBE0'],[s4,'F1EBE0'],[s5,'F1EBE0'],[s6,'F1EBE0'],[s7,'F1EBE0'],[s8,'F1EBE0'],[s9,'F1EBE0'],[s10,'F1EBE0'],[s11,'F1EBE0']];
       const entries=[
         ['[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/><Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/><Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/><Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>'+slides.map((_,i)=>'<Override PartName="/ppt/slides/slide'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>').join('')+'</Types>'],
         ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>'],
@@ -10428,8 +11231,10 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const url=URL.createObjectURL(blob);
       const a=document.createElement('a');
       a.href=url;
-      a.download='지수_'+(mode==='week'?'주간보고서_'+d.s.replace(/-/g,''):'월간보고서_'+d.s.slice(0,7).replace(/-/g,''))+'.pptx';
+      a.download='지수_'+(mode==='week'?'주간보고서_'+cur.s.replace(/-/g,''):'월간보고서_'+cur.s.slice(0,7).replace(/-/g,''))+'.pptx';
       document.body.appendChild(a); a.click(); a.remove();
+      window.__jisuPerfPpt={slides:slides.length,bytes:(blob.size||0)};
+      window.__jisuPerfPptBlob=blob;
       setTimeout(()=>URL.revokeObjectURL(url),4000);
     }
     const pptBtn=$('pfPptBtn'); if(pptBtn) pptBtn.addEventListener('click', async e=>{
@@ -10438,21 +11243,31 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       const fname='지수_'+(isWeek?'주간보고서_'+lastCur.s.replace(/-/g,''):'월간보고서_'+lastCur.s.slice(0,7).replace(/-/g,''))+'.pptx';
       const okDl=await window.jisuConfirmDownload({
         title:(isWeek?'주간':'월간')+' 보고서(PPT)를 다운로드할까요?',
-        desc:(isWeek?'이번 주':'이번 달')+' 실적을 4장 슬라이드(표지·하이라이트·구역별·날짜별)로 만듭니다.\n확인을 누를 때만 저장됩니다.',
+        desc:(isWeek?'이번 주':'이번 달')+' 실적을 11장 페이퍼 덱(표지·하이라이트·물량 추이·구역 달성률·누적 물량·출고/이월 비교·이월 추이·4조 2교대·완료율 균형·생산 A~H·구역 표)으로 만듭니다.\n확인을 누를 때만 저장됩니다.',
         filename:fname,
         meta:(isWeek?'주간':'월간')+' 보고서 · PPT'
       });
       if(!okDl) return;
       downloadPptReport(lastCur,lastPrev);
     });
-    btn.addEventListener('click',e=>{ e.stopPropagation(); selDay=null; shift=0; modal.hidden=false; draw(); });
+    btn.addEventListener('click',e=>{ e.stopPropagation(); shift=0; modal.hidden=false; draw(); });
     $('pfClose').addEventListener('click',()=>{ modal.hidden=true; });
     modal.addEventListener('click',e=>{ e.stopPropagation(); if(e.target===modal){ modal.hidden=true; return; }
-      const col=e.target.closest('[data-pf-day]'); if(col&&lastCur){ selDay=col.dataset.pfDay; modal.querySelectorAll('.pf-col').forEach(c=>c.classList.toggle('on',c===col)); const tp=$('pfTip'); if(tp) tp.innerHTML='<span>'+esc(tipText(lastCur,selDay))+'</span>'; return; }
       const b=e.target.closest('button'); if(!b) return;
-      if(b.dataset.pfMode){ mode=b.dataset.pfMode; shift=0; selDay=null; draw(); } else if(b.dataset.pfShift){ shift+=+b.dataset.pfShift; selDay=null; draw(); } else if(b.dataset.pfUnit){ unit=b.dataset.pfUnit; draw(); } });
+      if(b.dataset.pfMode){ mode=b.dataset.pfMode; shift=0; draw(); } else if(b.dataset.pfShift){ shift+=+b.dataset.pfShift; draw(); } });
     document.addEventListener('keydown',e=>{ if(modal.hidden) return; if(e.key==='Escape'){ modal.hidden=true; } });
     window.jisuPerfOpen=()=>btn.click();
+    window.jisuPerfDebug=function(){
+      if(!lastCur) return null;
+      const d=lastCur, prev=lastPrev, v=volumeBetween(d.s,d.e);
+      return {mode:mode,range:[d.s,d.e],sheets:document.querySelectorAll('#pfSlide .jpr-sheet').length,
+        pct:pctOf(d.done,d.work.length),work:d.work.length,done:d.done,carry:d.carry,
+        flow:v.flow,out:v.out,inT:v.inT,other:v.other,
+        groups:groupStats(d).map(g=>({key:g.key,n:g.n,done:g.done,pct:g.pct})),
+        crews:crewStats(d).map(c=>({key:c.key,n:c.n,done:c.done,carry:c.carry})),
+        lines:lineStats(d).map(l=>({z:l.z,n:l.n,done:l.done,carry:l.carry})),
+        ppt:window.__jisuPerfPpt||null};
+    };
   })();
   </script>
   <script>
