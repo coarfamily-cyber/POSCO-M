@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611261241">
+  <meta name="jisu-build" content="202611261924">
   <script>/* ==========================================================================
      저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
      "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
@@ -2740,11 +2740,16 @@
     [data-zone-btn].st-work > span.rounded-full{background:#22c55e !important;color:#4ade80 !important;box-shadow:0 0 8px rgba(34,197,94,0.65);}
     [data-zone-btn].st-done > span.rounded-full{background:#3b82f6 !important;color:#60a5fa !important;}
     [data-zone-btn].st-wait > span.rounded-full,[data-zone-btn].st-none > span.rounded-full{background:#64748b !important;color:#94a3b8 !important;}
+    [data-zone-btn].st-part > span.rounded-full{background:#3b82f6 !important;color:#60a5fa !important;box-shadow:0 0 8px rgba(59,130,246,.55);}
+    [data-zone-btn].st-urgent > span.rounded-full{background:#dc2626 !important;color:#fecaca !important;box-shadow:0 0 10px rgba(220,38,38,.85);}
     [data-toggle-zone].st-done .pulse-ring{background:#3b82f6 !important;color:#60a5fa !important;}
     [data-toggle-zone].st-carry .pulse-ring{background:#ec4899 !important;color:#f472b6 !important;}
     .state-legend{position:absolute;left:12px;bottom:12px;z-index:30;display:flex;flex-wrap:wrap;gap:10px;padding:6px 12px;border-radius:9999px;background:rgba(12,18,28,.55);backdrop-filter:blur(4px);font-size:11.5px;font-weight:700;color:#e5e7eb;pointer-events:none;zoom:var(--ui-z,1);}
     .state-legend span{display:inline-flex;align-items:center;gap:5px;} .state-legend i{width:9px;height:9px;border-radius:9999px;display:inline-block;}
     .state-legend i.n{background:#64748b;} .state-legend i.w{background:#f8fafc;} .state-legend i.r{background:#22c55e;} .state-legend i.d{background:#3b82f6;} .state-legend i.c{background:#ec4899;}
+    .state-legend i.p{background:#38bdf8;} .state-legend i.k{background:#16a34a;} .state-legend i.u{background:#dc2626;}
+    .state-legend{max-width:calc(100% - 24px);}
+    @media (max-width:600px){ .state-legend{font-size:10.5px;gap:7px;padding:4px 9px;} }
     /* 새 특이사항(보라)·공지(노랑) 알림: 10초 깜빡임 */
     @keyframes alertMemo{0%,100%{box-shadow:0 0 0 rgba(168,85,247,0)}50%{box-shadow:0 0 22px 6px rgba(168,85,247,.95)}}
     @keyframes alertNotice{0%,100%{box-shadow:0 0 0 rgba(250,204,21,0)}50%{box-shadow:0 0 22px 6px rgba(250,204,21,.95)}}
@@ -4836,6 +4841,13 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
   color:#bae6fd !important;
   box-shadow:0 0 10px rgba(56,189,248,.95) !important;
 }
+/* 일부 완료(st-part, 2026-11-26): 캡슐은 투명 유리 그대로, 점만 파란불 */
+#mapStage [data-toggle-zone].st-part .pulse-ring{
+  background:#38bdf8 !important;
+  color:#bae6fd !important;
+  box-shadow:0 0 10px rgba(56,189,248,.95) !important;
+}
+#mapStage [data-toggle-zone].st-part .pulse-ring::after{animation:none !important;opacity:0 !important;}
 #mapStage [data-toggle-zone].st-carry .pulse-ring{
   background:#ec4899 !important;
   color:#fbcfe8 !important;
@@ -4847,16 +4859,16 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
   box-shadow:0 0 11px rgba(250,204,21,.95) !important;
 }
 
-/* 상태가 바뀌어도 캡슐은 항상 맑은 투명 유리(구역 색은 점·배지로만) */
-#mapStage button.hotspot-pill[data-toggle-zone].st-done,
-#mapStage button.hotspot-pill[data-toggle-zone].st-work,
+/* 캡슐 색 규칙 (2026-11-26 수뽕 님 지시로 개편)
+   · 작업 없음(st-none)·대기(st-wait)·일부 완료(st-part)·이월(st-carry) = 맑은 투명 유리
+   · 작업중(st-work) = 버튼 전체 녹색불 / 모두 완료(st-done) = 버튼 전체 파란불 / 긴급(st-urgent) = 버튼 전체 빨간불
+     → 색이 들어가는 상태는 이 목록에서 빼고, 아래 '상태별 버튼 전체 불' 블록에서 칠한다. */
+#mapStage button.hotspot-pill[data-toggle-zone].st-part,
 #mapStage button.hotspot-pill[data-toggle-zone].st-wait,
 #mapStage button.hotspot-pill[data-toggle-zone].st-none,
 #mapStage button.hotspot-pill[data-toggle-zone].st-carry,
-body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-done,
-body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-work,
-body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-carry,
-body:not(#zz) #mapStage .hotspot-pill[data-toggle-zone="pitch"].st-done{
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-part,
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-carry{
   background:rgba(255,255,255,.12) !important;
   color:#fff !important;
   animation:none !important;
@@ -4901,6 +4913,136 @@ body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone]:hover,
 body:not(#zz) #mapStage .hotspot-wrapper.is-open > button.hotspot-pill[data-toggle-zone]{
   background:rgba(255,255,255,.22) !important;
 }
+
+/* ══ 상태별 '버튼 전체 불' (2026-11-26 수뽕 님 지시) ═══════════════════════════
+   · 작업중(st-work)·환경 작업중(env-run) = 버튼 전체 녹색불
+   · 모두 완료(st-done)·환경 완료(env-all) = 버튼 전체 파란불
+   · 긴급(st-urgent, 미완료 긴급 작업 있음) = 버튼 전체 빨간불 — 어떤 상태든 덮는 최우선
+   · 점검·정비(st-warn)는 기존 노란 테두리·글로우 그대로
+   색이 들어간 상태는 위 '맑은 투명 유리' 목록에서 빼 두었고, 여기서 다시 칠한다(특이도·순서 모두 이 블록이 마지막).
+   ※ '!important' 선언은 CSS 애니메이션이 덮지 못하므로, 깜빡이는 글로우는
+     @property 로 등록한 --st-glow 를 애니메이션해 box-shadow 계산값을 흔든다(정비 노란불과 같은 방식). */
+@property --st-glow{syntax:'<number>';inherits:false;initial-value:.45;}
+@keyframes nvWorkGlow{0%,100%{--st-glow:.45;}50%{--st-glow:1;}}
+@keyframes nvDoneGlow{0%,100%{--st-glow:.45;}50%{--st-glow:1;}}
+@keyframes nvUrgentGlow{0%,100%{--st-glow:.5;}50%{--st-glow:1;}}
+
+/* ③ 작업중 — 버튼 전체 녹색불 */
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-work{
+  --st-glow:.45;
+  background:rgba(34,197,94,.62) !important;
+  color:#fff !important;
+  box-shadow:
+    0 0 calc(10px + var(--st-glow) * 14px) calc(1px + var(--st-glow) * 3px) rgba(74,222,128,calc(.35 + var(--st-glow) * .5)),
+    inset 0 0 12px rgba(187,247,208,.30),
+    inset 0 1px 0 rgba(255,255,255,.30) !important;
+  animation:nvWorkGlow 2.4s ease-in-out infinite !important;
+}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-work span{color:#fff !important;}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-work::before{border-color:rgba(187,247,208,.5) !important;}
+
+/* ④ 모두 완료 — 버튼 전체 파란불 */
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-done{
+  --st-glow:.45;
+  background:rgba(59,130,246,.62) !important;
+  color:#fff !important;
+  box-shadow:
+    0 0 calc(10px + var(--st-glow) * 14px) calc(1px + var(--st-glow) * 3px) rgba(96,165,250,calc(.35 + var(--st-glow) * .5)),
+    inset 0 0 12px rgba(191,219,254,.35),
+    inset 0 1px 0 rgba(255,255,255,.30) !important;
+  animation:nvDoneGlow 2.4s ease-in-out infinite !important;
+}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-done span{color:#fff !important;}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-done .cmd-count{background:rgba(255,255,255,.92) !important;color:#2563eb !important;box-shadow:none !important;}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-done::before{border-color:rgba(191,219,254,.55) !important;}
+
+/* ⑤ 긴급 — 버튼 전체 빨간불 (완료·작업중·정비보다 뒤에 두어 어떤 상태든 덮는다) */
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-urgent{
+  --st-glow:.5;
+  background:rgba(220,38,38,.72) !important;
+  color:#fff !important;
+  box-shadow:
+    0 0 calc(10px + var(--st-glow) * 16px) calc(1px + var(--st-glow) * 4px) rgba(248,113,113,calc(.4 + var(--st-glow) * .55)),
+    inset 0 0 12px rgba(254,202,202,.30),
+    inset 0 1px 0 rgba(255,255,255,.30) !important;
+  animation:nvUrgentGlow 1.6s ease-in-out infinite !important;
+}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-urgent span{color:#fff !important;}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-urgent .pulse-ring{
+  background:#fff !important; color:#fee2e2 !important;
+  box-shadow:0 0 10px rgba(255,255,255,.95) !important; animation:none !important;
+}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-urgent::before{border-color:rgba(254,202,202,.6) !important;}
+
+/* 호버·열림에서도 상태 색을 유지한다(같은 색 계열로만 조금 밝아짐) */
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-work:hover,
+body:not(#zz) #mapStage .hotspot-wrapper.is-open > button.hotspot-pill[data-toggle-zone].st-work{background:rgba(34,197,94,.80) !important;}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-done:hover,
+body:not(#zz) #mapStage .hotspot-wrapper.is-open > button.hotspot-pill[data-toggle-zone].st-done{background:rgba(59,130,246,.80) !important;}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-urgent:hover,
+body:not(#zz) #mapStage .hotspot-wrapper.is-open > button.hotspot-pill[data-toggle-zone].st-urgent{background:rgba(220,38,38,.88) !important;}
+
+/* 환경 버튼도 같은 톤: 작업중(env-run) = 전체 녹색불 / 모두 완료(env-all) = 전체 파란불
+   (기존 규칙이 위 '투명 유리' 목록에 밀리지 않도록 여기서 한 단계 높은 특이도로 다시 칠한다) */
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].env-run{
+  --st-glow:.45;
+  background:rgba(34,197,94,.62) !important;
+  color:#fff !important;
+  box-shadow:
+    0 0 calc(10px + var(--st-glow) * 14px) calc(1px + var(--st-glow) * 3px) rgba(74,222,128,calc(.35 + var(--st-glow) * .5)),
+    inset 0 0 12px rgba(187,247,208,.30),
+    inset 0 1px 0 rgba(255,255,255,.30) !important;
+  animation:nvWorkGlow 2.4s ease-in-out infinite !important;
+}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].env-run span{color:#fff !important;}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].env-run::before{border-color:rgba(187,247,208,.5) !important;}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].env-all:not(.env-run){
+  --st-glow:.45;
+  background:rgba(59,130,246,.62) !important;
+  color:#fff !important;
+  box-shadow:
+    0 0 calc(10px + var(--st-glow) * 14px) calc(1px + var(--st-glow) * 3px) rgba(96,165,250,calc(.35 + var(--st-glow) * .5)),
+    inset 0 0 12px rgba(191,219,254,.35),
+    inset 0 1px 0 rgba(255,255,255,.30) !important;
+  animation:nvDoneGlow 2.4s ease-in-out infinite !important;
+}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].env-all:not(.env-run) span{color:#fff !important;}
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].env-all:not(.env-run)::before{border-color:rgba(191,219,254,.55) !important;}
+/* 환경 버튼에 긴급 작업이 있으면 환경 색(녹색·파랑)보다 빨강이 위 */
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].st-urgent{
+  --st-glow:.5;
+  background:rgba(220,38,38,.72) !important;
+  color:#fff !important;
+  box-shadow:
+    0 0 calc(10px + var(--st-glow) * 16px) calc(1px + var(--st-glow) * 4px) rgba(248,113,113,calc(.4 + var(--st-glow) * .55)),
+    inset 0 0 12px rgba(254,202,202,.30),
+    inset 0 1px 0 rgba(255,255,255,.30) !important;
+  animation:nvUrgentGlow 1.6s ease-in-out infinite !important;
+}
+
+/* ⑦ 새 내용 등록 — 버튼 전체가 10초(1초 × 10회) 깜빡인다 (2026-11-26 수뽕 님 지시).
+   점(.pulse-ring) 녹색 깜빡임은 아래 nv-flash-dot 블록이 그대로 맡고, 여기서는 캡슐 전체를 덮는다.
+   10초 뒤 st-flash-green 이 떨어지면 위 상태 규칙으로 그대로 돌아간다. */
+@property --nv-flash{syntax:'<number>';inherits:false;initial-value:0.05;}
+@keyframes nvBtnFlashGreen{
+  0%,100%{--nv-flash:.05;}
+  50%    {--nv-flash:1;}
+}
+html body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-flash-green,
+html body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].st-flash-green{
+  --nv-flash:.05;
+  background:rgba(34,197,94,calc(.30 + var(--nv-flash) * .68)) !important;
+  color:#fff !important;
+  box-shadow:
+    0 0 calc(8px + var(--nv-flash) * 20px) calc(1px + var(--nv-flash) * 6px) rgba(34,197,94,calc(.35 + var(--nv-flash) * .6)),
+    inset 0 0 14px rgba(187,247,208,calc(.15 + var(--nv-flash) * .3)),
+    inset 0 1px 0 rgba(255,255,255,.35) !important;
+  animation:nvBtnFlashGreen 1s ease-in-out 10 !important;
+}
+html body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-flash-green span,
+html body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].st-flash-green span{color:#fff !important;}
+html body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-flash-green::before,
+html body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].st-flash-green::before{border-color:rgba(187,247,208,.65) !important;}
 
 /* 동 표시(1~4동·창고): 같은 글래스 캡슐, 점 없음 */
 #mapStage .bldg-badge .status-dot{display:none !important;}
@@ -9981,7 +10123,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
   /* 버튼 표시등 = 작업 상태: 회색 작업 없음 · 흰색 대기 · 초록 작업중 · 파랑 완료 · 핑크 이월 */
   (function(){
     const KEY='jisu-commands-v1', load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}};
-    const ST=['st-none','st-wait','st-work','st-done','st-carry'];
+    const ST=['st-none','st-wait','st-part','st-work','st-done','st-carry'];
     function refresh(){ const all=load().filter(x=>!x.closed&&x.kind!=='notice'&&x.id!=='demo_dispatch_1');
       /* 정비 구역(st-warn, 2026-11-21): "정비"가 든 오늘 작업지시·공지·달력 예약·미확인 특이사항 중 지금 시각에 유효한 정비가
          있는 구역만 노란색 깜빡임. ① 부족 완료(short)와 ② 일반 오늘 특이사항은 더 이상 깜빡이지 않는다.
@@ -9992,18 +10134,24 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         let on=false; try{ on=!!(window.jisuMaintZoneActive&&window.jisuMaintZoneActive(k)); }catch(e){ on=false; }
         warn[k]=on?1:0; });
       document.querySelectorAll('[data-toggle-zone]').forEach(b=>{ const k=b.getAttribute('data-toggle-zone'), w=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(k==='inbound'&&x.target&&x.target.startsWith('inbound:')));
-        let st=!w.length?'st-none':(w.some(x=>x.working&&!x.completed)?'st-work':(w.every(x=>x.completed)?'st-done':'st-wait') /* 이월은 점 색이 아니라 분홍 -N 배지로만 표시 */);
+        /* 표시등 = 작업 상태 (2026-11-26 수뽕 님 지시)
+           · 작업 없음 = 회색 점 + 투명 유리
+           · 일부만 완료(st-part) = 투명 유리 + 점만 파란불
+           · 작업중(st-work) = 버튼 전체 녹색불
+           · 모두 완료(st-done) = 버튼 전체 파란불
+           · 긴급(st-urgent, 따로 토글) = 버튼 전체 빨간불 — 미완료 긴급 작업이 하나라도 있으면 붙는다 */
+        let st=!w.length?'st-none':(w.some(x=>x.working&&!x.completed)?'st-work':(w.every(x=>x.completed)?'st-done':(w.some(x=>x.completed)?'st-part':'st-wait'))) /* 이월은 점 색이 아니라 분홍 -N 배지로만 표시 */;
         if(k==='pitch'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-pitch-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done'&&(!w.length||w.every(x=>x.completed)))st='st-done';}catch(e){}}
-        if(k==='inbound'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done'&&(!w.length||w.every(x=>x.completed)))st='st-done';}catch(e){}}ST.forEach(c=>b.classList.toggle(c,c===st));b.classList.toggle('has-active-work',st==='st-work');
-        const sb=document.querySelector('[data-zone-btn="'+k+'"]');if(sb){ST.forEach(c=>sb.classList.toggle(c,c===st));sb.classList.toggle('has-active-work',st==='st-work');}
-        const urg=w.some(x=>x.urgent&&!x.completed); let um=b.querySelector('.urgent-mark'); if(urg&&!um){ um=document.createElement('span'); um.className='urgent-mark'; um.textContent='!'; um.title='긴급 작업'; b.appendChild(um); } else if(!urg&&um) um.remove();
+        if(k==='inbound'){try{const pd=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),row=JSON.parse(localStorage.getItem('jisu-inbound-records-v1')||'{}')[pd]||{};if(row.workState==='work')st='st-work';else if(row.workState==='done'&&(!w.length||w.every(x=>x.completed)))st='st-done';}catch(e){}}const urg=w.some(x=>x.urgent&&!x.completed);ST.forEach(c=>b.classList.toggle(c,c===st));b.classList.toggle('st-urgent',urg);b.classList.toggle('has-active-work',st==='st-work');
+        const sb=document.querySelector('[data-zone-btn="'+k+'"]');if(sb){ST.forEach(c=>sb.classList.toggle(c,c===st));sb.classList.toggle('st-urgent',urg);sb.classList.toggle('has-active-work',st==='st-work');}
+        { let um=b.querySelector('.urgent-mark'); if(urg&&!um){ um=document.createElement('span'); um.className='urgent-mark'; um.textContent='!'; um.title='긴급 작업'; b.appendChild(um); } else if(!urg&&um) um.remove(); }
         if(b.classList.contains('hotspot-pill')) b.classList.toggle('st-warn',!!warn[k]); });
       try{ if(window.jisuMaintPaint) window.jisuMaintPaint(); }catch(e){} }
     window.jisuStateRefresh=refresh; refresh();
     /* 화면을 켜 둔 채로도 예약된 정비 시작·종료 시각이 되면 저절로 켜지고 꺼지게 30초마다 다시 계산 */
     setInterval(function(){ try{ refresh(); }catch(e){} },30000);
     window.addEventListener('storage',e=>{ if(e.key===KEY||e.key==='jisu-memos-v1'||e.key==='jisu-schedule-v1'||e.key==='jisu-schedules-v1'||e.key==='jisu-maint-log-v1'||e.key==='jisu-pitch-records-v1'||e.key==='jisu-inbound-records-v1') refresh(); });
-    const stage=document.getElementById('mapStage'); if(stage){ const lg=document.createElement('div'); lg.className='state-legend'; lg.innerHTML='<span><i class="n"></i>작업 없음</span><span><i class="r"></i>신규 등록(10초)</span><span><i class="d"></i>완료</span><span><i class="c"></i>이월</span>'; stage.appendChild(lg); }
+    const stage=document.getElementById('mapStage'); if(stage){ const lg=document.createElement('div'); lg.className='state-legend'; lg.innerHTML='<span><i class="n"></i>작업 없음</span><span><i class="p"></i>일부 완료</span><span><i class="k"></i>작업중</span><span><i class="d"></i>완료</span><span><i class="u"></i>긴급</span><span><i class="c"></i>이월</span><span><i class="r"></i>신규 등록(10초)</span>'; stage.appendChild(lg); }
   })();
   </script>
   <script>

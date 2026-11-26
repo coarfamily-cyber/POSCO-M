@@ -73,7 +73,11 @@ test('저장하면 그 구역 점이 녹색으로 10초 깜빡이고, 작업중 
   assert.deepEqual(flashZones(w), [], '첫 로드에 깜빡임이 있으면 안 된다');
 
   const lg = (w.document.querySelector('.state-legend') || {}).textContent || '';
-  assert.ok(!lg.includes('작업중'), '범례에 작업중이 남아 있다: ' + lg);
+  /* 2026-11-26 수뽕 님 지시로 규칙이 바뀌었다: 작업중도 이제 '버튼 전체 녹색불'이라 범례에 다시 들어간다.
+     (11-23에 없앤 것은 점(dot)의 상시 녹색불이고, 그 점은 지금도 회색 불꺼짐 + 저장 10초만 녹색이다.) */
+  assert.ok(lg.includes('작업중'), '범례에 작업중이 없다(작업중 = 버튼 전체 녹색불): ' + lg);
+  assert.ok(lg.includes('일부 완료'), '범례에 일부 완료가 없다: ' + lg);
+  assert.ok(lg.includes('긴급'), '범례에 긴급이 없다: ' + lg);
   assert.ok(lg.includes('신규 등록(10초)'), '범례에 신규 등록(10초)이 없다: ' + lg);
 
   const wb = w.document.querySelector('#mapStage [data-toggle-zone="outbound"]');
