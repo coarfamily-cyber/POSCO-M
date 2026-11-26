@@ -354,19 +354,20 @@ test('E. 저장·즉시 반영·중복 방지·사진 1장·모달 초기화', a
     assert.equal(s.sch.length, 3);
     assert.match(doc.getElementById('czMsg').textContent, /이미 예약된 3건/);
 
-    // 오늘 날짜 → 즉시 금일작업 반영 + 그 구역 점 10초 깜빡임
+    // 오늘 날짜 → 즉시 금일작업 반영 (작업지시 저장은 녹색 깜빡임을 울리지 않는다 — 2026-11-26 2차 지시)
     s = saveBatch(w, `오늘\n입고 사각박스 100EA`);
     const todayCmd = s.cmds.find(x => x.id !== 'demo_dispatch_1');
     assert.ok(todayCmd, '오늘 카드가 금일작업에 들어간다');
     assert.equal(todayCmd.day, TODAY);
-    assert.deepEqual([...doc.querySelectorAll('#mapStage [data-toggle-zone].st-flash-green')].map(e => e.getAttribute('data-toggle-zone')), ['inbound']);
+    const flashed = [...doc.querySelectorAll('#mapStage [data-toggle-zone].st-flash-green')].map(e => e.getAttribute('data-toggle-zone'));
+    assert.deepEqual(flashed, [], '작업지시 저장에는 깜빡이지 않아야 한다(특이사항·사진만): ' + flashed.join(','));
 
     // 오늘 같은 작업을 다시 등록하는 것은 허용 (이미 적용된 카드는 중복으로 보지 않는다)
     const before = s.cmds.length;
     s = saveBatch(w, `오늘\n입고 사각박스 100EA`);
     assert.equal(s.cmds.length, before + 1);
 
-    // 오늘 특이사항 → jisu-memos-v1
+    // 오늘 특이사항 → jisu-memos-v1 (특이사항은 새 항목이 생긴 것이므로 그 구역이 깜빡인다)
     s = saveBatch(w, `오늘\n특이사항 도색 냄새`);
     assert.ok(s.memos.some(m => m.text === '도색 냄새' && m.day === TODAY));
 

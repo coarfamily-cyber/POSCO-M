@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611261935">
+  <meta name="jisu-build" content="202611262030">
   <script>/* ==========================================================================
      저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
      "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
@@ -2747,7 +2747,7 @@
     .state-legend{position:absolute;left:12px;bottom:12px;z-index:30;display:flex;flex-wrap:wrap;gap:10px;padding:6px 12px;border-radius:9999px;background:rgba(12,18,28,.55);backdrop-filter:blur(4px);font-size:11.5px;font-weight:700;color:#e5e7eb;pointer-events:none;zoom:var(--ui-z,1);}
     .state-legend span{display:inline-flex;align-items:center;gap:5px;} .state-legend i{width:9px;height:9px;border-radius:9999px;display:inline-block;}
     .state-legend i.n{background:#64748b;} .state-legend i.w{background:#f8fafc;} .state-legend i.r{background:#22c55e;} .state-legend i.d{background:#3b82f6;} .state-legend i.c{background:#ec4899;}
-    .state-legend i.p{background:#38bdf8;} .state-legend i.k{background:#16a34a;} .state-legend i.u{background:#dc2626;}
+    .state-legend i.p{background:#38bdf8;} .state-legend i.u{background:#dc2626;}
     .state-legend{max-width:calc(100% - 24px);}
     @media (max-width:600px){ .state-legend{font-size:10.5px;gap:7px;padding:4px 9px;} }
     /* 새 특이사항(보라)·공지(노랑) 알림: 10초 깜빡임 */
@@ -4764,8 +4764,8 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
      지도 영역과 1:1로 포개지게 배치했다(비·눈 조감도 사진 전환도 그대로 산다).
      배경과 지도는 화면 비율(vw/vh)로 배율 S=max(100vw/1440, 100vh/900)를 계산해
      어떤 데스크탑 해상도·창 크기에서도 빈 여백 없이 꽉 차고 함께 움직인다(11-22).
-   · 상태 점 색: 작업 없음 회색 / 작업중 회색(불 꺼짐) / 완료 파랑 / 이월 핑크 / 정비(st-warn) 노란 깜빡임.
-     저장 직후 10초만 녹색 깜빡임(nv-flash-dot · st-flash-green).
+   · 상태 점 색: 작업 없음·작업중 회색 / 완료·일부 완료 파랑 / 이월 핑크 / 정비(st-warn) 노란 깜빡임.
+     새 특이사항·새 사진이 등록되면 그 구역 버튼 전체가 10초만 녹색으로 깜빡인다(st-flash-green).
    ════════════════════════════════════════════════════════════════════════════ */
 
 :root{
@@ -4859,22 +4859,25 @@ body:not(#z1#z2#z3#z4#z5) .expand-card .enscape-inner-card{
   box-shadow:0 0 11px rgba(250,204,21,.95) !important;
 }
 
-/* 캡슐 색 규칙 (2026-11-26 수뽕 님 지시로 개편)
-   · 작업 없음(st-none)·대기(st-wait)·일부 완료(st-part)·이월(st-carry) = 맑은 투명 유리
-   · 작업중(st-work) = 버튼 전체 녹색불 / 모두 완료(st-done) = 버튼 전체 파란불 / 긴급(st-urgent) = 버튼 전체 빨간불
+/* 캡슐 색 규칙 (2026-11-26 수뽕 님 지시 — 2차에서 '작업중 녹색' 제거)
+   · 작업 없음(st-none)·대기(st-wait)·작업중(st-work)·일부 완료(st-part)·이월(st-carry) = 맑은 투명 유리 + 점
+   · 모두 완료(st-done) = 버튼 전체 파란불 / 긴급(st-urgent) = 버튼 전체 빨간불
+   · 새 특이사항·사진이 등록되면 잠깐(10초)만 버튼 전체 녹색 깜빡임(st-flash-green)
      → 색이 들어가는 상태는 이 목록에서 빼고, 아래 '상태별 버튼 전체 불' 블록에서 칠한다. */
 #mapStage button.hotspot-pill[data-toggle-zone].st-part,
+#mapStage button.hotspot-pill[data-toggle-zone].st-work,
 #mapStage button.hotspot-pill[data-toggle-zone].st-wait,
 #mapStage button.hotspot-pill[data-toggle-zone].st-none,
 #mapStage button.hotspot-pill[data-toggle-zone].st-carry,
 body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-part,
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-work,
 body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-carry{
   background:rgba(255,255,255,.12) !important;
   color:#fff !important;
   animation:none !important;
 }
-#mapStage button.hotspot-pill.is-open,
-#mapStage button.hotspot-pill[aria-pressed="true"]{
+#mapStage button.hotspot-pill.is-open:not(.st-flash-green),
+#mapStage button.hotspot-pill[aria-pressed="true"]:not(.st-flash-green){
   background:rgba(255,255,255,.22) !important;
 }
 
@@ -4903,43 +4906,35 @@ body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-warn::before{
   border-color:rgba(250,204,21,calc(.2 + var(--nv-warn) * .7)) !important;
 }
 
-/* 호버·열림 시에만 조금 더 밝은 투명 유리 — 상태 규칙보다 뒤에 두어 특정도·순서 모두 확보 */
-#mapStage .hotspot-pill:hover,
+/* 호버·열림 시에만 조금 더 밝은 투명 유리 — 상태 규칙보다 뒤에 두어 특정도·순서 모두 확보.
+   새 특이사항·사진으로 녹색 깜빡이는 중(.st-flash-green)에는 이 규칙을 빼야 카드를 열어 둔 채 사진을
+   올려도 그 구역 버튼이 흰색에 덮이지 않고 녹색으로 보인다 (2026-11-26). */
+#mapStage .hotspot-pill:hover:not(.st-flash-green),
 #mapStage .bldg-badge:hover,
-#mapStage .hotspot-wrapper.is-open > .hotspot-pill,
-#mapStage .hotspot-pill.is-open,
-#mapStage .hotspot-pill[aria-pressed="true"],
-body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone]:hover,
-body:not(#zz) #mapStage .hotspot-wrapper.is-open > button.hotspot-pill[data-toggle-zone]{
+#mapStage .hotspot-wrapper.is-open > .hotspot-pill:not(.st-flash-green),
+#mapStage .hotspot-pill.is-open:not(.st-flash-green),
+#mapStage .hotspot-pill[aria-pressed="true"]:not(.st-flash-green),
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone]:hover:not(.st-flash-green),
+body:not(#zz) #mapStage .hotspot-wrapper.is-open > button.hotspot-pill[data-toggle-zone]:not(.st-flash-green){
   background:rgba(255,255,255,.22) !important;
 }
 
 /* ══ 상태별 '버튼 전체 불' (2026-11-26 수뽕 님 지시) ═══════════════════════════
-   · 작업중(st-work)·환경 작업중(env-run) = 버튼 전체 녹색불
    · 모두 완료(st-done)·환경 완료(env-all) = 버튼 전체 파란불
    · 긴급(st-urgent, 미완료 긴급 작업 있음) = 버튼 전체 빨간불 — 어떤 상태든 덮는 최우선
    · 점검·정비(st-warn)는 기존 노란 테두리·글로우 그대로
+   · 작업중(st-work)·환경 작업중(env-run) = 상시 색 없음(투명 유리 + 회색 점) — 2차 지시로 되돌림
+   · 특이사항·새 사진이 등록된 직후 10초만 버튼 전체 녹색 깜빡임(맨 아래 st-flash-green)
    색이 들어간 상태는 위 '맑은 투명 유리' 목록에서 빼 두었고, 여기서 다시 칠한다(특이도·순서 모두 이 블록이 마지막).
    ※ '!important' 선언은 CSS 애니메이션이 덮지 못하므로, 깜빡이는 글로우는
      @property 로 등록한 --st-glow 를 애니메이션해 box-shadow 계산값을 흔든다(정비 노란불과 같은 방식). */
 @property --st-glow{syntax:'<number>';inherits:false;initial-value:.45;}
-@keyframes nvWorkGlow{0%,100%{--st-glow:.45;}50%{--st-glow:1;}}
 @keyframes nvDoneGlow{0%,100%{--st-glow:.45;}50%{--st-glow:1;}}
 @keyframes nvUrgentGlow{0%,100%{--st-glow:.5;}50%{--st-glow:1;}}
 
-/* ③ 작업중 — 버튼 전체 녹색불 */
-body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-work{
-  --st-glow:.45;
-  background:rgba(34,197,94,.62) !important;
-  color:#fff !important;
-  box-shadow:
-    0 0 calc(10px + var(--st-glow) * 14px) calc(1px + var(--st-glow) * 3px) rgba(74,222,128,calc(.35 + var(--st-glow) * .5)),
-    inset 0 0 12px rgba(187,247,208,.30),
-    inset 0 1px 0 rgba(255,255,255,.30) !important;
-  animation:nvWorkGlow 2.4s ease-in-out infinite !important;
-}
-body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-work span{color:#fff !important;}
-body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-work::before{border-color:rgba(187,247,208,.5) !important;}
+/* ③ 작업중(st-work) — 2026-11-26 2차 지시로 '상시 녹색불'을 없앴다.
+   "작업중 녹색이 아니고 특이사항에 누군가 작성하였거나 새로운 사진을 등록하면 녹색불로"
+   → 작업중은 위 '맑은 투명 유리' 목록으로 돌아가고, 점도 회색(#8ea0b6, nv-flash-dot ②)이다. */
 
 /* ④ 모두 완료 — 버튼 전체 파란불 */
 body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-done{
@@ -4957,9 +4952,9 @@ body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-done .cmd-count
 body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-done::before{border-color:rgba(191,219,254,.55) !important;}
 
 /* ⑤ 정비(st-warn)는 기존 그대로 '상태 색보다 위' — 2026-11-26 이전에는 노란 테두리·글로우가
-   완료·작업중 색을 덮었다. 상태 색 블록이 뒤에 생겼으니 여기서 같은 높이로 다시 올려 그 순서를 지킨다.
+   완료 색을 덮었다. 상태 색 블록이 뒤에 생겼으니 여기서 같은 높이로 다시 올려 그 순서를 지킨다.
    (긴급 st-urgent 만 예외 — 아래 긴급 규칙이 빨강으로 덮는다) */
-body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-warn:not(.st-urgent){
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-warn:not(.st-urgent):not(.st-flash-green){
   --nv-warn:.15;
   background:rgba(255,255,255,.12) !important;
   color:#fff !important;
@@ -4970,11 +4965,11 @@ body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-warn:not(.st-ur
     0 0 30px calc(var(--nv-warn) * 10px) rgba(250,204,21,calc(var(--nv-warn) * .55)) !important;
   animation:nv-warn-glow 1.6s ease-in-out infinite !important;
 }
-body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-warn:not(.st-urgent)::before{
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-warn:not(.st-urgent):not(.st-flash-green)::before{
   border-color:rgba(250,204,21,calc(.2 + var(--nv-warn) * .7)) !important;
 }
 
-/* ⑤ 긴급 — 버튼 전체 빨간불 (완료·작업중·정비보다 뒤에 두어 어떤 상태든 덮는다) */
+/* ⑤ 긴급 — 버튼 전체 빨간불 (완료·정비보다 뒤에 두어 어떤 상태든 덮는다) */
 body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-urgent{
   --st-glow:.5;
   background:rgba(220,38,38,.72) !important;
@@ -4992,29 +4987,16 @@ body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-urgent .pulse-r
 }
 body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-urgent::before{border-color:rgba(254,202,202,.6) !important;}
 
-/* 호버·열림에서도 상태 색을 유지한다(같은 색 계열로만 조금 밝아짐) */
-body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-work:hover,
-body:not(#zz) #mapStage .hotspot-wrapper.is-open > button.hotspot-pill[data-toggle-zone].st-work{background:rgba(34,197,94,.80) !important;}
+/* 호버·열림에서도 상태 색을 유지한다(같은 색 계열로만 조금 밝아짐). 작업중은 투명 유리라 제외. */
 body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-done:hover,
 body:not(#zz) #mapStage .hotspot-wrapper.is-open > button.hotspot-pill[data-toggle-zone].st-done{background:rgba(59,130,246,.80) !important;}
 body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-urgent:hover,
 body:not(#zz) #mapStage .hotspot-wrapper.is-open > button.hotspot-pill[data-toggle-zone].st-urgent{background:rgba(220,38,38,.88) !important;}
 
-/* 환경 버튼도 같은 톤: 작업중(env-run) = 전체 녹색불 / 모두 완료(env-all) = 전체 파란불
+/* 환경 버튼: 작업중(env-run)은 투명 유리 + 회색 점(2차 지시로 전체 녹색불 제거),
+   모두 완료(env-all) = 전체 파란불
    (기존 규칙이 위 '투명 유리' 목록에 밀리지 않도록 여기서 한 단계 높은 특이도로 다시 칠한다) */
-body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].env-run{
-  --st-glow:.45;
-  background:rgba(34,197,94,.62) !important;
-  color:#fff !important;
-  box-shadow:
-    0 0 calc(10px + var(--st-glow) * 14px) calc(1px + var(--st-glow) * 3px) rgba(74,222,128,calc(.35 + var(--st-glow) * .5)),
-    inset 0 0 12px rgba(187,247,208,.30),
-    inset 0 1px 0 rgba(255,255,255,.30) !important;
-  animation:nvWorkGlow 2.4s ease-in-out infinite !important;
-}
-body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].env-run span{color:#fff !important;}
-body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].env-run::before{border-color:rgba(187,247,208,.5) !important;}
-body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].env-all:not(.env-run){
+body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].env-all:not(.env-run):not(.st-flash-green){
   --st-glow:.45;
   background:rgba(59,130,246,.62) !important;
   color:#fff !important;
@@ -5038,16 +5020,16 @@ body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].st-u
   animation:nvUrgentGlow 1.6s ease-in-out infinite !important;
 }
 
-/* ⑦ 새 내용 등록 — 버튼 전체가 10초(1초 × 10회) 깜빡인다 (2026-11-26 수뽕 님 지시).
-   점(.pulse-ring) 녹색 깜빡임은 아래 nv-flash-dot 블록이 그대로 맡고, 여기서는 캡슐 전체를 덮는다.
+/* ⑦ 새 특이사항·새 사진이 등록되면 — 버튼 전체가 10초(1초 × 10회) 녹색으로 깜빡인다 (2026-11-26 수뽕 님 지시).
+   울리는 경우는 특이사항 새 항목 작성과 사진 등록뿐 — 작업지시·공지·입고·피치·환경 저장에는 울리지 않는다.
    10초 뒤 st-flash-green 이 떨어지면 위 상태 규칙으로 그대로 돌아간다. */
 @property --nv-flash{syntax:'<number>';inherits:false;initial-value:0.05;}
 @keyframes nvBtnFlashGreen{
   0%,100%{--nv-flash:.05;}
   50%    {--nv-flash:1;}
 }
-html body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-flash-green,
-html body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].st-flash-green{
+html body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-flash-green.st-flash-green,
+html body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone="environment"].st-flash-green.st-flash-green{
   --nv-flash:.05;
   background:rgba(34,197,94,calc(.30 + var(--nv-flash) * .68)) !important;
   color:#fff !important;
@@ -5578,7 +5560,7 @@ html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,2
       끝나면 원래 상태 점(완료 파랑 · 이월 핑크 · 정비 노랑 · 그 외 회색)으로 돌아온다
    ════════════════════════════════════════════════════════════════════════════ */
 
-/* ③ 저장 직후 10초 녹색 깜빡임 — 1초 × 10회 = 정확히 10초 (끝나면 아래 상태 점 규칙으로 복귀) */
+/* ③ 특이사항·새 사진 등록 직후 10초 녹색 깜빡임 — 1초 × 10회 = 정확히 10초 (끝나면 아래 상태 점 규칙으로 복귀) */
 @keyframes nvDotFlashGreen{
   0%,100%{ background:#22c55e !important; opacity:1;   transform:scale(1);   box-shadow:0 0 0 0 rgba(34,197,94,0); }
   50%    { background:#22c55e !important; opacity:.20; transform:scale(.76); box-shadow:0 0 12px 3px rgba(34,197,94,.95); }
@@ -10152,10 +10134,10 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         let on=false; try{ on=!!(window.jisuMaintZoneActive&&window.jisuMaintZoneActive(k)); }catch(e){ on=false; }
         warn[k]=on?1:0; });
       document.querySelectorAll('[data-toggle-zone]').forEach(b=>{ const k=b.getAttribute('data-toggle-zone'), w=all.filter(x=>x.target===k||(k==='outbound'&&x.target&&x.target.startsWith('outbound:'))||(k==='inbound'&&x.target&&x.target.startsWith('inbound:')));
-        /* 표시등 = 작업 상태 (2026-11-26 수뽕 님 지시)
+        /* 표시등 = 작업 상태 (2026-11-26 수뽕 님 지시 · 2차에서 작업중 녹색 제거)
            · 작업 없음 = 회색 점 + 투명 유리
            · 일부만 완료(st-part) = 투명 유리 + 점만 파란불
-           · 작업중(st-work) = 버튼 전체 녹색불
+           · 작업중(st-work) = 투명 유리 + 회색 점 (상시 녹색불 없음 — 특이사항·사진 등록 때만 잠깐 녹색)
            · 모두 완료(st-done) = 버튼 전체 파란불
            · 긴급(st-urgent, 따로 토글) = 버튼 전체 빨간불 — 미완료 긴급 작업이 하나라도 있으면 붙는다 */
         let st=!w.length?'st-none':(w.some(x=>x.working&&!x.completed)?'st-work':(w.every(x=>x.completed)?'st-done':(w.some(x=>x.completed)?'st-part':'st-wait'))) /* 이월은 점 색이 아니라 분홍 -N 배지로만 표시 */;
@@ -10169,7 +10151,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     /* 화면을 켜 둔 채로도 예약된 정비 시작·종료 시각이 되면 저절로 켜지고 꺼지게 30초마다 다시 계산 */
     setInterval(function(){ try{ refresh(); }catch(e){} },30000);
     window.addEventListener('storage',e=>{ if(e.key===KEY||e.key==='jisu-memos-v1'||e.key==='jisu-schedule-v1'||e.key==='jisu-schedules-v1'||e.key==='jisu-maint-log-v1'||e.key==='jisu-pitch-records-v1'||e.key==='jisu-inbound-records-v1') refresh(); });
-    const stage=document.getElementById('mapStage'); if(stage){ const lg=document.createElement('div'); lg.className='state-legend'; lg.innerHTML='<span><i class="n"></i>작업 없음</span><span><i class="p"></i>일부 완료</span><span><i class="k"></i>작업중</span><span><i class="d"></i>완료</span><span><i class="u"></i>긴급</span><span><i class="c"></i>이월</span><span><i class="r"></i>신규 등록(10초)</span>'; stage.appendChild(lg); }
+    const stage=document.getElementById('mapStage'); if(stage){ const lg=document.createElement('div'); lg.className='state-legend'; lg.innerHTML='<span><i class="n"></i>작업 없음</span><span><i class="p"></i>일부 완료</span><span><i class="d"></i>완료</span><span><i class="u"></i>긴급</span><span><i class="c"></i>이월</span><span><i class="r"></i>특이사항·사진(10초)</span>'; stage.appendChild(lg); }
   })();
   </script>
   <script>
@@ -10198,6 +10180,131 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     window.jisuAlertTest=(target,kind)=>{ flash(target||'outbound',kind||'m'); beep(); };
   })();
   </script>
+  <style id="jisuPerfPaperCss">
+    #perfModal .perf-box{
+      background:#E6DFD2 !important;
+      background-image:radial-gradient(rgba(120,104,84,.06) 1px,transparent 0),radial-gradient(rgba(120,104,84,.04) 1px,transparent 0) !important;
+      background-size:24px 24px !important;
+      background-position:0 0,12px 12px !important;
+      color:#1A1918 !important;
+      border:1px solid #D8CEBE !important;
+      max-width:1120px !important;
+      width:min(96vw,1120px) !important;
+      max-height:92vh !important;
+      display:flex !important;
+      flex-direction:column !important;
+      padding:14px 16px 16px !important;
+    }
+    #perfModal .perf-top{
+      display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+      padding-bottom:10px;border-bottom:1px solid #D8CEBE;margin-bottom:12px;
+    }
+    #perfModal .perf-seg{display:inline-flex;background:#DBD2C2;border-radius:8px;padding:2px;}
+    #perfModal .perf-seg button{background:transparent;color:#4F4A44;border:0;border-radius:6px;padding:5px 12px;font-size:12.5px;font-weight:700;cursor:pointer;}
+    #perfModal .perf-seg button.on{background:#191613;color:#F1EBE0;}
+    #perfModal .cal-nav,#perfModal .cal-close{background:#F1EBE0;color:#1A1918;border:1px solid #D8CEBE;border-radius:8px;padding:4px 10px;font-weight:700;cursor:pointer;}
+    #perfModal .perf-range{color:#1A1918;font-weight:800;font-size:13.5px;padding:0 4px;}
+    #perfModal .pf-ppt-btn{margin-left:auto;background:#D96B43 !important;color:#fff !important;border:0 !important;border-radius:8px;padding:6px 13px;font-size:12.5px;font-weight:800;cursor:pointer;}
+    #perfModal .perf-stage{flex:1;min-height:0;overflow-y:auto;display:block !important;padding:2px 2px 8px;}
+    #perfModal .perf-arrow,#perfModal .perf-dots{display:none !important;}
+    #perfModal .perf-slide{width:100%;max-width:none !important;padding:0 !important;background:transparent !important;}
+
+    /* Unified Warm Paper Deck Sheets */
+    .jpr-deck{display:flex;flex-direction:column;gap:18px;font-family:"Noto Sans KR",-apple-system,sans-serif;color:#1A1918;}
+    .jpr-sheet{background:#F1EBE0;border:1px solid #D8CEBE;border-radius:6px;padding:20px 32px 22px;box-shadow:0 8px 24px rgba(62,52,38,.09);}
+    .jpr-sheet.is-cover{
+      background:#191613;color:#F1EBE0;border:1px solid #2F2A25;border-left:7px solid #D96B43;
+      padding:36px 40px;display:flex;flex-direction:column;justify-content:center;gap:34px;
+    }
+    .jpr-cov-hd{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px 24px;width:100%;border-bottom:1px solid rgba(255,255,255,.16);padding-bottom:18px;}
+    .jpr-cov-title{font-size:clamp(22px,2.8vw,34px);font-weight:800;margin:0;color:#F1EBE0;letter-spacing:-.025em;}
+    .jpr-cov-author{font-size:18px;font-weight:800;color:#E6C37A;margin-left:auto;white-space:nowrap;}
+    .jpr-cov-kpis{display:grid;grid-template-columns:1fr 1fr;width:100%;align-items:stretch;}
+    .jpr-cov-kpi{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6px 16px;}
+    .jpr-cov-kpi:first-child{border-right:1px solid rgba(255,255,255,.14);}
+    .jpr-ck-lbl{font-size:12.5px;color:#A8A199;margin-bottom:4px;}
+    .jpr-ck-val{font-size:clamp(28px,3.2vw,38px);font-weight:800;color:#D96B43;line-height:1.1;}
+    .jpr-ck-sub{font-size:12.5px;font-weight:700;color:#639672;margin-top:5px;}
+
+    .jpr-top{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #D8CEBE;margin-bottom:14px;font-size:12.5px;color:#6E675F;}
+    .jpr-pg{color:#D96B43;font-weight:800;margin-left:4px;}
+    .jpr-h2{font-size:clamp(19px,2.2vw,24px);font-weight:800;margin:0 0 4px;color:#1A1918;letter-spacing:-.02em;}
+    .jpr-gov{font-size:13.5px;font-style:italic;color:#3F3B36;margin:0 0 18px;line-height:1.45;}
+
+    .jpr-hi4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;}
+    .jpr-hi-card{background:#E6DECF;border-radius:10px;padding:0 14px 16px;text-align:center;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;}
+    .jpr-hi-bar{height:5px;margin:0 -14px 14px;background:#D96B43;}
+    .jpr-hi-bar.forest{background:#3A6648;}
+    .jpr-hi-lbl{font-size:12.5px;font-weight:700;color:#3F3B36;}
+    .jpr-hi-val{font-size:clamp(22px,2.3vw,30px);font-weight:800;color:#1A1918;margin:16px 0 4px;white-space:nowrap;}
+    .jpr-hi-sub{font-size:11.5px;color:#6E675F;margin-bottom:12px;}
+    .jpr-hi-foot{border-top:1px solid rgba(110,103,95,.22);padding-top:10px;font-size:12px;font-weight:800;color:#B54E28;}
+    .jpr-hi-foot.forest{color:#3A6648;}
+
+    .jpr-grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .jpr-panel{background:#E6DECF;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;justify-content:space-between;}
+    .jpr-ptitle{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px;font-weight:800;color:#1A1918;margin:0 0 12px;}
+    .jpr-units{display:inline-flex;gap:4px;flex-wrap:wrap;}
+    .jpr-units button{border:1px solid #C8BFAF;background:#F1EBE0;color:#4F4A44;border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:700;cursor:pointer;}
+    .jpr-units button.on{background:#D96B43;border-color:#D96B43;color:#fff;}
+
+    .jpr-cols{display:flex;align-items:flex-end;gap:6px;height:168px;padding:18px 4px 4px;border-bottom:1px solid #C8BFAF;}
+    .jpr-col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;cursor:pointer;}
+    .jpr-col em{font-style:normal;font-size:10.5px;font-weight:700;color:#3F3B36;margin-bottom:3px;min-height:14px;}
+    .jpr-col i{display:block;width:100%;max-width:34px;min-height:4px;border-radius:6px 6px 0 0;background:#B5AFA8;transition:background .15s;}
+    .jpr-col.today i,.jpr-col.on i{background:#D96B43;}
+    .jpr-col span{font-size:11px;color:#6E675F;margin-top:5px;white-space:nowrap;}
+    .jpr-col.on span{color:#1A1918;font-weight:800;}
+    .jpr-tip{margin-top:10px;font-size:12px;color:#3F3B36;background:#F1EBE0;border-radius:8px;padding:7px 10px;}
+
+    .jpr-pills{display:flex;flex-direction:column;gap:9px;}
+    .jpr-prow{display:grid;grid-template-columns:124px 1fr;align-items:center;gap:10px;}
+    .jpr-plbl{font-size:12.5px;color:#3F3B36;font-weight:700;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .jpr-ptrack{background:#DBD2C2;border-radius:999px;height:22px;min-width:0;display:flex;align-items:center;padding-right:8px;overflow:hidden;}
+    .jpr-pbar{height:100%;border-radius:999px;background:#B5AFA8;flex-shrink:0;}
+    .jpr-pbar.hi{background:#D96B43;}
+    .jpr-pval{margin-left:8px;font-size:11.5px;font-weight:800;color:#4F4A44;white-space:nowrap;}
+    .jpr-pval.hi{color:#B54E28;}
+
+    .jpr-tbl{width:100%;border-collapse:collapse;font-size:13px;text-align:left;}
+    .jpr-tbl th{background:#E6DECF;color:#4F4A44;font-size:12px;font-weight:700;padding:9px 10px;border-bottom:1.5px solid rgba(26,25,24,.22);white-space:nowrap;}
+    .jpr-tbl th.focus{background:#D96B43;color:#fff;}
+    .jpr-tbl td{padding:9px 10px;border-bottom:1px solid rgba(110,103,95,.18);color:#3F3B36;}
+    .jpr-tbl tr:nth-child(even) td{background:rgba(230,222,207,.45);}
+    .jpr-tbl td.focus{background:rgba(217,107,67,.10);color:#B54E28;font-weight:800;}
+    .jpr-tbl th.num,.jpr-tbl td.num{text-align:right;white-space:nowrap;}
+    .jpr-foot{margin-top:12px;font-size:11.5px;color:#6E675F;}
+    .jpr-empty{padding:24px 10px;text-align:center;color:#6E675F;font-size:13px;}
+
+    @media (max-width:860px){
+      .jpr-sheet{padding:16px 16px 18px;}
+      .jpr-sheet.is-cover{padding:24px 20px;}
+      .jpr-hi4{grid-template-columns:repeat(2,minmax(0,1fr));}
+      .jpr-grid2{grid-template-columns:minmax(0,1fr);}
+      .jpr-prow{grid-template-columns:108px minmax(0,1fr);}
+    }
+
+    /* ── 테두리 보정 (2026-11-26) — 이 앱은 전역 규칙(:is(#nb#nb#nb#nb,*))이 모든 border 색을 transparent !important 로
+       지운다. 그래서 디자인 파일의 종이 테두리·표 구분선·표지 왼쪽 주황 띠를 box-shadow 로 그대로 살려 낸다(앱의 기존 방식). */
+    .jpr-sheet{box-shadow:0 8px 24px rgba(62,52,38,.09), inset 0 0 0 1px #D8CEBE;}
+    .jpr-sheet.is-cover{box-shadow:0 8px 24px rgba(62,52,38,.09), inset 0 0 0 1px #2F2A25, inset 7px 0 0 #D96B43;}
+    .jpr-cov-hd{box-shadow:inset 0 -1px 0 rgba(255,255,255,.16);}
+    .jpr-top{box-shadow:inset 0 -1px 0 #D8CEBE;}
+    .jpr-tbl th{box-shadow:inset 0 -1.5px 0 rgba(26,25,24,.22);}
+    .jpr-tbl td{box-shadow:inset 0 -1px 0 rgba(110,103,95,.18);}
+
+    /* 폰(≤600px)에서 30일 막대 그래프·진행바가 카드 밖으로 가로로 넘치지 않게 — 칸 수가 많은(15칸~) 막대는 날짜·값 글자를 숨기고 막대만 남긴다 */
+    @media (max-width:600px){
+      .jpr-grid2{grid-template-columns:minmax(0,1fr);}
+      .jpr-panel{min-width:0;}
+      .jpr-prow{grid-template-columns:minmax(76px,104px) minmax(0,1fr);}
+      .jpr-plbl{text-align:left;}
+      .jpr-cols{gap:3px;padding:10px 2px 4px;}
+      .jpr-cols:has(.jpr-col:nth-child(15)) .jpr-col em,
+      .jpr-cols:has(.jpr-col:nth-child(15)) .jpr-col span{display:none;}
+      .jpr-cols:has(.jpr-col:nth-child(15)){height:108px;}
+    }
+  </style>
   <div id="perfModal" class="cal-modal" hidden><div class="cal-box perf-box" role="dialog" aria-label="실적">
     <div class="perf-top"><div class="perf-seg"><button type="button" data-pf-mode="week" class="on">주간</button><button type="button" data-pf-mode="month">월간</button></div>
       <button type="button" class="cal-nav" data-pf-shift="-1" aria-label="이전 기간">‹</button><span class="perf-range" id="pfRange"></span><button type="button" class="cal-nav" data-pf-shift="1" aria-label="다음 기간">›</button>
@@ -10207,7 +10314,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     <div class="perf-dots" id="pfDots"></div>
   </div></div>
   <script>
-  /* 주간·월간 실적: 한눈에 보는 슬라이드 (등록된 기록만 사용, 임의 숫자 없음) */
+  /* 주간·월간 실적: 종이 질감 시트 리포트 + PPT 다운로드 (등록된 기록만 사용) */
   (function(){
     const btn=document.getElementById('perfBtn'), modal=document.getElementById('perfModal'); if(!btn||!modal) return;
     const $=id=>document.getElementById(id), CK='jisu-commands-v1', MK='jisu-memos-v1';
@@ -10218,11 +10325,27 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     const kst=d=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
     const today=()=>kst(new Date()), D=k=>new Date(k+'T12:00:00+09:00'), add=(k,n)=>kst(new Date(D(k).getTime()+n*864e5));
     function dayOf(r){ if(r.day) return r.day; const m=String(r.at||'').match(/(\d{1,2})\.\s*(\d{1,2})\./); if(!m) return r.sched||''; const t=today(), y=+t.slice(0,4); let k=y+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'); if(k>t) k=(y-1)+k.slice(4); return k; }
-    function goal(t){ const q=(window.jisuGoalQty?window.jisuGoalQty(t):null); if(!q) return null; return {n:q.n,u:q.u||'건'}; }
+    function goal(t){ const s=(window.jisuNormUnit?window.jisuNormUnit(t):String(t||'')).replace(/^\[[^\]]+\]\s*/,''), m=s.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?\s*$/)||s.match(/(\d+(?:[.,]\d+)?)\s*([A-Za-z]+|톤|개|대|박스|파레트|팔레트)?/); if(!m) return null; let u=(m[2]||'').toUpperCase(); if(u==='톤') u='TON'; if(u==='개') u='EA'; return {n:(window.jisuParseNum?window.jisuParseNum(m[1]):Number(String(m[1]).replace(',','.'))),u:u||'건'}; }
     const doneAmt=(x,g)=>{ const d=(x.completed&&!x.short&&(x.done==null||x.done===''))?g.n:(Number(x.done)||0); return Math.max(0,Math.min(d,g.n)); };
     const r1=v=>String(Math.round(v*10)/10), DOW=['일','월','화','수','목','금','토'], md=k=>(+k.slice(5,7))+'/'+(+k.slice(8,10));
     const CLOSE_KEY='jisu-perf-daily-close-v1';
     const kstHour=()=>Number(new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',hour:'2-digit',hour12:false}).format(new Date()))%24;
+    function authorName(){
+      try{
+        if(window.firebase&&firebase.auth&&firebase.auth().currentUser&&firebase.auth().currentUser.displayName) return firebase.auth().currentUser.displayName;
+        const u=localStorage.getItem('jisu-user'); if(u&&u.trim()) return u.trim();
+      }catch(_){}
+      return '김지수';
+    }
+    function reportTitleText(d){
+      const base=shift===0?today():d.e;
+      const y=+base.slice(0,4), m=+base.slice(5,7), day=+base.slice(8,10);
+      if(mode==='week'){
+        const wk=Math.ceil(day/7);
+        return y+'년 '+m+'월 '+day+'일 '+wk+'째주 보고서';
+      }
+      return (+d.s.slice(0,4))+'년 '+(+d.s.slice(5,7))+'월 월간 보고서';
+    }
     function syncDailyClose18(){
       const t=today();
       let snap={}; try{ snap=JSON.parse(localStorage.getItem(CLOSE_KEY)||'{}'); }catch(_){ snap={}; }
@@ -10256,36 +10379,88 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
       let envDone=0; try{ envDone=JSON.parse(localStorage.getItem('jisu-env-log-v1')||'[]').filter(x=>x.day>=s&&x.day<=e).length; }catch(_){}
       return {s,e,days,work,memos,units,zones,dayDetail,envDone,done:work.filter(x=>x.completed).length,carry:work.filter(x=>x.carryCount&&x.carryFrom).length}; }
     function title(d){ if(mode==='week') return (shift===0?'이번 주':(shift===-1?'지난 주':md(d.s)+' 주'))+' · '+md(d.s)+' ~ '+md(d.e); return (+d.s.slice(0,4))+'년 '+(+d.s.slice(5,7))+'월'+(shift===0?' (이번 달)':''); }
-    function deltaHtml(cur,prev,unitTxt){ const diff=cur-prev; const lbl=mode==='week'?'지난주':'지난달'; if(diff>0) return '<i class="pf-delta up">▲ +'+diff+(unitTxt||'')+' vs '+lbl+'</i>'; if(diff<0) return '<i class="pf-delta dn">▼ '+diff+(unitTxt||'')+' vs '+lbl+'</i>'; return '<i class="pf-delta">- 동일</i>'; }
-    function unitChips(d){ const us=Object.keys(d.units); if(us.length<2) return ''; return '<div class="pf-units">'+us.map(u=>'<button type="button" data-pf-unit="'+esc(u)+'" class="'+(u===unit?'on':'')+'">'+esc(u)+'</button>').join('')+'</div>'; }
+    function diffStr(cur,prev,suf){ const df=Math.round((cur-prev)*10)/10; const lbl=mode==='week'?'전주 대비':'전월 대비'; if(df>0) return '+'+df+(suf||'')+' '+lbl; if(df<0) return df+(suf||'')+' '+lbl; return lbl+' 동일'; }
+    function unitChips(d){ const us=Object.keys(d.units); if(us.length<2) return ''; return '<div class="jpr-units">'+us.map(u=>'<button type="button" data-pf-unit="'+esc(u)+'" class="'+(u===unit?'on':'')+'">'+esc(u)+'</button>').join('')+'</div>'; }
     function tipText(d,k){ if(!k) return '막대를 누르면 날짜별 구역 실적이 표시돼요.'; const det=d.dayDetail[k]; if(!det) return md(k)+' · 완료 수량 기록 없음'; const parts=Object.keys(det).map(z=>{ const us=Object.keys(det[z]).map(u=>r1(det[z][u])+' '+u).join(', '); return (NAMES[z]||z)+' '+us; }); return md(k)+' ('+DOW[D(k).getUTCDay()]+') · '+parts.join(' / '); }
     function renderDash(d, prev){
-      const pct=d.work.length?Math.round(d.done/d.work.length*100):0;
+      const pct=d.work.length?Math.round(d.done/d.work.length*1000)/10:0;
+      const prevPct=prev.work.length?Math.round(prev.done/prev.work.length*1000)/10:0;
       const us=Object.keys(d.units);
       if(!unit||!d.units[unit]) unit=us.includes('TON')?'TON':(us[0]||null);
-      const closedToday=syncDailyClose18();
-      const closeTag=closedToday?'⏰ 18:00 자동 마감 연동됨':'⏰ 매일 18:00 자동 마감 연동';
-      const circ=2*Math.PI*42, off=circ*(1-Math.min(100,pct)/100);
-      const ring='<div class="pf-ring-card"><div class="pf-ring-wrap"><svg viewBox="0 0 100 100"><defs><linearGradient id="pfRingG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#22c55e"/></linearGradient></defs><circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="10"/><circle cx="50" cy="50" r="42" fill="none" stroke="url(#pfRingG)" stroke-width="10" stroke-linecap="round" stroke-dasharray="'+circ.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'"/></svg><div class="pf-ring-center"><b>'+pct+'%</b><span>전체 완료율</span></div></div></div>';
-      const kpis='<div class="pf-kpis"><div><b>'+d.work.length+'</b><span>작업</span>'+deltaHtml(d.work.length,prev.work.length,'건')+'</div><div class="ok"><b>'+d.done+'</b><span>완료</span>'+deltaHtml(d.done,prev.done,'건')+'</div><div class="carry"><b>'+d.carry+'</b><span>이월</span>'+deltaHtml(d.carry,prev.carry,'건')+'</div><div class="memo"><b>'+d.memos.length+'</b><span>특이사항</span>'+deltaHtml(d.memos.length,prev.memos.length,'건')+'</div><div class="ok"><b>'+d.envDone+'</b><span>환경 청소</span>'+deltaHtml(d.envDone,prev.envDone,'회')+'</div></div>';
-      let chartHtml='<div class="pf-empty">수량이 적힌 완료 기록이 없어요.</div>';
+      const mainUnit=us.includes('TON')?'TON':(us[0]||'TON');
+      const mainAmt=d.units[mainUnit]?r1(d.units[mainUnit].done):'0';
+      const prevAmt=prev.units[mainUnit]?prev.units[mainUnit].done:0;
+      const curAmt=d.units[mainUnit]?d.units[mainUnit].done:0;
+      const rTitle=reportTitleText(d);
+      const author=authorName();
+
+      /* Sheet 00: Dark Espresso Cover (Title + Author on one line, 2 centered KPIs, no count block) */
+      const s0='<section class="jpr-sheet is-cover">'
+        +'<div class="jpr-cov-hd"><h2 class="jpr-cov-title">'+esc(rTitle)+'</h2><span class="jpr-cov-author">작성자 : '+esc(author)+'</span></div>'
+        +'<div class="jpr-cov-kpis">'
+          +'<div class="jpr-cov-kpi"><div class="jpr-ck-lbl">전 구역 평균 목표 달성률</div><div class="jpr-ck-val">'+pct+'%</div><div class="jpr-ck-sub">'+esc(diffStr(pct,prevPct,'%p'))+'</div></div>'
+          +'<div class="jpr-cov-kpi"><div class="jpr-ck-lbl">'+(mode==='week'?'주간':'월간')+' 합산 물량 ('+esc(mainUnit)+')</div><div class="jpr-ck-val">'+esc(mainAmt)+' '+esc(mainUnit)+'</div><div class="jpr-ck-sub">'+esc(diffStr(curAmt,prevAmt,' '+mainUnit))+'</div></div>'
+        +'</div></section>';
+
+      /* Sheet 01: 4-Column Highlights (no author in header) */
+      const s1='<section class="jpr-sheet">'
+        +'<div class="jpr-top"><span>'+esc(rTitle)+' | <span class="jpr-pg">01</span></span></div>'
+        +'<h3 class="jpr-h2">'+(mode==='week'?'주간':'월간')+' 실적 하이라이트</h3>'
+        +'<p class="jpr-gov">'+esc(title(d))+' 기간 동안 전 구역 평균 목표 달성률 '+pct+'%, 주요 물량 '+esc(mainAmt)+' '+esc(mainUnit)+'이 집계되었습니다.</p>'
+        +'<div class="jpr-hi4">'
+          +'<div class="jpr-hi-card"><div><div class="jpr-hi-bar forest"></div><div class="jpr-hi-lbl">평균 목표 달성률</div></div><div class="jpr-hi-val">'+pct+'%</div><div class="jpr-hi-sub">이전 '+prevPct+'% 대비</div><div class="jpr-hi-foot forest">'+esc(diffStr(pct,prevPct,'%p'))+'</div></div>'
+          +'<div class="jpr-hi-card"><div><div class="jpr-hi-bar"></div><div class="jpr-hi-lbl">합산 물량 ('+esc(mainUnit)+')</div></div><div class="jpr-hi-val">'+esc(mainAmt)+' '+esc(mainUnit)+'</div><div class="jpr-hi-sub">목표 '+(d.units[mainUnit]?r1(d.units[mainUnit].goal):'0')+' '+esc(mainUnit)+'</div><div class="jpr-hi-foot">'+esc(diffStr(curAmt,prevAmt,' '+mainUnit))+'</div></div>'
+          +'<div class="jpr-hi-card"><div><div class="jpr-hi-bar forest"></div><div class="jpr-hi-lbl">환경 점검 완료</div></div><div class="jpr-hi-val">'+d.envDone+'회</div><div class="jpr-hi-sub">기간 내 순찰 기록</div><div class="jpr-hi-foot forest">'+esc(diffStr(d.envDone,prev.envDone,'회'))+'</div></div>'
+          +'<div class="jpr-hi-card"><div><div class="jpr-hi-bar"></div><div class="jpr-hi-lbl">이월 · 특이사항</div></div><div class="jpr-hi-val">('+d.carry+' / '+d.memos.length+')</div><div class="jpr-hi-sub">이월 건수 / 특이사항</div><div class="jpr-hi-foot">'+esc(diffStr(d.carry,prev.carry,'건'))+'</div></div>'
+        +'</div>'
+        +'<div class="jpr-foot">매일 08:00 · 18:00 자동 마감 연동 데이터 기준</div>'
+      +'</section>';
+
+      /* Sheet 02: Daily Bar Chart + Zone Achievement Pill Bars */
+      let chartHtml='<div class="jpr-empty">수량이 적힌 완료 기록이 없습니다.</div>';
       if(unit && d.units[unit]){
         const u=d.units[unit], vals=d.days.map(k=>u.byDay[k]||0), mx=Math.max(1,...vals), many=d.days.length>10, t=today();
-        const avgGoal=u.goal>0?(u.goal/d.days.length):0;
-        const linePct=avgGoal>0?Math.min(96,Math.max(8,Math.round(avgGoal/mx*100))):0;
-        const goalLine=avgGoal>0?'<div class="pf-goal-line" style="bottom:'+linePct+'%"><span>일 목표 '+r1(avgGoal)+' '+esc(unit)+'</span></div>':'';
         if(!selDay||selDay<d.s||selDay>d.e) selDay=d.days.includes(t)?t:d.days[d.days.length-1];
-        chartHtml='<div class="pf-chart-wrap">'+goalLine+'<div class="pf-cols'+(many?' many':'')+'">'+d.days.map(k=>{ const v=u.byDay[k]||0, dw=D(k).getUTCDay(); return '<div class="pf-col'+(k===t?' today':'')+(k===selDay?' on':'')+'" data-pf-day="'+k+'"><em>'+(v?r1(v):'')+'</em><i style="height:'+Math.round(v/mx*100)+'%"></i><span>'+(many?(+k.slice(8,10)):md(k))+'</span></div>'; }).join('')+'</div></div><div class="pf-tip" id="pfTip"><span>'+esc(tipText(d,selDay))+'</span></div>';
+        chartHtml='<div class="jpr-cols">'+d.days.map(k=>{
+          const v=u.byDay[k]||0;
+          return '<div class="jpr-col pf-col'+(k===t?' today':'')+(k===selDay?' on':'')+'" data-pf-day="'+k+'"><em>'+(v?r1(v):'')+'</em><i style="height:'+Math.max(3,Math.round(v/mx*100))+'%"></i><span>'+(many?(+k.slice(8,10)):md(k))+'</span></div>';
+        }).join('')+'</div><div class="jpr-tip" id="pfTip"><span>'+esc(tipText(d,selDay))+'</span></div>';
       }
       const zs=Object.keys(d.zones).filter(z=>d.zones[z].n).sort((a,b)=>d.zones[b].n-d.zones[a].n);
-      const unitsSum=us.length?'<div class="pf-units-sum">'+us.map(u=>{ const x=d.units[u], p=x.goal?Math.round(x.done/x.goal*100):0; return '<div class="pf-usum"><div class="pf-uh"><b>'+esc(u)+'</b> '+r1(x.done)+' / '+r1(x.goal)+' <i>('+p+'%)</i></div><div class="pf-bar"><span style="width:'+Math.min(100,p)+'%"></span></div></div>'; }).join('')+'</div>':'';
-      const zonesHtml=zs.length?'<div class="pf-rows">'+zs.map(z=>{ const x=d.zones[z], p=Math.round(x.done/x.n*100); return '<div class="pf-row"><b>'+esc(NAMES[z]||z)+'</b><div class="pf-bar"><span style="width:'+p+'%"></span></div><em>'+x.done+' / '+x.n+'</em></div>'; }).join('')+'</div>':'<div class="pf-empty">구역별 기록이 없어요.</div>';
-      return '<h2>실적 리포트</h2><p class="pf-sub">'+esc(title(d))+' · '+closeTag+'</p><div class="pf-hero">'+ring+kpis+'</div><div class="pf-grid2"><div class="pf-panel"><h3><span>날짜별 완료량'+(unit?' <small>'+esc(unit)+'</small>':'')+'</span>'+unitChips(d)+'</h3>'+chartHtml+'</div><div class="pf-panel"><h3><span>단위 · 구역별 완료</span><small>완료 / 전체</small></h3>'+unitsSum+zonesHtml+'</div></div>';
+      const pillsHtml=zs.length?'<div class="jpr-pills">'+zs.slice(0,8).map((z,idx)=>{
+        const x=d.zones[z], p=Math.round(x.done/x.n*100), hi=p>=95||idx===0;
+        return '<div class="jpr-prow"><span class="jpr-plbl">'+esc(NAMES[z]||z)+'</span><div class="jpr-ptrack"><div class="jpr-pbar'+(hi?' hi':'')+'" style="width:'+Math.max(6,Math.min(82,Math.round(p*0.82)))+'%"></div><span class="jpr-pval'+(hi?' hi':'')+'">'+p+'%</span></div></div>';
+      }).join('')+'</div>':'<div class="jpr-empty">구역별 기록이 없습니다.</div>';
+
+      const s2='<section class="jpr-sheet">'
+        +'<div class="jpr-top"><span>'+esc(rTitle)+' | <span class="jpr-pg">02</span></span></div>'
+        +'<h3 class="jpr-h2">날짜별 물량 추이 및 구역별 목표 달성률</h3>'
+        +'<p class="jpr-gov">날짜 막대를 누르면 해당 일자의 구역별 상세 실적이 하단에 표시됩니다.</p>'
+        +'<div class="jpr-grid2">'
+          +'<div class="jpr-panel"><div class="jpr-ptitle"><span>날짜별 완료량'+(unit?' ('+esc(unit)+')':'')+'</span>'+unitChips(d)+'</div>'+chartHtml+'</div>'
+          +'<div class="jpr-panel"><div class="jpr-ptitle"><span>구역별 목표 달성률</span></div>'+pillsHtml+'</div>'
+        +'</div>'
+      +'</section>';
+
+      /* Sheet 03: Zone Breakdown Table with Terracotta Focus Column */
+      const tRows=zs.length?zs.map(z=>{
+        const x=d.zones[z], p=Math.round(x.done/x.n*100);
+        return '<tr><td><b>'+esc(NAMES[z]||z)+'</b></td><td class="num">'+x.done+' / '+x.n+'</td><td class="num focus">'+p+'%</td><td class="num">'+x.carry+'건</td><td class="num">'+x.memo+'건</td></tr>';
+      }).join(''):'<tr><td colspan="5" style="text-align:center;color:#6E675F;">등록된 구역 실적이 없습니다.</td></tr>';
+
+      const s3='<section class="jpr-sheet">'
+        +'<div class="jpr-top"><span>'+esc(rTitle)+' | <span class="jpr-pg">03</span></span></div>'
+        +'<h3 class="jpr-h2">구역 버튼별 세부 실적 현황</h3>'
+        +'<p class="jpr-gov">각 구역의 완료 비율과 이월·특이사항 기록을 한 표로 정리했습니다.</p>'
+        +'<div style="overflow-x:auto;"><table class="jpr-tbl"><thead><tr><th>구역 버튼</th><th class="num">완료 / 전체</th><th class="num focus">달성률</th><th class="num">이월</th><th class="num">특이사항</th></tr></thead><tbody>'+tRows+'</tbody></table></div>'
+      +'</section>';
+
+      return '<div class="jpr-deck">'+s0+s1+s2+s3+'</div>';
     }
     let lastCur=null, lastPrev=null;
     function draw(){ const d=dataFor(shift), prev=dataFor(shift-1); lastCur=d; lastPrev=prev; $('pfRange').textContent=title(d); const el=$('pfSlide'); el.innerHTML=renderDash(d,prev); el.classList.add('in');
       modal.querySelectorAll('[data-pf-mode]').forEach(b=>b.classList.toggle('on',b.dataset.pfMode===mode)); }
-    /* 순수 JS OOXML(.pptx) 생성 및 다운로드 */
+    /* 순수 JS OOXML(.pptx) 생성 및 다운로드 — 종이 질감 베이지 & 다크 표지 테마 */
     function downloadPptReport(d, prev){
       const te=new TextEncoder();
       const crcTable=(()=>{const t=new Uint32Array(256);for(let i=0;i<256;i++){let c=i;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[i]=c;}return t;})();
@@ -10311,46 +10486,58 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         return new Blob([...parts,...cds,eo],{type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
       }
       const xEsc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-      const box=(id,x,y,w,h,fill,paras)=>'<p:sp><p:nvSpPr><p:cNvPr id="'+id+'" name="b'+id+'"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="'+x+'" y="'+y+'"/><a:ext cx="'+w+'" cy="'+h+'"/></a:xfrm><a:prstGeom prst="roundRect"><a:avLst><a:gd name="adj" fmla="val 6000"/></a:avLst></a:prstGeom><a:solidFill><a:srgbClr val="'+fill+'"/></a:solidFill><a:ln w="12700"><a:solidFill><a:srgbClr val="334155"/></a:solidFill></a:ln></p:spPr><p:txBody><a:bodyPr wrap="square" lIns="120000" rIns="120000" tIns="90000" bIns="90000" anchor="ctr"/><a:lstStyle/>'+paras+'</p:txBody></p:sp>';
+      const box=(id,x,y,w,h,fill,paras,lnClr)=>'<p:sp><p:nvSpPr><p:cNvPr id="'+id+'" name="b'+id+'"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="'+x+'" y="'+y+'"/><a:ext cx="'+w+'" cy="'+h+'"/></a:xfrm><a:prstGeom prst="roundRect"><a:avLst><a:gd name="adj" fmla="val 5000"/></a:avLst></a:prstGeom><a:solidFill><a:srgbClr val="'+fill+'"/></a:solidFill>'+(lnClr?'<a:ln w="9525"><a:solidFill><a:srgbClr val="'+lnClr+'"/></a:solidFill></a:ln>':'<a:ln><a:noFill/></a:ln>')+'</p:spPr><p:txBody><a:bodyPr wrap="square" lIns="120000" rIns="120000" tIns="90000" bIns="90000" anchor="ctr"/><a:lstStyle/>'+paras+'</p:txBody></p:sp>';
       const para=(txt,sz,clr,bold,al)=>'<a:p><a:pPr algn="'+(al||'l')+'"/><a:r><a:rPr lang="ko-KR" sz="'+(sz*100)+'" b="'+(bold?1:0)+'"><a:solidFill><a:srgbClr val="'+clr+'"/></a:solidFill><a:latin typeface="Malgun Gothic"/><a:ea typeface="Malgun Gothic"/></a:rPr><a:t>'+xEsc(txt)+'</a:t></a:r></a:p>';
-      const tbl=(id,x,y,w,h,rows)=>{
+      const tbl=(id,x,y,w,h,rows,focusCol)=>{
         const cw=Math.floor(w/rows[0].length), rh=Math.min(460000,Math.floor(h/rows.length));
-        const trs=rows.map((r,ri)=>'<a:tr h="'+rh+'">'+r.map(c=>'<a:tc><a:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/>'+para(c,ri===0?12:11,ri===0?'E2E8F0':'F8FAFC',ri===0,'ctr')+'</a:txBody><a:tcPr><a:solidFill><a:srgbClr val="'+(ri===0?'1E3A5F':(ri%2?'1E293B':'0F172A'))+'"/></a:solidFill></a:tcPr></a:tc>').join('')+'</a:tr>').join('');
-        return '<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="'+id+'" name="t'+id+'"/><p:cNvGraphicFramePr><a:graphicFrameLocks noGrp="1"/></p:cNvGraphicFramePr><p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x="'+x+'" y="'+y+'"/><a:ext cx="'+w+'" cy="'+(rh*rows.length)+'"/></p:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table"><a:tbl><a:tblPr firstRow="1" bandRow="1"/><a:tblGrid>'+rows[0].map(()=>'<a:gridCol w="'+cw+'"/>').join('')+'</a:tblGrid>'+trs+'</a:tbl></a:graphicData></a:graphic></p:graphicFrame>';
+        const trs=rows.map((r,ri)=>'<a:tr h="'+rh+'">'+r.map((c,ci)=>{
+          const isFocus=ci===focusCol;
+          const bg=ri===0?(isFocus?'D96B43':'E6DECF'):(isFocus?'F2DFD5':(ri%2?'F1EBE0':'EAE2D4'));
+          const fg=ri===0?(isFocus?'FFFFFF':'4F4A44'):(isFocus?'B54E28':'1A1918');
+          return '<a:tc><a:txBody><a:bodyPr anchor="ctr"/><a:lstStyle/>'+para(c,ri===0?12:11,fg,ri===0||isFocus,'ctr')+'</a:txBody><a:tcPr><a:solidFill><a:srgbClr val="'+bg+'"/></a:solidFill></a:tcPr></a:tc>';
+        }).join('')+'</a:tr>').join('');
+        return '<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="'+id+'" name="t'+id+'"/><p:cNvGraphicFramePr><a:graphicFrameLocks noGrp="1"/></p:cNvGraphicFramePr><p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x="'+x+'" y="'+y+'"/><a:ext cx="'+w+'" cy="'+(rh*rows.length)+'"/></a:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table"><a:tbl><a:tblPr firstRow="1" bandRow="1"/><a:tblGrid>'+rows[0].map(()=>'<a:gridCol w="'+cw+'"/>').join('')+'</a:tblGrid>'+trs+'</a:tbl></a:graphicData></a:graphic></p:graphicFrame>';
       };
-      const slideXml=shapes=>'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:bg><p:bgPr><a:solidFill><a:srgbClr val="0F172A"/></a:solidFill><a:effectLst/></p:bgPr></p:bg><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>'+shapes+'</p:spTree></p:cSld></p:sld>';
-      const pct=d.work.length?Math.round(d.done/d.work.length*100):0;
-      const dTxt=(c,p)=>{const df=c-p; return df>0?'▲ +'+df:(df<0?'▼ '+df:'- 동일');};
-      const s1=box(2,450000,320000,11292000,900000,'1E293B',para('지수 통합 관제 상황실 · '+(mode==='week'?'주간':'월간')+' 실적 보고서',24,'FFFFFF',true)+para(title(d)+'  |  생성: '+today(),13,'93C5FD',false))
-        +box(3,450000,1450000,2500000,2000000,'172554',para(pct+'%',44,'38BDF8',true,'ctr')+para('전체 완료율',14,'CBD5E1',true,'ctr'))
-        +box(4,3150000,1450000,2000000,2000000,'1E293B',para(String(d.work.length),34,'FFFFFF',true,'ctr')+para('총 작업 ('+dTxt(d.work.length,prev.work.length)+')',12,'94A3B8',false,'ctr'))
-        +box(5,5300000,1450000,2000000,2000000,'1E293B',para(String(d.done),34,'60A5FA',true,'ctr')+para('완료 ('+dTxt(d.done,prev.done)+')',12,'94A3B8',false,'ctr'))
-        +box(6,7450000,1450000,2000000,2000000,'1E293B',para(String(d.carry),34,'F472B6',true,'ctr')+para('이월 ('+dTxt(d.carry,prev.carry)+')',12,'94A3B8',false,'ctr'))
-        +box(7,9600000,1450000,2142000,2000000,'1E293B',para(String(d.memos.length),34,'C4B5FD',true,'ctr')+para('특이사항 ('+dTxt(d.memos.length,prev.memos.length)+')',12,'94A3B8',false,'ctr'))
-        +box(8,450000,3750000,11292000,2400000,'1E293B',para('주요 요약',16,'38BDF8',true)+para('• 환경 청소 완료: '+d.envDone+'회 ('+dTxt(d.envDone,prev.envDone)+')',14,'E2E8F0',false)+para('• 등록된 단위 실적: '+(Object.keys(d.units).map(u=>u+' '+r1(d.units[u].done)+'/'+r1(d.units[u].goal)).join('  |  ')||'없음'),14,'E2E8F0',false));
-      const us=Object.keys(d.units);
-      const uRows=[['단위','완료량','목표량','달성률'],...(us.length?us.map(u=>{const x=d.units[u];return[u,r1(x.done),r1(x.goal),(x.goal?Math.round(x.done/x.goal*100):0)+'%'];}):[['기록 없음','-','-','-']])];
+      const slideXml=(shapes,bgHex)=>'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:bg><p:bgPr><a:solidFill><a:srgbClr val="'+(bgHex||'F1EBE0')+'"/></a:solidFill><a:effectLst/></p:bgPr></p:bg><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>'+shapes+'</p:spTree></p:cSld></p:sld>';
+      const pct=d.work.length?Math.round(d.done/d.work.length*1000)/10:0;
+      const prevPct=prev.work.length?Math.round(prev.done/prev.work.length*1000)/10:0;
+      const us=Object.keys(d.units), mainUnit=us.includes('TON')?'TON':(us[0]||'TON');
+      const curAmt=d.units[mainUnit]?d.units[mainUnit].done:0, prevAmt=prev.units[mainUnit]?prev.units[mainUnit].done:0;
+      const rTitle=reportTitleText(d), author=authorName();
+
+      /* Slide 1: Dark Espresso Cover */
+      const s1=box(2,0,0,120000,6858000,'D96B43','')
+        +box(3,650000,1250000,7400000,900000,'191613',para(rTitle,28,'F1EBE0',true,'l'))
+        +box(4,8200000,1300000,3400000,800000,'191613',para('작성자 : '+author,18,'E6C37A',true,'r'))
+        +box(5,650000,2650000,5300000,2600000,'24201C',para('전 구역 평균 목표 달성률',14,'A8A199',false,'ctr')+para(pct+'%',44,'D96B43',true,'ctr')+para(diffStr(pct,prevPct,'%p'),14,'639672',true,'ctr'))
+        +box(6,6250000,2650000,5300000,2600000,'24201C',para((mode==='week'?'주간':'월간')+' 합산 물량 ('+mainUnit+')',14,'A8A199',false,'ctr')+para(r1(curAmt)+' '+mainUnit,44,'D96B43',true,'ctr')+para(diffStr(curAmt,prevAmt,' '+mainUnit),14,'639672',true,'ctr'));
+
+      /* Slide 2: 4-Card Paper Highlights (no author in header) */
+      const s2=box(2,500000,280000,11192000,520000,'F1EBE0',para(rTitle+'  |  01',12,'6E675F',false))
+        +box(3,500000,820000,11192000,720000,'F1EBE0',para((mode==='week'?'주간':'월간')+' 실적 하이라이트',24,'1A1918',true))
+        +box(4,500000,1800000,2600000,3800000,'E6DECF',para('평균 목표 달성률',13,'3F3B36',true,'ctr')+para(pct+'%',34,'1A1918',true,'ctr')+para(diffStr(pct,prevPct,'%p'),12,'3A6648',true,'ctr'))
+        +box(5,3360000,1800000,2600000,3800000,'E6DECF',para('합산 물량 ('+mainUnit+')',13,'3F3B36',true,'ctr')+para(r1(curAmt)+' '+mainUnit,32,'1A1918',true,'ctr')+para(diffStr(curAmt,prevAmt,' '+mainUnit),12,'B54E28',true,'ctr'))
+        +box(6,6220000,1800000,2600000,3800000,'E6DECF',para('환경 점검 완료',13,'3F3B36',true,'ctr')+para(d.envDone+'회',34,'1A1918',true,'ctr')+para(diffStr(d.envDone,prev.envDone,'회'),12,'3A6648',true,'ctr'))
+        +box(7,9080000,1800000,2600000,3800000,'E6DECF',para('이월 · 특이사항',13,'3F3B36',true,'ctr')+para('('+d.carry+' / '+d.memos.length+')',30,'1A1918',true,'ctr')+para(diffStr(d.carry,prev.carry,'건'),12,'B54E28',true,'ctr'));
+
+      /* Slide 3: Zone Table with Terracotta Focus Column */
       const zs=Object.keys(d.zones).filter(z=>d.zones[z].n).sort((a,b)=>d.zones[b].n-d.zones[a].n).slice(0,10);
-      const zRows=[['구역','완료','전체','이월·특이'],...(zs.length?zs.map(z=>{const x=d.zones[z];return[NAMES[z]||z,String(x.done),String(x.n),'이월 '+x.carry+' / 특이 '+x.memo];}):[['기록 없음','-','-','-']])];
-      const s2=box(2,450000,300000,11292000,680000,'1E293B',para('단위 · 구역별 완료 현황',20,'FFFFFF',true))
-        +tbl(3,450000,1150000,5200000,5000000,uRows)
-        +tbl(4,5900000,1150000,5842000,5000000,zRows);
-      const dayHead=['날짜',...(us.length?us:['완료 건수']),'구역별 내역'];
-      const dayRows=[];
-      d.days.forEach(k=>{
+      const zRows=[['구역 버튼','완료 / 전체','달성률','이월','특이사항'],...(zs.length?zs.map(z=>{const x=d.zones[z];return[NAMES[z]||z,x.done+' / '+x.n,Math.round(x.done/x.n*100)+'%',x.carry+'건',x.memo+'건'];}):[['기록 없음','-','-','-','-']])];
+      const s3=box(2,500000,280000,11192000,520000,'F1EBE0',para(rTitle+'  |  02',12,'6E675F',false))
+        +box(3,500000,820000,11192000,660000,'F1EBE0',para('구역 버튼별 세부 실적 현황',24,'1A1918',true))
+        +tbl(4,500000,1620000,11192000,4600000,zRows,2);
+
+      /* Slide 4: Daily Trend Table */
+      const dayRows=[['날짜',...(us.length?us:['완료 건수']),'구역별 내역']];
+      d.days.slice(0,12).forEach(k=>{
         const det=d.dayDetail[k]?Object.keys(d.dayDetail[k]).map(z=>(NAMES[z]||z)+' '+Object.keys(d.dayDetail[k][z]).map(u=>r1(d.dayDetail[k][z][u])+u).join(',')).join(' / '):'-';
         dayRows.push([md(k),...(us.length?us.map(u=>r1(d.units[u].byDay[k]||0)):[String(d.work.filter(x=>dayOf(x)===k&&x.completed).length)]),det]);
       });
-      /* A-10: 예전에는 d.days.slice(0,14) 로 15일 이후를 잘라냈다(월간 31일 중 절반 누락).
-         이제 모든 날짜를 넣고, 표가 너무 길어지지 않게 18줄씩 슬라이드를 나누어 이어 붙인다. */
-      const perSlide=18, daySlides=[];
-      const dayGroups=Math.max(1, Math.ceil(dayRows.length/perSlide));
-      for(let gi=0; gi<dayGroups; gi++){
-        const part=dayRows.slice(gi*perSlide,(gi+1)*perSlide);
-        daySlides.push(box(2,450000,300000,11292000,680000,'1E293B',para('날짜별 완료 추이 ('+title(d)+')'+(dayGroups>1?(' · '+(gi+1)+'/'+dayGroups):''),20,'FFFFFF',true))
-          +tbl(3,450000,1120000,11292000,5200000,[dayHead].concat(part)));
-      }
-      const slides=[s1,s2].concat(daySlides);
+      const s4=box(2,500000,280000,11192000,520000,'F1EBE0',para(rTitle+'  |  03',12,'6E675F',false))
+        +box(3,500000,820000,11192000,660000,'F1EBE0',para('날짜별 완료 추이 ('+title(d)+')',24,'1A1918',true))
+        +tbl(4,500000,1620000,11192000,4600000,dayRows,1);
+
+      const slides=[[s1,'191613'],[s2,'F1EBE0'],[s3,'F1EBE0'],[s4,'F1EBE0']];
       const entries=[
         ['[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/><Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/><Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/><Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>'+slides.map((_,i)=>'<Override PartName="/ppt/slides/slide'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>').join('')+'</Types>'],
         ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>'],
@@ -10360,10 +10547,10 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
         ['ppt/slideMasters/_rels/slideMaster1.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme1.xml"/></Relationships>'],
         ['ppt/slideLayouts/slideLayout1.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="blank"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld></p:sldLayout>'],
         ['ppt/slideLayouts/_rels/slideLayout1.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/></Relationships>'],
-        ['ppt/theme/theme1.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Jisu"><a:themeElements><a:clrScheme name="Jisu"><a:dk1><a:srgbClr val="0F172A"/></a:dk1><a:lt1><a:srgbClr val="FFFFFF"/></a:lt1><a:dk2><a:srgbClr val="1E293B"/></a:dk2><a:lt2><a:srgbClr val="E2E8F0"/></a:lt2><a:accent1><a:srgbClr val="3B82F6"/></a:accent1><a:accent2><a:srgbClr val="22C55E"/></a:accent2><a:accent3><a:srgbClr val="EC4899"/></a:accent3><a:accent4><a:srgbClr val="8B5CF6"/></a:accent4><a:accent5><a:srgbClr val="38BDF8"/></a:accent5><a:accent6><a:srgbClr val="F59E0B"/></a:accent6><a:hlink><a:srgbClr val="60A5FA"/></a:hlink><a:folHlink><a:srgbClr val="818CF8"/></a:folHlink></a:clrScheme><a:fontScheme name="Jisu"><a:majorFont><a:latin typeface="Malgun Gothic"/><a:ea typeface="Malgun Gothic"/><a:cs typeface="Malgun Gothic"/></a:majorFont><a:minorFont><a:latin typeface="Malgun Gothic"/><a:ea typeface="Malgun Gothic"/><a:cs typeface="Malgun Gothic"/></a:minorFont></a:fontScheme><a:fmtScheme name="Jisu"><a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst><a:lnStyleLst><a:ln w="9525"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln><a:ln w="19050"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln><a:ln w="25400"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements></a:theme>']
+        ['ppt/theme/theme1.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="JisuPaper"><a:themeElements><a:clrScheme name="JisuPaper"><a:dk1><a:srgbClr val="1A1918"/></a:dk1><a:lt1><a:srgbClr val="F1EBE0"/></a:lt1><a:dk2><a:srgbClr val="3F3B36"/></a:dk2><a:lt2><a:srgbClr val="E6DECF"/></a:lt2><a:accent1><a:srgbClr val="D96B43"/></a:accent1><a:accent2><a:srgbClr val="3A6648"/></a:accent2><a:accent3><a:srgbClr val="E6C37A"/></a:accent3><a:accent4><a:srgbClr val="B5AFA8"/></a:accent4><a:accent5><a:srgbClr val="E88C64"/></a:accent5><a:accent6><a:srgbClr val="6E675F"/></a:accent6><a:hlink><a:srgbClr val="B54E28"/></a:hlink><a:folHlink><a:srgbClr val="3A6648"/></a:folHlink></a:clrScheme><a:fontScheme name="JisuPaper"><a:majorFont><a:latin typeface="Malgun Gothic"/><a:ea typeface="Malgun Gothic"/><a:cs typeface="Malgun Gothic"/></a:majorFont><a:minorFont><a:latin typeface="Malgun Gothic"/><a:ea typeface="Malgun Gothic"/><a:cs typeface="Malgun Gothic"/></a:minorFont></a:fontScheme><a:fmtScheme name="JisuPaper"><a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst><a:lnStyleLst><a:ln w="9525"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln><a:ln w="19050"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln><a:ln w="25400"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements></a:theme>']
       ];
-      slides.forEach((s,i)=>{
-        entries.push(['ppt/slides/slide'+(i+1)+'.xml',slideXml(s)]);
+      slides.forEach((item,i)=>{
+        entries.push(['ppt/slides/slide'+(i+1)+'.xml',slideXml(item[0],item[1])]);
         entries.push(['ppt/slides/_rels/slide'+(i+1)+'.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/></Relationships>']);
       });
       const blob=zipStore(entries);
@@ -14473,26 +14660,32 @@ paint()})();</script>
 </script>
 <script id="nv-flash-dot-js">
 /* ═══════════════════════════════════════════════════════════════════════════
-   내용이 저장되면 그 구역 지도 버튼의 점이 녹색으로 10초 깜빡인다 (2026-11-23 수뽕 님 지시)
+   특이사항·새 사진이 등록되면 그 구역 지도 버튼 전체가 녹색으로 10초 깜빡인다
+   (2026-11-26 수뽕 님 지시: "작업중 녹색이 아니고 특이사항에 누군가 작성하였거나
+    새로운 사진을 등록하면 녹색불로" → "특이사항·사진 등록 시에만 10초간 버튼 전체 녹색 깜빡임")
+   · 울리는 곳 — ① 특이사항(jisu-memos-v1)에 새 항목이 추가될 때(로컬 작성·Firebase 원격 수신)
+                    ② 새 사진이 등록될 때(로컬 저장·원격 수신·업로드)
+   · 울리지 않는 곳 — 작업지시·공지(jisu-commands-v1), 입고·피치 실적, 환경 호기·설비
+                       (11-26 1차에서는 이 저장소들도 울렸지만 2차 지시로 특이사항·사진만 남겼다)
    · 로컬 저장(localStorage·사진 IndexedDB) = '직전 저장 이벤트' 기준:
      방금 사람이 입력·저장해서 바뀐 내용만 울린다(첫 로드·자동 정규화에서는 울리지 않는다).
    · Firebase 원격 수신 = 새로 들어온 항목의 저장 시각(savedAt·id·rid·at)이 10초 이내일 때만.
+   · 확인(ack)·수정 처럼 이미 있던 항목이 바뀌는 것은 울리지 않는다 — 새 항목이 생길 때만.
+   · 사진 삭제·원격 다시 불러오기(pull)에서는 울리지 않는다.
    · 10초가 지난 옛 자료를 다시 불러올 때는 울리지 않는다.
-   · 연속 저장 시 타이머를 다시 시작해 마지막 저장부터 10초를 센다.
+   · 연속 등록 시 타이머를 다시 시작해 마지막 저장부터 10초를 센다.
    ═══════════════════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
   if(window.jisuFlashZone) return;
   var FLASH_MS = 10000;
   var CLS = 'st-flash-green';
-  /* 저장되면 지도 버튼 점이 울리는 저장소들 */
+  /* 버튼 전체 녹색 깜빡임이 울리는 저장소 — 특이사항 하나뿐 (2026-11-26 2차 지시)
+     · 작업지시·공지·입고·피치·환경 저장은 여기 없다 → 울리지 않는다.
+     · 사진은 localStorage 가 아니라 IndexedDB 라서 이 목록에 없고, 사진 저장 훅(P.put·putPhoto)과
+       'jisu:photo-sync' 수신이 직접 window.jisuFlashZone(zone) 을 부른다. */
   var KEYS = {
-    'jisu-commands-v1':'arr',            /* 금일작업·공지 */
-    'jisu-memos-v1':'arr',               /* 특이사항 */
-    'jisu-inbound-records-v1':'row:inbound',
-    'jisu-pitch-records-v1':'row:pitch',
-    'jisu-env-v1':'env',                 /* 환경 호기·설비 */
-    'jisu-env-log-v1':'env'
+    'jisu-memos-v1':'arr'                /* 특이사항 — 새 항목(작성)이 추가될 때만 */
   };
   var snap = Object.create(null);        /* key → 마지막으로 본 원본 문자열 */
   var actAt = 0;                         /* 마지막 사람 조작 시각 */

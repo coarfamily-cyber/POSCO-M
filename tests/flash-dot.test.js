@@ -1,6 +1,10 @@
 // 실행: NODE_PATH=<jsdom 설치 경로> node --test tests/flash-dot.test.js
 //        (개별 실행: NODE_PATH=<jsdom 설치 경로> node tests/flash-dot.test.js JISU/index.html)
-// 2026-11-23 수뽕 님 지시: "내용이 저장되면 그 구역 버튼 점이 녹색으로 10초 깜빡이고, 작업중 녹색불은 없앤다"
+// 2026-11-26 수뽕 님 지시 (2차): "작업중 녹색이 아니고 특이사항에 누군가 작성하였거나
+//   새로운 사진을 등록하면 녹색불로" → "특이사항·사진 등록 시에만 10초간 버튼 전체 녹색 깜빡임"
+//   · 특이사항(jisu-memos-v1) 새 항목 · 새 사진 등록 → 그 구역 버튼 전체 10초 녹색 깜빡임
+//   · 작업지시·공지(jisu-commands-v1)·입고·피치·환경 저장 → 울리지 않는다
+//   · 작업중(st-work)은 상시 녹색불 없이 투명 유리 + 회색 점(11-23 지시 그대로)
 // 회귀 테스트 — jsdom + 가짜 Firebase + 가짜 IndexedDB. 네트워크·운영 DB·푸시 서버로 나가지 않는다.
 const fs = require('fs');
 const path = require('path');
@@ -62,7 +66,29 @@ async function loadPage(seed, serverItems) {
 const flashZones = w => [...w.document.querySelectorAll('#mapStage [data-toggle-zone].st-flash-green')]
   .map(e => e.getAttribute('data-toggle-zone'));
 
-test('저장하면 그 구역 점이 녹색으로 10초 깜빡이고, 작업중 녹색불은 없다', async () => {
+/* 사진 등록 — 앱이 쓰는 통합 사진 저장소(jisu-zone-photos-v1 · photos)에 P.put 으로 한 장 넣는다 */
+const putPhoto = (w, zone, id) => w.eval(`new Promise((res,rej)=>{
+  const r=indexedDB.open('jisu-zone-photos-v1',1);
+  r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains('photos')) r.result.createObjectStore('photos',{keyPath:'id'}); };
+  r.onsuccess=()=>{ try{
+    const db=r.result, t=db.transaction('photos','readwrite');
+    t.objectStore('photos').put({id:'${id}', zone:'${zone}', data:'data:image/jpeg;base64,QUFB', ts:Date.now()});
+    t.oncomplete=()=>{ db.close(); res(1); }; t.onerror=()=>rej(t.error);
+  }catch(e){ rej(String(e)); } };
+  r.onerror=()=>rej(r.error);
+})`);
+
+const delPhoto = (w, id) => w.eval(`new Promise((res,rej)=>{
+  const r=indexedDB.open('jisu-zone-photos-v1',1);
+  r.onsuccess=()=>{ try{
+    const db=r.result, t=db.transaction('photos','readwrite');
+    t.objectStore('photos').delete('${id}');
+    t.oncomplete=()=>{ db.close(); res(1); }; t.onerror=()=>rej(t.error);
+  }catch(e){ rej(String(e)); } };
+  r.onerror=()=>rej(r.error);
+})`);
+
+test('특이사항·새 사진만 버튼 전체 10초 녹색 깜빡임 · 작업중은 투명 유리+회색 점', async () => {
   const seedItems = baseItems();
   const p1 = await loadPage({ [KEY]: JSON.stringify(seedItems), [MKEY]: '[]' });
   const w = p1.w;
@@ -72,55 +98,87 @@ test('저장하면 그 구역 점이 녹색으로 10초 깜빡이고, 작업중 
   assert.equal(p1.errors.length, 0, p1.errors.join(' | '));
   assert.deepEqual(flashZones(w), [], '첫 로드에 깜빡임이 있으면 안 된다');
 
+  /* 범례: 작업중(녹색)은 빠지고, 특이사항·사진(10초) 하나로 합쳐진다 */
   const lg = (w.document.querySelector('.state-legend') || {}).textContent || '';
-  /* 2026-11-26 수뽕 님 지시로 규칙이 바뀌었다: 작업중도 이제 '버튼 전체 녹색불'이라 범례에 다시 들어간다.
-     (11-23에 없앤 것은 점(dot)의 상시 녹색불이고, 그 점은 지금도 회색 불꺼짐 + 저장 10초만 녹색이다.) */
-  assert.ok(lg.includes('작업중'), '범례에 작업중이 없다(작업중 = 버튼 전체 녹색불): ' + lg);
+  assert.ok(!lg.includes('작업중'), '범례에 작업중이 남아 있다(작업중은 상시 녹색불이 아니다): ' + lg);
   assert.ok(lg.includes('일부 완료'), '범례에 일부 완료가 없다: ' + lg);
   assert.ok(lg.includes('긴급'), '범례에 긴급이 없다: ' + lg);
-  assert.ok(lg.includes('신규 등록(10초)'), '범례에 신규 등록(10초)이 없다: ' + lg);
+  assert.ok(lg.includes('특이사항·사진(10초)'), '범례에 특이사항·사진(10초)이 없다: ' + lg);
+  assert.ok(!lg.includes('신규 등록(10초)'), '옛 범례 문구(신규 등록(10초))가 남아 있다: ' + lg);
 
   const wb = w.document.querySelector('#mapStage [data-toggle-zone="outbound"]');
   assert.ok(wb.classList.contains('st-work'), wb.className);
   assert.ok(!wb.classList.contains('st-flash-green'), '작업중 구역에 깜빡임 클래스가 붙어 있다: ' + wb.className);
 
-  // ── 2) 로컬 저장 → 그 구역만 10초 깜빡임 ─────────────────────────────────
+  // ── 2) 작업지시(금일작업) 로컬 저장 → 깜빡이지 않는다 ──────────────────────
   w.eval(`(()=>{
     const sel=document.getElementById('cmdTarget'); sel.value='packaging'; sel.dispatchEvent(new Event('change',{bubbles:true}));
     const t=document.getElementById('cmdText'); t.value='포장 12 TON'; t.dispatchEvent(new Event('input',{bubbles:true}));
     document.getElementById('cmdSubmit').click();
   })()`);
-  await sleep(250);
-  assert.deepEqual(flashZones(w), ['packaging'], '저장한 구역만 깜빡여야 한다');
+  await sleep(300);
+  assert.deepEqual(flashZones(w), [], '작업지시 저장에는 울리면 안 된다(특이사항·사진만)');
+  const saved = JSON.parse(w.localStorage.getItem(KEY) || '[]');
+  assert.ok(saved.some(x => x.target === 'packaging'), '작업지시가 저장되지 않았다: ' + saved.length);
 
-  await sleep(6000);
-  assert.deepEqual(flashZones(w), ['packaging'], '6초 뒤에도 깜빡여야 한다');
-  await sleep(4500);
-  assert.deepEqual(flashZones(w), [], '10초가 지나면 꺼져야 한다');
-
-  // ── 3) 다른 기기(Firebase) 저장 수신 ────────────────────────────────────
+  // ── 3) 다른 기기(Firebase)에서 들어온 작업지시 → 깜빡이지 않는다 ───────────
   const push = obj => p1.fake.firebase.database().ref('jisu/state/' + KEY).set({ v: JSON.stringify(obj), t: Date.now(), by: 'other' });
-
   const fresh = { id: sid(1000), target: 'pitch', kind: 'instruction', text: '피치 방금 등록', at: md + ' 20:55', day: today };
   await push(seedItems.concat([fresh]));
   await sleep(900);
-  assert.deepEqual(flashZones(w), ['pitch'], '방금 등록된 항목을 받으면 깜빡여야 한다');
+  assert.deepEqual(flashZones(w), [], '방금 다른 기기에서 등록된 작업지시에도 울리면 안 된다');
 
-  const stale = { id: sid(60000), target: 'outbound', kind: 'instruction', text: '옛 작업', at: md + ' 18:00', day: today };
-  await push(seedItems.concat([fresh, stale]));
-  await sleep(900);
-  assert.ok(!flashZones(w).includes('outbound'), '10초 지난 옛 항목 수신에는 울리면 안 된다');
-
-  // ── 4) 특이사항 저장 → 그 구역 깜빡임 ───────────────────────────────────
+  // ── 4) 특이사항 새 작성 → 그 구역 버튼 전체 10초 깜빡임 ────────────────────
   w.eval(`(()=>{
     const a=JSON.parse(localStorage.getItem('${MKEY}')||'[]');
     a.push({id:Date.now().toString(36),target:'inbound',tag:'issue',text:'입고 특이사항',at:'20:56'});
     localStorage.setItem('${MKEY}',JSON.stringify(a));
   })()`);
   await sleep(300);
-  assert.ok(flashZones(w).includes('inbound'), '특이사항 저장한 구역이 깜빡여야 한다');
+  assert.deepEqual(flashZones(w), ['inbound'], '특이사항을 작성하면 그 구역이 깜빡여야 한다');
 
-  // ── 5) 전체('*') 공지 → 모든 구역 버튼 ─────────────────────────────────
+  await sleep(6000);
+  assert.deepEqual(flashZones(w), ['inbound'], '6초 뒤에도 깜빡여야 한다');
+  await sleep(4500);
+  assert.deepEqual(flashZones(w), [], '10초가 지나면 꺼져야 한다');
+
+  // ── 5) 확인(ack)·수정 → 새 항목이 아니므로 울리지 않는다 ──────────────────
+  w.eval(`(()=>{
+    const a=JSON.parse(localStorage.getItem('${MKEY}')||'[]');
+    a[0].ack=true; a[0].ackAt='20:57';
+    localStorage.setItem('${MKEY}',JSON.stringify(a));
+  })()`);
+  await sleep(300);
+  assert.deepEqual(flashZones(w), [], '특이사항 확인(ack) 변경에는 울리면 안 된다');
+
+  // ── 6) 다른 기기에서 들어온 새 특이사항 → 깜빡임 ─────────────────────────
+  const remoteMemo = { id: sid(500), target: 'production-a', tag: 'issue', text: '다른 기기 특이사항', at: md + ' 20:58' };
+  w.eval(`(()=>{
+    const a=JSON.parse(localStorage.getItem('${MKEY}')||'[]');
+    a.push(${JSON.stringify(remoteMemo)});
+    localStorage.setItem('${MKEY}',JSON.stringify(a));
+  })()`);
+  await sleep(300);
+  assert.deepEqual(flashZones(w), ['production-a'], '새 특이사항(원격 포함)이 들어오면 깜빡여야 한다');
+
+  // ── 7) 새 사진 등록 → 그 구역 버튼 전체 10초 깜빡임 ────────────────────────
+  await sleep(300);
+  w.document.querySelectorAll('#mapStage [data-toggle-zone].st-flash-green').forEach(e => e.classList.remove('st-flash-green'));
+  await putPhoto(w, 'packaging', 'qa-photo-' + Date.now().toString(36));
+  await sleep(500);
+  assert.deepEqual(flashZones(w), ['packaging'], '새 사진을 등록하면 그 구역이 깜빡여야 한다');
+  await sleep(6000);
+  assert.deepEqual(flashZones(w), ['packaging'], '사진 등록 6초 뒤에도 깜빡여야 한다');
+  await sleep(4500);
+  assert.deepEqual(flashZones(w), [], '사진 등록 10초 뒤에는 꺼져야 한다');
+
+  // ── 8) 사진 삭제 → 울리지 않는다 ─────────────────────────────────────────
+  const pid = w.eval(`(async()=>{ const r=indexedDB.open('jisu-zone-photos-v1',1); return await new Promise(res=>{ r.onsuccess=()=>{ const db=r.result, q=db.transaction('photos','readonly').objectStore('photos').getAll(); q.onsuccess=()=>{ const it=(q.result||[]).slice(-1)[0]; db.close(); res(it?it.id:''); }; }; }); })()`);
+  await delPhoto(w, pid);
+  await sleep(400);
+  assert.deepEqual(flashZones(w), [], '사진 삭제에는 울리면 안 된다');
+
+  // ── 9) 전체('*') 특이사항 → 모든 구역 버튼 ────────────────────────────────
   w.eval(`window.jisuFlashZone('*')`);
   const all = flashZones(w);
   assert.ok(all.length >= 14, '전체 공지가 모든 구역을 깜빡여야 한다: ' + all.join(','));
@@ -132,10 +190,11 @@ test('저장하면 그 구역 점이 녹색으로 10초 깜빡이고, 작업중 
   }
 });
 
-test('첫 로드(서버 동기화)로 들어온 자료에는 깜빡이지 않는다', async () => {
-  // 다른 기기가 1초 전에 저장해 둔 항목이 서버에 있는 상태로 이 기기를 새로 켠다 → 과거 자료 재로딩이라 울리면 안 된다
+test('첫 로드(서버 동기화)로 들어온 자료·특이사항에는 깜빡이지 않는다', async () => {
+  // 다른 기기가 1초 전에 저장해 둔 작업지시·특이사항이 서버에 있는 상태로 이 기기를 새로 켠다 → 과거 자료 재로딩이라 울리면 안 된다
   const fresh = { id: sid(1000), target: 'outbound', kind: 'instruction', text: '방금 저장된 작업', at: md + ' 21:00', day: today };
-  const p = await loadPage({}, baseItems().concat([fresh]));
+  const recentMemo = { id: sid(1000), target: 'outbound', tag: 'issue', text: '방금 쓴 특이사항', at: md + ' 21:00' };
+  const p = await loadPage({ [MKEY]: JSON.stringify([recentMemo]) }, baseItems().concat([fresh]));
   try {
     await sleep(600);
     assert.deepEqual(flashZones(p.w), [], '첫 로드·재동기화에는 울리면 안 된다');

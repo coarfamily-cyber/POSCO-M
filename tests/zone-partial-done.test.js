@@ -3,11 +3,11 @@
 // 2026-11-26 수뽕 님 지시: 지도 구역 버튼 상태를 이렇게 나눈다.
 //   ① 작업 없음·대기        = 맑은 투명 유리 + 회색 점
 //   ② 일부만 완료(st-part)  = 맑은 투명 유리 + 점만 파란불
-//   ③ 작업중(st-work)       = 버튼 전체 녹색불
+//   ③ 작업중(st-work)       = 맑은 투명 유리 + 회색 점 (2차 지시로 상시 녹색불 제거)
 //   ④ 모두 완료(st-done)    = 버튼 전체 파란불 (예전에는 투명 유리 규칙이 덮어써서 점만 파랬다)
 //   ⑤ 정비(st-warn)         = 기존 노란 테두리·글로우 그대로
 //   ⑥ 긴급(st-urgent)       = 버튼 전체 빨간불, 어떤 상태든 덮는 최우선
-//   ⑦ 새 내용 등록(st-flash-green) = 버튼 전체가 10초 깜빡 (점만 아님)
+//   ⑦ 특이사항·사진 등록(st-flash-green) = 그 구역 버튼 전체가 10초 깜빡 (점만 아님)
 // jsdom + 가짜 Firebase + 가짜 IndexedDB. 네트워크·운영 DB·푸시 서버로 나가지 않는다.
 const fs = require('fs');
 const path = require('path');
@@ -131,8 +131,9 @@ test('일부 완료=점만 파란불(st-part) · 모두 완료=버튼 전체 파
     assert.equal(stateOf(zoneBtn(w, 'packaging')), 'st-wait', 'packaging');
     assert.equal(stateOf(zoneBtn(w, 'environment')), 'st-none', 'environment');
 
-    /* ③ 작업중 */
+    /* ③ 작업중 — 클래스는 있지만 버튼 전체 색은 없다(투명 유리 + 회색 점) */
     assert.equal(stateOf(zoneBtn(w, 'production-b')), 'st-work', 'production-b');
+    assert.ok(!zoneBtn(w, 'production-b').classList.contains('st-flash-green'), '작업중에 깜빡임 클래스가 붙었다');
 
     /* ⑤ 긴급 — 미완료 긴급 작업이 있는 구역만 st-urgent (지도·사이드바 모두) */
     assert.ok(zoneBtn(w, 'pitch').classList.contains('st-urgent'), 'pitch 긴급: ' + zoneBtn(w, 'pitch').className);
@@ -151,7 +152,8 @@ test('일부 완료=점만 파란불(st-part) · 모두 완료=버튼 전체 파
 
     /* ⑦ 범례도 새 규칙과 같아야 한다 */
     const lg = (w.document.querySelector('.state-legend') || {}).textContent || '';
-    ['작업 없음', '일부 완료', '작업중', '완료', '긴급', '이월', '신규 등록(10초)'].forEach(t => assert.ok(lg.includes(t), '범례에 ' + t + ' 가 없다: ' + lg));
+    ['작업 없음', '일부 완료', '완료', '긴급', '이월', '특이사항·사진(10초)'].forEach(t => assert.ok(lg.includes(t), '범례에 ' + t + ' 가 없다: ' + lg));
+    assert.ok(!lg.includes('작업중'), '작업중은 상시 녹색불이 아니므로 범례에 두지 않는다: ' + lg);
 
     /* 남은 1건까지 완료하면 outbound 는 st-done 으로 넘어간다 */
     w.eval(`(()=>{const a=JSON.parse(localStorage.getItem('${KEY}')||'[]');const it=a.find(x=>x.id==='o2');it.completed=true;it.completedAt='${NOW}';localStorage.setItem('${KEY}',JSON.stringify(a));if(window.jisuStateRefresh)window.jisuStateRefresh();})()`);
@@ -176,22 +178,27 @@ test('일부 완료=점만 파란불(st-part) · 모두 완료=버튼 전체 파
   }
 });
 
-test('CSS — 투명 유리 목록에서 완료·작업중을 빼고 상태별 전체 색·긴급 최우선·전체 깜빡임 규칙이 있다', async () => {
-  /* '항상 맑은 투명 유리' 목록: 대기·없음·일부완료·이월만 남고 완료·작업중은 빠져야 한다 */
+test('CSS — 작업중은 투명 유리+회색 점, 전체 색은 완료·긴급만, 깜빡임은 특이사항·사진 몫', async () => {
+  /* '항상 맑은 투명 유리' 목록: 없음·대기·작업중·일부완료·이월이 들어가고 완료만 빠진다 */
   const listStart = html.indexOf('/* 캡슐 색 규칙 (2026-11-26');
   assert.ok(listStart > 0, '투명 유리 목록 주석을 찾지 못했다');
   const listEnd = html.indexOf('}', listStart);
   const list = html.slice(listStart, listEnd);
   assert.ok(list.includes('.st-part'), '투명 목록에 st-part 가 없다');
+  assert.ok(list.includes('.st-work'), '투명 목록에 st-work 가 없다(작업중은 투명 유리 + 회색 점)');
   assert.ok(list.includes('.st-none') && list.includes('.st-wait') && list.includes('.st-carry'), '투명 목록에 대기·없음·이월이 빠졌다');
   assert.ok(!/\.st-done/.test(list), '투명 목록에 st-done 이 남아 있다(전체 파란불을 덮는다)');
-  assert.ok(!/\.st-work/.test(list), '투명 목록에 st-work 가 남아 있다(전체 녹색불을 덮는다)');
+
+  /* 2차 지시: 작업중(st-work)·환경 작업중(env-run)의 '버튼 전체 녹색불' 규칙은 없어야 한다 */
+  assert.ok(!html.includes('body:not(#zz) #mapStage button.hotspot-pill[data-toggle-zone].st-work{'),
+    '작업중 버튼 전체 녹색불 규칙이 남아 있다');
+  assert.ok(!html.includes('button.hotspot-pill[data-toggle-zone="environment"].env-run{'),
+    '환경 작업중(env-run) 버튼 전체 녹색불 규칙이 남아 있다');
+  assert.ok(!/@keyframes nvWorkGlow/.test(html), '작업중 녹색 글로우 keyframes(nvWorkGlow)가 남아 있다');
 
   const bgs = [
-    ['작업중 전체 녹색불', 'button.hotspot-pill[data-toggle-zone].st-work', 'rgba(34,197,94,.62)'],
     ['전체 완료 파란불', 'button.hotspot-pill[data-toggle-zone].st-done', 'rgba(59,130,246,.62)'],
     ['긴급 전체 빨간불', 'button.hotspot-pill[data-toggle-zone].st-urgent', 'rgba(220,38,38,.72)'],
-    ['환경 작업중 녹색불', '.env-run', 'rgba(34,197,94,.62)'],
     ['환경 완료 파란불', '.env-all:not(.env-run)', 'rgba(59,130,246,.62)']
   ];
   bgs.forEach(([name, sel, color]) => {
@@ -214,10 +221,13 @@ test('CSS — 투명 유리 목록에서 완료·작업중을 빼고 상태별 �
   assert.ok(/\[data-zone-btn\]\.st-part > span\.rounded-full\{[^}]*#3b82f6/.test(html), '사이드바 일부 완료 점 규칙이 없다');
   assert.ok(/\[data-zone-btn\]\.st-urgent > span\.rounded-full\{[^}]*#dc2626/.test(html), '사이드바 긴급 점 규칙이 없다');
 
-  /* 새 내용 등록 = 버튼 전체가 10초(1초×10회) 깜빡 */
+  /* 특이사항·사진 등록 = 버튼 전체가 10초(1초×10회) 깜빡 */
   assert.ok(/@keyframes nvBtnFlashGreen/.test(html), '버튼 전체 깜빡임 keyframes 가 없다');
-  const fl = html.indexOf('button.hotspot-pill[data-toggle-zone].st-flash-green,');
+  const fl = html.indexOf('.st-flash-green.st-flash-green');
   assert.ok(fl > 0, 'st-flash-green 버튼 규칙이 없다');
+  /* 카드를 열어 둔 채(사진 업로드)여도 흰색 호버·열림 색에 덮이지 않아야 한다 */
+  assert.ok(/button\.hotspot-pill\[data-toggle-zone\]:hover:not\(\.st-flash-green\)/.test(html),
+    '호버 규칙이 깜빡임(.st-flash-green)을 덮는다');
   const flBlock = html.slice(fl, html.indexOf('}', html.indexOf('animation:nvBtnFlashGreen', fl)));
   assert.ok(/animation:nvBtnFlashGreen 1s ease-in-out 10 !important/.test(flBlock), '10초(1초×10회) 애니메이션이 아니다: ' + flBlock.slice(0, 200));
   assert.ok(/background:rgba\(34,197,94,/.test(flBlock), '깜빡임 배경색 규칙이 없다');
