@@ -142,6 +142,27 @@ class T(unittest.TestCase):
         self.assertEqual([c["text"] for c in got], ["오전 12 EA", "오후 24 EA"])
         self.assertTrue(got[0].get("urgent"))
 
+    # ── 3-1) 공백 없는 오전/오후 — "오전 HH 54 TON, 오후HH 36 TON" 도 두 카드 (2026-11-27) ──
+    def test_third_day_ampm_no_space(self):
+        now = sched.kst_now()
+        sch, _d1, _d2, d3 = batch_schedule()
+        for s in sch[:5]:
+            s["applied"] = True
+        sch[5] = {"id": "b6", "date": d3, "target": "inbound", "kind": "instruction",
+                  "text": "오전 HH 54 TON, 오후HH 36 TON"}
+        sch = sch[:6]
+        db = self.db_with(sch)
+        orig_now = sched.kst_now
+        sched.kst_now = lambda: now + timedelta(days=3)
+        try:
+            self.run_with(db)
+        finally:
+            sched.kst_now = orig_now
+        cmds = json.loads(db.tree["jisu"]["state"]["jisu-commands-v1"]["v"])
+        got = [c for c in cmds if str(c.get("id", "")).startswith("sb6")]
+        self.assertEqual([c["id"] for c in got], ["sb6", "sb6-1"], "한 카드로 남으면 안 된다")
+        self.assertEqual([c["text"] for c in got], ["오전 HH 54 TON", "오후 HH 36 TON"])
+
     # ── 4) 파렛트 환산·오전/오후 나누기가 이미 된 글자를 또 바꾸지 않는다 ────
     def test_pallet_and_ampm_idempotent(self):
         sch = [{"id": "p1", "date": day(0)[0], "target": "inbound", "kind": "instruction", "text": "16 KG 파렛트 576 EA"}]

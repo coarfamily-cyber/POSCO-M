@@ -256,6 +256,20 @@ class T(unittest.TestCase):
         self.assertEqual(sched.split_am_pm("오전 10시~ 오후 2시~"), ["오전 10시~ 오후 2시~"])
         self.assertEqual(sched.split_am_pm("오전 공지 오후 공지", "notice"), ["오전 공지 오후 공지"])
         self.assertEqual(sched.split_am_pm("출고 오전에 하지마"), ["출고 오전에 하지마"])
+        # 2026-11-27: 한글 조사·어미가 바로 붙으면 라벨이 아니다
+        for t in ("오전에 피치 오후에 출고", "오전까지 대기, 오후부터 작업", "오전중 점검, 오후반 근무",
+                  "오전10시~ 오후2시~", "출고 20 TON 오전, 30 TON 오후"):
+            self.assertEqual(sched.split_am_pm(t), [t], t)
+
+    def test_am_pm_split_no_space_label(self):
+        """2026-11-27 수뽕 님: '오후HH 36 TON' 처럼 라벨 뒤 공백 없이 영문·숫자가 붙어도 두 작업으로 나눈다."""
+        self.assertEqual(sched.split_am_pm("오전 HH 54 TON, 오후HH 36 TON"), ["오전 HH 54 TON", "오후 HH 36 TON"])
+        self.assertEqual(sched.split_am_pm("오전HH 54 TON, 오후HH 36 TON"), ["오전 HH 54 TON", "오후 HH 36 TON"])
+        self.assertEqual(sched.split_am_pm("오전 JH 18 TON, 오후JH 18 TON"), ["오전 JH 18 TON", "오후 JH 18 TON"])
+        self.assertEqual(sched.split_am_pm("오전L1 4 TON, 오후L1 2 TON"), ["오전 L1 4 TON", "오후 L1 2 TON"])
+        self.assertEqual(sched.split_am_pm("오전 RAS-2 8 TON, 오후RAS-2 6 TON"),
+                         ["오전 RAS-2 8 TON", "오후 RAS-2 6 TON"])
+        self.assertEqual(sched.split_am_pm("오전 4PLT, 오후2PLT"), ["오전 4PLT", "오후 2PLT"])
 
     # ---------------- A-3: 특이사항(memo) 예약은 작업 카드가 아니라 jisu-memos-v1 로 ----------------
     def test_memo_schedule_goes_to_memos_not_cmds(self):
@@ -345,7 +359,16 @@ class T(unittest.TestCase):
                    ["오전 공지 오후 공지", "notice"],
                    ["출고 오전에 하지마", None],
                    ["오전 10시~ 오후 2시~", None],
-                   ["오전에 피치 오후에 출고", None]]
+                   ["오전에 피치 오후에 출고", None],
+                   ["오전 HH 54 TON, 오후HH 36 TON", None],
+                   ["오전HH 54 TON, 오후HH 36 TON", None],
+                   ["오전 JH 18 TON, 오후JH 18 TON", None],
+                   ["오전L1 4 TON, 오후L1 2 TON", None],
+                   ["오전 RAS-2 8 TON, 오후RAS-2 6 TON", None],
+                   ["오전 4PLT, 오후2PLT", None],
+                   ["오전중 점검, 오후반 근무", None],
+                   ["오전까지 대기, 오후부터 작업", None],
+                   ["출고 20 TON 오전, 30 TON 오후", None]]
         js_code = r"""
 const fs=require('fs'); const html=fs.readFileSync(process.argv[1],'utf8');
 const b=html.indexOf('window.jisuAmPmSplitText');

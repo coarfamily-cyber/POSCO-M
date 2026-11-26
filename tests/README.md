@@ -10,6 +10,7 @@
 | 화면 통합(v2 여러 기기) | `node tests/integration/v2.js JISU/index.html` |
 | 18시 마감 rollover 회귀(#28279 — 부족 완료·판단 대기 유지) | `node tests/integration/rollover-pending-short.js JISU/index.html` |
 | 2026-11-23 코드감사 수정 회귀(A-1~A-17·#28145) | `node tests/bugfix-20261123.test.js JISU/index.html` |
+| 오전·오후 공백 없는 표기("오전 HH 54 TON, 오후HH 36 TON") 분리 — 화면·예약·08시 스크립트 공통, 이미 저장된 카드·Firebase 사본까지 두 건 (2026-11-27) | `node --test tests/ampm-nospace-20261127.test.js` |
 | 특이사항·새 사진 등록 → 그 구역 버튼 전체 10초 녹색 깜빡임 · 작업중은 투명 유리+회색 점 · 작업지시 저장에는 안 울림 · 범례 회귀 (2026-11-26 2차) | `node tests/flash-dot.test.js JISU/index.html` |
 | 일일보고서 엑셀(구역 버튼별 16시트: 작업 내역·구역 특이사항·현장 사진, 입고 중량일지·피치 현황·환경 호기 표) + 일간·주간·월간 다운로드 전 확인 요청(자동 저장 금지) (2026-11-26) | `node tests/daily-report-20261126.test.js JISU/index.html` |
 | 주간·월간 실적 보고서 페이퍼 덱 11시트(표지·하이라이트·물량 추이 점선·구역 달성률·100% 비중·주차 누적 스택·출고/이월 비교·이월 추이·4조 2교대·완료율 균형·생산 A~H·구역 표) + PPT 11장 (2026-11-26) | `node tests/perf-report-full-20261126.test.js JISU/index.html` |

@@ -220,7 +220,7 @@ def _split_once(s: str):
         after = s[i + 2:]
         if before and not _BOUNDARY_RE.match(before):
             continue
-        if not (after[:1].isspace() or after[:1] in ",·;:/|、()~-"):   # '오전에' 처럼 붙은 말은 라벨이 아니다 (쉼표·괄호는 허용 — index.html 과 같은 규칙)
+        if not re.match(r"[\s,·;:/|、()~\-A-Za-z0-9]", after):   # '오전에' 처럼 한글이 붙은 말은 라벨이 아니다. 공백·구두점·영문·숫자는 허용("오후HH 36 TON" — index.html 과 같은 규칙)
             continue
         marks.append((i, m.group(1)))
     if not marks:
@@ -247,7 +247,8 @@ def _split_once(s: str):
         return None
     if _time_only(head_body) or _time_only(tail_body):
         return None
-    return [head, tail]
+    tidy = lambda t: re.sub(r"(오전|오후)(?=[A-Za-z0-9])", r"\1 ", t)   # "오후HH" → "오후 HH"
+    return [tidy(head), tidy(tail)]
 
 
 def split_am_pm(text, kind=None):
