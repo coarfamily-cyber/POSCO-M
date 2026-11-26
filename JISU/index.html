@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611262145">
+  <meta name="jisu-build" content="202611262152">
   <script>/* ==========================================================================
      저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
      "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
@@ -15228,9 +15228,11 @@ paint()})();</script>
     return out;
   }
   function extendValidation(xml, col, from, to) {
-    if (to <= from) return xml;
-    var re = new RegExp('sqref="' + col + from + ':' + col + from + '"');
-    return xml.replace(re, 'sqref="' + col + from + ':' + col + to + '"');
+    var re = new RegExp('sqref="' + col + from + ':' + col + '(\\d+)"');
+    return xml.replace(re, function (m, cur) {
+      var end = Math.max(Number(cur) || 0, to);
+      return 'sqref="' + col + from + ':' + col + end + '"';
+    });
   }
   function mergeRange(xml, oldRef, newRef) {
     if (!oldRef || oldRef === newRef) return xml;
