@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611271815">
+  <meta name="jisu-build" content="202611271911">
   <script>/* ==========================================================================
      저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
      "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
@@ -5283,8 +5283,8 @@ html:not(.kiosk) body:not(.worker-zone-only) > header #loginBtn.login-btn.is-in{
   html:not(.kiosk) body:not(.worker-zone-only) aside#cmdSide.cmd-side{
     position:fixed !important;
     left:16px !important; top:86px !important;
-    /* 폭: 1920 화면부터 320px(조금 더 넓게), 1366~1700 처럼 지도가 사이드바 가까이 오는 화면은 288px 그대로(11-22) */
-    width:clamp(288px, 16.7vw, 320px) !important; flex:0 0 auto !important;
+    /* 폭: 1920 화면에서 396px(넓게), 1440에서 295px, 1366~ 처럼 지도가 사이드바 가까이 오는 화면은 288px 유지(11-27) */
+    width:clamp(288px, 20.5vw, 396px) !important; flex:0 0 auto !important;
     /* 큰 모니터는 사이드바가 화면 배율(--ui-z, 최대 1.6배)로 커지므로 높이를 그 배율로 나눠야
        화면 안에 딱 맞고(아래 키오스크 버튼까지 보임) 내용이 넘치면 사이드바 안에서 스크롤된다(11-22) */
     height:calc(100vh / var(--ui-z, 1) - 102px) !important;
@@ -5359,14 +5359,33 @@ html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .cmd-sum-chip{
 html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .side-title-row h2{text-shadow:0 1px 6px rgba(0,0,0,.45);}
 html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .jisu-ver{color:rgba(203,213,225,.55) !important;}
 
+/* ── ④-2 사이드바 내부 버튼: 넓어진 폭(288~396px)에 맞춰 가로를 꽉 채운다 (2026-11-27
+   수뽕 님 지시 "사이드 넓어진만큼 버튼 사이즈도 알아서 맞춰줘야지") — 글래스 질감·버튼 색은
+   건드리지 않고 폭·여백만 폭에 비례해 늘린다. 모바일(≤900px)·키오스크·작업자 화면은 제외. */
+@media (min-width:901px){
+  html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .cmd-attach-row{gap:8px !important;flex-wrap:nowrap !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .cmd-attach-row .cmd-attach-btn{flex:1 0 auto !important;padding:5px 12px !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .cmd-attach-row .cmd-attach-hint{margin-left:auto !important;}
+  /* 출고·입고 품목/이송 칩: 줄마다 남는 폭을 칩들이 나눠 가져 오른쪽 빈 자리가 생기지 않게
+     (혼자 남은 줄의 칩이 통짜 막대가 되지 않도록 한 칩 최대 폭은 절반) */
+  html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .ob-sub-chips .ob-chip,
+  html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .ob-sub-trans .ob-chip{flex:1 1 auto !important;max-width:calc(50% - 3px) !important;padding:0 8px !important;}
+  /* 등록 내역 요약 칩: 한 줄을 나눠 채우되 칩 사이는 넓은 폭에 맞게 띄운다 */
+  html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .cmd-summary{gap:9px !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .cmd-summary .cmd-sum-chip{flex:1 0 auto !important;text-align:center !important;padding:4px 10px !important;}
+  /* 구분·등록 버튼: 넓어진 폭에 맞춰 위아래·좌우 여백만 늘림 */
+  html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .cmd-kind button{padding:8px 10px !important;}
+  html:not(.kiosk) body:not(.worker-zone-only) #cmdSide .cmd-submit{padding:10px 12px !important;}
+}
+
 /* ── ⑤ 상태 범례 ──────────────────────────────────────────────────────────── */
 
 /* 데스크탑: 지도 안(1동 아래)에서 화면 맨 아래 숲 영역으로 — 공장 도로·건물을 가리지 않게 */
 @media (min-width:901px){
   html:not(.kiosk) body:not(.worker-zone-only) #mapStage .state-legend{
     position:fixed !important;
-    /* 사이드바(왼쪽 16px + 폭) 오른쪽에서 늘 30px 떨어지게 — 사이드바 폭이 화면 따라 바뀌어도 붙지 않음(11-22) */
-    left:calc(16px + clamp(288px, 16.7vw, 320px) + 30px) !important;
+    /* 사이드바(왼쪽 16px + 폭) 오른쪽에서 늘 30px 떨어지게 — 사이드바 폭이 화면 따라 바뀌어도 붙지 않음(11-22, 폭 규칙과 함께 11-27 갱신) */
+    left:calc(16px + clamp(288px, 20.5vw, 396px) + 30px) !important;
     bottom:16px !important;
     top:auto !important;
     right:auto !important;
