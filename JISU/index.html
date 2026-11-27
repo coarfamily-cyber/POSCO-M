@@ -17811,6 +17811,16 @@ paint()})();</script>
     try{ [].forEach.call(document.querySelectorAll('#cmdTarget option'), function(o){ if(o.value === t) ok = true; }); }catch(_){}
     return ok;
   }
+  /* 품목까지 적힌 대상(입고:HH 등)은 화면 등록 폼이 아는 구역(입고)으로 내려 등록한다 — 내용에 품목이 남는다 */
+  function baseTarget(t){
+    if(!t) return '';
+    if(validTarget(t)) return t;
+    if(t.indexOf(':') > 0){
+      var base = t.split(':')[0];
+      if(validTarget(base)) return base;
+    }
+    return '';
+  }
   function normalizeActions(list, snap){
     var out = [], seen = {};
     var byId = {};
@@ -17828,8 +17838,8 @@ paint()})();</script>
       if(type === 'add_work' || type === 'add_notice' || type === 'add_memo'){
         var text = String(a.text == null ? '' : a.text).trim().slice(0, 300);
         if(!text) return;
-        var target = String(a.target == null ? '' : a.target).trim();
-        if(!validTarget(target)) target = (type === 'add_notice' || type === 'add_memo') ? '*' : '';
+        var target = baseTarget(String(a.target == null ? '' : a.target).trim());
+        if(!target) target = (type === 'add_notice' || type === 'add_memo') ? '*' : '';
         if(!target) return;
         var sig = type + '|' + target + '|' + text;
         if(seen[sig]) return; seen[sig] = 1;
@@ -18216,7 +18226,7 @@ paint()})();</script>
     hasKey:function(){ return !!getKey(); }
   };
   window.jisuChiefTest = {
-    geometry:geometry, normalizeActions:normalizeActions, describeAction:describeAction,
+    geometry:geometry, normalizeActions:normalizeActions, baseTarget:baseTarget, describeAction:describeAction,
     localAnswer:localAnswer, kstDay:kstDay, isWorkItem:isWorkItem, isCarry:isCarry, zoneOf:zoneOf
   };
   })();

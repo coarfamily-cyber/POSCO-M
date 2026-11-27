@@ -338,6 +338,10 @@ test('없는 id·없는 구역·빈 내용은 실행 계획에서 걸러진다',
     assert.equal(acts.length, 2, '유효한 두 건만 남아야 한다: ' + JSON.stringify(acts));
     assert.deepEqual([acts[0].type, acts[0].id], ['complete', 'x1']);
     assert.deepEqual([acts[1].type, acts[1].target], ['add_notice', '*']);
+    /* 품목까지 적힌 대상(하위 칩)은 화면이 아는 구역으로 내려 등록한다 */
+    const sub = plain(p.w.eval(`window.jisuChiefTest.baseTarget('inbound:HH')`));
+    assert.equal(sub, 'inbound');
+    assert.equal(plain(p.w.eval(`window.jisuChiefTest.baseTarget('없는구역')`)), '');
     assert.equal(s.work.total, 1);
   } finally { softClose(p.w); }
 });
