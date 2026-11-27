@@ -1,0 +1,105 @@
+{
+ "recordedAt": "2026-11-22T08:30+09:00",
+ "source": "backup/jisu-db-20261122-083016/jisu-full.json → state/* (실제 현장 입력 녹화본)",
+ "note": "11-19~11-22 실제 기록. 대시보드가 이 값을 그대로 쓴다. 기대값은 별도 구현으로 계산해 적어 둔다(수정 전후 섀도잉 비교).",
+ "localStorage": {
+  "jisu-commands-v1": "[{\"id\":\"c1\",\"target\":\"outbound\",\"kind\":\"instruction\",\"text\":\"RAS-2 33 TON\",\"at\":\"11. 19. 08:10\",\"day\":\"2026-11-19\",\"completed\":true,\"done\":33,\"completedAt\":\"11. 19. 15:00\",\"closed\":true},{\"id\":\"c2\",\"target\":\"inbound:SH\",\"kind\":\"instruction\",\"text\":\"SH 36 TON\",\"at\":\"11. 19. 08:20\",\"day\":\"2026-11-19\",\"working\":false,\"completed\":true,\"completedAt\":\"11. 19. 14:51\",\"doneBefore\":null,\"closed\":true},{\"id\":\"c3\",\"target\":\"inbound:16kg 파렛트\",\"kind\":\"instruction\",\"text\":\"16 KG 파렛트 2대\",\"at\":\"11. 19. 08:30\",\"day\":\"2026-11-19\",\"completed\":true,\"done\":2,\"closed\":true},{\"id\":\"c4\",\"target\":\"production-a\",\"kind\":\"instruction\",\"text\":\"생산A 12 TON\",\"at\":\"11. 19. 09:00\",\"day\":\"2026-11-19\",\"completed\":true,\"done\":10,\"short\":true,\"closed\":true},{\"id\":\"c5\",\"target\":\"*\",\"kind\":\"notice\",\"text\":\"바닥 공사 안내\",\"at\":\"11. 19. 09:10\",\"day\":\"2026-11-19\",\"closed\":true},{\"id\":\"mwmq144u\",\"target\":\"outbound:2공장→1공장\",\"kind\":\"instruction\",\"text\":\"[공장간 이송 (2공장→1공장)] 2대\",\"at\":\"11. 19. 07:57\",\"day\":\"2026-11-19\",\"closed\":true,\"carried\":true,\"carriedTo\":\"c_mwmq144u_2026-11-20\",\"carriedQty\":2,\"carriedDay\":\"2026-11-20\",\"working\":false},{\"id\":\"c_mwmq144u_2026-11-20\",\"target\":\"outbound:2공장→1공장\",\"kind\":\"instruction\",\"text\":\"[공장간 이송 (2공장→1공장)] 2대\",\"at\":\"11. 20. 00:00\",\"day\":\"2026-11-20\",\"carryFrom\":\"mwmq144u\",\"carryCount\":1,\"origGoal\":2,\"origDay\":\"2026-11-19\",\"prevDone\":0,\"prevGoal\":2,\"review\":\"moved\",\"closed\":true,\"movedTo\":\"2026-11-21\",\"working\":false,\"reviewBy\":\"\",\"reviewAt\":\"11. 20. 09:50\",\"reviewNote\":\"11/21로 변경\"},{\"id\":\"mwo6dwpj\",\"target\":\"*\",\"kind\":\"notice\",\"text\":\"오늘 눈이 오는관계로 지게차 포크 미끄러움 조심 \\n보행중 미끄러움 주의!!\",\"at\":\"11. 20. 08:22\",\"day\":\"2026-11-20\",\"closed\":true},{\"id\":\"smwo9nhqu0\",\"target\":\"packaging\",\"kind\":\"instruction\",\"text\":\"11월 23일 출하준비(52.5 TON)\",\"at\":\"11. 20. 09:54\",\"day\":\"2026-11-20\",\"sched\":\"2026-11-20\",\"origDay\":\"2026-11-20\",\"closed\":true,\"carried\":true,\"carriedTo\":\"c_smwo9nhqu0_2026-11-21\",\"carriedQty\":11,\"carriedDay\":\"2026-11-21\",\"working\":false},{\"id\":\"smwo9o35i0\",\"target\":\"packaging\",\"kind\":\"instruction\",\"text\":\"구형화 반제품 10백 포장\",\"at\":\"11. 20. 09:54\",\"day\":\"2026-11-20\",\"sched\":\"2026-11-20\",\"origDay\":\"2026-11-20\",\"closed\":true,\"carried\":true,\"carriedTo\":\"c_smwo9o35i0_2026-11-21\",\"carriedQty\":10,\"carriedDay\":\"2026-11-21\",\"working\":false},{\"id\":\"smwo9oxqu3b0g0\",\"target\":\"inbound\",\"kind\":\"instruction\",\"text\":\"오전 HH 54 TON\",\"at\":\"11. 20. 09:55\",\"day\":\"2026-11-20\",\"sched\":\"2026-11-20\",\"origDay\":\"2026-11-20\",\"tonText\":\"1대 · 54 TON\",\"completed\":true,\"working\":false,\"completedAt\":\"11. 20. 12:23\",\"doneBefore\":null,\"closed\":true},{\"id\":\"mwo9q5ad\",\"target\":\"*\",\"kind\":\"notice\",\"text\":\"금일 8시 50분 포장장 밴딩기 롤러부분 발 빠짐구간 사이즈 측정\",\"at\":\"11. 20. 09:56\",\"day\":\"2026-11-20\",\"closed\":true},{\"id\":\"smwp27wtsmo1m0\",\"target\":\"inbound\",\"kind\":\"instruction\",\"text\":\"사각박스 100 SET\",\"at\":\"11. 20. 23:13\",\"day\":\"2026-11-20\",\"sched\":\"2026-11-20\",\"origDay\":\"2026-11-20\",\"closed\":true,\"carried\":true,\"carriedTo\":\"c_smwp27wtsmo1m0_2026-11-21\",\"carriedQty\":100,\"carriedDay\":\"2026-11-21\",\"working\":false},{\"id\":\"smwp27wtsteyq1\",\"target\":\"inbound\",\"kind\":\"instruction\",\"text\":\"알루미늄 파우치백 50 EA\",\"at\":\"11. 20. 23:13\",\"day\":\"2026-11-20\",\"sched\":\"2026-11-20\",\"origDay\":\"2026-11-20\",\"closed\":true,\"carried\":true,\"carriedTo\":\"c_smwp27wtsteyq1_2026-11-21\",\"carriedQty\":50,\"carriedDay\":\"2026-11-21\",\"working\":false},{\"id\":\"c_smwo9nhqu0_2026-11-21\",\"target\":\"packaging\",\"kind\":\"instruction\",\"text\":\"11월 23일 출하준비(52.5 TON)\",\"at\":\"11. 21. 00:00\",\"day\":\"2026-11-21\",\"carryFrom\":\"smwo9nhqu0\",\"carryCount\":1,\"origGoal\":11,\"origDay\":\"2026-11-20\",\"prevDone\":0,\"prevGoal\":11,\"review\":\"ok\",\"closed\":true,\"carried\":true,\"carriedTo\":\"c_c_smwo9nhqu0_2026-11-21_2026-11-22\",\"carriedQty\":11,\"carriedDay\":\"2026-11-22\",\"working\":false},{\"id\":\"c_smwo9o35i0_2026-11-21\",\"target\":\"packaging\",\"kind\":\"instruction\",\"text\":\"구형화 반제품 10백 포장\",\"at\":\"11. 21. 00:00\",\"day\":\"2026-11-21\",\"carryFrom\":\"smwo9o35i0\",\"carryCount\":1,\"origGoal\":10,\"origDay\":\"2026-11-20\",\"prevDone\":0,\"prevGoal\":10,\"review\":\"ok\",\"closed\":true,\"carried\":true,\"carriedTo\":\"c_c_smwo9o35i0_2026-11-21_2026-11-22\",\"carriedQty\":10,\"carriedDay\":\"2026-11-22\",\"working\":false},{\"id\":\"c_smwp27wtsmo1m0_2026-11-21\",\"target\":\"inbound\",\"kind\":\"instruction\",\"text\":\"사각박스 100 SET\",\"at\":\"11. 21. 00:00\",\"day\":\"2026-11-21\",\"carryFrom\":\"smwp27wtsmo1m0\",\"carryCount\":1,\"origGoal\":100,\"origDay\":\"2026-11-20\",\"prevDone\":0,\"prevGoal\":100,\"review\":\"ok\",\"closed\":true,\"carried\":true,\"carriedTo\":\"c_c_smwp27wtsmo1m0_2026-11-21_2026-11-22\",\"carriedQty\":100,\"carriedDay\":\"2026-11-22\",\"working\":false},{\"id\":\"c_smwp27wtsteyq1_2026-11-21\",\"target\":\"inbound\",\"kind\":\"instruction\",\"text\":\"알루미늄 파우치백 50 EA\",\"at\":\"11. 21. 00:00\",\"day\":\"2026-11-21\",\"carryFrom\":\"smwp27wtsteyq1\",\"carryCount\":1,\"origGoal\":50,\"origDay\":\"2026-11-20\",\"prevDone\":0,\"prevGoal\":50,\"review\":\"ok\",\"closed\":true,\"carried\":true,\"carriedTo\":\"c_c_smwp27wtsteyq1_2026-11-21_2026-11-22\",\"carriedQty\":50,\"carriedDay\":\"2026-11-22\",\"working\":false},{\"id\":\"smwo9j4tkm\",\"target\":\"outbound:2공장→1공장\",\"kind\":\"instruction\",\"text\":\"[공장간 이송 (2공장→1공장)] 2대\",\"at\":\"11. 21. 08:00\",\"day\":\"2026-11-21\",\"sched\":\"2026-11-21\",\"origDay\":\"2026-11-21\",\"closed\":true,\"carried\":true,\"carriedTo\":\"c_smwo9j4tkm_2026-11-22\",\"carriedQty\":2,\"carriedDay\":\"2026-11-22\",\"working\":false},{\"id\":\"c_c_smwo9nhqu0_2026-11-21_2026-11-22\",\"target\":\"packaging\",\"kind\":\"instruction\",\"text\":\"11월 23일 출하준비(52.5 TON)\",\"at\":\"11. 22. 00:00\",\"day\":\"2026-11-22\",\"carryFrom\":\"c_smwo9nhqu0_2026-11-21\",\"carryCount\":2,\"origGoal\":11,\"origDay\":\"2026-11-20\",\"prevDone\":0,\"prevGoal\":11,\"review\":\"ok\"},{\"id\":\"c_c_smwo9o35i0_2026-11-21_2026-11-22\",\"target\":\"packaging\",\"kind\":\"instruction\",\"text\":\"구형화 반제품 10백 포장\",\"at\":\"11. 22. 00:00\",\"day\":\"2026-11-22\",\"carryFrom\":\"c_smwo9o35i0_2026-11-21\",\"carryCount\":2,\"origGoal\":10,\"origDay\":\"2026-11-20\",\"prevDone\":0,\"prevGoal\":10,\"review\":\"ok\"},{\"id\":\"c_c_smwp27wtsmo1m0_2026-11-21_2026-11-22\",\"target\":\"inbound\",\"kind\":\"instruction\",\"text\":\"사각박스 100 SET\",\"at\":\"11. 22. 00:00\",\"day\":\"2026-11-22\",\"carryFrom\":\"c_smwp27wtsmo1m0_2026-11-21\",\"carryCount\":2,\"origGoal\":100,\"origDay\":\"2026-11-20\",\"prevDone\":0,\"prevGoal\":100,\"review\":\"ok\"},{\"id\":\"c_c_smwp27wtsteyq1_2026-11-21_2026-11-22\",\"target\":\"inbound\",\"kind\":\"instruction\",\"text\":\"알루미늄 파우치백 50 EA\",\"at\":\"11. 22. 00:00\",\"day\":\"2026-11-22\",\"carryFrom\":\"c_smwp27wtsteyq1_2026-11-21\",\"carryCount\":2,\"origGoal\":50,\"origDay\":\"2026-11-20\",\"prevDone\":0,\"prevGoal\":50,\"review\":\"ok\"},{\"id\":\"c_smwo9j4tkm_2026-11-22\",\"target\":\"outbound:2공장→1공장\",\"kind\":\"instruction\",\"text\":\"[공장간 이송 (2공장→1공장)] 2대\",\"at\":\"11. 22. 00:00\",\"day\":\"2026-11-22\",\"carryFrom\":\"smwo9j4tkm\",\"carryCount\":1,\"origGoal\":2,\"origDay\":\"2026-11-21\",\"prevDone\":0,\"prevGoal\":2,\"review\":\"ok\"}]",
+  "jisu-memos-v1": "[{\"id\":\"m1\",\"target\":\"outbound\",\"tag\":\"issue\",\"text\":\"파렛트 파손 2건\",\"at\":\"11. 19. 10:00\",\"by\":\"김지수\"}]",
+  "jisu-inbound-records-v1": "{\"2026-11-19\":{\"rows\":[],\"archivedRows\":[{\"lot\":\"L0\",\"bag\":\"A\",\"kg\":\"500\",\"worker\":\"김지수\",\"rid\":\"g8opaz8\"},{\"lot\":\"L1\",\"bag\":\"001\",\"kg\":\"1000\",\"worker\":\"김지수\",\"loc\":\"서울12가3456\",\"rid\":\"gfi0ddh\"},{\"lot\":\"L1\",\"bag\":\"002\",\"kg\":\"1000.5\",\"worker\":\"김지수\",\"rid\":\"gerkkjc\"}],\"workState\":\"idle\",\"gone\":{},\"shiftKey\":\"2026-11-19-pm\"},\"2026-11-20\":{\"day\":\"2026-11-20\",\"shiftKey\":\"2026-11-21-am\",\"workState\":\"idle\",\"rows\":[],\"completedAt\":\"15:30\",\"archivedRows\":[{\"lot\":\"HH2610146\",\"bag\":\"7\",\"kg\":\"924.8\",\"loc\":\"\",\"worker\":\"박은준\",\"rid\":\"rmwof293vop9y\"},{\"lot\":\"HH2610145\",\"bag\":\"3\",\"kg\":\"923.9\",\"loc\":\"\",\"worker\":\"박은준\",\"rid\":\"rmwof1qlaefmu\"},{\"lot\":\"HH2610139\",\"bag\":\"9\",\"kg\":\"923.1\",\"loc\":\"\",\"worker\":\"박은준\",\"rid\":\"rmwof18m3atub\"},{\"lot\":\"HH2610113\",\"bag\":\"10\",\"kg\":\"923\",\"loc\":\"\",\"worker\":\"박은준\",\"rid\":\"rmwof0tfey0nd\"},{\"lot\":\"HH2610141\",\"bag\":\"10\",\"kg\":\"923.2\",\"loc\":\"\",\"worker\":\"박은준\",\"rid\":\"rmwof0dxdf5ly\"},{\"lot\":\"HH2610140\",\"bag\":\"5\",\"kg\":\"922.6\",\"loc\":\"\",\"worker\":\"박은준\",\"rid\":\"rmwoezu8i3nr2\"}]},\"2026-11-21\":{\"day\":\"2026-11-21\",\"shiftKey\":\"2026-11-21-pm\",\"workState\":\"idle\",\"rows\":[]},\"2026-11-22\":{\"day\":\"2026-11-22\",\"shiftKey\":\"2026-11-22-am\",\"workState\":\"idle\",\"rows\":[]}}",
+  "jisu-env-v1": "{\"round\":4,\"u\":{\"3,4\":{\"subs\":{\"분체\":{\"s\":\"\"},\"충진기\":{\"s\":\"\"},\"포장기\":{\"s\":\"\"},\"소성로\":{\"s\":\"done\",\"ts\":\"14:52\",\"td\":\"14:52\",\"day\":\"2026-11-20\"}},\"doneCnt\":1,\"workCnt\":0,\"s\":\"done\",\"ts\":\"14:52\",\"td\":\"14:52\"},\"1,2\":{\"subs\":{\"분체\":{\"s\":\"\"},\"충진기\":{\"s\":\"\"},\"포장기\":{\"s\":\"\"},\"소성로\":{\"s\":\"done\",\"ts\":\"14:52\",\"td\":\"14:52\",\"day\":\"2026-11-20\"}},\"doneCnt\":1,\"workCnt\":0,\"s\":\"done\",\"ts\":\"14:52\",\"td\":\"14:52\"}},\"a\":{\"s\":\"\",\"ts\":\"\",\"td\":\"\",\"day\":\"\",\"doneAt\":0,\"subs\":{\"2호기\":{\"s\":\"\"},\"3호기\":{\"s\":\"\"}},\"doneCnt\":0,\"workCnt\":0}}",
+  "jisu-schedule-v1": "[{\"id\":\"mwo6hd9l4ip30\",\"date\":\"2026-11-20\",\"target\":\"outbound\",\"kind\":\"instruction\",\"text\":\"지게차 주의\",\"created\":\"11. 20. 08:25\",\"applied\":true,\"appliedAt\":\"11. 20. 08:25\"},{\"id\":\"mwo9j4tkm\",\"date\":\"2026-11-21\",\"target\":\"outbound:2공장→1공장\",\"kind\":\"instruction\",\"text\":\"[공장간 이송 (2공장→1공장)] 2대\",\"created\":\"11. 20. 09:50\",\"carryFrom\":\"c_mwmq144u_2026-11-20\",\"carryCount\":1,\"origGoal\":2,\"origDay\":\"2026-11-19\",\"applied\":true,\"appliedAt\":\"11. 21. 08:00\"},{\"id\":\"mwo9nhqu0\",\"date\":\"2026-11-20\",\"target\":\"packaging\",\"kind\":\"instruction\",\"text\":\"11월 23일 출하준비(52.5 TON)\",\"created\":\"11. 20. 09:54\",\"applied\":true,\"appliedAt\":\"11. 20. 09:54\"},{\"id\":\"mwo9o35i0\",\"date\":\"2026-11-20\",\"target\":\"packaging\",\"kind\":\"instruction\",\"text\":\"구형화 반제품 10백 포장\",\"created\":\"11. 20. 09:54\",\"applied\":true,\"appliedAt\":\"11. 20. 09:54\"},{\"id\":\"mwo9oxqu3b0g0\",\"date\":\"2026-11-20\",\"target\":\"inbound\",\"kind\":\"instruction\",\"text\":\"오전 HH 54 TON\",\"created\":\"11. 20. 09:55\",\"tonText\":\"1대 · 54 TON\",\"applied\":true,\"appliedAt\":\"11. 20. 09:55\"},{\"id\":\"mwp27wtsmo1m0\",\"date\":\"2026-11-20\",\"target\":\"inbound\",\"kind\":\"instruction\",\"text\":\"사각박스 100 SET\",\"created\":\"11. 20. 23:13\",\"applied\":true,\"appliedAt\":\"11. 20. 23:13\"},{\"id\":\"mwp27wtsteyq1\",\"date\":\"2026-11-20\",\"target\":\"inbound\",\"kind\":\"instruction\",\"text\":\"알루미늄 파우치백 50 EA\",\"created\":\"11. 20. 23:13\",\"applied\":true,\"appliedAt\":\"11. 20. 23:13\"}]"
+ },
+ "expected": {
+  "2026-11-20": {
+   "work": {
+    "total": 5,
+    "done": 1,
+    "working": 0,
+    "carried": 4,
+    "remaining": 4,
+    "pending": 4
+   },
+   "zones": {
+    "packaging": {
+     "total": 2,
+     "done": 0,
+     "carried": 2
+    },
+    "inbound": {
+     "total": 3,
+     "done": 1,
+     "carried": 2
+    }
+   },
+   "inbound": {
+    "tons": 5.54,
+    "rows": 6,
+    "bags": 44.0,
+    "lots": {
+     "HH": {
+      "tons": 5.54,
+      "rows": 6,
+      "bags": 44.0
+     }
+    }
+   },
+   "memos": {
+    "total": 0,
+    "unacked": 0
+   },
+   "notices": 0,
+   "env": {
+    "done": 2,
+    "total": 30
+   },
+   "plans": {
+    "today": 0
+   }
+  },
+  "2026-11-22": {
+   "work": {
+    "total": 5,
+    "done": 0,
+    "working": 0,
+    "carried": 5,
+    "remaining": 5,
+    "pending": 5
+   },
+   "zones": {
+    "packaging": {
+     "total": 2,
+     "done": 0,
+     "carried": 2
+    },
+    "inbound": {
+     "total": 2,
+     "done": 0,
+     "carried": 2
+    },
+    "outbound": {
+     "total": 1,
+     "done": 0,
+     "carried": 1
+    }
+   },
+   "inbound": {
+    "tons": 0.0,
+    "rows": 0,
+    "bags": 0,
+    "lots": {}
+   },
+   "memos": {
+    "total": 0,
+    "unacked": 0
+   },
+   "notices": 0,
+   "env": {
+    "done": 2,
+    "total": 30
+   },
+   "plans": {
+    "today": 0
+   }
+  }
+ }
+}
