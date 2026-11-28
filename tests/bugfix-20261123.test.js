@@ -488,7 +488,15 @@ async function okAsync(name, fn) {
   {
     const fake = makeFakeFirebase();
     const kst = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-    const inbound = { [kst]: { day: kst, shiftKey: kst + '-pm', workState: 'idle', rows: [
+    /* 실행 시각 의존 제거: 입고 패널은 지금 교대(08~18 = -am, 18~08 = 전날 -pm)의 기록만 그린다.
+       '-pm' 로 고정하면 오전에 돌릴 때 교대 초기화로 보관되며 합계가 0 이 된다. */
+    const shiftNow = (() => {
+      const h = +Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', hour: '2-digit', hour12: false }).formatToParts(new Date()).map(x => [x.type, x.value])).hour;
+      if (h >= 18) return kst + '-pm';
+      if (h >= 8) return kst + '-am';
+      return new Date(Date.parse(kst + 'T00:00:00Z') - 86400000).toISOString().slice(0, 10) + '-pm';
+    })();
+    const inbound = { [kst]: { day: kst, shiftKey: shiftNow, workState: 'idle', rows: [
       { rid: 'r1', lot: 'LOT-A', bag: '10', kg: '1,200', loc: '12가3456', worker: '지수' },
       { rid: 'r2', lot: 'LOT-B', bag: '8', kg: '480', loc: '34나5678', worker: '지수' },
     ] } };
