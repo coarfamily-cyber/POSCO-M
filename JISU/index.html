@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611282110">
+  <meta name="jisu-build" content="202611282145">
   <script>/* ==========================================================================
      저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
      "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
@@ -978,26 +978,16 @@
     .cmd-move-arrow{color:#fbbf24;font-weight:900;}
     .move-tag{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:800;color:#fde68a;background:rgba(251,191,36,.14);border:1px solid rgba(251,191,36,.45);border-radius:9999px;padding:1px 7px;vertical-align:middle;}
     .move-layer{position:absolute;inset:0;pointer-events:none;z-index:22;overflow:visible;}
-    .move-glow{fill:none;stroke:var(--mv,#ff9900);stroke-width:6;stroke-linecap:round;opacity:.15;filter:drop-shadow(0 0 3px var(--mv,#ff9900));}
-    .move-path-outer{display:none;}
-    .move-path-inner{display:none;}
-    .move-path{fill:none;stroke:var(--mv,#ff9900);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.50;}
-    .move-path.is-working{stroke:var(--mvw,#4ade80);opacity:.70;}
+    /* 이동동선: 3D 입체 쉐브론(>) 화살표 파도 — 점선·펄스 대체 */
+    .mv-chev{fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:.03;animation:mvChevWave 3.8s ease-in-out infinite;}
+    .mv-chev.is-working{animation-duration:2.8s;}
+    .mv-chev-shadow{stroke:rgba(0,0,0,.55);stroke-width:3.6;}
+    .mv-chev-main{stroke:var(--c,#ff9900);stroke-width:2.8;}
+    .mv-chev-gloss{stroke:rgba(255,255,255,.45);stroke-width:1;}
+    @keyframes mvChevWave{0%{opacity:.03;}16%{opacity:1;}38%{opacity:.52;}64%{opacity:.12;}100%{opacity:.03;}}
     .move-labels{position:absolute;inset:0;pointer-events:none;z-index:23;}
     .move-label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:clamp(10px,1.05cqw,13px);font-weight:700;color:#f8fafc;background:rgba(15,23,42,.78);border:1px solid var(--mv,#ff9900);border-radius:9999px;padding:3px 10px;box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 8px rgba(255,153,0,.25);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
     .move-label.is-working{background:rgba(15,23,42,.82) !important;color:#f8fafc !important;border:1px solid var(--mvw,#39ff14) !important;box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 8px rgba(57,255,20,.25) !important;}
-    .move-path{stroke-linejoin:round;}
-    .move-glow{stroke-linejoin:round;}
-    .move-start{fill:var(--mv,#ff9900);stroke:#ffffff;stroke-width:1;opacity:.8;}
-    .move-start.is-working{fill:var(--mvw,#39ff14);}
-    /* 2안: 스마트팩토리 디지털 펄스 러너 */
-    .move-runner.pulse{pointer-events:none;}
-    .pulse-aura{fill:var(--mv,#ff9900);opacity:.35;filter:drop-shadow(0 0 4px var(--mv,#ff9900));}
-    .pulse-core{fill:var(--mv,#ff9900);opacity:.95;filter:drop-shadow(0 0 2px #ffffff);}
-    .pulse-spark{fill:#ffffff;opacity:.95;}
-    .move-runner.pulse.is-working .pulse-aura{fill:var(--mvw,#39ff14);filter:drop-shadow(0 0 5px var(--mvw,#39ff14));}
-    .move-runner.pulse.is-working .pulse-core{fill:var(--mvw,#39ff14);}
-    .move-start.is-working{fill:#4ade80;}
     .cmd-notice-count{display:inline-flex;align-items:center;justify-content:center;min-width:1.35em;height:1.35em;padding:0 .35em;border-radius:9999px;background:#f59e0b;color:#1f2937;font-size:.7em;font-weight:900;margin-left:.3em;line-height:1;box-shadow:0 0 8px rgba(245,158,11,.6);}
     .cmd-notice-count{padding:0 .45em !important;white-space:nowrap;}
     .cmd-summary{display:flex;flex-wrap:wrap;gap:5px;}
@@ -3073,49 +3063,16 @@
     body:not(#zz) .cmd-item .meta > button[data-cmd-del]{margin-left:6px !important;}
   </style>
   <style>
-    /* 이동작업 모션: 점선이 출발→도착 방향으로 흐르고, 빛나는 점이 경로를 따라 이동 */
-    @keyframes moveFlow{to{stroke-dashoffset:-24;}}
-    body:not(#zz) .move-path{stroke-dasharray:8 4;animation:moveFlow 1.1s linear infinite !important;}
-    body:not(#zz) .move-path.is-working{stroke-dasharray:8 4;animation:moveFlow .55s linear infinite !important;}
-    .move-runner{fill:#fff7d6;stroke:#fbbf24;stroke-width:2.5;filter:drop-shadow(0 0 5px rgba(251,191,36,.95)) drop-shadow(0 0 2px rgba(0,0,0,.6));}
-    .move-runner.is-working{fill:#eafff1;stroke:#4ade80;filter:drop-shadow(0 0 6px rgba(74,222,128,.95)) drop-shadow(0 0 2px rgba(0,0,0,.6));}
-    @media (prefers-reduced-motion: reduce){ body:not(#zz) .move-path{animation:none !important;} }
-  </style>
-  <style>
-    /* 이동작업: 경로를 따라 움직이는 지게차 (위에서 본 모습, 진행 방향으로 회전) */
-    .move-runner.fl{fill:none;stroke:none;filter:drop-shadow(0 0 4px rgba(251,191,36,.9)) drop-shadow(0 1px 2px rgba(0,0,0,.7));}
-    .move-runner.fl.is-working{filter:drop-shadow(0 0 5px rgba(74,222,128,.95)) drop-shadow(0 1px 2px rgba(0,0,0,.7));}
-    .move-runner.fl{fill:none;stroke:none;filter:drop-shadow(0 0 4px var(--mv,#ff9900)) drop-shadow(0 1px 3px rgba(0,0,0,.6));opacity:.92;}
-    .move-runner.fl.is-working{filter:drop-shadow(0 0 8px var(--mvw,#39ff14)) drop-shadow(0 2px 4px rgba(0,0,0,.8));}
-    .move-runner.fl .fl-body{fill:#181c24 !important;stroke:var(--mv,#ff9900) !important;stroke-width:1.2;}
-    .move-runner.fl.is-working .fl-body{stroke:var(--mvw,#39ff14) !important;}
-    .move-runner.fl .fl-cab{fill:#111827;stroke:rgba(255,255,255,.75);stroke-width:.8;}
-    .move-runner.fl .fl-weight{fill:#0f172a;}
-    .move-runner.fl .fl-wheel{fill:#0f172a;stroke:var(--mv,#ff9900);stroke-width:1.2;}
-    .move-runner.fl.is-working .fl-wheel{stroke:var(--mvw,#39ff14);}
-    .move-runner.fl .fl-mast{fill:#334155;}
-    .move-runner.fl .fl-fork{fill:#e2e8f0;stroke:var(--mv,#ff9900);stroke-width:.8;}
-    .move-runner.fl .fl-light{fill:#ffffff !important;filter:drop-shadow(0 0 4px #ffffff);}
+    /* 이동작업 모션: 3D 쉐브론 화살표가 출발→도착 방향으로 파도친다 */
+    @media (prefers-reduced-motion: reduce){ .mv-chev{animation:none !important;opacity:.55;} }
   </style>
   <style>
     /* 이동작업 색 구분 (작업중이 아니면 각자 색) */
-    .move-path:not(.is-working){stroke:var(--mv,#fbbf24);}
-    .move-start:not(.is-working){fill:var(--mv,#fbbf24);}
     .move-label:not(.is-working){background:rgba(15,23,42,.78) !important;color:#f8fafc !important;border:1px solid var(--mv,#ff9900) !important;box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 8px rgba(255,153,0,.35) !important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
-    .move-runner.fl:not(.is-working) .fl-body{fill:var(--mv,#fbbf24);}
-    .move-runner.fl:not(.is-working){filter:drop-shadow(0 0 4px var(--mv,#fbbf24)) drop-shadow(0 1px 2px rgba(0,0,0,.7));}
   </style>
   <style>
     /* 작업중 이동작업: 팀마다 다른 녹색 계열 */
-    body:not(#zz) .move-path.is-working{stroke:var(--mvw,#4ade80) !important;}
-    body:not(#zz) .move-start.is-working{fill:var(--mvw,#4ade80) !important;}
     body:not(#zz) .move-label.is-working{background:rgba(15,23,42,.82) !important;color:#f8fafc !important;border:1px solid var(--mvw,#39ff14) !important;box-shadow:0 4px 14px rgba(0,0,0,.45),0 0 8px rgba(57,255,20,.35) !important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
-    body:not(#zz) .move-runner.fl.is-working .fl-body{fill:var(--mvw,#4ade80) !important;}
-    body:not(#zz) .move-runner.fl.is-working{filter:drop-shadow(0 0 5px var(--mvw,#4ade80)) drop-shadow(0 1px 2px rgba(0,0,0,.7)) !important;}
-  </style>
-  <style>
-    /* 지게차 주변 색 번짐(glow) 제거: 그림자만 살짝 */
-    body:not(#zz) .move-runner.fl, body:not(#zz) .move-runner.fl.is-working, body:not(#zz) .move-runner.fl:not(.is-working){filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.65)) !important;}
   </style>
   <style>
     /* 금일작업 탭·등록 버튼: 어두운 화면에 맞춘 반투명 하늘색 (눈부시지 않게) */
@@ -3390,34 +3347,11 @@
     .memo-meta .memo-ack:hover{background:rgba(139,92,246,.6);color:#fff;}
   </style>
   <style>
-    /* 현실적인 지게차 (위에서 본 모습, 배경 항공사진 톤): 그림자·바퀴·카운터웨이트·운전석 보호대·마스트·포크, 작업중이면 팔레트 적재 + 경광등 */
-    body:not(#zz) .move-runner.fl{filter:none !important;}
-    .move-runner.fl .fl-shadow{display:none;}
-    .move-runner.fl .fl-tire{fill:#141414;}
-    body:not(#zz) .move-runner.fl .fl-body{stroke:rgba(0,0,0,.55);stroke-width:.5;}
-    .move-runner.fl .fl-weight{fill:#2b2b2b;stroke:rgba(0,0,0,.6);stroke-width:.4;}
-    .move-runner.fl .fl-guard{fill:rgba(17,24,39,.88);stroke:#4b5563;stroke-width:.5;}
-    .move-runner.fl .fl-slat{stroke:#6b7280;stroke-width:.45;}
-    .move-runner.fl .fl-beacon{fill:#f59e0b;opacity:.35;}
-    .move-runner.fl.is-working .fl-beacon{opacity:1;animation:flBeacon .7s steps(2,end) infinite;}
-    @keyframes flBeacon{0%{fill:#fbbf24;}50%{fill:#7c2d12;}}
-    .move-runner.fl .fl-mast{fill:#3f3f46;stroke:#18181b;stroke-width:.35;}
-    .move-runner.fl .fl-chain{stroke:#a1a1aa;stroke-width:.4;stroke-dasharray:.6 .5;}
-    .move-runner.fl .fl-carriage{fill:#52525b;}
-    .move-runner.fl .fl-fork{fill:#a8a29e;stroke:#57534e;stroke-width:.35;}
-    .move-runner.fl .fl-load{display:none;}
-    .move-runner.fl.is-working .fl-load{display:inline;}
-    .move-runner.fl .fl-light{fill:#fef9c3;}
-  </style>
-  <style>
     /* 특이사항 확인 버튼: 남기기 버튼과 같은 크기 */
     body:not(#zz) .memo-meta .memo-ack{font-size:12.5px;font-weight:900;padding:0px 14px;border-radius:10px;min-width:65px;height:38px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;color:#fff;background:rgba(139,92,246,.55);}
     body:not(#zz) .memo-meta .memo-ack:hover{background:rgba(139,92,246,.8);}
     body:not(#zz) .memo-item .memo-meta{align-items:center;}
-    /* 트론 네온 레이저 이동 동선: 연하고 부드러운 투명도 */
-    body:not(#zz) #moveLayer .move-path{opacity:.50;}
-    body:not(#zz) #moveLayer .move-glow{opacity:.15;stroke:var(--mv,#ff9900);}
-    body:not(#zz) #moveLayer .move-start{opacity:.75;}
+    /* 이동 동선(3D 쉐브론)은 파도 밝기 그대로 — 추가 투명도 덮지 않는다 */
   </style>
   <style>
     /* 특이사항: 확인 버튼을 항목 안쪽 오른쪽 세로 가운데에 여백 맞춰 배치 (텍스트와 겹침/외곽 돌출 방지) */
@@ -7866,13 +7800,14 @@ html body:not(#zz) #mapStage [data-toggle-zone="environment"].env-run:not(.st-fl
       let labels=document.getElementById('moveLabels'); if(!labels){ labels=document.createElement('div'); labels.id='moveLabels'; labels.className='move-labels'; stage.appendChild(labels); }
       const sr=stage.getBoundingClientRect(); svg.setAttribute('viewBox','0 0 '+sr.width+' '+sr.height); svg.setAttribute('width',sr.width); svg.setAttribute('height',sr.height);
       const moves=load().filter(x=>!x.closed).map(x=>({x,m:moveOf(x)})).filter(o=>o.m&&!o.x.completed);
-      let defs='<defs><marker id="mvHead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fbbf24"/></marker><marker id="mvHeadW" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4ade80"/></marker></defs>';
-      let paths=''; let lab=''; let runners='';
+      let paths=''; let lab='';
       const MVC=['#ff9900','#4ade80','#00f0ff','#a78bfa']; /* 1번 앰버 오렌지, 2번 라임 그린, 3번 시안, 4번 바이올렛 */ /* 이동작업 색: 1번 노랑, 2번 주황, 3번 보라, 4번 하늘 */
       const MVW=['#ffaa00','#39ff14','#38bdf8','#c084fc']; /* 작업중 고휘도 네온 */ /* 작업중 색 (녹색 계열): 초록, 청록, 연두, 에메랄드 */ let wIdx=0;
-      defs=defs.replace('</defs>','<linearGradient id="flShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient></defs>');
-      defs=defs.replace('</defs>',MVW.map((c,i)=>'<marker id="mvHeadW'+i+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="'+c+'"/></marker>').join('')+'</defs>');
-      defs=defs.replace('</defs>',MVC.map((c,i)=>'<marker id="mvHead'+i+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="'+c+'"/></marker>').join('')+'</defs>');
+      /* 3D 입체 쉐브론(>) 화살표: 경로를 따라 일정 간격으로 방향을 맞춰 세우고, 밝기 파도가 출발지→도착지로 흐른다 */
+      const CHEV_STEP=18;                          /* 화살표 간격(px, 지도 기준) */
+      const CHEV_WAVES=3;                          /* 경로 위에 동시에 흐르는 파도 개수 */
+      const CHEV='M-3.9,-4.4 L2.5,0 L-3.9,4.4';    /* 오른쪽(진행 방향)을 가리키는 꺾쇠 */
+      const chevTf=(x,y,a)=>'translate('+x.toFixed(1)+','+y.toFixed(1)+') rotate('+a.toFixed(1)+')';
       const W=sr.width, H=sr.height, P=(x,y)=>[x/100*W,y/100*H];
       // building footprints (% of map) and road centre-lines (% of map) traced from the background image
       const BLD={A:[4.8,45.0,21.8,86.4],B:[25.6,10.4,31.5,86.8],C:[57.3,11.4,82.6,45.4],D:[57.3,55.3,82.6,87.9],'4':[12.2,13.2,22.1,40.6],W:[67.6,0.6,81.0,10.4]};
@@ -7918,18 +7853,29 @@ html body:not(#zz) #mapStage [data-toggle-zone="environment"].env-run:not(.st-fl
       moves.forEach((o,idx)=>{
         const pts=route(o.m.from,o.m.to); if(!pts||pts.length<2) return;
         const off=(idx%3)*4-4; const pp=pts.map((p,i)=>(i===0||i===pts.length-1)?p:[p[0]+off,p[1]+off]); /* 출발·도착(입구)은 정확히 그 지점에 */
-        const d='M'+pp.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
-        const working=!!o.x.working; const cls='move-path'+(working?' is-working':''); const ci=idx%MVC.length, wi=working?(wIdx++)%MVW.length:0, mvs=' style="--mv:'+MVC[ci]+';--mvw:'+MVW[wi]+'"';
-        paths+='<path class="move-glow" d="'+d+'"'+mvs+'/><path class="move-path-outer" d="'+d+'"'+mvs+'/><path class="move-path-inner" d="'+d+'"/><path class="'+cls+'"'+mvs+' d="'+d+'" marker-end="url(#'+(working?'mvHeadW'+wi:'mvHead'+ci)+')"/>'
-              +'<circle class="move-start'+(working?' is-working':'')+'"'+mvs+' cx="'+pp[0][0]+'" cy="'+pp[0][1]+'" r="5"/>';
+        const working=!!o.x.working; const ci=idx%MVC.length, wi=working?(wIdx++)%MVW.length:0; const col=working?MVW[wi]:MVC[ci];
+        const mvs=' style="--mv:'+MVC[ci]+';--mvw:'+MVW[wi]+';--c:'+col+'"'; const period=working?2.8:3.8;
         let total=0; const segs=[]; for(let i=1;i<pp.length;i++){const l=Math.hypot(pp[i][0]-pp[i-1][0],pp[i][1]-pp[i-1][1]);segs.push(l);total+=l;}
-        { const dur=Math.max(2.5,Math.min(9,total/(working?160:110))).toFixed(2); /* 스마트 디지털 펄스: 은은한 유선형 빛의 흐름 */
-          runners+='<g class="move-runner pulse'+(working?' is-working':'')+'"'+mvs+'><circle class="pulse-aura" cx="0" cy="0" r="7"/><ellipse class="pulse-core" cx="0" cy="0" rx="6" ry="3.2"/><circle class="pulse-spark" cx="2.5" cy="0" r="1.4"/><animateMotion dur="'+dur+'s" repeatCount="indefinite" rotate="auto" path="'+d+'"/></g>'; }
+        { const nChev=Math.max(2,Math.round(total/CHEV_STEP));
+          for(let n=1;n<=nChev;n++){
+            const along=total*(n-0.5)/nChev;   /* 경로 전체에 균등 배치 */
+            let acc=0, si=0; while(si<segs.length-1&&acc+segs[si]<along){acc+=segs[si];si++;}
+            const t=segs[si]?Math.min(1,Math.max(0,(along-acc)/segs[si])):0;
+            const x=pp[si][0]+(pp[si+1][0]-pp[si][0])*t, y=pp[si][1]+(pp[si+1][1]-pp[si][1])*t;
+            const ang=Math.atan2(pp[si+1][1]-pp[si][1],pp[si+1][0]-pp[si][0])*180/Math.PI;   /* 진행 방향 */
+            const phase=((CHEV_WAVES*n)/nChev)%1;   /* 뒤쪽 화살표일수록 늦게 밝아져 파도가 앞으로 흐른다 */
+            const delay=(-(period*(1-phase))).toFixed(2);   /* 음수 오프셋: 첫 프레임부터 끊김 없이 */
+            paths+='<g class="mv-chev'+(working?' is-working':'')+'" style="--mv:'+MVC[ci]+';--mvw:'+MVW[wi]+';--c:'+col+';animation-delay:'+delay+'s">'
+              +'<path class="mv-chev-shadow" d="'+CHEV+'" transform="'+chevTf(x,y+1.5,ang)+'"/>'   /* 아래·어두운 두께 */
+              +'<path class="mv-chev-main" d="'+CHEV+'" transform="'+chevTf(x,y,ang)+'"/>'
+              +'<path class="mv-chev-gloss" d="'+CHEV+'" transform="'+chevTf(x,y-0.7,ang)+'"/></g>';   /* 위쪽 하이라이트 */
+          }
+        }
         let half=total/2, mx=pp[0][0], my=pp[0][1]; for(let i=1;i<pp.length;i++){if(half<=segs[i-1]){const t=half/segs[i-1];mx=pp[i-1][0]+(pp[i][0]-pp[i-1][0])*t;my=pp[i-1][1]+(pp[i][1]-pp[i-1][1])*t;break;} half-=segs[i-1];}
         const g=goalOf(o.x.text); const prog=g?((o.x.done!=null?o.x.done:0)+' / '+g.n+(g.u?' '+g.u:'')):'';
         lab+='<div class="move-label'+(working?' is-working':'')+'" style="--mv:'+MVC[ci]+';--mvw:'+MVW[wi]+';left:'+mx+'px;top:'+my+'px">'+esc(PLACE_LABEL[o.m.from]||o.m.from)+' → '+esc(PLACE_LABEL[o.m.to]||o.m.to)+(prog?' · '+esc(prog):'')+(working?' · 작업중':'')+'</div>';
       });
-      svg.innerHTML=defs+paths+runners; labels.innerHTML=lab;
+      svg.innerHTML=paths; labels.innerHTML=lab;
     }
     let obSubTarget='';
     const getTarget=()=>((sel.value==='outbound'||sel.value==='inbound')&&obSubTarget)?obSubTarget:sel.value;
