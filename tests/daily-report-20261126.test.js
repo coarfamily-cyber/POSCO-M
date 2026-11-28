@@ -43,6 +43,9 @@ async function loadPage({ seed, before, wait = 1500 } = {}) {
       w.indexedDB = fidb.indexedDB;
       ['IDBKeyRange', 'IDBObjectStore', 'IDBIndex', 'IDBCursor', 'IDBCursorWithValue', 'IDBDatabase', 'IDBTransaction', 'IDBRequest', 'IDBOpenDBRequest', 'IDBFactory', 'IDBVersionChangeEvent'].forEach(n => { if (fidb[n]) w[n] = fidb[n]; });
       w.alert = () => {}; w.confirm = () => true;
+      /* 실행 시각 의존 제거: 이 테스트의 고정 날짜(2026-11-28) 예약은 '08시 자동 적용 전' 상태를 가정한다.
+         그대로 두면 08:00(KST) 이후 실행에서 예약이 금일작업으로 옮겨져 [예정] 줄이 사라진다. */
+      w.JISU_SCHEDULE_APPLY_TIME = { hour: 23, minute: 59 };
       w.matchMedia = w.matchMedia || (() => ({ matches: false, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {} }));
       w.ResizeObserver = w.ResizeObserver || class { observe() {} unobserve() {} disconnect() {} };
       w.IntersectionObserver = w.IntersectionObserver || class { observe() {} unobserve() {} disconnect() {} };

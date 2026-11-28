@@ -67,6 +67,9 @@ async function loadPage(seed) {
         }
         return Promise.resolve({ ok: true, json: () => Promise.resolve({}), text: () => Promise.resolve('') });
       };
+      /* 실행 시각 의존 제거: 이 테스트는 '08시 자동 적용 전' 화면을 가정한다.
+         그대로 두면 08:00(KST) 이후 실행에서 오늘 예약이 금일작업으로 옮겨져 집계가 달라진다. */
+      w.JISU_SCHEDULE_APPLY_TIME = { hour: 23, minute: 59 };
       w.__jisuClosed = false; w.__jisuTimers = new Set();
       const _st = w.setTimeout.bind(w), _si = w.setInterval.bind(w);
       w.setTimeout = (fn, ms, ...a) => { const id = _st(() => { w.__jisuTimers.delete(id); if (!w.__jisuClosed) fn(...a); }, ms); w.__jisuTimers.add(id); return id; };
