@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611282000">
+  <meta name="jisu-build" content="202611282110">
   <script>/* ==========================================================================
      저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
      "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
@@ -6138,6 +6138,154 @@ html body:not(#zz) #mapStage [data-toggle-zone="environment"].env-run:not(.st-fl
       linear-gradient(96.5deg, rgba(120,108,92,.028) 0 1px, rgba(255,255,255,0) 1px 4.4px),
       linear-gradient(157deg, rgba(255,255,255,.34) 0%, rgba(255,255,255,0) 34%);
       background-repeat:no-repeat, no-repeat, repeat, no-repeat;}
+  }
+  </style>
+  <!-- ═══ 지수 비서실장 말풍선 — 크림 그라데이션 + 폭 확장 (2026-11-28 승인 시안 그대로 정식 반영) ══════════════
+       · 수뽕 님 1번 지시: 중앙·상단은 맑은 크림(#FDFBF7→#FAF5ED), 좌·우·하단 코너로 갈수록 따뜻한 라떼/피치
+         베이지(#F3E6D6 → #E5D1BB)가 은은하게 감싸는 radial + soft linear 그라데이션을 꼬리까지 한 장으로.
+       · 내부 칩·AI 말풍선·입력창은 순백 카드 + 0 4px 14px rgba(84,58,38,.08) 그림자 + 얇은 테두리로 띄운다.
+       · 본문 #231B15 · 보조 #6B5E53 · 포인트 #0F766E, 전송 버튼 라임 #D7FE01 유지.
+       · 수뽕 님 2번 지시: 데스크탑(>900px) 검색창·말풍선 폭 확장 — 1920 에서 말풍선 541px, 1366 이하에서는 현행 436px.
+       · 수뽕 님 3번 지시("상단 검색창 가로폭이 말풍선 오른쪽 끝라인이랑 맞춰야지"):
+         검색창 폭은 CSS 로 상수 못박지 않고 스크립트가 '말풍선 오른쪽 끝 − 검색창 왼쪽'으로 계산해 넣는다
+         (syncSearchWidth — 창 폭을 어떻게 조절해도 두 끝선이 1px 안에서 일치, 우측 시계·로그인 칩은 침범 금지).
+       · 앞선 종이 규칙(#jisuChiefPaperCss) 뒤에서 같은 선택자를 덮어쓴다 — 기존 규칙은 지우지 않는다. -->
+  <style id="jisuChiefCreamCss">
+  /* ── 꼬리까지 한 장: 크림 → 라떼 그라데이션 ───────────────────────────── */
+  #chiefBubble{
+    --cb-ink:#231B15; --cb-ink2:#6B5E53; --cb-acc:#0F766E;
+    --cb-lime:#D7FE01; --cb-card-edge:rgba(120,96,72,.10);
+    --cb-card-shadow:0 4px 14px rgba(84,58,38,.08);
+    color:var(--cb-ink);
+    filter:drop-shadow(0 16px 30px rgba(48,30,14,.40)) drop-shadow(0 3px 7px rgba(48,30,14,.22));
+  }
+  #chiefBubble .cb-glass{
+    background-color:#F4EBDF;
+    background-image:
+      url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23f)' opacity='0.09'/%3E%3C/svg%3E"),
+      radial-gradient(96% 70% at 50% -10%, rgba(255,255,255,.98) 0%, rgba(255,255,255,.56) 26%, rgba(255,255,255,0) 62%),
+      radial-gradient(54% 32% at 50% 108%, rgba(216,187,160,.95) 0%, rgba(216,187,160,.34) 46%, rgba(216,187,160,0) 74%),
+      radial-gradient(42% 48% at -4% 88%, rgba(213,183,155,.95) 0%, rgba(213,183,155,.34) 44%, rgba(213,183,155,0) 70%),
+      radial-gradient(40% 46% at 104% 92%, rgba(220,192,167,.82) 0%, rgba(220,192,167,.28) 46%, rgba(220,192,167,0) 68%),
+      radial-gradient(28% 36% at -4% 10%, rgba(236,220,203,.52) 0%, rgba(236,220,203,0) 70%),
+      linear-gradient(158deg, #FDFBF7 0%, #FAF5ED 40%, #F3E6D6 72%, #E5D1BB 100%);
+    background-size:180px 180px, auto, auto, auto, auto, auto, auto;
+    background-repeat:repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+    -webkit-backdrop-filter:none; backdrop-filter:none;
+  }
+  /* 매트 질감만 아주 옅게 — 섬유 헤어라인은 끄고 빛만 남긴다 */
+  #chiefBubble .cb-glass-sheen{
+    background-image:
+      radial-gradient(78% 58% at 26% -6%, rgba(255,255,255,.46) 0%, rgba(255,255,255,0) 62%),
+      radial-gradient(124% 96% at 50% 46%, rgba(255,255,255,0) 52%, rgba(226,196,167,.16) 82%, rgba(219,186,156,.34) 100%);
+    background-repeat:no-repeat, no-repeat;
+  }
+  #chiefBubble #cbRimPath{stroke:rgba(150,120,92,.32); stroke-opacity:1; stroke-width:1;}
+
+  /* ── 상태 알약 · 닫기 ─────────────────────────────────────────────── */
+  #chiefBubble .cb-badge{
+    color:#5B4E42; background:rgba(255,255,255,.90);
+    border:1px solid rgba(120,96,72,.14);
+    box-shadow:0 2px 8px rgba(84,58,38,.07), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  #chiefBubble .cb-badge i{background:#0F766E; box-shadow:0 0 0 2px rgba(15,118,110,.16);}
+  #chiefBubble .cb-close{
+    color:#4A3E33 !important; background:rgba(255,255,255,.88) !important;
+    border:1px solid rgba(120,96,72,.16) !important;
+    box-shadow:0 2px 8px rgba(84,58,38,.08), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  #chiefBubble .cb-close:hover{background:#FFFFFF !important; border-color:rgba(120,96,72,.32) !important; color:#231B15 !important;}
+
+  /* ── 빠른 질문 칩: 순백 카드 ───────────────────────────────────────── */
+  #chiefBubble .cb-chip{
+    color:#231B15 !important; background:rgba(255,255,255,.92) !important;
+    border:1px solid var(--cb-card-edge) !important;
+    box-shadow:var(--cb-card-shadow), inset 0 1px 0 rgba(255,255,255,.92) !important;
+  }
+  #chiefBubble .cb-chip:hover{background:#FFFFFF !important; border-color:rgba(15,118,110,.44) !important; color:#0F766E !important;}
+
+  /* ── 대화: AI = 흰 카드, 나 = 라임 틴트 카드 ────────────────────────── */
+  #chiefBubble .cb-msgs::-webkit-scrollbar-thumb{background:rgba(120,96,72,.22);}
+  #chiefBubble .cb-who{color:var(--cb-ink2);}
+  #chiefBubble .cb-msg.ai .cb-who b{color:var(--cb-acc);}
+  #chiefBubble .cb-bub{color:var(--cb-ink);}
+  #chiefBubble .cb-msg.ai .cb-bub{
+    color:var(--cb-ink); background:rgba(255,255,255,.96);
+    border:1px solid var(--cb-card-edge); border-bottom-left-radius:5px;
+    box-shadow:var(--cb-card-shadow), inset 0 1px 0 rgba(255,255,255,.95);
+  }
+  #chiefBubble .cb-msg.me .cb-bub{
+    color:var(--cb-ink); background:linear-gradient(135deg, rgba(215,254,1,.46) 0%, rgba(215,254,1,.22) 100%);
+    border:1px solid rgba(120,96,72,.16); border-bottom-right-radius:5px;
+    box-shadow:var(--cb-card-shadow);
+  }
+  #chiefBubble .cb-msg.sys .cb-bub{
+    color:var(--cb-ink); background:rgba(15,118,110,.07); border:1px solid rgba(15,118,110,.22);
+  }
+  #chiefBubble .cb-bub b{color:var(--cb-acc);}
+  #chiefBubble .cb-bub .cb-cy{color:#0E7490;}
+  #chiefBubble .cb-typing i{background:var(--cb-acc);}
+  #chiefBubble .cb-keyhint{color:var(--cb-ink2);}
+  #chiefBubble .cb-err{color:#B42318;}
+
+  /* ── 실행 버튼 ───────────────────────────────────────────────────── */
+  #chiefBubble .cb-act{
+    color:#231B15 !important; background:rgba(255,255,255,.92) !important;
+    border:1px solid rgba(120,96,72,.14) !important;
+    box-shadow:var(--cb-card-shadow), inset 0 1px 0 rgba(255,255,255,.9) !important;
+  }
+  #chiefBubble .cb-act:hover{background:#FFFFFF !important; border-color:rgba(120,96,72,.30) !important;}
+  #chiefBubble .cb-act.primary{
+    background:linear-gradient(180deg,#E2FF52 0%, var(--cb-lime) 100%) !important;
+    border:1px solid rgba(90,74,52,.20) !important; color:#1B1500 !important;
+    box-shadow:0 1px 0 rgba(255,255,255,.70) inset, 0 4px 12px rgba(84,58,38,.18) !important;
+  }
+
+  /* ── 입력창 · 전송 ────────────────────────────────────────────────── */
+  #chiefBubble .cb-in-in{
+    background:#FFFFFF !important; border:1px solid rgba(120,96,72,.18) !important;
+    color:#231B15 !important; box-shadow:0 2px 8px rgba(84,58,38,.06), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  #chiefBubble .cb-in-in::placeholder{color:#8C8177 !important;}
+  #chiefBubble .cb-in-in:focus{
+    border-color:rgba(15,118,110,.55) !important;
+    box-shadow:0 0 0 3px rgba(15,118,110,.13), 0 4px 14px rgba(84,58,38,.08) !important;
+  }
+  #chiefBubble .cb-send{
+    color:#1B1500 !important; background:linear-gradient(180deg,#E2FF52 0%, var(--cb-lime) 100%) !important;
+    border:1px solid rgba(90,74,52,.20) !important;
+    box-shadow:0 1px 0 rgba(255,255,255,.70) inset, 0 4px 12px rgba(84,58,38,.18);
+  }
+  #chiefBubble .cb-foot{color:var(--cb-ink2); border-top:1px solid rgba(120,96,72,.14);}
+  #chiefBubble .cb-foot button{color:#5B4E42 !important;}
+  #chiefBubble .cb-foot button:hover{color:var(--cb-acc) !important;}
+
+  /* ── 폭 확장(데스크탑만): 1366 이하에서는 현행 436px, 1920 에서 541px, 상한 560px ─────
+     검색창 폭 규칙은 여기에 없다 — syncSearchWidth() 가 '말풍선 오른쪽 끝 − 검색 왼쪽'으로
+     매번 계산해 넣으므로(창 폭·사이드바 폭이 어떤 값이어도 끝선이 같다) CSS 상수로 두지 않는다. */
+  @media (min-width:901px){
+    #chiefBubble{ width:clamp(436px, calc(436px + (100vw - 1366px) * 0.19), 560px); }
+  }
+
+  /* ── 모바일도 같은 크림 (종이 규칙의 검정 유리 덮어쓰기 방지) ───────────── */
+  @media (max-width:900px){
+    #chiefBubble .cb-glass{
+      background-color:#F4EBDF;
+      background-image:
+        url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23f)' opacity='0.09'/%3E%3C/svg%3E"),
+        radial-gradient(96% 70% at 50% -10%, rgba(255,255,255,.98) 0%, rgba(255,255,255,.56) 26%, rgba(255,255,255,0) 62%),
+        radial-gradient(54% 32% at 50% 108%, rgba(216,187,160,.95) 0%, rgba(216,187,160,.34) 46%, rgba(216,187,160,0) 74%),
+        radial-gradient(42% 48% at -4% 88%, rgba(213,183,155,.95) 0%, rgba(213,183,155,.34) 44%, rgba(213,183,155,0) 70%),
+        radial-gradient(40% 46% at 104% 92%, rgba(220,192,167,.82) 0%, rgba(220,192,167,.28) 46%, rgba(220,192,167,0) 68%),
+        radial-gradient(28% 36% at -4% 10%, rgba(236,220,203,.52) 0%, rgba(236,220,203,0) 70%),
+        linear-gradient(158deg, #FDFBF7 0%, #FAF5ED 40%, #F3E6D6 72%, #E5D1BB 100%);
+      background-size:180px 180px, auto, auto, auto, auto, auto, auto;
+      background-repeat:repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+    }
+    #chiefBubble .cb-glass-sheen{background-image:
+      radial-gradient(78% 58% at 26% -6%, rgba(255,255,255,.46) 0%, rgba(255,255,255,0) 62%),
+      radial-gradient(124% 96% at 50% 46%, rgba(255,255,255,0) 52%, rgba(226,196,167,.16) 82%, rgba(219,186,156,.34) 100%);
+      background-repeat:no-repeat, no-repeat;}
   }
   </style>
 </head>
@@ -18231,6 +18379,100 @@ paint()})();</script>
     return g;
   }
 
+  /* ── 상단 검색창 오른쪽 끝 = 비서실장 말풍선 오른쪽 끝 (2026-11-28 3차 지시) ─────────────
+     말풍선 자리: left = 사이드바 오른쪽 + 20 (화면 밖으로 넘칠 때만 오른쪽 16px 여백까지 당김) — geometry() 와 같은 규칙.
+     말풍선 폭: CSS clamp(436px, 436px + (100vw − 1366px) × 0.19, 560px) — 화면 폭에 따라 달라진다.
+     그래서 검색창 폭은 고정값이 아니라 매번 '말풍선 오른쪽 끝 − 검색창 왼쪽'으로 계산해 넣는다.
+     창 폭·사이드바 폭이 어떻게 바뀌어도 두 끝선이 1px 안에서 일치하고, 오른쪽 시계·로그인 칩은 침범하지 않는다. */
+  var CB_GAP = 20, CB_EDGE = 16, CB_CLOCK_GAP = 8;
+  var hdrBox = $('hdrSearchBox'), hdrClock = $('liveClock');
+  /* 검색창이 없거나 데스크탑이 아니면 손대지 않는다 */
+  function searchAlignable(vw){ return !!hdrBox && vw > 900; }
+  /* CSS 폭 식과 같은 값 — 말풍선을 잴 수 없을 때의 폴백(회귀 테스트가 CSS 와 대조한다) */
+  function bubbleWidthFor(vw){
+    if(!(vw > 900)) return 0;
+    return Math.min(560, Math.max(436, 436 + (vw - 1366) * 0.19));
+  }
+  /* geometry() 의 왼쪽 자리 규칙 그대로 → 말풍선 오른쪽 끝 좌표 */
+  function bubbleRightFor(vw, sideRight, bubbleW){
+    var left = Math.round(sideRight + CB_GAP);
+    if(left + bubbleW > vw - CB_EDGE) left = Math.max(12, vw - bubbleW - CB_EDGE);
+    return left + bubbleW;
+  }
+  /* 검색창 왼쪽·말풍선 오른쪽·시계 왼쪽으로 폭을 되짚는다 (순수 함수) */
+  function searchWidthFor(o){
+    if(!(o && o.vw > 900)) return null;
+    var right = o.bubbleRight;
+    var limit = (o.clockLeft != null && o.clockLeft > 0) ? o.clockLeft - CB_CLOCK_GAP : o.vw - CB_EDGE;
+    if(right > limit) right = limit;
+    var w = right - o.boxLeft;
+    if(!(w > 0)) return null;
+    return { width:Math.round(w * 100) / 100, right:right,
+             aligned:Math.abs(right - o.bubbleRight) < 0.5 };
+  }
+  /* 말풍선의 실제 폭(소수 포함) — 닫혀 있으면 잠깐 띄워 잰다(그리는 사이가 없어 화면에 보이지 않는다) */
+  function bubbleWidthNow(vw){
+    try{
+      if(bubble.offsetWidth > 0){
+        var r = bubble.getBoundingClientRect();
+        if(r && r.width) return r.width;
+        return bubble.offsetWidth;
+      }
+      var pd = bubble.style.display, pv = bubble.style.visibility;
+      bubble.style.display = 'block'; bubble.style.visibility = 'hidden';
+      var m = bubble.getBoundingClientRect();
+      var w = (m && m.width) || bubble.offsetWidth || bubbleWidthFor(vw);
+      bubble.style.display = pd; bubble.style.visibility = pv;
+      return w || bubbleWidthFor(vw);
+    }catch(_){ return bubbleWidthFor(vw); }
+  }
+  /* 실제 화면 값을 읽어 검색창 폭을 맞춘다 — o 에 값을 주면 그 값으로만 계산(테스트·진단용) */
+  function syncSearchWidth(o){
+    if(!hdrBox) return null;
+    o = o || {};
+    var vw = o.vw || window.innerWidth;
+    if(!searchAlignable(vw)){
+      hdrBox.style.removeProperty('width');
+      hdrBox.removeAttribute('data-cb-edge');
+      return null;
+    }
+    var boxLeft = o.boxLeft;
+    if(boxLeft == null){
+      var br = hdrBox.getBoundingClientRect();
+      if(!br || !(br.width > 0)){ hdrBox.style.removeProperty('width'); hdrBox.removeAttribute('data-cb-edge'); return null; }
+      boxLeft = br.left;
+    }
+    var sideRight = o.sideRight;
+    if(sideRight == null) sideRight = side ? side.getBoundingClientRect().right : 0;
+    var bw = o.bubbleWidth != null ? o.bubbleWidth : bubbleWidthNow(vw);
+    var clockLeft = o.clockLeft;
+    if(clockLeft == null) clockLeft = hdrClock ? hdrClock.getBoundingClientRect().left : null;
+    var bubbleRight = bubbleRightFor(vw, sideRight, bw);
+    var fit = searchWidthFor({ vw:vw, boxLeft:boxLeft, bubbleRight:bubbleRight, clockLeft:clockLeft });
+    if(!fit){ hdrBox.style.removeProperty('width'); hdrBox.removeAttribute('data-cb-edge'); return null; }
+    hdrBox.style.setProperty('width', fit.width + 'px', 'important');
+    hdrBox.setAttribute('data-cb-edge', String(Math.round(bubbleRight)));
+    return { vw:vw, boxLeft:boxLeft, bubbleWidth:bw, bubbleRight:bubbleRight,
+             width:fit.width, right:fit.right, aligned:fit.aligned };
+  }
+  /* 레이아웃이 바뀔 때마다 다시 맞춘다 — 첫 로드·폰트·리사이즈·글자 크기 변화·사이드바 폭 변화 */
+  function syncSoon(){
+    try{ syncSearchWidth(); }catch(_){}
+    setTimeout(function(){ try{ syncSearchWidth(); }catch(_){} }, 360);
+  }
+  if(hdrBox){
+    syncSoon();
+    window.addEventListener('load', syncSoon);
+    window.addEventListener('resize', syncSoon);
+    if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ syncSoon(); });
+    if(window.ResizeObserver){
+      try{
+        var roSync = new ResizeObserver(function(){ try{ syncSearchWidth(); }catch(_){} });
+        if(side) roSync.observe(side);
+      }catch(_){}
+    }
+  }
+
   function scrollEnd(){ if(msgs) msgs.scrollTop = msgs.scrollHeight; }
   function addMsg(role, html){
     var wrap = document.createElement('div');
@@ -18452,6 +18694,8 @@ paint()})();</script>
     localAnswer:localAnswer, kstDay:kstDay, isWorkItem:isWorkItem, isCarry:isCarry, zoneOf:zoneOf,
     outerLeftTop:outerLeftTop, outerTop:outerTop, leftTail:LEFT_TAIL, buildPaths:buildPaths,
     tailMx:tailMx, anchorX:anchorX, lastPlace:function(){ return lastG; }, place:place,
+    syncSearchWidth:syncSearchWidth, searchWidthFor:searchWidthFor,
+    bubbleRightFor:bubbleRightFor, bubbleWidthFor:bubbleWidthFor,
     glassOffset:{x:GLASS_DX, y:GLASS_DY}
   };
   })();

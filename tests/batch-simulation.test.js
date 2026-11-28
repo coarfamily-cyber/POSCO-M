@@ -133,8 +133,11 @@ test('A. 날짜 헤더·기간·해 넘김·전각/없는 날짜', async () => {
     expectRows(w, r, [{ date: D1, zone: 'inbound', text: '사각박스 640 EA' }]);
 
     // 범위: 시작~끝, 월 넘김, 해 넘김
-    r = preview(w, `${md(D1)}~${Number(md(D3).split('/')[1])}\n입고 사각박스 640EA`);
-    assert.deepEqual(r.rows.map(x => x.date), [D1, D2, D3]);
+    /* 오늘 날짜가 월말이면 D3 가 다음 달로 넘어가 '11/29~1' 이 월 범위가 되어 버린다 —
+       같은 달 안의 범위는 그 달 5일에서 석 달 연속 날짜로 고정한다(달력에 따라 흔들리지 않게). */
+    const R1 = TODAY.slice(0, 7) + '-05', R2 = shift(R1, 1), R3 = shift(R1, 2);
+    r = preview(w, `${md(R1)}~${Number(md(R3).split('/')[1])}\n입고 사각박스 640EA`);
+    assert.deepEqual(r.rows.map(x => x.date), [R1, R2, R3]);
 
     r = preview(w, '11/28~12/2\n입고 사각박스 640EA');
     const expectNov = ['11-28', '11-29', '11-30', '12-01', '12-02'].map(x => x);

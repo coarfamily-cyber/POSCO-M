@@ -384,11 +384,140 @@ test('말풍선은 종이 질감: 따뜻한 크림 바탕·섬유 노이즈·1px
     /* 실제 렌더(computed) — 밝은 종이 위 먹색 글씨, 라임 전송 버튼, 숨긴 그림자 path */
     const cs = (el) => w.getComputedStyle(el);
     const glass = doc.querySelector('#chiefBubble .cb-glass');
-    assert.equal(cs(glass).backgroundColor, 'rgb(244, 239, 230)', '유리 레이어 바탕색이 크림(#F4EFE6)이 아니다(예전 검정 유리가 이겼다)');
+    assert.equal(cs(glass).backgroundColor, 'rgb(244, 235, 223)', '유리 레이어 바탕색이 크림(#F4EBDF — 11-28 3차 크림 레이어가 종이를 덮는다)이 아니다(예전 검정 유리가 이겼다)');
     assert.equal(cs(doc.getElementById('chiefBubble')).color, 'var(--cb-ink)', '말풍선 글씨가 먹색 토큰(--cb-ink)을 쓰지 않는다');
     assert.equal(cs(doc.getElementById('cbShadowWide')).display, 'none', '검정 넓은 그림자가 살아 있다');
     assert.equal(cs(doc.getElementById('cbShadowTight')).display, 'none', '검정 좁은 그림자가 살아 있다');
     assert.equal(cs(doc.getElementById('chiefBubble')).filter.indexOf('drop-shadow'), 0, '말풍선 그림자 필터가 없다: ' + cs(doc.getElementById('chiefBubble')).filter);
+    assert.equal(p.errors.length, 0, p.errors.join(' | '));
+  } finally { softClose(p.w); }
+});
+
+/* ───────────────── 2-d. 크림 그라데이션 (2026-11-28 승인 시안 그대로 정식 반영) ───────────────── */
+test('말풍선은 승인된 크림 그라데이션: 크림→라떼 4색·순백 카드·먹색 #231B15·라임 #D7FE01 전송, 모바일도 같은 크림', async () => {
+  const p = await loadPage({});
+  try {
+    const w = p.w, doc = w.document;
+    const cream = doc.getElementById('jisuChiefCreamCss');
+    assert.ok(cream, '크림 그라데이션 스타일(#jisuChiefCreamCss)이 없다');
+    const all = Array.from(doc.querySelectorAll('style'));
+    assert.ok(all.indexOf(doc.getElementById('jisuChiefPaperCss')) < all.indexOf(cream), '크림 스타일이 종이 규칙보다 앞에 있어 덮어쓰지 못한다');
+    const css = cream.textContent;
+    /* 승인된 그라데이션: 상단 크림 #FDFBF7 → #FAF5ED → #F3E6D6 → 코너 라떼 #E5D1BB (꼬리까지 한 장) */
+    assert.ok(/#chiefBubble \.cb-glass\{[^}]*linear-gradient\(158deg, #FDFBF7 0%, #FAF5ED 40%, #F3E6D6 72%, #E5D1BB 100%\)/.test(css),
+      '승인된 크림→라떼 그라데이션이 없다');
+    for (const tone of ['#FDFBF7', '#FAF5ED', '#F3E6D6', '#E5D1BB']) assert.ok(css.indexOf(tone) >= 0, '승인된 크림 색이 빠졌다: ' + tone);
+    assert.ok(/radial-gradient\(54% 32% at 50% 108%/.test(css), '하단 코너를 감싸는 베이지 radial 이 없다');
+    assert.ok(/feTurbulence type='fractalNoise'/.test(css), '아주 옅은 종이 노이즈가 없다');
+    assert.ok(/#chiefBubble \.cb-glass\{[^}]*backdrop-filter:none/.test(css), '밝은 크림 위에 유리 블러가 남았다');
+    /* 내부 요소는 순백 카드, 글씨는 먹색, 전송은 라임 */
+    assert.ok(/--cb-ink:#231B15/.test(css), '본문 먹색이 #231B15 가 아니다');
+    assert.ok(/#chiefBubble \.cb-chip\{[^}]*background:rgba\(255,255,255,\.92\)/.test(css), '빠른 질문 칩이 순백 카드가 아니다');
+    assert.ok(/#chiefBubble \.cb-msg\.ai \.cb-bub\{[^}]*background:rgba\(255,255,255,\.96\)/.test(css), 'AI 말풍선이 순백 카드가 아니다');
+    assert.ok(/#chiefBubble \.cb-in-in\{[^}]*background:#FFFFFF/.test(css), '대화 입력창이 순백이 아니다');
+    assert.ok(/--cb-lime:#D7FE01/.test(css) && /#chiefBubble \.cb-send\{[^}]*linear-gradient\(180deg,#E2FF52 0%, var\(--cb-lime\) 100%\)/.test(css), '전송 버튼이 라임(#D7FE01)이 아니다');
+    assert.ok(/#chiefBubble #cbRimPath\{stroke:rgba\(150,120,92,\.32\)/.test(css), '1px 웜 림이 없다');
+    /* 모바일도 같은 크림(어두운 유리 덮어쓰기 금지) */
+    const mobile = css.slice(css.indexOf('@media (max-width:900px)'));
+    assert.ok(/linear-gradient\(158deg, #FDFBF7 0%, #FAF5ED 40%, #F3E6D6 72%, #E5D1BB 100%\)/.test(mobile), '모바일에서 크림 바탕이 다시 지정되지 않는다');
+    assert.ok(/feTurbulence/.test(mobile), '모바일에서 종이 노이즈가 빠졌다');
+    /* 실제 렌더(computed) */
+    const glass = doc.querySelector('#chiefBubble .cb-glass');
+    assert.equal(w.getComputedStyle(glass).backgroundColor, 'rgb(244, 235, 223)', '유리 바탕색이 크림(#F4EBDF)이 아니다');
+    assert.equal(p.errors.length, 0, p.errors.join(' | '));
+  } finally { softClose(p.w); }
+});
+
+/* ─────────────── 2-e. 상단 검색창 오른쪽 끝 = 비서실장 말풍선 오른쪽 끝 (2026-11-28 3차 지시) ─────────────── */
+test('데스크탑 어떤 폭에서도 상단 검색창 오른쪽 끝 = 말풍선 오른쪽 끝 (1920·1600·1366·1280, 시계 침범 없음)', async () => {
+  const p = await loadPage({});
+  try {
+    const w = p.w, T = w.jisuChiefTest;
+    /* 격리 Chromium 실측값(2026-11-28): 사이드바 오른쪽·검색창 왼쪽·시계 왼쪽·말풍선 폭 */
+    const cases = [
+      { vw: 1920, vh: 1080, sideRight: 409.59, boxLeft: 400.86, clockLeft: 1518.52, bubbleW: 541.25 },
+      { vw: 1600, vh: 900, sideRight: 344, boxLeft: 400.86, clockLeft: 1198.52, bubbleW: 480.453 },
+      { vw: 1366, vh: 768, sideRight: 304, boxLeft: 394.8, clockLeft: 964.52, bubbleW: 436 },
+      { vw: 1280, vh: 800, sideRight: 304, boxLeft: 387.05, clockLeft: 878.52, bubbleW: 436 }
+    ];
+    for (const c of cases) {
+      /* 화면 폭 → 말풍선 폭 식이 CSS clamp 와 같아야 한다(여기가 틀리면 끝선도 틀어진다) */
+      assert.ok(Math.abs(T.bubbleWidthFor(c.vw) - c.bubbleW) < 0.6,
+        c.vw + 'px 폭 식이 CSS 와 다르다: ' + T.bubbleWidthFor(c.vw) + ' vs ' + c.bubbleW);
+      /* 말풍선 자리는 geometry() 가 정한다 — 그 오른쪽 끝에 검색창을 맞춘다 */
+      const g = T.geometry({ vw: c.vw, vh: c.vh, sideRight: c.sideRight, btnTop: 80, btnBottom: 116, bubbleW: c.bubbleW, bubbleH: 404 });
+      const bubbleRight = g.left + c.bubbleW;
+      const fit = T.searchWidthFor({ vw: c.vw, boxLeft: c.boxLeft, bubbleRight, clockLeft: c.clockLeft });
+      assert.ok(fit, c.vw + 'px 폭 계산이 비었다');
+      assert.ok(Math.abs((c.boxLeft + fit.width) - bubbleRight) < 0.02,
+        c.vw + 'px 검색창 오른쪽 ' + (c.boxLeft + fit.width).toFixed(2) + ' ≠ 말풍선 ' + bubbleRight.toFixed(2));
+      assert.ok(fit.aligned, c.vw + 'px 시계 때문에 끝선이 잘렸다');
+      assert.ok(c.clockLeft - (c.boxLeft + fit.width) >= 8, c.vw + 'px 시계·로그인 칩을 침범한다');
+    }
+    /* 기준점(승인 브리프): 1920 에서 말풍선 541px·right 971px, 검색창 left 401 → 폭 570px */
+    const g19 = T.geometry({ vw: 1920, vh: 1080, sideRight: 409.59, btnTop: 80, btnBottom: 116, bubbleW: 541.25, bubbleH: 404 });
+    assert.equal(Math.round(g19.left), 430);
+    assert.equal(Math.round(g19.left + 541.25), 971);
+    const fit19 = T.searchWidthFor({ vw: 1920, boxLeft: 400.86, bubbleRight: g19.left + 541.25, clockLeft: 1518.52 });
+    assert.ok(Math.abs(fit19.width - 570.39) < 0.05, '1920 검색창 폭이 570px 대가 아니다: ' + fit19.width);
+
+    /* 실제 DOM 배선 — 가짜 rect 를 물리고 syncSearchWidth() 를 부르면 그 폭이 !important 로 들어간다 */
+    const box = w.document.getElementById('hdrSearchBox');
+    const side = w.document.getElementById('cmdSide');
+    const clock = w.document.getElementById('liveClock');
+    const rect = (o) => () => ({ x: o.x, y: 0, left: o.x, top: 0, right: o.x + o.w, bottom: 40, width: o.w, height: 40 });
+    Object.defineProperty(w, 'innerWidth', { value: 1920, configurable: true });
+    side.getBoundingClientRect = rect({ x: 16, w: 393.59 });
+    clock.getBoundingClientRect = rect({ x: 1518.52, w: 120 });
+    box.getBoundingClientRect = rect({ x: 400.86, w: 430 });
+    const r = T.syncSearchWidth({ bubbleWidth: 541.25 });
+    assert.ok(r, '검색창 폭 동기화가 아무것도 하지 않았다');
+    assert.ok(Math.abs(r.width - 570.39) < 0.05, '동기화 폭이 ' + r.width + ' (570.39 기대)');
+    assert.equal(box.style.getPropertyValue('width'), r.width + 'px');
+    assert.equal(box.style.getPropertyPriority('width'), 'important', '기존 430px !important 규칙을 이기지 못한다');
+    assert.equal(box.getAttribute('data-cb-edge'), '971', '검색창에 맞춘 끝선 좌표가 남지 않는다');
+
+    /* 모바일(<=900px)에서는 검색창 폭을 건드리지 않고, 데스크탑 1366 으로 돌아오면 다시 좁힌다 */
+    assert.equal(T.syncSearchWidth({ vw: 412, boxLeft: 20, bubbleWidth: 388, sideRight: 398, clockLeft: 260 }), null);
+    assert.ok(!box.style.getPropertyValue('width'), '모바일에서 데스크탑 검색창 폭이 남아 있다');
+    Object.defineProperty(w, 'innerWidth', { value: 1366, configurable: true });
+    side.getBoundingClientRect = rect({ x: 16, w: 288 });
+    clock.getBoundingClientRect = rect({ x: 964.52, w: 120 });
+    box.getBoundingClientRect = rect({ x: 394.8, w: 365.2 });
+    const r2 = T.syncSearchWidth({ bubbleWidth: 436 });
+    assert.ok(r2 && Math.abs((394.8 + r2.width) - (324 + 436)) < 0.02,
+      '1366 에서 검색창 오른쪽이 말풍선(760)과 어긋난다: ' + (r2 && (394.8 + r2.width)));
+    assert.equal(p.errors.length, 0, p.errors.join(' | '));
+  } finally { softClose(p.w); }
+});
+
+test('창 폭을 새로고침 없이 바꾸면 검색창 폭도 그 폭의 말풍선 끝선으로 다시 맞춘다', async () => {
+  const p = await loadPage({});
+  try {
+    const w = p.w, doc = w.document;
+    const box = doc.getElementById('hdrSearchBox');
+    const side = doc.getElementById('cmdSide');
+    const clock = doc.getElementById('liveClock');
+    const rect = (o) => () => ({ x: o.x, y: 0, left: o.x, top: 0, right: o.x + o.w, bottom: 40, width: o.w, height: 40 });
+    const apply = (vw, sideW, boxLeft, clockLeft) => {
+      Object.defineProperty(w, 'innerWidth', { value: vw, configurable: true });
+      side.getBoundingClientRect = rect({ x: 16, w: sideW });
+      clock.getBoundingClientRect = rect({ x: clockLeft, w: 120 });
+      box.getBoundingClientRect = rect({ x: boxLeft, w: 430 });
+      w.dispatchEvent(new w.Event('resize'));
+    };
+    apply(1920, 393.59, 400.86, 1518.52);
+    await sleep(520);
+    const w1920 = parseFloat(box.style.getPropertyValue('width'));
+    assert.ok(Math.abs(w1920 - 570.4) < 0.2, '1920 검색창 폭이 다시 맞춰지지 않았다: ' + box.style.getPropertyValue('width'));
+    apply(1600, 328, 400.86, 1198.52);
+    await sleep(520);
+    const w1600 = parseFloat(box.style.getPropertyValue('width'));
+    assert.ok(Math.abs(w1600 - 443.6) < 0.2, '1600 검색창 폭이 다시 맞춰지지 않았다: ' + box.style.getPropertyValue('width'));
+    apply(1366, 288, 394.8, 964.52);
+    await sleep(520);
+    const w1366 = parseFloat(box.style.getPropertyValue('width'));
+    assert.ok(Math.abs(w1366 - 365.2) < 0.2, '1366 검색창 폭이 다시 맞춰지지 않았다: ' + box.style.getPropertyValue('width'));
     assert.equal(p.errors.length, 0, p.errors.join(' | '));
   } finally { softClose(p.w); }
 });
