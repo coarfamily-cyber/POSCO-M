@@ -145,6 +145,77 @@ test('처음 열면 지금 집계로 인사한다 (예시 숫자를 지어내지
   } finally { softClose(p.w); }
 });
 
+/* ───────────────── 1-b. 메탈 베젤 제거 · 헤더 중복 제거 (2026-11-28 2차) ───────────────── */
+test('두꺼운 20px 메탈 베젤이 없고, 유리·외곽선·그림자가 꼬리까지 같은 path 하나로 그려진다', async () => {
+  const p = await loadPage({});
+  try {
+    const w = p.w, doc = w.document, bubble = doc.getElementById('chiefBubble');
+    /* 베젤을 만들던 금속 path 들은 흔적도 없어야 한다 */
+    for (const id of ['cbBezelPath', 'cbBrushPath', 'cbGrainPath', 'cbSheenPath', 'cbShadePath',
+      'cbRimGlow', 'cbSpecPath', 'cbTopSpec', 'cbEdgeDark', 'cbHiPath', 'cbInnerShadePath', 'cbInnerLipPath']) {
+      assert.equal(doc.getElementById(id), null, '메탈 베젤 path 가 남아 있다: ' + id);
+    }
+    assert.equal(bubble.querySelectorAll('path[fill^="url(#cbMetal"]').length, 0, '금속 그라디언트가 남아 있다');
+    /* 남은 것은 1px 유리 림 + 부드러운 그림자 둘뿐 */
+    const rim = doc.getElementById('cbRimPath');
+    assert.ok(rim, '유리 림 path 가 없다');
+    assert.equal(rim.getAttribute('stroke-width'), '1', '림 두께는 1px');
+    assert.equal(rim.getAttribute('stroke-opacity'), '.16', '림은 은은한 흰색 16%');
+    assert.equal(bubble.querySelectorAll('path[stroke="#000000"]').length, 0, '안쪽 어두운 이음매(이중 테두리)가 남아 있다');
+
+    /* 실제 높이를 넣고 그리게 하면 유리 clip-path 가 꼬리 포함 외곽 path 와 같아야 한다 */
+    const box = doc.createElement('div');
+    const gl = bubble.querySelector('.cb-glass'), sh = bubble.querySelector('.cb-glass-sheen');
+    Object.defineProperty(bubble, 'offsetWidth', { value: 436, configurable: true });
+    Object.defineProperty(bubble, 'offsetHeight', { value: 404, configurable: true });
+    w.jisuChiefTest.buildPaths();
+    const outerD = w.eval('window.jisuChiefTest.outerLeftTop(436, 404, 26)');
+    const off = plain(w.eval('window.jisuChiefTest.glassOffset'));
+    const clipD = w.eval(`window.jisuChiefTest.outerLeftTop(436, 404, 26, ${off.x}, ${off.y})`);
+    assert.ok(/path\("M62,30/.test(gl.style.clipPath), '유리 clip 이 꼬리 path(상자 기준 이동)로 시작하지 않는다: ' + gl.style.clipPath.slice(0, 44));
+    assert.equal(gl.style.clipPath, 'path("' + clipD + '")', '유리 clip-path 가 꼬리 path 와 다르다(꼬리가 잘린다)');
+    assert.equal(sh.style.clipPath, gl.style.clipPath, '광택 레이어가 유리와 다른 모양으로 잘린다');
+    assert.equal(doc.getElementById('cbRimPath').getAttribute('d'), outerD, '외곽선이 꼬리 path 로 그려지지 않는다');
+    /* 유리 상자는 꼬리만큼 말풍선 밖까지 넓어야 꼬리 안쪽도 같은 유리로 칠해진다 */
+    const cssAll = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
+    const glassRule = (cssAll.match(/#chiefBubble \.cb-glass\{[^}]*\}/) || [''])[0];
+    const sheenRule = (cssAll.match(/#chiefBubble \.cb-glass-sheen\{[^}]*\}/) || [''])[0];
+    assert.ok(new RegExp('left:-' + off.x + 'px').test(glassRule) && new RegExp('top:-' + off.y + 'px').test(glassRule),
+      '유리 상자가 꼬리 영역을 덮지 않는다(꼬리가 비어 보인다): ' + glassRule);
+    assert.ok(new RegExp('left:-' + off.x + 'px').test(sheenRule) && new RegExp('top:-' + off.y + 'px').test(sheenRule),
+      '광택 상자가 꼬리 영역을 덮지 않는다: ' + sheenRule);
+    box.remove();
+
+    /* 베젤이 차지하던 20px 여백 없이 내용이 말풍선 끝까지 찬다 */
+    const css = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
+    assert.ok(/#chiefBubble \.cb-inner\{[^}]*padding:16px 18px 14px/.test(css), '내부 패딩이 베젤 기준(24px 26px)으로 남아 있다');
+    assert.equal(p.errors.length, 0, p.errors.join(' | '));
+  } finally { softClose(p.w); }
+});
+
+test('말풍선 헤더는 상태 알약 + ✕ 만 — 사이드바와 겹치는 캐릭터·이름을 되풀이하지 않는다', async () => {
+  const p = await loadPage({});
+  try {
+    const w = p.w, doc = w.document, bubble = doc.getElementById('chiefBubble');
+    const head = bubble.querySelector('.cb-head');
+    assert.ok(head, '헤더가 없다');
+    assert.equal(head.querySelector('.cb-ava'), null, '헤더 아바타가 남아 있다');
+    assert.equal(head.querySelector('img'), null, '헤더에 캐릭터 이미지가 남아 있다');
+    assert.equal(head.querySelector('.cb-title'), null, '헤더 제목이 남아 있다');
+    assert.ok(!/지수\s*비서실장/.test(head.textContent), '헤더가 이름을 되풀이한다: ' + head.textContent.trim());
+    assert.ok(/대시보드 연동/.test(head.querySelector('.cb-badge').textContent), '상태 알약이 없다');
+    assert.equal(head.querySelector('.cb-badge i').getAttribute('aria-hidden'), 'true');
+    assert.ok(head.querySelector('#cbClose'), '닫기 버튼이 헤더에 없다');
+    assert.equal(head.children.length, 2, '헤더에는 알약과 닫기 두 요소만 있어야 한다');
+    assert.equal(bubble.getAttribute('aria-label'), '지수 비서실장', '말풍선 접근성 이름이 사라졌다');
+    /* 헤더가 짧아진 만큼 대화 영역이 남은 높이를 모두 쓴다 */
+    bubble.classList.add('is-open');
+    const msgCss = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
+    assert.ok(/#chiefBubble \.cb-msgs\{[^}]*flex:1 1 auto/.test(msgCss), '대화 영역이 남은 높이를 채우지 않는다');
+    assert.equal(p.errors.length, 0, p.errors.join(' | '));
+  } finally { softClose(p.w); }
+});
+
 /* ───────────────── 2. 폭별 배치 계산 (1920·1366·900·412) ───────────────── */
 test('폭별 배치: 데스크탑은 사이드바 오른쪽 위, 모바일은 캐릭터 바로 아래 · 꼬리가 아이콘을 가리킨다', async () => {
   const p = await loadPage({});

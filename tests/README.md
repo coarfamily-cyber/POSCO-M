@@ -10,7 +10,7 @@
 | 화면 통합(v2 여러 기기) | `node tests/integration/v2.js JISU/index.html` |
 | 18시 마감 rollover 회귀(#28279 — 부족 완료·판단 대기 유지) | `node tests/integration/rollover-pending-short.js JISU/index.html` |
 | 2026-11-23 코드감사 수정 회귀(A-1~A-17·#28145) | `node tests/bugfix-20261123.test.js JISU/index.html` |
-| 사이드바 '지수 비서실장' — 지도 위 메탈 말풍선(v2, 스파크 없음)·무료 Flash-Lite·코드 집계·[적용 확인] 전 무쓰기·실제 현장 녹화본 섀도잉 (`tests/fixtures/chief-scene-20261122.json`) · 데스크탑 꼬리 = 왼쪽 위 모서리, 모바일 = 캐릭터 아래 28px 고정·넘치면 높이만 축소 (2026-11-28) | `node --test tests/chief-assistant-20261128.test.js` |
+| 사이드바 '지수 비서실장' — 지도 위 NUVO 반투명 다크 유리 말풍선(꼬리까지 한 장, 20px 메탈 베젤 없음, 헤더는 상태 알약+✕만)·무료 Flash-Lite·코드 집계·[적용 확인] 전 무쓰기·실제 현장 녹화본 섀도잉 (`tests/fixtures/chief-scene-20261122.json`) · 데스크탑 꼬리 = 왼쪽 위 모서리, 모바일 = 캐릭터 아래 28px 고정·넘치면 높이만 축소 (2026-11-28) | `node --test tests/chief-assistant-20261128.test.js` |
 | 오전·오후 공백 없는 표기("오전 HH 54 TON, 오후HH 36 TON") 분리 — 화면·예약·08시 스크립트 공통, 이미 저장된 카드·Firebase 사본까지 두 건 (2026-11-27) | `node --test tests/ampm-nospace-20261127.test.js` |
 | 특이사항·새 사진 등록 → 그 구역 버튼 전체 10초 녹색 깜빡임 · 작업중은 투명 유리+회색 점 · 작업지시 저장에는 안 울림 · 범례 회귀 (2026-11-26 2차) | `node tests/flash-dot.test.js JISU/index.html` |
 | 일일보고서 엑셀(구역 버튼별 16시트: 작업 내역·구역 특이사항·현장 사진, 입고 중량일지·피치 현황·환경 호기 표) + 일간·주간·월간 다운로드 전 확인 요청(자동 저장 금지) (2026-11-26) | `node tests/daily-report-20261126.test.js JISU/index.html` |
