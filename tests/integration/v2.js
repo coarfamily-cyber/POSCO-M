@@ -16,9 +16,9 @@ const yesterday = kst(new Date(Date.now() - 86400000));
 const tomorrow = kst(new Date(Date.now() + 86400000));
 const md = d => d.slice(5, 7) + '. ' + d.slice(8, 10) + '.';
 const CK = 'jisu-commands-v1', MK = 'jisu-memos-v1';
-// 구역 묶음 16곳 × (작업지시·특이사항) 32 + 통째로 다루는 묶음 7
-// (피치 기록·입고 기록·환경·환경 로그·예약·예약(별칭)·정비 기록) = 39
-const UNITS = 39;
+// 구역 묶음 16곳 × (작업지시·특이사항) 32 + 통째로 다루는 묶음 8
+// (피치 기록·입고 기록·환경·환경 로그·예약·예약(별칭)·정비 기록·비서실장 브리핑) = 40
+const UNITS = 40;
 const results = [];
 const ok = (name, fn) => { try { fn(); results.push('PASS ' + name); } catch (e) { results.push('FAIL ' + name + ' :: ' + e.message.slice(0, 300)); } };
 const pages = [];

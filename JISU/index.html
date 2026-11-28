@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611282145">
+  <meta name="jisu-build" content="202611282305">
   <script>/* ==========================================================================
      저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
      "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
@@ -16,7 +16,7 @@
   (function(){
     try{
       var ARR=['jisu-commands-v1','jisu-memos-v1','jisu-schedule-v1','jisu-schedules-v1','jisu-env-log-v1','jisu-maint-log-v1'];
-      var OBJ={'jisu-inbound-records-v1':['rows','archivedRows'],'jisu-pitch-records-v1':null,'jisu-env-v1':null,'jisu-perf-daily-close-v1':null};
+      var OBJ={'jisu-inbound-records-v1':['rows','archivedRows'],'jisu-pitch-records-v1':null,'jisu-env-v1':null,'jisu-perf-daily-close-v1':null,'jisu-chief-briefing-v1':null};
       function isObj(x){ return !!x && typeof x==='object' && !Array.isArray(x); }
       window.jisuSanitizeState=function(k,raw){
         if(typeof raw!=='string'||raw==='') return raw;
@@ -6221,6 +6221,47 @@ html body:not(#zz) #mapStage [data-toggle-zone="environment"].env-run:not(.st-fl
       radial-gradient(124% 96% at 50% 46%, rgba(255,255,255,0) 52%, rgba(226,196,167,.16) 82%, rgba(219,186,156,.34) 100%);
       background-repeat:no-repeat, no-repeat;}
   }
+  </style>
+  <!-- ═=" 지수 비서실장 — 강조는 '노란 형광펜 + 검정 글씨' (2026-11-28 수뽕 님 지시) ═════════
+       "텍스트에 중요하거나 필요한부분은 네가 특정색으로 바궈서 텍스트 넣잖아 텍스트는 모두 검정으로 하고
+        이미지처럼 노란색으로 표시한것처럼"
+       · 기존 초록/청록 글자색 강조(#0F766E·#0E7490·#EAFFC4)는 전부 진한 검정(#111827)으로 바꿈다.
+       · 굵게 표시된 핵심(건수·톤수·날씨·긴급/부족/미확인/정비)은 글자 아래~배경에 따뜻한 노란 형광펜이
+         깔린다. 줄이 바뀌어도 줄마다 이어지게 box-decoration-break:clone.
+       · 크림 규칙(#jisuChiefCreamCss) 뒤에 있어 같은 선택자를 그대로 덮어쓴다. -->
+  <style id="jisuChiefHighlightCss">
+  /* ── 핵심 숫자·키워드: 검정 글씨 + 노란 형광펜 ─────────────────────── */
+  #chiefBubble .cb-bub b,
+  #chiefBubble .cb-bub strong,
+  #chiefBubble .cb-bub .cb-em,
+  #chiefBubble .cb-bub .cb-cy{
+    color:#111827 !important;
+    font-weight:800;
+    background-image:linear-gradient(180deg, transparent 26%, rgba(250,204,21,.72) 26%, rgba(253,224,71,.88) 92%, transparent 92%);
+    padding:0 3px;
+    border-radius:3px;
+    -webkit-box-decoration-break:clone;
+    box-decoration-break:clone;
+  }
+  /* 이름표('비서실장 · 07:40')는 형광펜 없이 검정만 — 대화 본문 강조와 섞이지 않게 */
+  #chiefBubble .cb-msg.ai .cb-who b{color:#111827 !important; font-weight:900; background:none; padding:0;}
+  /* 본문 전체는 검정 — 메시지 역할과 상관없이 같은 규칙 */
+  #chiefBubble .cb-msg .cb-bub{color:#111827;}
+  /* 오류만 예외로 빨간색 */
+  #chiefBubble .cb-bub .cb-err{color:#B42318 !important; font-weight:700;}
+  /* ── 긴 브리핑이 위에서 잘려 첫 줄을 못 보는 문제 수정 ─────────────────
+     flex-end 정렬 + overflow 는 크롬에서 위쪽 내용을 스크롤할 수 없게 만든다.
+     대화가 짧을 땐 첫 메시지의 margin-top:auto 가 아래에서부터 쌓이게 한다. */
+  #chiefBubble .cb-msgs{justify-content:flex-start;}
+  #chiefBubble .cb-msgs > :first-child{margin-top:auto;}
+  /* ── 브리핑 현장 사진 썸네일 (누르면 기존 사진 확대창) ─────────────────── */
+  #chiefBubble .cb-photos{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;}
+  #chiefBubble .cb-photo{
+    width:64px; height:64px; padding:0; border-radius:9px; overflow:hidden; cursor:zoom-in;
+    border:1px solid rgba(120,96,72,.18); background:#FFFFFF; box-shadow:0 2px 8px rgba(84,58,38,.10);
+  }
+  #chiefBubble .cb-photo:hover{border-color:rgba(15,118,110,.45); transform:translateY(-1px);}
+  #chiefBubble .cb-photo img{width:100%; height:100%; object-fit:cover; display:block;}
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
@@ -14270,7 +14311,7 @@ paint()})();</script>
     return (Date.now()>=today18Utc)?today18Utc:(today18Utc-DAY);
   }
   function isPhotoExpired(ts){ return Boolean(ts&&ts<photoCutoffMs()); }
-  var STATE_KEYS=['jisu-commands-v1','jisu-memos-v1','jisu-pitch-records-v1','jisu-inbound-records-v1','jisu-schedule-v1','jisu-schedules-v1','jisu-env-v1','jisu-env-log-v1','jisu-maint-log-v1'];
+  var STATE_KEYS=['jisu-commands-v1','jisu-memos-v1','jisu-pitch-records-v1','jisu-inbound-records-v1','jisu-schedule-v1','jisu-schedules-v1','jisu-env-v1','jisu-env-log-v1','jisu-maint-log-v1','jisu-chief-briefing-v1'];
   var PHOTO_DB={outbound:{db:'jisu-photos',store:'outbound'},inbound:{db:'jisu-inbound-photos',store:'inbound'},pitch:{db:'jisu-pitch-photos',store:'pitch'}};
   var ZONE_STORE={db:'jisu-zone-photos-v1',store:'photos'};
   var ALL_ZONES=['outbound','inbound','pitch','packaging','packaging-d','environment','warehouse','production-a','production-b','production-c','production-d','production-e','production-f','production-g','production-h'];
@@ -14323,7 +14364,7 @@ paint()})();</script>
   var V2_ZONES=['outbound','inbound','pitch','packaging','packaging-d','environment','production-a','production-b','production-c','production-d','production-e','production-f','production-g','production-h'];
   var V2_PARTS=V2_ZONES.concat(['_admin','_notice']);
   var V2_SPLIT={'jisu-commands-v1':1,'jisu-memos-v1':1};
-  var V2_WHOLE={'jisu-pitch-records-v1':'pitch','jisu-inbound-records-v1':'inbound','jisu-env-v1':'environment','jisu-env-log-v1':'environment','jisu-schedule-v1':'_admin','jisu-schedules-v1':'_admin','jisu-maint-log-v1':'_admin'};
+  var V2_WHOLE={'jisu-pitch-records-v1':'pitch','jisu-inbound-records-v1':'inbound','jisu-env-v1':'environment','jisu-env-log-v1':'environment','jisu-schedule-v1':'_admin','jisu-schedules-v1':'_admin','jisu-maint-log-v1':'_admin','jisu-chief-briefing-v1':'_admin'};
   var SYNC_MODE=(function(){ try{ return lsGet('jisu-sync-mode')==='v2'?'v2':'state'; }catch(_){ return 'state'; } })();
   var ROLE={all:true,zone:''};
   var UNITS=[];
@@ -17679,6 +17720,9 @@ paint()})();</script>
   function fmt(t){
     var s = esc(String(t == null ? '' : t).trim());
     s = s.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+    /* 생성 스크립트가 <b>…</b>·<br> 로 표시한 핵심도 같은 노란 형광펜으로.
+       이 두 태그만 되살리고 나머지 HTML 은 계속 글자로 보여 준다. */
+    s = s.replace(/&lt;(\/?)b&gt;/gi, '<$1b>').replace(/&lt;br\s*\/?&gt;/gi, '<br>');
     s = s.replace(/\n{2,}/g, '<br><br>').replace(/\n/g, '<br>');
     return s;
   }
@@ -18201,7 +18245,7 @@ paint()})();</script>
   var keyBox = $('cbKeyBox'), keyInput = $('cbKeyInput'), keySave = $('cbKeySave'), keyToggle = $('cbKeyToggle');
   var svg = bubble.querySelector('.cb-svg'), glass = bubble.querySelector('.cb-glass'), sheen = bubble.querySelector('.cb-glass-sheen');
   var RAD = 26, GLASS_DX = 40, GLASS_DY = 30;
-  var state = { busy:false, pending:null, greeted:false };
+  var state = { busy:false, pending:null, greeted:false, briefing:null };
 
   function n(v){ return Math.round(v * 100) / 100; }
   /* 데스크탑: 왼쪽 위 모서리 꼬리 — 둥근 모서리를 대신해 그 자리에서 캐릭터 쪽으로 뻗어 나간다.
@@ -18497,6 +18541,7 @@ paint()})();</script>
     text = String(text || '').trim();
     if(!text || state.busy) return Promise.resolve(false);
     addMsg('me', esc(text));
+    if(state.briefing) markBriefingSeen(state.briefing);   /* 브리핑을 읽고 말을 걸었으면 확인한 것 */
     var snap = buildChiefContextSnapshot();
     var key = getKey();
     if(!key){
@@ -18572,6 +18617,8 @@ paint()})();</script>
     btn.classList.remove('is-open');
     btn.setAttribute('aria-expanded', 'false');
     state.pending = null;
+    /* ✕·Esc·바깥 클릭으로 닫으면 이 회차 브리핑은 확인한 것 — 새로고침해도 다시 뜨지 않는다 */
+    if(state.briefing) markBriefingSeen(state.briefing);
   }
   function toggle(){ if(bubble.classList.contains('is-open')) close(); else open(); }
 
@@ -18586,6 +18633,166 @@ paint()})();</script>
     if(bubble.classList.contains('is-open')){ place(); buildPaths(); }
   });
 
+  /* ══ ⑤ 자동 브리핑 (매일 07:40 · 17:40) — 관리자 화면에서만 ═════════════════════
+     스크립트(scheduled-actions/jisu-chief-briefing/jisu_chief_briefing.py)가 Firebase
+     jisu/state/jisu-chief-briefing-v1 에 남긴
+       { id:'2026-11-29-0740', slot:'am'|'pm', title, text, createdAt, expiresAt }
+     를 이 화면이 실시간으로 받아, 비서실장 말풍선을 스스로 열고 브리핑을 읽어 준다.
+     · ?zone= 작업자 화면·?kiosk=1 키오스크에서는 절대 열지 않는다(관리자 화면 전용).
+     · 같은 회차(id)는 ✕ 로 닫으면 다시 뜨지 않는다 — 기기별 기억(localStorage jisu-chief-briefing-seen).
+     · 보고서 다운로드 확인창 등 다른 창이 떠 있으면 닫힌 뒤에 연다(17:40 ↔ 18시 안내 겹침 방지). */
+  var BRIEF_KEY = 'jisu-chief-briefing-v1';
+  var BRIEF_SEEN = 'jisu-chief-briefing-seen';
+  function isAdminScreen(){
+    try{
+      if(document.documentElement.classList.contains('kiosk')) return false;
+      if(document.documentElement.classList.contains('worker-zone-only')) return false;
+      if(document.body.classList.contains('worker-zone-only')) return false;
+      var q = new URLSearchParams(location.search);
+      if(q.get('zone')) return false;
+      if(q.get('kiosk') === '1') return false;
+    }catch(_){ return false; }
+    return true;
+  }
+  /* 지금 유효한 브리핑인가 — 없거나, 글이 비었거나, expiresAt 이 지났으면 null */
+  function currentBriefing(nowMs){
+    var b = obj(BRIEF_KEY);
+    if(!b || typeof b !== 'object' || !b.id) return null;
+    if(!String(b.text || '').trim()) return null;
+    var exp = Number(b.expiresAt);
+    if(isFinite(exp) && exp > 0 && (nowMs || Date.now()) >= exp) return null;
+    return b;
+  }
+  function briefingSeen(id){
+    try{ return localStorage.getItem(BRIEF_SEEN) === String(id); }catch(_){ return false; }
+  }
+  function markBriefingSeen(id){
+    if(!id) return;
+    try{ localStorage.setItem(BRIEF_SEEN, String(id)); }catch(_){}
+  }
+  function briefSel(id){ return '[data-cb-briefing="' + String(id).replace(/["\\]/g, '') + '"]'; }
+  /* 다른 확인창(보고서 다운로드 확인 등)이 떠 있으면 그 창을 덮지 않는다 */
+  function briefBlocked(){
+    try{ if(window.jisuIsDlConfirmOpen && window.jisuIsDlConfirmOpen()) return true; }catch(_){}
+    try{ var ov = document.getElementById('dlConfirmModal'); if(ov && ov.classList.contains('is-open')) return true; }catch(_){}
+    return false;
+  }
+  var briefTimer = null, briefTry = 0;
+  function scheduleBriefCheck(ms){
+    if(briefTimer) clearTimeout(briefTimer);
+    briefTimer = setTimeout(function(){ briefTimer = null; checkBriefing(); }, ms);
+  }
+  /* 브리핑 사진: briefing.photos([{id,zone,label}]) · photoIds(['zone:id']) → 썸네일 목록 */
+  function briefPhotoList(b){
+    var out = [], seen = {};
+    function add(zone, id, label){
+      zone = String(zone || ''); id = String(id || '');
+      if(!zone || !id || seen[zone + ':' + id]) return;
+      seen[zone + ':' + id] = 1;
+      out.push({ zone:zone, id:id, label:String(label || '') });
+    }
+    function fromString(s){
+      s = String(s || '');
+      var i = s.indexOf(':');
+      if(i > 0) add(s.slice(0, i), s.slice(i + 1), '');
+    }
+    (Array.isArray(b && b.photos) ? b.photos : []).forEach(function(p){
+      if(!p) return;
+      if(typeof p === 'string'){ fromString(p); return; }
+      add(p.zone, p.id, p.label);
+    });
+    (Array.isArray(b && b.photoIds) ? b.photoIds : []).forEach(function(p){
+      if(typeof p === 'string'){ fromString(p); return; }
+      if(p && p.zone) add(p.zone, p.id, p.label);
+    });
+    return out.slice(0, 4);
+  }
+  /* 기존 사진 로더(IndexedDB → RTDB 1건)를 그대로 쓴다 — 브리핑용 새 저장소를 만들지 않는다 */
+  function loadBriefPhoto(p){
+    var b = window.jisuPhotoBridge;
+    if(!b || !b.available) return Promise.resolve(null);
+    return Promise.resolve()
+      .then(function(){ return b.get(p.zone, p.id); })
+      .then(function(rec){ if(rec && rec.data) return rec; return b.remote(p.zone, p.id); })
+      .then(function(rec){ if(rec && rec.data) return rec; return null; })
+      .catch(function(){ return null; });
+  }
+  function renderBriefPhotos(el, b){
+    var list = briefPhotoList(b);
+    if(!list.length || !el) return 0;
+    var bub = el.querySelector('.cb-bub');
+    if(!bub) return 0;
+    var strip = document.createElement('div');
+    strip.className = 'cb-photos';
+    strip.setAttribute('role', 'group');
+    strip.setAttribute('aria-label', '브리핑 현장 사진');
+    list.forEach(function(p){
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cb-photo';
+      btn.setAttribute('data-photo-zone', p.zone);
+      btn.setAttribute('data-photo-id', p.id);
+      btn.setAttribute('title', (p.label || p.zone) + ' 사진 크게 보기');
+      var img = document.createElement('img');
+      img.alt = (p.label || p.zone) + ' 사진';
+      img.loading = 'lazy';
+      btn.appendChild(img);
+      strip.appendChild(btn);
+      loadBriefPhoto(p).then(function(rec){
+        if(rec && rec.data) img.src = rec.data;
+        else if(btn.parentNode) btn.parentNode.removeChild(btn);   /* 사진이 만료·삭제됐으면 빈 칸을 남기지 않는다 */
+      });
+    });
+    bub.appendChild(strip);
+    return list.length;
+  }
+  /* 말풍선에 브리핑 한 건 표시(중복 방지) — 제목 굵게 + 본문(빈 줄은 문단으로) */
+  function showBriefingMessage(b){
+    if(!b || !msgs) return false;
+    var id = String(b.id);
+    if(msgs.querySelector(briefSel(id))) return false;
+    var title = String(b.title || '').trim() || (b.slot === 'pm' ? '오후 브리핑' : '아침 브리핑');
+    var body = String(b.text || '').trim();
+    var el = addMsg('ai', '<b>' + esc(title) + '</b>' + (body ? '<br>' + fmt(body) : ''));
+    el.setAttribute('data-cb-briefing', id);
+    state.briefing = id;
+    try{ renderBriefPhotos(el, b); }catch(_){}
+    scrollEnd();
+    /* 브리핑은 길다 — 맥 끝(인사 뒤)이 아니라 첫 줄(제목)부터 읽을 수 있게 그 자리로 올린다 */
+    try{
+      var r = el.getBoundingClientRect(), mr = msgs.getBoundingClientRect();
+      msgs.scrollTop = Math.max(0, msgs.scrollTop + (r.top - mr.top) - 2);
+    }catch(_){}
+    return true;
+  }
+  /* 유효한·아직 확인하지 않은 브리핑이 있으면 말풍선을 열고 보여 준다 */
+  function checkBriefing(nowMs){
+    if(!isAdminScreen()) return false;
+    var b = currentBriefing(nowMs);
+    if(!b) return false;
+    if(briefingSeen(b.id)) return false;
+    if(msgs && msgs.querySelector(briefSel(b.id))) return false;
+    if(briefBlocked()){                    /* 확인창이 닫힐 때까지 5초 간격으로 계속 미룸(닫히면 바로 연다) */
+      briefTry++;
+      scheduleBriefCheck(5000);
+      return false;
+    }
+    briefTry = 0;
+    open();
+    showBriefingMessage(b);
+    return true;
+  }
+  scheduleBriefCheck(900);                                   /* 페이지를 열 때 */
+  window.addEventListener('load', function(){ scheduleBriefCheck(500); });
+  window.addEventListener('storage', function(e){
+    if(e && e.key === BRIEF_KEY) scheduleBriefCheck(80);     /* 다른 창·기기에서 도착 */
+  });
+  window.addEventListener('jisu:remote-sync', function(e){
+    var k = e && e.detail && e.detail.key;
+    if(k === BRIEF_KEY) scheduleBriefCheck(80);              /* Firebase 실시간 수신 */
+  });
+  setInterval(function(){ try{ checkBriefing(); }catch(_){} }, 60000);   /* 놓쳤을 때를 위한 조용한 확인 */
+
   /* 말풍선 안 클릭: 적용/나중에 + 추천 칩 */
   bubble.addEventListener('click', function(e){
     var ap = e.target.closest && e.target.closest('[data-cb-apply]');
@@ -18597,6 +18804,13 @@ paint()})();</script>
       var acts = lt.closest('.cb-msg');
       if(acts){ var box = acts.querySelector('.cb-acts'); if(box) box.remove(); }
       addMsg('sys', '알겠습니다. 실행하지 않았습니다. 필요할 때 다시 말씀해 주세요.');
+      return;
+    }
+    var ph = e.target.closest && e.target.closest('[data-photo-zone]');
+    if(ph){
+      e.preventDefault();
+      var pz = ph.getAttribute('data-photo-zone'), pi = ph.getAttribute('data-photo-id');
+      try{ if(typeof window.jisuOpenPhotoById === 'function') window.jisuOpenPhotoById(pz, pi); }catch(_){}
       return;
     }
     var chip = e.target.closest && e.target.closest('[data-cb-chip]');
@@ -18633,7 +18847,18 @@ paint()})();</script>
     buildSnapshot:buildChiefContextSnapshot, snapshotBrief:snapshotBrief,
     getPending:function(){ return state.pending; },
     applyPlan:applyPlan,
-    hasKey:function(){ return !!getKey(); }
+    hasKey:function(){ return !!getKey(); },
+    /* 자동 브리핑(07:40·17:40) — 테스트·진단용 */
+    checkBriefing:checkBriefing, showBriefing:showBriefingMessage,
+    currentBriefing:currentBriefing, isAdminScreen:isAdminScreen,
+    isBriefingSeen:briefingSeen, markBriefingSeen:markBriefingSeen,
+    briefingKey:BRIEF_KEY, briefingSeenKey:BRIEF_SEEN,
+    briefDebug:function(){
+      var b=currentBriefing();
+      return { admin:isAdminScreen(), id:b?String(b.id):'', seen:b?briefingSeen(b.id):false,
+        shown:!!(b && msgs && msgs.querySelector(briefSel(b.id))),
+        blocked:briefBlocked(), tries:briefTry, pending:!!briefTimer, open:bubble.classList.contains('is-open') };
+    }
   };
   window.jisuChiefTest = {
     geometry:geometry, normalizeActions:normalizeActions, baseTarget:baseTarget, describeAction:describeAction,

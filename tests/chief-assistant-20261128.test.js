@@ -5,6 +5,9 @@
 //   · 말풍선 여닫기(아이콘 재클릭·✕·Esc·바깥 클릭) / 폭별(1920·1366·900·412) 배치 계산
 //   · buildChiefContextSnapshot() 집계 정확도(합성 입력 + 2026-11-22 실제 현장 녹화본 섀도잉)
 //   · [적용 확인] 전에는 localStorage 에 아무것도 쓰지 않고, 누른 뒤에만 반영
+//   · 07:40·17:40 자동 브리핑(jisu-chief-briefing-v1) — 관리자 화면 말풍선 자동 오픈,
+//     같은 회차 재오픈 방지(seen), 작업자(?zone=)·키오스크(?kiosk=1) 미오픈, 만료 무시
+//   · 강조는 '검정 글씨 + 노란 형광펜'(2026-11-28 수뽕 님 지시) — 초록/청록 글자색 금지
 // 회귀 테스트 — jsdom + 가짜 Firebase + 가짜 IndexedDB. 네트워크·운영 DB·푸시 서버로 나가지 않는다.
 const fs = require('fs');
 const path = require('path');
@@ -36,7 +39,8 @@ if (typeof test.after === 'function') test.after(async () => {
 });
 
 /* 페이지 하나 띄우기 — 밖으로 나가는 요청은 전부 가짜 응답 */
-async function loadPage(seed) {
+async function loadPage(seed, opt) {
+  opt = opt || {};
   const errors = [];
   const vc = new VirtualConsole();
   const envOnly = m => /Not implemented: HTMLCanvasElement\.prototype\.getContext/.test(m);
@@ -46,7 +50,7 @@ async function loadPage(seed) {
   const fake = makeFakeFirebase();
   const gemini = [];
   const dom = new JSDOM(html, {
-    url: 'https://jisu.test/POSCO-M/JISU/index.html',
+    url: opt.url || 'https://jisu.test/POSCO-M/JISU/index.html',
     runScripts: 'dangerously', pretendToBeVisual: true, virtualConsole: vc,
     beforeParse(w) {
       w.firebase = fake.firebase;
@@ -78,8 +82,8 @@ async function loadPage(seed) {
     }
   });
   opened.push(dom.window);
-  await sleep(1700);
-  return { w: dom.window, errors, gemini };
+  await sleep(opt.wait || 1700);
+  return { w: dom.window, errors, gemini, fake };
 }
 
 const snap = (w, day) => plain(w.eval(`window.buildChiefContextSnapshot(${day ? JSON.stringify(day) : ''})`));
@@ -712,5 +716,239 @@ test('키가 없으면 안내하고, 전용 키 → 기존 일괄등록 키 순�
     assert.ok(p.gemini.length >= 1 && /AIzaCHIEF/.test(p.gemini[p.gemini.length - 1].url), '전용 키가 우선되지 않는다');
     const sent = JSON.parse(p.gemini[p.gemini.length - 1].body);
     assert.ok(/금일작업/.test(sent.contents[0].parts[0].text), '집계가 프롬프트에 들어가지 않았다');
+  } finally { softClose(p.w); }
+});
+
+/* ───────────────── 6. 07:40·17:40 자동 브리핑 (2026-11-28 수뽕 님 지시) ───────────────── */
+const BRIEF = 'jisu-chief-briefing-v1';
+const BRIEF_SEEN = 'jisu-chief-briefing-seen';
+const BRIEF_AM = '2026-11-29-0740';
+const BRIEF_PM = '2026-11-29-1740';
+const briefJson = (o) => JSON.stringify(Object.assign({
+  id: BRIEF_AM, slot: 'am', title: '🌅 07:40 아침 브리핑 · 주간',
+  text: '세종2공장 주간 날씨(08:00~18:00) · 기온 **1~10℃** · 강수확률 **70%**\n금일작업 **6건** — 남음 **5** · 긴급 **1**',
+  createdAt: Date.now(), expiresAt: Date.now() + 6 * 3600 * 1000
+}, o || {}));
+const briefMsg = (doc, id) => doc.querySelector('[data-cb-briefing="' + id + '"]');
+
+test('브리핑이 들어오면 관리자 말풍선이 스스로 열리고, 강조는 검정 글씨 + 노란 형광펜이다', async () => {
+  const p = await loadPage({ [BRIEF]: briefJson() });
+  try {
+    const w = p.w, doc = w.document, bubble = doc.getElementById('chiefBubble');
+    assert.ok(bubble.classList.contains('is-open'), '브리핑이 있는데 말풍선이 열리지 않았다');
+    assert.equal(bubble.getAttribute('aria-hidden'), 'false');
+    assert.equal(doc.getElementById('jisuChiefBtn').getAttribute('aria-expanded'), 'true');
+    const el = briefMsg(doc, BRIEF_AM);
+    assert.ok(el, '브리핑 메시지가 대화창에 없다');
+    assert.ok(/아침 브리핑/.test(el.textContent), el.textContent);
+    assert.ok(/1~10℃/.test(el.textContent) && /70%/.test(el.textContent), '브리핑 본문이 빠졌다: ' + el.textContent);
+    assert.equal(doc.querySelectorAll('[data-cb-briefing]').length, 1, '같은 브리핑이 두 번 들어갔다');
+    /* 강조: 초록/청록이 아니라 진한 검정 + 노란 형광펜 */
+    const strong = el.querySelector('.cb-bub b');
+    assert.ok(strong, '강조(b)가 없다');
+    const cs = w.getComputedStyle(strong);
+    assert.equal(cs.color, 'rgb(17, 24, 39)', '강조 글씨가 진한 검정이 아니다: ' + cs.color);
+    assert.ok(/linear-gradient/.test(cs.backgroundImage), '형광펜 배경이 없다: ' + cs.backgroundImage);
+    assert.ok(/250,\s*204,\s*21|253,\s*224,\s*71/.test(cs.backgroundImage), '노란색 형광펜이 아니다: ' + cs.backgroundImage);
+    /* 확인 전에는 seen 을 쓰지 않는다 */
+    assert.equal(w.localStorage.getItem(BRIEF_SEEN), null);
+    assert.equal(p.errors.length, 0, p.errors.join(' | '));
+  } finally { softClose(p.w); }
+});
+
+test('브리핑을 ✕로 닫으면 같은 회차는 새로고침해도 다시 열지 않는다 (중복 방지)', async () => {
+  const p = await loadPage({ [BRIEF]: briefJson() });
+  try {
+    const w = p.w, doc = w.document, bubble = doc.getElementById('chiefBubble');
+    assert.ok(bubble.classList.contains('is-open'));
+    doc.getElementById('cbClose').click();
+    assert.ok(!bubble.classList.contains('is-open'), '✕로 닫히지 않았다');
+    assert.equal(w.localStorage.getItem(BRIEF_SEEN), BRIEF_AM, '✕로 닫았는데 확인 기록이 없다');
+    assert.equal(w.jisuChief.checkBriefing(), false, '확인한 브리핑이 다시 열렸다');
+    assert.ok(!bubble.classList.contains('is-open'));
+  } finally { softClose(p.w); }
+  const q = await loadPage({ [BRIEF]: briefJson(), [BRIEF_SEEN]: BRIEF_AM }, { wait: 1500 });
+  try {
+    const doc = q.w.document;
+    assert.ok(!doc.getElementById('chiefBubble').classList.contains('is-open'), '확인한 브리핑이 새로고침 뒤 다시 열렸다');
+    assert.equal(doc.querySelectorAll('[data-cb-briefing]').length, 0);
+  } finally { softClose(q.w); }
+});
+
+test('만료된 브리핑(expiresAt 지남)은 열지 않고, 새 회차(id)는 다시 연다', async () => {
+  const p = await loadPage({ [BRIEF]: briefJson({ expiresAt: Date.now() - 60000 }) }, { wait: 1500 });
+  try {
+    const w = p.w, doc = w.document, bubble = doc.getElementById('chiefBubble');
+    assert.equal(w.jisuChief.currentBriefing(), null, '만료된 브리핑이 유효로 남아 있다');
+    assert.ok(!bubble.classList.contains('is-open'), '만료된 브리핑으로 말풍선이 열렸다');
+    /* 같은 id 라도 새 회차가 오면 seen 과 무관하게 열린다 */
+    w.localStorage.setItem(BRIEF_SEEN, BRIEF_AM);
+    w.localStorage.setItem(BRIEF, briefJson({
+      id: BRIEF_PM, slot: 'pm', title: '🌆 17:40 저녁 브리핑 · 야간',
+      text: '야간 날씨(18:00~익일 08:00) · 기온 **3~8℃**\n달력 예약(내일) **1건**'
+    }));
+    assert.equal(w.jisuChief.checkBriefing(), true, '새 회차 브리핑이 열리지 않았다');
+    const el = briefMsg(doc, BRIEF_PM);
+    assert.ok(el && /야간/.test(el.textContent), '저녁 브리핑이 표시되지 않았다');
+  } finally { softClose(p.w); }
+});
+
+test('작업자 ?zone= 화면과 ?kiosk=1 키오스크에서는 브리핑 말풍선을 열지 않는다', async () => {
+  const cases = [
+    { url: 'https://jisu.test/POSCO-M/JISU/index.html?zone=outbound', why: '?zone= 작업자 화면' },
+    { url: 'https://jisu.test/POSCO-M/JISU/index.html?kiosk=1', why: '?kiosk=1 키오스크' }
+  ];
+  for (const c of cases) {
+    const p = await loadPage({ [BRIEF]: briefJson() }, { url: c.url, wait: 1500 });
+    try {
+      const w = p.w, doc = w.document;
+      assert.equal(w.jisuChief.isAdminScreen(), false, c.why + ' 인데 관리자 화면으로 판정했다');
+      assert.ok(!doc.getElementById('chiefBubble').classList.contains('is-open'), c.why + ' 에서 말풍선이 열렸다');
+      assert.equal(doc.querySelectorAll('[data-cb-briefing]').length, 0, c.why + ' 에서 브리핑이 표시됐다');
+      assert.equal(w.localStorage.getItem(BRIEF_SEEN), null, c.why + ' 에서 확인 기록을 썼다');
+    } finally { softClose(p.w); }
+  }
+});
+
+/* 이 시간대(18시 이후)에는 페이지가 입고·보고서 확인창을 스스로 띄운다 — 브리핑보다 그 창이 우선이므로
+   테스트에서는 확인창을 닫아 가며 브리핑이 열리는지 본다. */
+const closeDl = (doc) => {
+  const d = doc.getElementById('dlConfirmModal');
+  if (d && d.classList.contains('is-open')) { const c = doc.getElementById('dlConfirmCancel'); if (c) c.click(); }
+};
+
+test('페이지를 연 뒤 Firebase 실시간으로 도착한 브리핑도 열린다 (중복 없음)', async () => {
+  const p = await loadPage({}, { wait: 1300 });
+  try {
+    const w = p.w, doc = w.document, bubble = doc.getElementById('chiefBubble');
+    assert.ok(!bubble.classList.contains('is-open'), '브리핑이 없는데 말풍선이 열려 있다');
+    /* DB 구독(readyKey)이 붙을 때까지 잠깐 기다린다 — 큰 페이지라 1.3초에 아직일 수 있다 */
+    for (let i = 0; i < 50 && !p.fake.state.listeners.some(l => l.path === 'jisu/state/' + BRIEF); i++) await sleep(100);
+    assert.ok(p.fake.state.listeners.some(l => l.path === 'jisu/state/' + BRIEF), '브리핑 키 구독이 시작되지 않았다');
+    /* 18시 이후 로드에서는 보고서 다운로드 확인창이 자동으로 떠 있다 → 먼저 닫는다(아래 겹짐 테스트가 따로 있다) */
+    closeDl(doc);
+    /* fakefb.setServer 는 값만 저장하고 리스너를 부르지 않는다 → 실제 수신처럼 콜백을 직접 부른다 */
+    const node = {
+      v: briefJson({ id: BRIEF_PM, slot: 'pm', title: '🌆 17:40 저녁 브리핑 · 야간', text: '야간 날씨 · 기온 **3~8℃**' }),
+      t: Date.now(), by: 'pickle-chief-pm'
+    };
+    p.fake.setServer('jisu/state/' + BRIEF, node);
+    p.fake.state.listeners
+      .filter(l => l.path === 'jisu/state/' + BRIEF)
+      .forEach(l => l.cb({ key: BRIEF, val: () => JSON.parse(JSON.stringify(node)), exists: () => true }));
+    for (let i = 0; i < 75 && !bubble.classList.contains('is-open'); i++) { closeDl(doc); await sleep(100); }
+    assert.ok(bubble.classList.contains('is-open'), '실시간으로 온 브리핑에 말풍선이 열리지 않았다');
+    const el = briefMsg(doc, BRIEF_PM);
+    assert.ok(el && /야간/.test(el.textContent), '저녁 브리핑이 표시되지 않았다');
+    assert.equal(doc.querySelectorAll('[data-cb-briefing]').length, 1);
+    w.jisuChief.checkBriefing();
+    w.jisuChief.checkBriefing();
+    assert.equal(doc.querySelectorAll('[data-cb-briefing]').length, 1, '같은 브리핑이 중복 추가됐다');
+    /* 사람이 말을 걸면(=읽었다) 확인으로 기록 */
+    await w.jisuChief.ask('오늘 남은 작업 요약');
+    await sleep(80);
+    assert.equal(w.localStorage.getItem(BRIEF_SEEN), BRIEF_PM, '브리핑을 읽고 질문했는데 확인 기록이 없다');
+  } finally { softClose(p.w); }
+});
+
+test('말풍선 강조 스타일: 크림 규칙 뒤에서 초록/청록 글자색을 검정+형광펜으로 덮는다', async () => {
+  const p = await loadPage({});
+  try {
+    const w = p.w, doc = w.document;
+    const hl = doc.getElementById('jisuChiefHighlightCss');
+    assert.ok(hl, '강조 스타일(#jisuChiefHighlightCss)이 없다');
+    const all = Array.from(doc.querySelectorAll('style'));
+    assert.ok(all.indexOf(doc.getElementById('jisuChiefCreamCss')) < all.indexOf(hl), '크림 규칙보다 앞에 있어 덮어쓰지 못한다');
+    const css = hl.textContent;
+    assert.ok(/color:#111827 !important/.test(css), '검정 글씨 규칙이 없다');
+    assert.ok(/background-image:linear-gradient\(180deg, transparent 26%, rgba\(250,204,21,\.72\) 26%/.test(css), '노란 형광펜 그라데이션이 없다');
+    assert.ok(/box-decoration-break:clone/.test(css), '줄바꿈된 강조가 줄마다 이어지지 않는다');
+    /* 실제 렌더 — 인사말의 <b> 가 검정 + 형광펜 */
+    doc.getElementById('jisuChiefBtn').click();
+    const b = doc.querySelector('#cbMsgs .cb-msg.ai .cb-bub b');
+    assert.ok(b, '인사말에 강조가 없다');
+    const cs = w.getComputedStyle(b);
+    assert.equal(cs.color, 'rgb(17, 24, 39)', '인사말 강조가 검정이 아니다: ' + cs.color);
+    assert.ok(/linear-gradient/.test(cs.backgroundImage), '인사말 강조에 형광펜이 없다: ' + cs.backgroundImage);
+    const whoBg = w.getComputedStyle(doc.querySelector('#cbMsgs .cb-msg.ai .cb-who b')).backgroundImage;
+    assert.ok(!whoBg || whoBg === 'none', '이름표까지 형광펜이 칠해졌다: ' + whoBg);
+    assert.equal(p.errors.length, 0, p.errors.join(' | '));
+  } finally { softClose(p.w); }
+});
+
+test('생성 스크립트가 <b>·<br> 로 표시한 핵심도 같은 형광펜으로 그려진다 (다른 HTML 은 글자로)', async () => {
+  const p = await loadPage({});
+  try {
+    const w = p.w, doc = w.document;
+    doc.getElementById('jisuChiefBtn').click();
+    w.jisuChief.showBriefing({ id: 'test-b1', slot: 'am', title: '테스트 브리핑', text: '<b>긴급 2건</b> 먼저<br><script>alert(1)</script> 확인' });
+    const el = briefMsg(doc, 'test-b1');
+    assert.ok(el, '브리핑이 추가되지 않았다');
+    const bolds = el.querySelectorAll('b');
+    assert.ok(bolds.length >= 2, '<b> 마크업이 글자로 새어 나왔다: ' + el.innerHTML);
+    assert.ok(/긴급 2건/.test(bolds[bolds.length - 1].textContent), el.innerHTML);
+    assert.ok(el.querySelector('br'), '<br> 줄바꿈이 살아나지 않았다');
+    assert.ok(!el.querySelector('script'), '허용하지 않은 태그가 실행됐다');
+    assert.ok(/&lt;script&gt;/.test(el.innerHTML), '허용하지 않은 태그가 글자로 남지 않았다: ' + el.innerHTML);
+  } finally { softClose(p.w); }
+});
+
+test('보고서 확인창이 떠 있으면 17:40 브리핑은 그 창이 닫힌 뒤에 연다 (18시 겹침 방지)', async () => {
+  const p = await loadPage({}, { wait: 1500 });
+  try {
+    const w = p.w, doc = w.document, bubble = doc.getElementById('chiefBubble');
+    /* 18시 이후 로드에서는 확인창이 이미 떠 있을 수 있다 → 확실히 띄운다 */
+    const pr = w.jisuConfirmDownload({ title: '일일보고서를 다운로드할까요?', filename: 'x.xlsx', desc: '테스트' });
+    if (pr && pr.catch) pr.catch(() => { });
+    assert.ok(w.jisuIsDlConfirmOpen(), '확인창이 열리지 않았다');
+    w.localStorage.setItem(BRIEF, briefJson({ id: '2026-11-29-1740', slot: 'pm', title: '🌆 17:40 저녁 브리핑 · 야간', text: '야간 날씨 · 기온 **3~8℃**' }));
+    assert.equal(w.jisuChief.checkBriefing(), false, '확인창이 떠 있는데 브리핑을 열었다');
+    assert.ok(!bubble.classList.contains('is-open'), '확인창을 덮고 말풍선이 열렸다');
+    assert.equal(doc.querySelectorAll('[data-cb-briefing]').length, 0);
+    /* 확인창을 닫으면 5초 간격 재확인으로 열린다 */
+    doc.getElementById('dlConfirmCancel').click();
+    assert.equal(w.jisuIsDlConfirmOpen(), false);
+    let opened = false;
+    for (let i = 0; i < 70 && !opened; i++) { closeDl(doc); await sleep(100); opened = bubble.classList.contains('is-open'); }
+    assert.ok(!opened || !w.jisuIsDlConfirmOpen(), '브리핑이 열린 순간에 확인창이 겹쳐 있다');
+    assert.ok(opened, '확인창이 닫힌 뒤에도 브리핑이 열리지 않았다');
+    assert.ok(briefMsg(doc, '2026-11-29-1740'), '저녁 브리핑 메시지가 없다');
+  } finally { softClose(p.w); }
+});
+
+test('브리핑 photos/photoIds 가 있으면 말풍선에 썸네일이 붙고, 누르면 기존 사진 확대창으로 연다', async () => {
+  const p = await loadPage({});
+  try {
+    const w = p.w, doc = w.document;
+    const asked = [];
+    w.jisuPhotoBridge = {
+      available: true,
+      get: (zone, id) => Promise.resolve({ zone, id, data: 'data:image/png;base64,AAAA' }),
+      remote: () => Promise.resolve(null)
+    };
+    w.jisuOpenPhotoById = (zone, id) => { asked.push(zone + ':' + id); return true; };
+    doc.getElementById('jisuChiefBtn').click();
+    w.jisuChief.showBriefing({
+      id: 'photo-1', slot: 'am', title: '사진 브리핑', text: '입고 **중복 의심** 확인',
+      photos: [{ id: 'inb-2', zone: 'inbound', label: '입고' }],
+      photoIds: ['inbound:inb-2', 'inbound:inb-1']
+    });
+    await sleep(80);
+    const el = briefMsg(doc, 'photo-1');
+    assert.ok(el, '브리핑 메시지가 없다');
+    const btns = el.querySelectorAll('.cb-photo');
+    assert.equal(btns.length, 2, '썸네일이 photos·photoIds 만큼 붙지 않았다');
+    assert.equal(btns[0].getAttribute('data-photo-zone'), 'inbound');
+    assert.equal(btns[0].getAttribute('data-photo-id'), 'inb-2');
+    const img = btns[0].querySelector('img');
+    assert.ok(/^data:image/.test(img.getAttribute('src') || ''), '썸네일 이미지가 채워지지 않았다: ' + img.getAttribute('src'));
+    btns[0].click();
+    assert.deepEqual(asked, ['inbound:inb-2'], '썸네일을 누르면 기존 사진 확대창(jisuOpenPhotoById)으로 열려야 한다');
+    /* 사진이 만료·삭제됐으면 빈 칸을 남기지 않는다 */
+    w.jisuPhotoBridge = { available: true, get: () => Promise.resolve(null), remote: () => Promise.resolve(null) };
+    w.jisuChief.showBriefing({ id: 'photo-2', slot: 'am', title: '사진 없음', text: '본문', photos: [{ id: 'gone', zone: 'pitch' }] });
+    await sleep(80);
+    assert.equal(briefMsg(doc, 'photo-2').querySelectorAll('.cb-photo').length, 0, '없는 사진의 빈 썸네일이 남았다');
+    assert.equal(p.errors.length, 0, p.errors.join(' | '));
   } finally { softClose(p.w); }
 });
