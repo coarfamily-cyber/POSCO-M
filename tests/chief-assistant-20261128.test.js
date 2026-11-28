@@ -146,7 +146,7 @@ test('처음 열면 지금 집계로 인사한다 (예시 숫자를 지어내지
 });
 
 /* ───────────────── 2. 폭별 배치 계산 (1920·1366·900·412) ───────────────── */
-test('폭별 배치: 데스크탑은 사이드바 오른쪽 위, 모바일은 상단 중앙 · 꼬리가 아이콘을 가리킨다', async () => {
+test('폭별 배치: 데스크탑은 사이드바 오른쪽 위, 모바일은 캐릭터 바로 아래 · 꼬리가 아이콘을 가리킨다', async () => {
   const p = await loadPage({});
   try {
     const w = p.w, g = (o) => plain(w.eval(`window.jisuChiefTest.geometry(${JSON.stringify(o)})`));
@@ -168,14 +168,45 @@ test('폭별 배치: 데스크탑은 사이드바 오른쪽 위, 모바일은 �
       assert.ok(r.top >= 0 && r.top + c.bubbleH <= c.vh, c.vw + 'px 세로 넘침: ' + r.top);
       if (c.mode === 'leftTop') {
         assert.ok(r.left > sideRight, c.vw + 'px: 말풍선이 사이드바를 덮는다');
-        assert.ok(Math.abs(r.tail.y - (r.top + 26)) < 0.01);
-        assert.ok(r.tail.x < r.left && r.tail.x > sideRight - 24, c.vw + 'px: 꼬리 끝이 아이콘 쪽이 아니다');
+        /* 꼬리는 말풍선 '왼쪽 위 모서리'에서 시작해 아이콘 오른쪽 모서리(얼굴 높이)를 가리킨다 */
+        assert.ok(r.tail.x < r.left && r.tail.x >= sideRight - 24, c.vw + 'px: 꼬리 끝이 아이콘 쪽이 아니다');
+        assert.ok(r.tail.y >= r.top && r.tail.y <= r.top + 30, c.vw + 'px: 꼬리 끝이 모서리가 아니다');
+        assert.equal(r.maxHeight, c.bubbleH, c.vw + 'px: 데스크탑은 높이를 줄이지 않는다');
       } else {
-        assert.ok(r.top > btnBottom, c.vw + 'px: 꼬리가 아이콘을 덮는다');
+        /* 모바일: 꼬리(26) + 여백(2) 아래에서만 시작 — 절대 캐릭터를 덮지 않는다 */
+        assert.ok(r.top >= btnBottom + 28, c.vw + 'px: 말풍선이 캐릭터를 덮는다');
+        assert.ok(r.tail.y >= btnBottom, c.vw + 'px: 꼬리 끝이 캐릭터를 덮는다');
         assert.ok(Math.abs(r.tail.x - (r.left + c.bubbleW - 39)) < 0.01);
         assert.ok(r.tail.y < r.top);
+        assert.ok(r.maxHeight >= 280, c.vw + 'px: 최소 높이');
       }
     }
+    /* 실기기(주소창 포함 가용 높이 560px)에서도 위로 밀지 않고 높이만 줄인다 */
+    const small = g({ vw: 412, vh: 560, sideRight: 400, btnTop: 90, btnBottom: 158, bubbleW: 388, bubbleH: 430 });
+    assert.equal(small.mode, 'top');
+    assert.ok(small.top >= 158 + 28, '작은 화면에서 캐릭터를 덮었다: ' + small.top);
+    assert.equal(small.maxHeight, 560 - small.top - 12, '남은 높이만큼만 줄인다');
+    assert.ok(small.top + Math.min(430, small.maxHeight) <= 560 - 12, '작은 화면 세로 넘침');
+  } finally { softClose(p.w); }
+});
+
+test('데스크탑 꼬리 path는 왼쪽 위 모서리에서 시작해 뾰족한 끝 → 위쪽 라인으로 이어진다', async () => {
+  const p = await loadPage({});
+  try {
+    const d = p.w.eval('window.jisuChiefTest.outerLeftTop(436, 404, 26)');
+    const tail = plain(p.w.eval('window.jisuChiefTest.leftTail'));
+    assert.ok(d.startsWith('M22,0'), '위쪽 라인이 꼬리 끝단(topX)에서 시작하지 않는다: ' + d.slice(0, 20));
+    assert.ok(d.indexOf('L0,44') > 0, '왼쪽 변에서 꼬리가 시작하지 않는다: ' + d);
+    assert.ok(d.indexOf(tail.tipX + ',' + tail.tipY) > 0, '뾰족한 끝 좌표가 없다');
+    assert.ok(d.trim().endsWith('22,0 Z'), '꼬리 위쪽 면이 상단 라인으로 닫히지 않는다');
+    assert.ok(d.indexOf('0,94') < 0, '옛 왼쪽 변 가운데 꼬리가 남아 있다');
+    assert.equal(tail.tipX, -34);
+    assert.ok(tail.tipY >= -2 && tail.tipY <= 24, '끝점 높이가 캐릭터 얼굴 언저리여야 한다');
+    /* 모바일 위쪽 꼬리는 그대로: 상단 오른쪽에서 아이콘 쪽으로 */
+    const dm = p.w.eval('window.jisuChiefTest.outerTop(388, 430, 26)');
+    assert.ok(dm.indexOf('349,-26') > 0, '모바일 꼬리 끝 좌표가 바뀌었다: ' + dm.slice(0, 120));
+    assert.ok(dm.trim().endsWith(',0 Z'), '모바일 path가 닫히지 않는다');
+    assert.equal(p.errors.length, 0, p.errors.join(' | '));
   } finally { softClose(p.w); }
 });
 

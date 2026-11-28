@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611281058">
+  <meta name="jisu-build" content="202611281245">
   <script>/* ==========================================================================
      저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
      "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
@@ -5638,7 +5638,7 @@ html body:not(#zz) #mapStage [data-toggle-zone="environment"].env-run:not(.st-fl
 </style>
   <!-- ═══ 지수 비서실장 (2026-11-28) — 사이드바 아이콘 → 지도 위 브러시드 메탈 말풍선 ═══════════
        · 접두사 #jisuChiefBtn / #chiefBubble / .cb- / .jcb- 로만 스코프해 기존 스타일을 건드리지 않는다.
-       · 꼬리는 데스크탑 왼쪽 위(사이드바 캐릭터 아이콘을 직접 가리킴), 모바일 위쪽. 전기 스파크는 없다. -->
+       · 꼬리는 데스크탑 왼쪽 위 모서리(그 자리에서 사이드바 캐릭터를 직접 가리킴), 모바일 위쪽. 전기 스파크는 없다. -->
   <style id="jisu-chief-style">
   /* ── ① 사이드바 제목줄 오른쪽 끝 아이콘 버튼 ── */
   #jisuChiefBtn{
@@ -18103,11 +18103,13 @@ paint()})();</script>
       'L' + n(x) + ',' + n(y + r) +
       'A' + r + ',' + r + ' 0 0 1 ' + n(x + r) + ',' + n(y) + ' Z';
   }
-  /* 데스크탑: 왼쪽 위 꼬리 — 끝점이 사이드바 캐릭터 아이콘 오른쪽 모서리 옆을 향한다 */
-  var LEFT_TAIL = { y1:94, y2:52, tx:-31, ty:26, c1x:-11, c1y:90, c2x:-27, c2y:69, q1x:-27, q1y:25, u1x:-17, u1y:29, u2x:-8, u2y:42 };
+  /* 데스크탑: 왼쪽 위 모서리 꼬리 — 둥근 모서리를 대신해 그 자리에서 캐릭터 쪽으로 뻗어 나간다.
+     왼쪽 변(y1) → 둥글게 밖으로 휘어 뾰족한 끝(tip) → 위쪽 라인(topX,0)으로 이어진다.
+     끝점은 사이드바 캐릭터 아이콘(얼굴 높이) 오른쪽 모서리를 가리킨다. */
+  var LEFT_TAIL = { y1:44, c1x:-6, c1y:42, c2x:-22, c2y:34, tipX:-34, tipY:20, qx:-38, qy:16, ax:-35, ay:12, u1x:-18, u1y:6, u2x:0, u2y:0, topX:22 };
   function outerLeftTop(W, H, r){
     var t = LEFT_TAIL;
-    return 'M' + r + ',0' +
+    return 'M' + t.topX + ',0' +
       'L' + n(W - r) + ',0' +
       'A' + r + ',' + r + ' 0 0 1 ' + n(W) + ',' + r +
       'L' + n(W) + ',' + n(H - r) +
@@ -18115,11 +18117,9 @@ paint()})();</script>
       'L' + r + ',' + n(H) +
       'A' + r + ',' + r + ' 0 0 1 0,' + n(H - r) +
       'L0,' + t.y1 +
-      'C' + t.c1x + ',' + t.c1y + ' ' + t.c2x + ',' + t.c2y + ' ' + t.tx + ',' + (t.ty + 9) +
-      'Q' + t.tx + ',' + t.ty + ' ' + t.q1x + ',' + t.q1y +
-      'C' + t.u1x + ',' + t.u1y + ' ' + t.u2x + ',' + t.u2y + ' 0,' + t.y2 +
-      'L0,' + r +
-      'A' + r + ',' + r + ' 0 0 1 ' + r + ',0 Z';
+      'C' + t.c1x + ',' + t.c1y + ' ' + t.c2x + ',' + t.c2y + ' ' + t.tipX + ',' + t.tipY +
+      'Q' + t.qx + ',' + t.qy + ' ' + t.ax + ',' + t.ay +
+      'C' + t.u1x + ',' + t.u1y + ' ' + t.u2x + ',' + t.u2y + ' ' + t.topX + ',0 Z';
   }
   /* 모바일: 위쪽 꼬리 — 바로 위 오른쪽 아이콘 아래를 향한다(폭에 비례) */
   function outerTop(W, H, r){
@@ -18157,7 +18157,7 @@ paint()})();</script>
 
   /* 배치 계산 — 테스트에서 그대로 부를 수 있게 순수 함수로 둔다 */
   function geometry(o){
-    var W = o.bubbleW, H = o.bubbleH, left, top, mode;
+    var W = o.bubbleW, H = o.bubbleH, left, top, mode, maxHeight = H;
     if(o.vw > 900){
       mode = 'leftTop';
       left = Math.round(o.sideRight + 20);
@@ -18165,19 +18165,31 @@ paint()})();</script>
       if(left + W > o.vw - 16) left = Math.max(12, o.vw - W - 16);
       if(top + H > o.vh - 12) top = Math.max(12, o.vh - H - 12);
     }else{
+      /* 모바일: 꼬리(26) + 여백(2) 만큼만 아이콘 아래에서 시작한다 — 캐릭터를 절대 덮지 않는다.
+         화면 아래로 넘칠 때는 위로 밀어 올리지 않고(그러면 캐릭터를 덮는다) 높이만 줄여
+         .cb-msgs 안에서 스크롤한다. */
       mode = 'top';
       left = Math.round((o.vw - W) / 2);
-      top = Math.round(o.btnBottom + 26);
-      if(top + H > o.vh - 10) top = Math.max(10, o.vh - H - 10);
+      top = Math.round(o.btnBottom + 28);
+      maxHeight = Math.max(280, o.vh - top - 12);
     }
-    var tail = (mode === 'leftTop') ? { x:left - 31, y:top + 26 } : { x:left + Math.round(W - 39), y:top - 26 };
-    return { left:left, top:top, mode:mode, tail:tail,
+    var tail;
+    if(mode === 'leftTop') tail = { x:left + LEFT_TAIL.tipX, y:top + LEFT_TAIL.tipY };
+    else tail = { x:left + Math.round(W - 39), y:top - 26 };
+    return { left:left, top:top, mode:mode, tail:tail, maxHeight:maxHeight,
       overflowRight:Math.max(0, left + W - o.vw), overflowLeft:Math.max(0, -left) };
   }
   function place(){
     var r = btn.getBoundingClientRect(), s = side ? side.getBoundingClientRect() : r;
+    var mobile = window.innerWidth <= 900;
+    /* 지난번에 줄여 둔 높이를 먼저 풀고 자연 높이로 다시 잰다 */
+    bubble.style.maxHeight = '';
     var g = geometry({ vw:window.innerWidth, vh:window.innerHeight, sideRight:s.right, btnTop:r.top, btnBottom:r.bottom,
       bubbleW:bubble.offsetWidth, bubbleH:bubble.offsetHeight });
+    if(mobile){
+      /* 화면 아래로 넘치면 자리(top)를 올리지 않고 높이만 줄인다 — 올리면 캐릭터를 덮는다 */
+      bubble.style.maxHeight = Math.min(bubble.offsetHeight || g.maxHeight, g.maxHeight) + 'px';
+    }
     bubble.style.left = g.left + 'px';
     bubble.style.top = g.top + 'px';
     return g;
@@ -18322,7 +18334,8 @@ paint()})();</script>
       bubble.setAttribute('aria-hidden', 'false');
       btn.classList.add('is-open');
       btn.setAttribute('aria-expanded', 'true');
-      buildPaths(); place();
+      place();          /* 높이가 먼저 정해지고 (모바일은 줄어들 수 있다) */
+      buildPaths();     /* 그 높이에 맞춰 베벨을 그린다 */
       if(!state.greeted && msgs && !msgs.children.length){ state.greeted = true; greeting(); }
       else if(msgs) scrollEnd();
       var inp = $('cbInput'); if(inp && window.innerWidth > 900){ try{ inp.focus({ preventScroll:true }); }catch(_){} }
@@ -18346,7 +18359,7 @@ paint()})();</script>
     if(!bubble.contains(e.target) && !btn.contains(e.target)) close();
   });
   window.addEventListener('resize', function(){
-    if(bubble.classList.contains('is-open')){ buildPaths(); place(); }
+    if(bubble.classList.contains('is-open')){ place(); buildPaths(); }
   });
 
   /* 말풍선 안 클릭: 적용/나중에 + 추천 칩 */
@@ -18400,7 +18413,8 @@ paint()})();</script>
   };
   window.jisuChiefTest = {
     geometry:geometry, normalizeActions:normalizeActions, baseTarget:baseTarget, describeAction:describeAction,
-    localAnswer:localAnswer, kstDay:kstDay, isWorkItem:isWorkItem, isCarry:isCarry, zoneOf:zoneOf
+    localAnswer:localAnswer, kstDay:kstDay, isWorkItem:isWorkItem, isCarry:isCarry, zoneOf:zoneOf,
+    outerLeftTop:outerLeftTop, outerTop:outerTop, leftTail:LEFT_TAIL
   };
   })();
   </script>
