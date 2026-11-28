@@ -16,7 +16,7 @@
 | 일일보고서 엑셀(구역 버튼별 16시트: 작업 내역·구역 특이사항·현장 사진, 입고 중량일지·피치 현황·환경 호기 표) + 일간·주간·월간 다운로드 전 확인 요청(자동 저장 금지) (2026-11-26) | `node tests/daily-report-20261126.test.js JISU/index.html` |
 | 주간·월간 실적 보고서 구역별 색을 달력 색상 범례(출고 #FF8A00 · 입고 #0686EF · 포장 #CBD5E1 · 생산 #EC4899 · 환경 #059669 · 피치 #9A5219)와 통일 — 03 달성률·비중, 04 누적 스택, 09 생산 A~H, 10 구역 표, PPT 11장 도형까지 (2026-11-27) | `node tests/perf-zone-colors-20261127.test.js JISU/index.html` |
 | 주간·월간 실적 보고서 페이퍼 덱 11시트(표지·하이라이트·물량 추이 점선·구역 달성률·100% 비중·주차 누적 스택·출고/이월 비교·이월 추이·4조 2교대·완료율 균형·생산 A~H·구역 표) + PPT 11장 (2026-11-26) | `node tests/perf-report-full-20261126.test.js JISU/index.html` |
-| 구역 버튼 상태 — 일부 완료(st-part)=점만 파란불 · 작업중=투명 유리+회색 점 · 모두 완료=버튼 전체 파란불 · 긴급(st-urgent)=버튼 전체 빨간불 · 특이사항·사진 등록 때만 버튼 전체 10초 깜빡 (2026-11-26) | `node tests/zone-partial-done.test.js JISU/index.html` |
+| 구역 버튼 상태 — 일부 완료(st-part)=점만 파란불 · 작업중=투명 유리+회색 점 · 모두 완료=버튼 전체 파란불 · 긴급(st-urgent)=버튼 전체 빨간불 · 특이사항·사진 등록 때만 버튼 전체 10초 깜빡 · 하단 상태 범례 '정비' 노란 점(#facc15) (2026-11-26, 11-28) | `node tests/zone-partial-done.test.js JISU/index.html` |
 | 지도 '환경' 파란불 기준 = 가장 최근 08:00/18:00(KST) 마감 (07:59·08:00·12:20·17:59·18:00·20:43 경계) (2026-11-26) | `node tests/env-shift-cutoff.test.js JISU/index.html` |
 | 날씨 눈·비 교차확인(met.no 맑음 + wttr.in 눈/비 · 오탐 필터 유지) | `node tests/weather-crosscheck.test.js JISU/index.html` |
 | ?zone= 없는 구역 → 관리자 화면 · 저장값 자동 복구(로컬·DB 수신) · 생산 작업자 화면 격자 해제 (2026-11-25) | `node tests/zone-and-recovery.test.js JISU/index.html` |

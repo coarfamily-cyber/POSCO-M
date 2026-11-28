@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611281935">
+  <meta name="jisu-build" content="202611282000">
   <script>/* ==========================================================================
      저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
      "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
@@ -2749,7 +2749,7 @@
     [data-toggle-zone].st-carry .pulse-ring{background:#ec4899 !important;color:#f472b6 !important;}
     .state-legend{position:absolute;left:12px;bottom:12px;z-index:30;display:flex;flex-wrap:wrap;gap:10px;padding:6px 12px;border-radius:9999px;background:rgba(12,18,28,.55);backdrop-filter:blur(4px);font-size:11.5px;font-weight:700;color:#e5e7eb;pointer-events:none;zoom:var(--ui-z,1);}
     .state-legend span{display:inline-flex;align-items:center;gap:5px;} .state-legend i{width:9px;height:9px;border-radius:9999px;display:inline-block;}
-    .state-legend i.n{background:#64748b;} .state-legend i.w{background:#f8fafc;} .state-legend i.r{background:#22c55e;} .state-legend i.d{background:#3b82f6;} .state-legend i.c{background:#ec4899;}
+    .state-legend i.n{background:#64748b;} .state-legend i.w{background:#facc15;box-shadow:0 0 8px rgba(250,204,21,.9);} .state-legend i.r{background:#22c55e;} .state-legend i.d{background:#3b82f6;} .state-legend i.c{background:#ec4899;}
     .state-legend i.p{background:#38bdf8;} .state-legend i.u{background:#dc2626;}
     .state-legend{max-width:calc(100% - 24px);}
     @media (max-width:600px){ .state-legend{font-size:10.5px;gap:7px;padding:4px 9px;} }
@@ -10591,7 +10591,7 @@ window.jisuPitchArchive={all:()=>run('readonly',s=>s.getAll()),put:v=>run('readw
     /* 화면을 켜 둔 채로도 예약된 정비 시작·종료 시각이 되면 저절로 켜지고 꺼지게 30초마다 다시 계산 */
     setInterval(function(){ try{ refresh(); }catch(e){} },30000);
     window.addEventListener('storage',e=>{ if(e.key===KEY||e.key==='jisu-memos-v1'||e.key==='jisu-schedule-v1'||e.key==='jisu-schedules-v1'||e.key==='jisu-maint-log-v1'||e.key==='jisu-pitch-records-v1'||e.key==='jisu-inbound-records-v1') refresh(); });
-    const stage=document.getElementById('mapStage'); if(stage){ const lg=document.createElement('div'); lg.className='state-legend'; lg.innerHTML='<span><i class="n"></i>작업 없음</span><span><i class="p"></i>일부 완료</span><span><i class="d"></i>완료</span><span><i class="u"></i>긴급</span><span><i class="c"></i>이월</span><span><i class="r"></i>특이사항·사진(10초)</span>'; stage.appendChild(lg); }
+    const stage=document.getElementById('mapStage'); if(stage){ const lg=document.createElement('div'); lg.className='state-legend'; lg.innerHTML='<span><i class="n"></i>작업 없음</span><span><i class="p"></i>일부 완료</span><span><i class="d"></i>완료</span><span><i class="u"></i>긴급</span><span><i class="w"></i>정비</span><span><i class="c"></i>이월</span><span><i class="r"></i>특이사항·사진(10초)</span>'; stage.appendChild(lg); }
   })();
   </script>
   <script>

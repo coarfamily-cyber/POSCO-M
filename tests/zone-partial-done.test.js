@@ -152,8 +152,14 @@ test('일부 완료=점만 파란불(st-part) · 모두 완료=버튼 전체 파
 
     /* ⑦ 범례도 새 규칙과 같아야 한다 */
     const lg = (w.document.querySelector('.state-legend') || {}).textContent || '';
-    ['작업 없음', '일부 완료', '완료', '긴급', '이월', '특이사항·사진(10초)'].forEach(t => assert.ok(lg.includes(t), '범례에 ' + t + ' 가 없다: ' + lg));
+    ['작업 없음', '일부 완료', '완료', '긴급', '정비', '이월', '특이사항·사진(10초)'].forEach(t => assert.ok(lg.includes(t), '범례에 ' + t + ' 가 없다: ' + lg));
     assert.ok(!lg.includes('작업중'), '작업중은 상시 녹색불이 아니므로 범례에 두지 않는다: ' + lg);
+    /* 범례의 '정비' 점은 지도 버튼 정비 노란 테두리(st-warn)와 같은 노란색(#facc15) */
+    const warnDot = w.document.querySelector('.state-legend i.w');
+    assert.ok(warnDot, '범례에 정비(i.w) 점이 없다');
+    const warnCss = [...w.document.styleSheets].flatMap(s => { try { return [...s.cssRules]; } catch (e) { return []; } })
+      .map(r => r.cssText).find(t => /state-legend i\.w\s*\{[^}]*facc15/i.test(t)) || '';
+    assert.ok(/facc15/i.test(warnCss), '범례 정비 점 색이 #facc15 가 아니다: ' + warnCss);
 
     /* 남은 1건까지 완료하면 outbound 는 st-done 으로 넘어간다 */
     w.eval(`(()=>{const a=JSON.parse(localStorage.getItem('${KEY}')||'[]');const it=a.find(x=>x.id==='o2');it.completed=true;it.completedAt='${NOW}';localStorage.setItem('${KEY}',JSON.stringify(a));if(window.jisuStateRefresh)window.jisuStateRefresh();})()`);
