@@ -225,15 +225,17 @@ test('폭별 배치: 데스크탑은 사이드바 오른쪽 위, 모바일은 �
     /* 사이드바: clamp(288px, 20.5vw, 396px) + 16px 여백 */
     const sideW = vw => Math.min(396, Math.max(288, vw * 0.205));
     const cases = [
-      { vw: 1920, vh: 1080, bubbleW: 436, bubbleH: 404, mode: 'leftTop' },
-      { vw: 1366, vh: 768, bubbleW: 436, bubbleH: 404, mode: 'leftTop' },
-      { vw: 900, vh: 700, bubbleW: 388, bubbleH: 430, mode: 'top' },
-      { vw: 412, vh: 915, bubbleW: 388, bubbleH: 430, mode: 'top' }
+      { vw: 1920, vh: 1080, bubbleW: 436, bubbleH: 404, mode: 'leftTop', sideRight: 410, btnCenterX: 360 },
+      { vw: 1366, vh: 768, bubbleW: 436, bubbleH: 404, mode: 'leftTop', sideRight: 304, btnCenterX: 254 },
+      /* 모바일은 사이드바가 화면 폭 전체(좌우 14px 여백)이고 아이콘은 제목줄 오른쪽 끝 */
+      { vw: 900, vh: 700, bubbleW: 388, bubbleH: 430, mode: 'top', sideRight: 886, btnCenterX: 839 },
+      { vw: 412, vh: 915, bubbleW: 388, bubbleH: 430, mode: 'top', sideRight: 398, btnCenterX: 354 }
     ];
     for (const c of cases) {
-      const sideRight = Math.round(16 + sideW(c.vw));
+      const sideRight = c.mode === 'leftTop' ? Math.round(16 + sideW(c.vw)) : c.sideRight;
+      assert.equal(sideRight, c.sideRight, c.vw + 'px 사이드바 오른쪽 끝(현장 실측 기준)');
       const btnTop = 100, btnBottom = btnTop + 36;
-      const r = g({ vw: c.vw, vh: c.vh, sideRight, btnTop, btnBottom, bubbleW: c.bubbleW, bubbleH: c.bubbleH });
+      const r = g({ vw: c.vw, vh: c.vh, sideRight, btnTop, btnBottom, btnCenterX: c.btnCenterX, bubbleW: c.bubbleW, bubbleH: c.bubbleH });
       assert.equal(r.mode, c.mode, c.vw + 'px 모드');
       assert.equal(r.overflowRight, 0, c.vw + 'px 가로 넘침');
       assert.equal(r.overflowLeft, 0, c.vw + 'px 왼쪽 넘침');
@@ -248,13 +250,15 @@ test('폭별 배치: 데스크탑은 사이드바 오른쪽 위, 모바일은 �
         /* 모바일: 꼬리(26) + 여백(2) 아래에서만 시작 — 절대 캐릭터를 덮지 않는다 */
         assert.ok(r.top >= btnBottom + 28, c.vw + 'px: 말풍선이 캐릭터를 덮는다');
         assert.ok(r.tail.y >= btnBottom, c.vw + 'px: 꼬리 끝이 캐릭터를 덮는다');
-        assert.ok(Math.abs(r.tail.x - (r.left + c.bubbleW - 39)) < 0.01);
+        /* 꼬리 끝은 고정값(W-39)이 아니라 '실제 캐릭터 아이콘 중심'을 가리킨다 */
+        assert.ok(Math.abs(r.tail.x - c.btnCenterX) <= 1, c.vw + 'px: 꼬리 끝이 아이콘 중심과 어긋난다 (tail ' + r.tail.x + ' / 아이콘 ' + c.btnCenterX + ')');
+        assert.ok(r.tail.x > r.left && r.tail.x < r.left + c.bubbleW, c.vw + 'px: 꼬리가 말풍선 밖으로 나갔다');
         assert.ok(r.tail.y < r.top);
         assert.ok(r.maxHeight >= 280, c.vw + 'px: 최소 높이');
       }
     }
     /* 실기기(주소창 포함 가용 높이 560px)에서도 위로 밀지 않고 높이만 줄인다 */
-    const small = g({ vw: 412, vh: 560, sideRight: 400, btnTop: 90, btnBottom: 158, bubbleW: 388, bubbleH: 430 });
+    const small = g({ vw: 412, vh: 560, sideRight: 400, btnTop: 90, btnBottom: 158, btnCenterX: 354, bubbleW: 388, bubbleH: 430 });
     assert.equal(small.mode, 'top');
     assert.ok(small.top >= 158 + 28, '작은 화면에서 캐릭터를 덮었다: ' + small.top);
     assert.equal(small.maxHeight, 560 - small.top - 12, '남은 높이만큼만 줄인다');
@@ -278,6 +282,113 @@ test('데스크탑 꼬리 path는 왼쪽 위 모서리에서 시작해 뾰족한
     const dm = p.w.eval('window.jisuChiefTest.outerTop(388, 430, 26)');
     assert.ok(dm.indexOf('349,-26') > 0, '모바일 꼬리 끝 좌표가 바뀌었다: ' + dm.slice(0, 120));
     assert.ok(dm.trim().endsWith(',0 Z'), '모바일 path가 닫히지 않는다');
+    assert.equal(p.errors.length, 0, p.errors.join(' | '));
+  } finally { softClose(p.w); }
+});
+
+/* ───────────────── 2-b. 넓은 모바일(가로모드·태블릿) 꼬리 정렬 (2026-11-28 3차) ───────────────── */
+test('넓은 모바일 600~890px: 말풍선이 캐릭터 쪽으로 붙고 꼬리 끝이 아이콘 중심을 1px 오차로 가리킨다', async () => {
+  const p = await loadPage({});
+  try {
+    const w = p.w, g = (o) => plain(w.eval(`window.jisuChiefTest.geometry(${JSON.stringify(o)})`));
+    /* 현장 실측(격리 Chromium): 모바일은 사이드바가 화면 폭 전체(좌우 14px), 아이콘 66px 는 오른쪽 끝 -15px */
+    const widths = [360, 412, 600, 768, 820, 890];
+    for (const vw of widths) {
+      const W = Math.min(396, vw - 24);
+      const sideRight = vw - 14;
+      const btnRight = sideRight - 15;
+      const btnCenterX = btnRight - 33;
+      const btnTop = 86, btnBottom = btnTop + 74;
+      const r = g({ vw, vh: 915, sideRight, btnTop, btnBottom, btnRight, btnCenterX, bubbleW: W, bubbleH: 430 });
+      assert.equal(r.mode, 'top', vw + 'px 모드');
+      assert.equal(r.overflowRight, 0, vw + 'px 오른쪽 넘침');
+      assert.equal(r.overflowLeft, 0, vw + 'px 왼쪽 넘침');
+      assert.ok(r.left >= 12, vw + 'px: 왼쪽 여백이 12px 미만');
+      assert.ok(r.left + W <= vw - 12, vw + 'px: 오른쪽 여백이 12px 미만');
+      /* 핵심: 꼬리 끝이 실제 캐릭터 아이콘 중심 아래 (1px 오차) */
+      assert.ok(Math.abs(r.tail.x - btnCenterX) <= 1,
+        vw + 'px: 꼬리 끝 ' + r.tail.x + ' 이 아이콘 중심 ' + btnCenterX + ' 과 어긋난다');
+      assert.ok(r.tail.x >= btnCenterX - 33 && r.tail.x <= btnCenterX + 33, vw + 'px: 꼬리가 아이콘 폭을 벗어났다');
+      assert.equal(r.tail.y, r.top - 26, vw + 'px 꼬리 높이');
+      assert.ok(r.top >= btnBottom + 28, vw + 'px: 말풍선이 캐릭터를 덮는다');
+      /* 600px 이상에서는 예전처럼 화면 가운데가 아니라 오른쪽(캐릭터 쪽)으로 붙는다 */
+      if (vw >= 600) assert.ok(r.left > Math.round((vw - W) / 2), vw + 'px: 예전처럼 화면 가운데에 있다(꼬리가 400px 떨어짐)');
+    }
+    /* 태블릿 가로모드 820×500: 위로 밀지 않고 높이만 줄이며, 꼬리는 그대로 아이콘 아래 */
+    const land = g({ vw: 820, vh: 500, sideRight: 806, btnTop: 86, btnBottom: 160, btnRight: 791, btnCenterX: 758, bubbleW: 396, bubbleH: 430 });
+    assert.equal(land.top, 188);
+    assert.equal(land.maxHeight, 500 - 188 - 12, '남은 높이만큼만 줄인다');
+    assert.ok(land.top + Math.min(430, land.maxHeight) <= 500 - 12, '820×500 세로 넘침');
+    assert.equal(land.tail.x, 758, '820×500 꼬리 끝이 캐릭터 중심이 아니다');
+    assert.equal(p.errors.length, 0, p.errors.join(' | '));
+  } finally { softClose(p.w); }
+});
+
+test('모바일 꼬리 path 는 place() 가 잡은 자리 그대로 그린다 — 넓은 가로모드에서도', async () => {
+  const p = await loadPage({});
+  try {
+    const w = p.w, doc = w.document, bubble = doc.getElementById('chiefBubble'), btn = doc.getElementById('jisuChiefBtn');
+    const side = doc.getElementById('cmdSide');
+    /* 현장 실측값(820×500 가로모드)으로 레이아웃을 흥내낸다 */
+    const rect = (o) => () => ({ x: o.x, y: o.y, left: o.x, top: o.y, right: o.x + o.w, bottom: o.y + o.h, width: o.w, height: o.h });
+    Object.defineProperty(w, 'innerWidth', { value: 820, configurable: true });
+    btn.getBoundingClientRect = rect({ x: 725, y: 86, w: 66, h: 74 });
+    if (side) side.getBoundingClientRect = rect({ x: 14, y: 73, w: 792, h: 1200 });
+    Object.defineProperty(bubble, 'offsetWidth', { value: 396, configurable: true });
+    Object.defineProperty(bubble, 'offsetHeight', { value: 430, configurable: true });
+
+    const g = plain(w.jisuChiefTest.place());
+    assert.equal(bubble.style.left, g.left + 'px');
+    assert.ok(Math.abs(g.tail.x - 758) <= 1, '배치 꼬리가 캐릭터 중심이 아니다: ' + g.tail.x);
+    w.jisuChiefTest.buildPaths();
+
+    const d = doc.getElementById('cbRimPath').getAttribute('d');
+    const mx = parseFloat((d.match(/(-?[\d.]+),-26/) || [0, 'NaN'])[1]);
+    assert.equal(mx, g.tail.x - g.left, '꼬리 path 가 배치와 다른 자리에 그려졌다');
+    assert.ok(/^M26,0L/.test(d), '모바일 path 머리가 바뀌었다: ' + d.slice(0, 20));
+    /* 같은 자리에서 위쪽 라인 복귀(x2)와 오른쪽 모서리 둥글기가 깨지지 않았다 */
+    assert.ok(d.indexOf((mx + 5) + ',0') > 0, '꼬리 오른쪽 복귀점이 없다: ' + d.slice(0, 160));
+    assert.ok(/A26,26 0 0 1 396,26/.test(d), '오른쪽 둥근 모서리가 꼬리에 먹혔다: ' + d);
+    /* 종이 유리 레이어도 꼬리만큼(40·30px) 옮긴 같은 모양으로 잘린다 */
+    const off = plain(w.jisuChiefTest.glassOffset);
+    assert.equal(doc.querySelector('#chiefBubble .cb-glass').style.clipPath,
+      'path("' + w.eval(`window.jisuChiefTest.outerTop(396, 430, 26, ${off.x}, ${off.y}, ${g.tail.x - g.left})`) + '")');
+    assert.equal(p.errors.length, 0, p.errors.join(' | '));
+  } finally { softClose(p.w); }
+});
+
+/* ───────────────── 2-c. 따뜻한 종이 질감 (2026-11-28 승인 "이걸로 배포해주고") ───────────────── */
+test('말풍선은 종이 질감: 따뜻한 크림 바탕·섬유 노이즈·1px 웜 림, 검정 그림자 path 는 꺼진다', async () => {
+  const p = await loadPage({});
+  try {
+    const w = p.w, doc = w.document;
+    const paper = doc.getElementById('jisuChiefPaperCss');
+    assert.ok(paper, '종이 질감 스타일(#jisuChiefPaperCss)이 없다');
+    /* 앞선 유리 규칙 뒤에 있어야 같은 선택자를 덮어쓴다 */
+    const all = Array.from(doc.querySelectorAll('style'));
+    assert.ok(all.indexOf(doc.getElementById('jisu-chief-style')) < all.indexOf(paper), '종이 스타일이 유리 규칙보다 앞에 있다');
+    const css = paper.textContent;
+    assert.ok(/#chiefBubble\{[^}]*filter:drop-shadow/.test(css), '종이 실루엣 그림자(drop-shadow)가 없다');
+    assert.ok(/#chiefBubble \.cb-glass\{[^}]*linear-gradient\(158deg, #F6F2EA 0%, #F1EADD 46%, #EBE4D6 100%\)/.test(css), '따뜻한 크림 그러데이션이 없다');
+    assert.ok(/feTurbulence type='fractalNoise'/.test(css), '종이 섬유 노이즈가 없다');
+    assert.ok(/#chiefBubble \.cb-glass\{[^}]*backdrop-filter:none/.test(css), '밝은 종이 위에 유리 블러가 남았다');
+    assert.ok(/#chiefBubble #cbShadowWide, #chiefBubble #cbShadowTight\{display:none;?\}/.test(css), '검정 그림자 path 를 끄지 않았다(종이가 검게 죽는다)');
+    assert.ok(/#chiefBubble #cbRimPath\{stroke:rgba\(120,108,92,\.38\)/.test(css), '1px 웜 림이 없다');
+    assert.ok(/--cb-lime:#D7FE01/.test(css) && /#chiefBubble \.cb-send\{[^}]*linear-gradient\(180deg,#E2FF52 0%, var\(--cb-lime\) 100%\)/.test(css), '전송 버튼이 라임(#D7FE01)이 아니다');
+    assert.ok(/#chiefBubble\.cb-msg|#chiefBubble \.cb-msg\.ai \.cb-bub\{[^}]*color:#1E242B/.test(css), '본문 먹색이 아니다');
+    /* 모바일에서도 어두운 유리 덮어쓰기 없이 같은 종이 (같은 미디어쿼리에서 배경을 다시 지정) */
+    const mobile = css.slice(css.indexOf('@media (max-width:900px)'));
+    assert.ok(/linear-gradient\(158deg, #F6F2EA 0%, #F1EADD 46%, #EBE4D6 100%\)/.test(mobile), '모바일에서 종이 바탕이 다시 지정되지 않는다');
+    assert.ok(/feTurbulence/.test(mobile), '모바일에서 섬유 노이즈가 빠졌다');
+
+    /* 실제 렌더(computed) — 밝은 종이 위 먹색 글씨, 라임 전송 버튼, 숨긴 그림자 path */
+    const cs = (el) => w.getComputedStyle(el);
+    const glass = doc.querySelector('#chiefBubble .cb-glass');
+    assert.equal(cs(glass).backgroundColor, 'rgb(244, 239, 230)', '유리 레이어 바탕색이 크림(#F4EFE6)이 아니다(예전 검정 유리가 이겼다)');
+    assert.equal(cs(doc.getElementById('chiefBubble')).color, 'var(--cb-ink)', '말풍선 글씨가 먹색 토큰(--cb-ink)을 쓰지 않는다');
+    assert.equal(cs(doc.getElementById('cbShadowWide')).display, 'none', '검정 넓은 그림자가 살아 있다');
+    assert.equal(cs(doc.getElementById('cbShadowTight')).display, 'none', '검정 좁은 그림자가 살아 있다');
+    assert.equal(cs(doc.getElementById('chiefBubble')).filter.indexOf('drop-shadow'), 0, '말풍선 그림자 필터가 없다: ' + cs(doc.getElementById('chiefBubble')).filter);
     assert.equal(p.errors.length, 0, p.errors.join(' | '));
   } finally { softClose(p.w); }
 });

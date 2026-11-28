@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611281845">
+  <meta name="jisu-build" content="202611281935">
   <script>/* ==========================================================================
      저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
      "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
@@ -5995,6 +5995,149 @@ html body:not(#zz) #mapStage [data-toggle-zone="environment"].env-run:not(.st-fl
   @media (prefers-reduced-motion: reduce){
     #jisuChiefBtn .jcb-float, #jisuChiefBtn .jcb-tilt, #jisuChiefBtn .jcb-hero,
     #jisuChiefBtn .jcb-glow, #jisuChiefBtn .jcb-shadow, #jisuChiefBtn .jcb-dot{animation:none !important;}
+  }
+  </style>
+  <!-- ═══ 지수 비서실장 말풍선 — 따뜻한 고급 종이 질감 (2026-11-28 승인 · 수뽕 님 "이걸로 배포해주고") ══════
+       · 배경: 주간·월간 보고서 페이퍼 덱(#jisuPerfPaperCss)과 같은 따뜻한 아이보리/크림 (#F6F2EA → #EBE4D6)
+         + SVG feTurbulence 미세 섬유결 + CSS 결선. 꼬리 안쪽까지 같은 종이(유리 상자를 꼬리 모양으로 clip).
+       · 외곽선 1px = 따뜻한 종이 그림자 톤(rgba(120,108,92,.38)), 그림자는 #chiefBubble 의 drop-shadow
+         (clip-path 로 잘린 종이 실루엣을 필터가 따라가므로 꼬리 모양 그대로 떨어진다).
+       · 밝은 종이 위 가독성: 본문 #1E242B · 보조 #5C636E · 포인트 에메랄드 #0F766E, 라임 #D7FE01 은 전송 버튼에만.
+       · 앞선 유리 규칙(#jisu-chief-style) 뒤에서 같은 선택자를 덮어쓴다 — 기존 규칙은 지우지 않는다. -->
+  <style id="jisuChiefPaperCss">
+  #chiefBubble{
+    --cb-ink:#1E242B; --cb-ink2:#5C636E; --cb-edge:rgba(120,108,92,.38); --cb-lime:#D7FE01;
+    color:var(--cb-ink);
+    /* 종이 쪽지가 지도 위에 떠 있는 느낌 — 필터는 clip-path 로 잘린 종이 실루엣(꼬리 포함)을 따라간다 */
+    filter:drop-shadow(0 15px 26px rgba(24,18,10,.44)) drop-shadow(0 3px 6px rgba(24,18,10,.28));
+  }
+  /* ── 종이 본체: 꼬리까지 한 장 ────────────────────────────────────── */
+  #chiefBubble .cb-glass{
+    background-color:#F4EFE6;
+    background-image:
+      url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.86' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23f)' opacity='0.17'/%3E%3C/svg%3E"),
+      radial-gradient(46% 34% at 24% 16%, rgba(255,255,255,.34) 0%, rgba(255,255,255,0) 72%),
+      radial-gradient(40% 30% at 78% 62%, rgba(255,252,244,.30) 0%, rgba(255,252,244,0) 74%),
+      radial-gradient(118% 86% at 10% 2%, rgba(255,253,247,.72) 0%, rgba(255,253,247,0) 56%),
+      radial-gradient(104% 84% at 98% 104%, rgba(203,188,161,.30) 0%, rgba(203,188,161,0) 64%),
+      linear-gradient(158deg, #F6F2EA 0%, #F1EADD 46%, #EBE4D6 100%);
+    background-size:160px 160px, auto, auto, auto, auto, auto;
+    background-repeat:repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+    background-blend-mode:normal, normal, normal, normal, normal, normal;
+    -webkit-backdrop-filter:none; backdrop-filter:none;
+  }
+  /* ── 종이 결: 성긴 섬유 헤어라인 + 커다란 은은한 얼룩(결진 종이 느낌) ── */
+  #chiefBubble .cb-glass-sheen{
+    background-image:
+      radial-gradient(120% 76% at 86% -8%, rgba(255,248,230,.52) 0%, rgba(255,248,230,0) 54%),
+      radial-gradient(96% 70% at -10% 106%, rgba(176,156,120,.16) 0%, rgba(176,156,120,0) 62%),
+      linear-gradient(96.5deg, rgba(120,108,92,.028) 0 1px, rgba(255,255,255,0) 1px 4.4px),
+      linear-gradient(157deg, rgba(255,255,255,.34) 0%, rgba(255,255,255,0) 34%);
+    background-repeat:no-repeat, no-repeat, repeat, no-repeat;
+  }
+  /* ── 외곽선: 따뜻한 종이 그림자 1px ──
+     기존 SVG 그림자 path 는 같은 모양을 위에서 덮어 밝은 종이를 검게 죽이므로 끄고,
+     #chiefBubble 의 drop-shadow 가 꼬리 모양 그대로 부드럽게 떨어진다. */
+  #chiefBubble #cbRimPath{stroke:rgba(120,108,92,.38); stroke-opacity:1; stroke-width:1;}
+  #chiefBubble #cbShadowWide, #chiefBubble #cbShadowTight{display:none;}
+  #chiefBubble .cb-glass{z-index:1;}
+  #chiefBubble .cb-glass-sheen{z-index:2;}
+  #chiefBubble .cb-svg{z-index:3;}
+  #chiefBubble .cb-inner{z-index:4;}
+
+  /* ── 상태 알약 ──────────────────────────────────────────────────── */
+  #chiefBubble .cb-badge{
+    color:#2B3440; background:rgba(30,36,43,.06);
+    border:1px solid rgba(30,36,43,.10);
+  }
+  #chiefBubble .cb-badge i{background:#0F766E; box-shadow:0 0 0 2px rgba(15,118,110,.14);}
+  /* ── 닫기 ───────────────────────────────────────────────────────── */
+  #chiefBubble .cb-close{
+    color:#2B3440 !important; background:rgba(30,36,43,.07) !important;
+    border:1px solid rgba(30,36,43,.12) !important; box-shadow:0 1px 0 rgba(255,255,255,.6) inset;
+  }
+  #chiefBubble .cb-close:hover{background:rgba(30,36,43,.13) !important; border-color:rgba(30,36,43,.26) !important; color:#111827 !important;}
+
+  /* ── 빠른 질문 칩: 종이 위 얇은 카드 ─────────────────────────────── */
+  #chiefBubble .cb-chip{
+    color:#1E242B !important; background:rgba(255,255,255,.68) !important;
+    border:1px solid rgba(30,36,43,.12) !important;
+    box-shadow:0 1px 0 rgba(255,255,255,.85) inset, 0 1px 2px rgba(70,58,40,.07);
+  }
+  #chiefBubble .cb-chip:hover{background:#FFFFFF !important; border-color:rgba(15,118,110,.52) !important; color:#0F766E !important;}
+
+  /* ── 대화 ───────────────────────────────────────────────────────── */
+  #chiefBubble .cb-msgs::-webkit-scrollbar-thumb{background:rgba(30,36,43,.20);}
+  #chiefBubble .cb-who{color:var(--cb-ink2);}
+  #chiefBubble .cb-msg.ai .cb-who b{color:#0F766E;}
+  #chiefBubble .cb-bub{color:var(--cb-ink);}
+  #chiefBubble .cb-msg.me .cb-bub{
+    color:#1E242B; background:linear-gradient(135deg, rgba(215,254,1,.34), rgba(215,254,1,.16));
+    border:1px solid rgba(120,108,92,.30); border-bottom-right-radius:5px;
+  }
+  #chiefBubble .cb-msg.ai .cb-bub{
+    color:#1E242B; background:rgba(255,255,255,.62); border:1px solid rgba(30,36,43,.09); border-bottom-left-radius:5px;
+    box-shadow:0 1px 2px rgba(70,58,40,.05);
+  }
+  #chiefBubble .cb-msg.sys .cb-bub{
+    color:#1E242B; background:rgba(15,118,110,.07); border:1px solid rgba(15,118,110,.22);
+  }
+  #chiefBubble .cb-bub b{color:#0F766E;}
+  #chiefBubble .cb-bub .cb-cy{color:#0E7490;}
+  #chiefBubble .cb-typing i{background:#0F766E;}
+  #chiefBubble .cb-keyhint{color:var(--cb-ink2);}
+  #chiefBubble .cb-err{color:#B42318;}
+  /* ── 실행 버튼 ──────────────────────────────────────────────────── */
+  #chiefBubble .cb-act{
+    color:#1E242B !important; background:rgba(255,255,255,.72) !important;
+    border:1px solid rgba(30,36,43,.14) !important; box-shadow:0 1px 0 rgba(255,255,255,.8) inset;
+  }
+  #chiefBubble .cb-act:hover{background:#FFFFFF !important; border-color:rgba(30,36,43,.26) !important;}
+  #chiefBubble .cb-act.primary{
+    background:linear-gradient(180deg,#E2FF52 0%, var(--cb-lime) 100%) !important;
+    border:1px solid rgba(30,36,43,.18) !important; color:#111827 !important;
+    box-shadow:0 1px 0 rgba(255,255,255,.70) inset, 0 3px 9px rgba(70,58,40,.18);
+  }
+
+  /* ── 입력창 · 전송 ──────────────────────────────────────────────── */
+  #chiefBubble .cb-in-in{
+    background:rgba(255,255,255,.80) !important; border:1px solid rgba(30,36,43,.16) !important;
+    color:#1E242B !important; box-shadow:0 1px 0 rgba(255,255,255,.7) inset;
+  }
+  #chiefBubble .cb-in-in::placeholder{color:#8A8F98 !important;}
+  #chiefBubble .cb-in-in:focus{
+    border-color:rgba(15,118,110,.55) !important; box-shadow:0 0 0 3px rgba(15,118,110,.13) !important;
+  }
+  #chiefBubble .cb-send{
+    color:#111827 !important; background:linear-gradient(180deg,#E2FF52 0%, var(--cb-lime) 100%) !important;
+    border:1px solid rgba(30,36,43,.18) !important;
+    box-shadow:0 1px 0 rgba(255,255,255,.70) inset, 0 3px 9px rgba(70,58,40,.18);
+  }
+  #chiefBubble .cb-foot{color:var(--cb-ink2); border-top:1px solid rgba(30,36,43,.12);}
+  #chiefBubble .cb-foot button{color:#4B5563 !important;}
+  #chiefBubble .cb-foot button:hover{color:#0F766E !important;}
+
+  /* ── 모바일: 운영 규칙(거의 검정 유리)을 종이로 덮는다 ─────────────── */
+  @media (max-width:900px){
+    #chiefBubble .cb-glass{
+      background-color:#F4EFE6;
+      background-image:
+        url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.86' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23f)' opacity='0.17'/%3E%3C/svg%3E"),
+        radial-gradient(46% 34% at 24% 16%, rgba(255,255,255,.34) 0%, rgba(255,255,255,0) 72%),
+        radial-gradient(40% 30% at 78% 62%, rgba(255,252,244,.30) 0%, rgba(255,252,244,0) 74%),
+        radial-gradient(118% 86% at 10% 2%, rgba(255,253,247,.72) 0%, rgba(255,253,247,0) 56%),
+        radial-gradient(104% 84% at 98% 104%, rgba(203,188,161,.30) 0%, rgba(203,188,161,0) 64%),
+        linear-gradient(158deg, #F6F2EA 0%, #F1EADD 46%, #EBE4D6 100%);
+      background-size:160px 160px, auto, auto, auto, auto, auto;
+      background-repeat:repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+      background-blend-mode:normal, normal, normal, normal, normal, normal;
+    }
+    #chiefBubble .cb-glass-sheen{background-image:
+      radial-gradient(120% 76% at 86% -8%, rgba(255,248,230,.52) 0%, rgba(255,248,230,0) 54%),
+      radial-gradient(96% 70% at -10% 106%, rgba(176,156,120,.16) 0%, rgba(176,156,120,0) 62%),
+      linear-gradient(96.5deg, rgba(120,108,92,.028) 0 1px, rgba(255,255,255,0) 1px 4.4px),
+      linear-gradient(157deg, rgba(255,255,255,.34) 0%, rgba(255,255,255,0) 34%);
+      background-repeat:no-repeat, no-repeat, repeat, no-repeat;}
   }
   </style>
 </head>
@@ -17987,9 +18130,17 @@ paint()})();</script>
       'Q' + X(t.qx) + ',' + Y(t.qy) + ' ' + X(t.ax) + ',' + Y(t.ay) +
       'C' + X(t.u1x) + ',' + Y(t.u1y) + ' ' + X(t.u2x) + ',' + Y(t.u2y) + ' ' + X(t.topX) + ',' + Y(0) + ' Z';
   }
-  /* 모바일: 위쪽 꼬리 — 바로 위 오른쪽 아이콘 아래를 향한다(폭에 비례) */
-  function outerTop(W, H, r, dx, dy){
-    var x1 = Math.round(W - 70), x2 = Math.round(W - 34), mx = Math.round(W - 39), my = -26;
+  /* 모바일 꼬리 끝 x — 실제 캐릭터 아이콘 중심(말풍선 기준)을 받아 쓴다.
+     꼬리 끝이 종이 오른쪽 모서리 둥글기(r)를 넘어가면 path 가 깨지므로 그 안쪽으로만 민다.
+     (아래 35 = 꼬리 오른쪽 곡선이 mx+9 까지 뻗는 만큼) */
+  function tailMx(W, r, x){
+    if(x == null) return Math.round(W - 39);
+    return Math.max(r + 31, Math.min(W - r - 9, Math.round(x)));
+  }
+  /* 모바일: 위쪽 꼬리 — 바로 위 오른쪽 아이콘 아래를 향한다. tailX 를 주면 그 x 아래를 가리킨다. */
+  function outerTop(W, H, r, dx, dy, tailX){
+    var mx = tailMx(W, r, tailX), my = -26;
+    var x1 = mx - 31, x2 = mx + 5;   /* 예전 W-70 / W-34 = mx-31 / mx+5 — 모양은 그대로, 자리만 따라간다 */
     var X = function(v){ return n(v + (dx || 0)); }, Y = function(v){ return n(v + (dy || 0)); };
     return 'M' + X(r) + ',' + Y(0) +
       'L' + X(x1) + ',' + Y(0) +
@@ -18005,15 +18156,19 @@ paint()})();</script>
       'L' + X(0) + ',' + Y(r) +
       'A' + r + ',' + r + ' 0 0 1 ' + X(r) + ',' + Y(0) + ' Z';
   }
+  var lastG = null;   /* place() 가 계산한 마지막 배치 — 꼬리 path 를 같은 자리에 그린다 */
   function buildPaths(){
     var W = Math.round(bubble.offsetWidth), H = Math.round(bubble.offsetHeight);
     if(!W || !H || !svg) return;
     /* 베젤 없이 꼬리까지 한 덩어리 — 같은 path 하나로 유리·외곽선·그림자를 모두 그린다.
        (유리를 inner roundRect 로 자르면 꼬리가 잘리고 이중 테두리가 보인다) */
     var leftTop = window.innerWidth > 900;
-    var outer = leftTop ? outerLeftTop(W, H, RAD) : outerTop(W, H, RAD);
+    /* 모바일 꼬리는 배치 결과의 꼬리 x 를 말풍선 기준 좌표로 되돌려 그린다 —
+       폭이 넓어도(600~900px) 꼬리 끝이 캐릭터 아이콘 바로 아래를 가리킨다 */
+    var tx = (lastG && !leftTop) ? (lastG.tail.x - lastG.left) : null;
+    var outer = leftTop ? outerLeftTop(W, H, RAD) : outerTop(W, H, RAD, 0, 0, tx);
     /* 유리 상자는 꼬리만큼 넓게 잡혀 있으므로 clip path 를 그만큼 옮긴다 */
-    var clipOuter = leftTop ? outerLeftTop(W, H, RAD, GLASS_DX, GLASS_DY) : outerTop(W, H, RAD, GLASS_DX, GLASS_DY);
+    var clipOuter = leftTop ? outerLeftTop(W, H, RAD, GLASS_DX, GLASS_DY) : outerTop(W, H, RAD, GLASS_DX, GLASS_DY, tx);
     ['cbRimPath','cbShadowWide','cbShadowTight'].forEach(function(id){ var e = $(id); if(e) e.setAttribute('d', outer); });
     var sw = $('cbShadowWide'), st = $('cbShadowTight');
     if(sw) sw.setAttribute('transform', 'translate(0,22)');
@@ -18036,17 +18191,27 @@ paint()})();</script>
     }else{
       /* 모바일: 꼬리(26) + 여백(2) 만큼만 아이콘 아래에서 시작한다 — 캐릭터를 절대 덮지 않는다.
          화면 아래로 넘칠 때는 위로 밀어 올리지 않고(그러면 캐릭터를 덮는다) 높이만 줄여
-         .cb-msgs 안에서 스크롤한다. */
+         .cb-msgs 안에서 스크롤한다.
+         가로: 꼬리 끝이 캐릭터 아이콘 중심 아래에 오도록 오른쪽 정렬한다.
+         (예전엔 화면 가운데 정렬이라 600~900px 가로모드/태블릿에서 꼬리가 400px 넘게 떨어졌다)
+         360~412px 에서는 오른쪽 정렬해도 12px 여백에서 막혀 예전과 같은 자리다. */
       mode = 'top';
-      left = Math.round((o.vw - W) / 2);
+      var anchor = anchorX(o);
+      left = Math.round(Math.max(12, Math.min(o.vw - W - 12, anchor - (W - 39))));
       top = Math.round(o.btnBottom + 28);
       maxHeight = Math.max(280, o.vh - top - 12);
     }
     var tail;
     if(mode === 'leftTop') tail = { x:left + LEFT_TAIL.tipX, y:top + LEFT_TAIL.tipY };
-    else tail = { x:left + Math.round(W - 39), y:top - 26 };
+    else tail = { x:left + tailMx(W, RAD, anchorX(o) - left), y:top - 26 };
     return { left:left, top:top, mode:mode, tail:tail, maxHeight:maxHeight,
       overflowRight:Math.max(0, left + W - o.vw), overflowLeft:Math.max(0, -left) };
+  }
+  /* 모바일 기준점: 캐릭터 아이콘의 가로 중심(화면 x). 없으면 아이콘 오른쪽 끝 - 17px, 그것도 없으면 화면 오른쪽 33px 안쪽 */
+  function anchorX(o){
+    if(o.btnCenterX != null) return o.btnCenterX;
+    if(o.btnRight != null) return o.btnRight - 17;
+    return o.vw - 33;
   }
   function place(){
     var r = btn.getBoundingClientRect(), s = side ? side.getBoundingClientRect() : r;
@@ -18054,7 +18219,9 @@ paint()})();</script>
     /* 지난번에 줄여 둔 높이를 먼저 풀고 자연 높이로 다시 잰다 */
     bubble.style.maxHeight = '';
     var g = geometry({ vw:window.innerWidth, vh:window.innerHeight, sideRight:s.right, btnTop:r.top, btnBottom:r.bottom,
+      btnRight:r.right || null, btnCenterX:r.width ? (r.left + r.right) / 2 : null,
       bubbleW:bubble.offsetWidth, bubbleH:bubble.offsetHeight });
+    lastG = g;
     if(mobile){
       /* 화면 아래로 넘치면 자리(top)를 올리지 않고 높이만 줄인다 — 올리면 캐릭터를 덮는다 */
       bubble.style.maxHeight = Math.min(bubble.offsetHeight || g.maxHeight, g.maxHeight) + 'px';
@@ -18284,6 +18451,7 @@ paint()})();</script>
     geometry:geometry, normalizeActions:normalizeActions, baseTarget:baseTarget, describeAction:describeAction,
     localAnswer:localAnswer, kstDay:kstDay, isWorkItem:isWorkItem, isCarry:isCarry, zoneOf:zoneOf,
     outerLeftTop:outerLeftTop, outerTop:outerTop, leftTail:LEFT_TAIL, buildPaths:buildPaths,
+    tailMx:tailMx, anchorX:anchorX, lastPlace:function(){ return lastG; }, place:place,
     glassOffset:{x:GLASS_DX, y:GLASS_DY}
   };
   })();
