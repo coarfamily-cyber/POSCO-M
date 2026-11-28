@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta name="jisu-build" content="202611281830">
+  <meta name="jisu-build" content="202611281845">
   <script>/* ==========================================================================
      저장값 자동 복구 (2026-11-25) — 다른 기기·직접 수정 등으로 localStorage 값이
      "null"·객체·깨진 JSON 처럼 앱이 기대하는 모양(배열/객체)이 아니게 되면
@@ -5694,7 +5694,7 @@ html body:not(#zz) #mapStage [data-toggle-zone="environment"].env-run:not(.st-fl
   /* 유리: 꼬리까지 한 장 — 상자보다 왼쪽·위로 40·30px 넓게 잡아 꼬리 안쪽도 같은 유리로 채운다
      (clip-path 는 칠해진 영역을 자를 뿐이라, 상자 밖 꼬리까지 칠하려면 상자가 꼬리를 덮어야 한다) */
   #chiefBubble .cb-glass{
-    position:absolute; left:-40px; top:-30px; right:0; bottom:0;
+    position:absolute; left:-40px; top:-30px; right:0; bottom:0; pointer-events:none;
     background:rgba(10,15,23,.82);
     -webkit-backdrop-filter:blur(22px) saturate(148%);
     backdrop-filter:blur(22px) saturate(148%);

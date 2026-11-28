@@ -182,6 +182,7 @@ test('두꺼운 20px 메탈 베젤이 없고, 유리·외곽선·그림자가 �
     const sheenRule = (cssAll.match(/#chiefBubble \.cb-glass-sheen\{[^}]*\}/) || [''])[0];
     assert.ok(new RegExp('left:-' + off.x + 'px').test(glassRule) && new RegExp('top:-' + off.y + 'px').test(glassRule),
       '유리 상자가 꼬리 영역을 덮지 않는다(꼬리가 비어 보인다): ' + glassRule);
+    assert.ok(/pointer-events:\s*none/.test(glassRule), '넓어진 유리 상자가 사이드바 클릭을 가로챈다: ' + glassRule);
     assert.ok(new RegExp('left:-' + off.x + 'px').test(sheenRule) && new RegExp('top:-' + off.y + 'px').test(sheenRule),
       '광택 상자가 꼬리 영역을 덮지 않는다: ' + sheenRule);
     box.remove();
